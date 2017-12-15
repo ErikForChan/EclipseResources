@@ -146,7 +146,12 @@ public class CommonBuilder extends ACBuilder {
 			return true;
 		}
 	}
-	private static class CfgBuildInfo {
+	
+	public CfgBuildInfo getCfgBuildInfo(IBuilder builder, boolean isForegound) {
+		return new CfgBuildInfo(builder,isForegound);
+	}
+	
+	public static class CfgBuildInfo {
 		private final IProject fProject;
 		private final IManagedBuildInfo fBuildInfo;
 		private final IConfiguration fCfg;
@@ -713,7 +718,7 @@ public class CommonBuilder extends ACBuilder {
 		}
 	}
 
-	protected void build(int kind, CfgBuildInfo bInfo, IProgressMonitor monitor) throws CoreException{
+	public void build(int kind, CfgBuildInfo bInfo, IProgressMonitor monitor) throws CoreException{
 		if(VERBOSE)
 			outputTrace(bInfo.getProject().getName(), "building cfg " + bInfo.getConfiguration().getName() + " with builder " + bInfo.getBuilder().getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		IBuilder builder = bInfo.getBuilder();

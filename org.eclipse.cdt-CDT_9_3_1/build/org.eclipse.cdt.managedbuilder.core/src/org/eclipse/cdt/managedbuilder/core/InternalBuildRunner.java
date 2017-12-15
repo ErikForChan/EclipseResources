@@ -32,6 +32,7 @@ import org.eclipse.cdt.managedbuilder.internal.buildmodel.DescriptionBuilder;
 import org.eclipse.cdt.managedbuilder.internal.buildmodel.IConfigurationBuildState;
 import org.eclipse.cdt.managedbuilder.internal.buildmodel.IProjectBuildState;
 import org.eclipse.cdt.managedbuilder.internal.buildmodel.ParallelBuilder;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
 import org.eclipse.cdt.managedbuilder.internal.core.ManagedMakeMessages;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceDelta;
@@ -42,6 +43,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
+import org.eclipse.cdt.managedbuilder.internal.core.Configuration;
 
 /**
  * The build runner for the internal builder.
@@ -149,6 +151,19 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 
 			if (status != ICommandLauncher.ILLEGAL_COMMAND) {
 				buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
+			}
+			
+			
+			/*
+			 * after Interalbuilder build success¡Athen invoke Externalbuilder
+			 */
+			if (status == ParallelBuilder.STATUS_OK) {
+				CommonBuilder cb = new CommonBuilder();
+				((Configuration) configuration).enableInternalBuilder(false);				
+				buildRunnerHelper.printLine("Toggle to ExternalBuilder... Please Waitting");	
+				IBuilder myBuilder = configuration.getEditableBuilder();
+				CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
+				cb.build(IncrementalProjectBuilder.FULL_BUILD, bInfo, monitor);		
 			}
 
 		} catch (Exception e) {
