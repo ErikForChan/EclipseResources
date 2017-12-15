@@ -72,11 +72,23 @@ public class ModeledPageLayout implements IPageLayout {
 			return Collections.emptyList();
 		}
 		ArrayList<String> result = new ArrayList<>();
-		for (String tag : model.getTags()) {
-			if (tag.startsWith(tagPrefix)) {
-				result.add(tag.substring(tagPrefix.length()));
+		if(tagPrefix.equals(NEW_WIZARD_TAG)) {
+			if(model.getLabel().equals("<C/C++>")) {
+				result.add("org.eclipse.cdt.ui.wizards.NewCWizard3");
+			}else {
+				for (String tag : model.getTags()) {
+					if (tag.startsWith(tagPrefix)) {
+						result.add(tag.substring(tagPrefix.length()));
+					}
+				}
 			}
-		}
+		}else {
+			for (String tag : model.getTags()) {
+				if (tag.startsWith(tagPrefix)) {
+					result.add(tag.substring(tagPrefix.length()));
+				}
+			}
+		}		
 		return result;
 	}
 

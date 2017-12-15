@@ -458,6 +458,20 @@
              %Cproject.desc
          </description>
       </wizard>
+      <wizard
+            canFinishEarly="false"
+            category="org.eclipse.cdt.ui.newCWizards"
+            class="org.eclipse.cdt.ui.wizards.CProjectWizard"
+            finalPerspective="org.eclipse.cdt.ui.CPerspective"
+            hasPages="true"
+            icon="icons/elcl16/newmngc_app.gif"
+            id="org.eclipse.cdt.ui.wizards.NewCWizard3"
+            name="%DJYOSproject"
+            project="true">
+        <description>
+            %DJYOSproject.desc
+        </description>
+     </wizard>
        <wizard
              canFinishEarly="false"
              category="org.eclipse.cdt.ui.newCWizards"
@@ -3961,6 +3975,27 @@
 	         menuGroupId="org.eclipse.cdt.ui.newProject"
 	         type="new"
 	         wizardId="org.eclipse.cdt.ui.wizards.NewCWizard2">
+		 <enablement>
+		 	<or>
+	         	<with variable="activeWorkbenchWindow.activePerspective">
+                    <equals
+                          value="org.eclipse.cdt.ui.CPerspective">
+                    </equals>
+	         	</with>
+	         	<instanceof value="org.eclipse.cdt.core.model.ICElement" />	
+		        <and>
+		            <instanceof value="org.eclipse.core.resources.IProject"/>
+		            <test property="org.eclipse.core.resources.projectNature"
+		                  value="org.eclipse.cdt.core.cnature"/>
+		        </and>
+         	</or>
+         </enablement>
+	   </commonWizard>
+	    <commonWizard
+	         associatedExtensionId="org.eclipse.cdt.ui.navigator.content"
+	         menuGroupId="org.eclipse.cdt.ui.newProject"
+	         type="new"
+	         wizardId="org.eclipse.cdt.ui.wizards.NewCWizard3">
 		 <enablement>
 		 	<or>
 	         	<with variable="activeWorkbenchWindow.activePerspective">
