@@ -58,10 +58,11 @@ public class AddExpressionEditorActionDelegate extends ActionDelegate implements
 	@Override
 	public void run( IAction action ) {
 		String text = getSelectedText();
-		ExpressionDialog dlg = new ExpressionDialog( getShell(), text );
-		if ( dlg.open() != Window.OK )
-			return;
-		createExpression( dlg.getExpression() );
+//		ExpressionDialog dlg = new ExpressionDialog( getShell(), text );
+//		if ( dlg.open() != Window.OK )
+//			return;
+//		createExpression( dlg.getExpression() );
+		createExpression( text );
 		activateExpressionView();
 	}
 
