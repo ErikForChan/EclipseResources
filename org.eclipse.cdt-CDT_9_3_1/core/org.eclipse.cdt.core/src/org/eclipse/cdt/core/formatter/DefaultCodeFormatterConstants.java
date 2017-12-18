@@ -2380,6 +2380,15 @@ public class DefaultCodeFormatterConstants {
 	}
 
 	/**
+	 * Returns the DJYOS formatter settings
+	 * 
+	 * @return the DJYOS settings
+	 */
+	public static Map<String,String> getDjyosSettings() {
+		return DefaultCodeFormatterOptions.getDjyosSettings().getMap();
+	}
+	
+	/**
 	 * Returns the K&R formatter settings
 	 * 
 	 * @return the K&R settings

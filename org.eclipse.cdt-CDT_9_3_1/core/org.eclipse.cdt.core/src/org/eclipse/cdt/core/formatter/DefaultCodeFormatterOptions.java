@@ -35,7 +35,14 @@ public class DefaultCodeFormatterOptions {
 		options.setDefaultSettings();
 		return options;
 	}
-
+	
+	public static DefaultCodeFormatterOptions getDjyosSettings() {
+		DefaultCodeFormatterOptions options = new DefaultCodeFormatterOptions();
+		options.setDjyosSettings();
+		return options;
+	}
+	
+	
 	public static DefaultCodeFormatterOptions getKandRSettings() {
 		DefaultCodeFormatterOptions options = new DefaultCodeFormatterOptions();
 		options.setKandRSettings();
@@ -1695,6 +1702,28 @@ public class DefaultCodeFormatterOptions {
 		this.tab_size = 4;
 		this.page_width = 80;
 		this.tab_char = TAB;
+		this.use_tabs_only_for_leading_indentations = false;
+	}
+	
+	/**
+	 * Configure DJYOS style.
+	 * <p>Example:</p>
+	 * <pre>
+	 * namespace foospace {
+	 * int Foo() {
+	 *     if (isBar) {
+	 *         bar();
+	 *         return 1;
+	 *     } else
+	 *         return 0;
+	 * }
+	 * }
+	 * </pre>
+	 * @see "http://en.wikipedia.org/wiki/Indent_style"
+	 */
+	public void setDjyosSettings() {
+		setDefaultSettings();
+		this.tab_char = SPACE;
 		this.use_tabs_only_for_leading_indentations = false;
 	}
 	

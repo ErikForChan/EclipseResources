@@ -390,6 +390,7 @@ final class FormatterMessages extends NLS {
 //	public static String NewLinesTabPage_array_group_option_before_closing_brace_of_array_initializer;
 //	public static String NewLinesTabPage_annotations_group_title;
 //	public static String NewLinesTabPage_annotations_group_option_after_annotation;
+	public static String ProfileManager_djyos_profile_name;
 	public static String ProfileManager_kandr_profile_name;
 	public static String ProfileManager_allman_profile_name;
 	public static String ProfileManager_gnu_profile_name;

@@ -31,6 +31,7 @@ import org.eclipse.cdt.internal.ui.preferences.PreferencesAccess;
 public class FormatterProfileManager extends ProfileManager {
 	private static final List<String> EMPTY_LIST = Collections.emptyList();
 
+	public final static String DJYOS_PROFILE= "org.eclipse.cdt.ui.default.djyos_profile"; //$NON-NLS-1$
 	public final static String KANDR_PROFILE= "org.eclipse.cdt.ui.default.kandr_profile"; //$NON-NLS-1$
 	public final static String ALLMAN_PROFILE= "org.eclipse.cdt.ui.default.allman_profile"; //$NON-NLS-1$
 	public final static String GNU_PROFILE= "org.eclipse.cdt.ui.default.gnu_profile"; //$NON-NLS-1$
@@ -50,7 +51,9 @@ public class FormatterProfileManager extends ProfileManager {
 	    super(addBuiltinProfiles(profiles, profileVersioner), context, preferencesAccess, profileVersioner, KEY_SETS, PROFILE_KEY, FORMATTER_SETTINGS_VERSION);
     }
 	
-	private static List<Profile> addBuiltinProfiles(List<Profile> profiles, IProfileVersioner profileVersioner) {
+	private static List<Profile> addBuiltinProfiles(List<Profile> profiles, IProfileVersioner profileVersioner) {		
+		final Profile djyosProfile= new BuiltInProfile(DJYOS_PROFILE, FormatterMessages.ProfileManager_djyos_profile_name, getDjyosSettings(), 2, profileVersioner.getCurrentVersion(), profileVersioner.getProfileKind()); 
+		profiles.add(djyosProfile);
 		final Profile kandrProfile= new BuiltInProfile(KANDR_PROFILE, FormatterMessages.ProfileManager_kandr_profile_name, getKandRSettings(), 2, profileVersioner.getCurrentVersion(), profileVersioner.getProfileKind()); 
 		profiles.add(kandrProfile);
 		final Profile allmanProfile= new BuiltInProfile(ALLMAN_PROFILE, FormatterMessages.ProfileManager_allman_profile_name, getAllmanSettings(), 2, profileVersioner.getCurrentVersion(), profileVersioner.getProfileKind()); 
@@ -88,6 +91,13 @@ public class FormatterProfileManager extends ProfileManager {
 		return DefaultCodeFormatterConstants.getDefaultSettings();
 	}
 
+	/** 
+	 * @return Returns the DJYOS settings.
+	 */
+	public static Map<String, String> getDjyosSettings() {
+		return DefaultCodeFormatterConstants.getDjyosSettings();
+	}
+	
 	/** 
 	 * @return Returns the K&R settings.
 	 */
