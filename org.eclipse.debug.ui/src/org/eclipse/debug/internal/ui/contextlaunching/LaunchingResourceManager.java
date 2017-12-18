@@ -341,7 +341,7 @@ public class LaunchingResourceManager implements IPropertyChangeListener, IWindo
 				fExtCache.put(resource, sc);
 			}
 			int esize = sc.size();
-			if(esize == 0) {
+			if(esize == 0 || esize == 1) {
 				if(resource != null && shouldCheckParent()) {
 					IProject project = resource.getProject();
 					if(project != null && !project.equals(resource)) {
@@ -355,17 +355,17 @@ public class LaunchingResourceManager implements IPropertyChangeListener, IWindo
 					return ContextMessages.ContextRunner_15;
 				}
 			}
-			if(esize == 1) {
-				if(resource != null) {
-					return resource.getName();
-				}
-				else {
-					return MessageFormat.format(ContextMessages.LaunchingResourceManager_1, new Object[] { sc.get(0).getLabel() });
-				}
-			}
-			else {
-				return ContextMessages.ContextRunner_14;
-			}
+//			if(esize == 1) {
+//				if(resource != null) {
+//					return resource.getName();
+//				}
+//				else {
+//					return MessageFormat.format(ContextMessages.LaunchingResourceManager_1, new Object[] { sc.get(0).getLabel() });
+//				}
+//			}
+//			else {
+ 				return ContextMessages.ContextRunner_14;
+//			}
 		}
 	}
 

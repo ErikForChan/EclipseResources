@@ -170,10 +170,10 @@ public final class ContextRunner {
 			shortcuts = fLRM.pruneShortcuts(shortcuts, resource, mode);
 		//see if the context is a shared configuration
 			ILaunchConfiguration config = lcm.isSharedConfig(resource);
-			if(config != null) {
-				launch(config, mode, isShift);
-				return;
-			}
+//			if(config != null) {
+//				launch(config, mode, isShift);
+//				return;
+//			}
 		//get the configurations from the resource and participants
 			List<ILaunchConfiguration> configs = fLRM.getParticipatingLaunchConfigurations(selection, resource, shortcuts, mode);
 			int csize = configs.size();
@@ -182,13 +182,13 @@ public final class ContextRunner {
 			}
 			else if(csize < 1) {
 				int esize = shortcuts.size();
-				if(esize == 1) {
-					launchShortcut(selection, shortcuts.get(0), mode, isShift);
-				}
-				else if(esize > 1) {
+				//if(esize == 1) {
+					//launchShortcut(selection, shortcuts.get(0), mode, isShift);
+				//}
+				if(esize > 1) {
 					showShortcutSelectionDialog(resource, shortcuts, mode, selection, isShift);
 				}
-				else if(esize < 1) {
+				else if(esize <= 1) {
 					if(DebugUIPlugin.getDefault().getPreferenceStore().getBoolean(IInternalDebugUIConstants.PREF_LAUNCH_LAST_IF_NOT_LAUNCHABLE)) {
 						if (!launchLast(group, isShift)) {
 							MessageDialog.openInformation(DebugUIPlugin.getShell(), ContextMessages.ContextRunner_0, ContextMessages.ContextRunner_7);
