@@ -14,6 +14,11 @@ package org.eclipse.cdt.managedbuilder.ui.wizards;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.eclipse.cdt.core.CCorePlugin;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionPreferences;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionWorkspacePreferences;
+import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
 import org.eclipse.cdt.internal.ui.wizards.ICDTCommonProjectWizard;
 import org.eclipse.cdt.managedbuilder.core.IProjectType;
 import org.eclipse.cdt.managedbuilder.core.IToolChain;
@@ -22,6 +27,7 @@ import org.eclipse.cdt.managedbuilder.internal.ui.Messages;
 import org.eclipse.cdt.managedbuilder.ui.properties.ManagedBuilderUIImages;
 import org.eclipse.cdt.ui.newui.CDTPrefUtil;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
@@ -188,6 +194,11 @@ public class CDTConfigWizardPage extends WizardPage {
 			public void widgetSelected(SelectionEvent e) {
 				advancedDialog();
 			}});
+		
+		//new->project,set scope to be shared
+		ICDTCommonProjectWizard nmWizard = (ICDTCommonProjectWizard)getWizard();
+    	final IProject project = nmWizard.getProject(true, false);
+    	IndexerPreferences.setScope(project, IndexerPreferences.SCOPE_PROJECT_SHARED);
 
 		Group gr = new Group(parent, SWT.NONE);
 		gd = new GridData(GridData.FILL_HORIZONTAL);
@@ -197,6 +208,12 @@ public class CDTConfigWizardPage extends WizardPage {
 		Label lb = new Label(gr, SWT.NONE);
 		lb.setText(COMMENT);
 
+		//new->project,set userActive to be true		
+		ICProjectDescriptionManager prjDescMgr= CCorePlugin.getDefault().getProjectDescriptionManager();
+		ICProjectDescriptionWorkspacePreferences prefs= prjDescMgr.getProjectDescriptionWorkspacePreferences(true);
+		prefs.setConfigurationRelations(ICProjectDescriptionPreferences.CONFIGS_LINK_SETTINGS_AND_ACTIVE);
+		prjDescMgr.setProjectDescriptionWorkspacePreferences(prefs, false, new NullProgressMonitor());
+		
 		setControl(parent);
 	}
 
@@ -338,10 +355,10 @@ public class CDTConfigWizardPage extends WizardPage {
 				CDTPrefUtil.setBool(CDTPrefUtil.KEY_NOMNG, true);
 				try {
 					int res = PreferencesUtil.createPropertyDialogOn(getWizard().getContainer().getShell(), newProject, propertyId, null, null).open();
-					if (res != Window.OK) {
-						// if user presses cancel, remove the project.
-						nmWizard.performCancel();
-					}
+//					if (res != Window.OK) {
+//						// if user presses cancel, remove the project.
+//						nmWizard.performCancel();
+//					}
 				} finally {
 					CDTPrefUtil.setBool(CDTPrefUtil.KEY_NOMNG, oldManage);
 				}

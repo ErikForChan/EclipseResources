@@ -110,6 +110,9 @@ public abstract class PropertyAndPreferencePage extends PreferencePage implement
 			fUseProjectSettings= new SelectionButtonDialogField(SWT.CHECK);
 			fUseProjectSettings.setDialogFieldListener(listener);
 			fUseProjectSettings.setLabelText(PreferencesMessages.PropertyAndPreferencePage_useprojectsettings_label);
+			//UseProjectSettings set to be true
+			fUseProjectSettings.setSelection(true);
+			
 			fUseProjectSettings.doFillIntoGrid(composite, 1);
 			LayoutUtil.setHorizontalGrabbing(fUseProjectSettings.getSelectionButton(null), true);
 			

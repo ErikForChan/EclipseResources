@@ -596,6 +596,8 @@ public class IndexerBlock extends AbstractCOptionPage {
     	if (fPrefScopeBlock != null) {
     		fPrefScopeBlock.setInstanceScope();
         	onPreferenceScopeChange();
+        	//set UseActiveBuildConfig to be true
+        	setUseActiveBuildConfig(true);
     	} else {
     		fCurrentProperties= IndexerPreferences.getDefaultIndexerProperties();
     		updateForNewProperties(IndexerPreferences.SCOPE_INSTANCE);
