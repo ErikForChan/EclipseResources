@@ -14,6 +14,8 @@
  *******************************************************************************/
 package org.eclipse.cdt.managedbuilder.internal.core;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -157,7 +159,7 @@ public class CommonBuilder extends ACBuilder {
 		private final IConfiguration fCfg;
 		private final IBuilder fBuilder;
 		private IConsole fConsole;
-		CfgBuildInfo(IBuilder builder, boolean isForegound){
+		public CfgBuildInfo(IBuilder builder, boolean isForegound){
 			this.fBuilder = builder;
 			this.fCfg = builder.getParent().getParent();
 			this.fProject = this.fCfg.getOwner().getProject();
@@ -447,30 +449,47 @@ public class CommonBuilder extends ACBuilder {
 
 		if(VERBOSE)
 			outputTrace(project.getName(), ">>build requested, type = " + kind); //$NON-NLS-1$
-
+		setAllConfigBuild(false);
 		IProject[] projects = null;
+		String path = "E:\\source\\content.txt";
+		File file = new File(path);
+		if(!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		FileWriter writer = null;
+		try {		
+			writer = new FileWriter(path, true);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		if (needAllConfigBuild()) {
 			IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
 			IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
-			IConfiguration defCfg = info.getDefaultConfiguration();
+			IConfiguration defCfg = info.getDefaultConfiguration();		
 			for (IConfiguration cfg : cfgs) {
 				info.setDefaultConfiguration(cfg);
 				IBuilder builders[] = ManagedBuilderCorePlugin.createBuilders(project, args);
-				projects = build(kind, project, builders, true, monitor, new MyBoolean(false));
+				projects = build(kind, project, builders, true, monitor, new MyBoolean(false));		
 			}
 			info.setDefaultConfiguration(defCfg);
 		} else {
 			IBuilder builders[] = ManagedBuilderCorePlugin.createBuilders(project, args);
 			projects = build(kind, project, builders, true, monitor, new MyBoolean(false));
 		}
-
+		
 		if(VERBOSE)
 			outputTrace(project.getName(), "<<done build requested, type = " + kind); //$NON-NLS-1$
 
 		return projects;
 	}
 
-	protected IProject[] build(int kind, IProject project, IBuilder[] builders, boolean isForeground, IProgressMonitor monitor) throws CoreException{
+	public IProject[] build(int kind, IProject project, IBuilder[] builders, boolean isForeground, IProgressMonitor monitor) throws CoreException{
 		return build(kind, project, builders, isForeground, monitor, new MyBoolean(false));
 	}
 
@@ -674,7 +693,7 @@ public class CommonBuilder extends ACBuilder {
 		new OtherConfigVerifier(builders, allCfgs).updateOtherConfigs(buildKind == FULL_BUILD ? null : getDelta(info.getManagedProject().getOwner().getProject()));
 	}
 
-	protected class BuildStatus {
+	public static class BuildStatus {
 		private final boolean fManagedBuildOn;
 		private boolean fRebuild;
 		private boolean fBuild = true;
@@ -722,6 +741,33 @@ public class CommonBuilder extends ACBuilder {
 		if(VERBOSE)
 			outputTrace(bInfo.getProject().getName(), "building cfg " + bInfo.getConfiguration().getName() + " with builder " + bInfo.getBuilder().getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		IBuilder builder = bInfo.getBuilder();
+		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
+		Configuration configuration = (Configuration) bInfo.getConfiguration();		
+		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
+		if(!folder.exists()) {
+			if(folder.getName().startsWith("libOS")) {
+				configuration.enableInternalBuilder(true);
+				builder = configuration.getEditableBuilder();
+				bInfo = getCfgBuildInfo(builder, true);
+			}	
+		}else {
+			Boolean makefileExist = false;
+			IPath path = folder.getLocation();
+			File file = path.toFile();
+			if(folder.getName().startsWith("libOS")) {
+				for (File cfile : file.listFiles()) {
+					if(cfile.getName().equals("makefile")) {
+						makefileExist = true;
+					}
+				}		
+			}	
+			if(!makefileExist) {
+				configuration.enableInternalBuilder(true);
+				builder = configuration.getEditableBuilder();
+				bInfo = getCfgBuildInfo(builder, true);
+			}
+		}
+		
 		BuildStatus status = new BuildStatus(builder);
 
 		if (!shouldBuild(kind, builder)) {
@@ -864,7 +910,7 @@ public class CommonBuilder extends ACBuilder {
 		return buildStatus;
 	}
 
-	protected BuildStatus performPrebuildGeneration(int kind, CfgBuildInfo bInfo, BuildStatus buildStatus, IProgressMonitor monitor) throws CoreException{
+	public BuildStatus performPrebuildGeneration(int kind, CfgBuildInfo bInfo, BuildStatus buildStatus, IProgressMonitor monitor) throws CoreException{
 		IBuilder builder = bInfo.getBuilder();
 		if(builder.isInternalBuilder())
 			return buildStatus;
@@ -994,7 +1040,7 @@ public class CommonBuilder extends ACBuilder {
 		return status;
 	}
 
-	protected MultiStatus performMakefileGeneration(CfgBuildInfo bInfo, IManagedBuilderMakefileGenerator generator, BuildStatus buildStatus, IProgressMonitor monitor) throws CoreException {
+	public MultiStatus performMakefileGeneration(CfgBuildInfo bInfo, IManagedBuilderMakefileGenerator generator, BuildStatus buildStatus, IProgressMonitor monitor) throws CoreException {
 		// Need to report status to the user
 		IProject curProject = bInfo.getProject();
 		if (monitor == null) {

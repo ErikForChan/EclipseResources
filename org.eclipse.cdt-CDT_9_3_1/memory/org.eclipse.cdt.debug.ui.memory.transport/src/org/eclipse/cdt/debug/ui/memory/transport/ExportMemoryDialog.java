@@ -48,6 +48,8 @@ public class ExportMemoryDialog extends SelectionDialog
 	private static final String SELECTED_EXPORTER = "SELECTED_EXPORTER"; //$NON-NLS-1$
 
 	private Combo fFormatCombo;
+	private Combo fByteCombo;
+	private Combo fPortCombo;
 	
 	private IMemoryBlock fMemoryBlock;
 	
@@ -173,6 +175,36 @@ public class ExportMemoryDialog extends SelectionDialog
 		data = new FormData();
 		data.left = new FormAttachment(textLabel);
 		fFormatCombo.setLayoutData(data);
+		
+		// byte
+		Label byteLabel = new Label(composite, SWT.NONE);
+		byteLabel.setText(Messages.getString("ExportMemoryDialog.Byte"));  //$NON-NLS-1$		
+		fByteCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
+		
+		FormData byteData = new FormData();
+		byteData.top = new FormAttachment(textLabel, 0, SWT.CENTER);
+		byteData.left = new FormAttachment(fFormatCombo);
+		byteLabel.setLayoutData(byteData);
+		
+		byteData = new FormData();
+		byteData.top = new FormAttachment(fFormatCombo, 0, SWT.CENTER);
+		byteData.left = new FormAttachment(byteLabel);
+		fByteCombo.setLayoutData(byteData);
+		
+		// port
+		Label portLabel = new Label(composite, SWT.NONE);
+		portLabel.setText(Messages.getString("ExportMemoryDialog.Port")); //$NON-NLS-1$
+		fPortCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
+
+		FormData portData = new FormData();
+		portData.top = new FormAttachment(byteLabel, 0, SWT.CENTER);
+		portData.left = new FormAttachment(fByteCombo);
+		portLabel.setLayoutData(portData);
+
+		portData = new FormData();
+		portData.top = new FormAttachment(fFormatCombo, 0, SWT.CENTER);
+		portData.left = new FormAttachment(portLabel);
+		fPortCombo.setLayoutData(portData);
 		
 		Vector<IMemoryExporter> exporters = new Vector<IMemoryExporter>();
 		
