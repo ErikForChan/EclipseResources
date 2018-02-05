@@ -1246,7 +1246,7 @@ public class WizardProjectsImportPage extends WizardDataTransferPage {
 			ArchiveFileManipulations.closeStructureProvider(structureProvider, getShell());
 
 			// Ensure the projects to the working sets
-			//addToWorkingSets();
+			addToWorkingSets();
 		}
 		return true;
 	}
@@ -1288,7 +1288,7 @@ public class WizardProjectsImportPage extends WizardDataTransferPage {
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		final IProject project = workspace.getRoot().getProject(projectName);
 		createdProjects.add(project);
-		if (record.description == null) {//no
+		if (record.description == null) {
 			// error case
 			record.description = workspace.newProjectDescription(projectName);
 			IPath locationPath = new Path(record.projectSystemFile
@@ -1303,7 +1303,7 @@ public class WizardProjectsImportPage extends WizardDataTransferPage {
 		} else {
 			record.description.setName(projectName);
 		}
-		if (record.projectArchiveFile != null) {//no
+		if (record.projectArchiveFile != null) {
 			// import from archive
 			List fileSystemObjects = structureProvider
 					.getChildren(record.parent);
@@ -1326,7 +1326,7 @@ public class WizardProjectsImportPage extends WizardDataTransferPage {
 
 		// import from file system
 		File importSource = null;
-		if (copyFiles) {//no
+		if (copyFiles) {
 			// import project from location copying files - use default project
 			// location for this workspace
 			URI locationURI = record.description.getLocationURI();
@@ -1367,7 +1367,7 @@ public class WizardProjectsImportPage extends WizardDataTransferPage {
 		}
 
 		// import operation to import project files if copy checkbox is selected
-		if (copyFiles && importSource != null) {//no
+		if (copyFiles && importSource != null) {
 			List filesToImport = FileSystemStructureProvider.INSTANCE
 					.getChildren(importSource);
 			ImportOperation operation = new ImportOperation(project

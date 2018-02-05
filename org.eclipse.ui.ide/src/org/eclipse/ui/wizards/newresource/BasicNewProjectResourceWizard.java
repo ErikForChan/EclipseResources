@@ -151,6 +151,7 @@ public class BasicNewProjectResourceWizard extends BasicNewResourceWizard
 	@Override
 	public void addPages() {
 		super.addPages();
+		
 		mainPage = new WizardNewProjectCreationPage("basicNewProjectPage") { //$NON-NLS-1$
 			@Override
 			public void createControl(Composite parent) {
