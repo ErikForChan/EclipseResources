@@ -137,13 +137,15 @@ public class BaseNewWizardMenu extends CompoundContributionItem {
         if (page != null) {
             String[] wizardIds = page.getNewWizardShortcuts();
             for (String wizardId : wizardIds) {
-                IAction action = getAction(wizardId);
-                if (action != null) {
-                    if (!WorkbenchActivityHelper.filterItem(action)) {
-                        list.add(new ActionContributionItem(action));
-                        added = true;
-                    }
-                }
+            	if(wizardId.endsWith("org.eclipse.cdt.ui.wizards.NewCWizard3")) {
+            		 IAction action = getAction(wizardId);
+                     if (action != null) {
+                         if (!WorkbenchActivityHelper.filterItem(action)) {
+                             list.add(new ActionContributionItem(action));
+                             added = true;
+                         }
+                     }
+            	}           
             }
         }
         return added;

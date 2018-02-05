@@ -627,8 +627,10 @@ implements
 				lc = MultiItemsHolder.createRDescription(rds);
 			} else {
 				ICConfigurationDescription c = findCfg(local_prjd, resd.getConfiguration());
-				if (c == null)
+				if (c == null) {
 					return false; // cannot save: no cfg found
+				}
+					
 				lc = getResDesc(c);
 			}
 		}
@@ -956,8 +958,10 @@ implements
 	public ICResourceDescription getResDesc(ICConfigurationDescription cf) {
 		IAdaptable ad = getElement();
 
-		if (isForProject())
+		if (isForProject()) {
 			return cf.getRootFolderDescription();
+		}
+			
 		ICResourceDescription out = null;
 		IResource res = (IResource)ad;
 		IPath p = res.getProjectRelativePath();
@@ -968,10 +972,14 @@ implements
 				out = cf.getResourceDescription(p, false);
 				if (! p.equals(out.getPath()) ) {
 					try {
-						if (isForFolder())
+						if (isForFolder()) {
 							out = cf.createFolderDescription(p, (ICFolderDescription)out);
-						else
+						}
+							
+						else {
 							out = cf.createFileDescription(p, out);
+						}
+							
 					} catch (CoreException e) {
 						System.out.println(Messages.AbstractPage_10 +
 								p.toOSString() + "\n" + e.getLocalizedMessage()); //$NON-NLS-1$

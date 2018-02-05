@@ -261,6 +261,8 @@ public class Messages extends NLS {
 	public static String NewModelProjectWizard_3;
 	public static String NewModelProjectWizard_4;
 	public static String NewModelProjectWizard_5;
+	public static String NewModelProjectWizard_6;
+	public static String NewModelProjectWizard_7;
 	public static String ProjectContentsArea_0;
 	public static String ProjectContentsArea_1;
 	public static String ProjectContentsArea_2;

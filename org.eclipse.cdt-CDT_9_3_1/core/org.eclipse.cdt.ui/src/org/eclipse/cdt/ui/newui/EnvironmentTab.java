@@ -207,14 +207,14 @@ public class EnvironmentTab extends AbstractCPropertyTab {
 		});
 		tv.setLabelProvider(new EnvironmentLabelProvider(true));
 		// add headers
-		TableColumn tc = new TableColumn(table, SWT.LEFT);
+		TableColumn tc = new TableColumn(table, SWT.CENTER);
 		tc.setText(Messages.EnvironmentTab_1);
 		tc.setWidth(150);
-		tc = new TableColumn(table, SWT.LEFT);
+		tc = new TableColumn(table, SWT.CENTER);
 		tc.setText(Messages.EnvironmentTab_2);
 		tc.setWidth(150);
 		if (this.getResDesc() != null) {
-			tc = new TableColumn(table, SWT.LEFT);
+			tc = new TableColumn(table, SWT.CENTER);
 			tc.setText(Messages.EnvironmentTab_16);
 			tc.setWidth(100);
 		}
