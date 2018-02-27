@@ -1,31 +1,33 @@
 package org.eclipse.cdt.ui.wizards.parsexml;
-import java.io.File;  
+import java.io.File;
 import java.io.StringWriter;  
   
 import javax.xml.parsers.DocumentBuilder;  
 import javax.xml.parsers.DocumentBuilderFactory;  
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;  
-import javax.xml.transform.TransformerException;  
+import javax.xml.transform.Transformer;   
 import javax.xml.transform.TransformerFactory;  
 import javax.xml.transform.dom.DOMSource;  
 import javax.xml.transform.stream.StreamResult;  
   
 import org.w3c.dom.Document;  
-import org.w3c.dom.Element; 
+import org.w3c.dom.Element;
 
 public class CreateBoardXml {
 	
 	 DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
 	 	
-     public void creatBoard(Board board,File file) {
+     public void creatBoard(Board board,String xmlPath) {
         try {
+        	factory.setIgnoringElementContentWhitespace(false);
         	DocumentBuilder builder = factory.newDocumentBuilder();             
-            Document document = builder.newDocument();   
+        	Document document = builder.parse(xmlPath); 
         	 //创建属性名、赋值  
-            Element root = document.createElement("board");  
-            
+        	Element root = document.getDocumentElement();  
+        	Element boardElement = document.createElement("board");
+        	
+        	Element boardName = document.createElement("boardName");
+        	boardName.setTextContent(board.getBoardName());
             Element device = document.createElement("device");
             device.setTextContent(board.cpu.getDevice());
             Element core = document.createElement("core");
@@ -47,17 +49,19 @@ public class CreateBoardXml {
             Element ibootSize = document.createElement("ibootSize");
             ibootSize.setTextContent(board.getIbootSize());
             
-            root.appendChild(device);
-            root.appendChild(core);
-            root.appendChild(architecture);
-            root.appendChild(flashStart);
-            root.appendChild(flashSize);
-            root.appendChild(ramStart);
-            root.appendChild(ramSize);
-            root.appendChild(fpuType);
-            root.appendChild(exClk);
-            root.appendChild(ibootSize);
-            document.appendChild(root);      
+            boardElement.appendChild(boardName);
+            boardElement.appendChild(device);
+            boardElement.appendChild(core);
+            boardElement.appendChild(architecture);
+            boardElement.appendChild(flashStart);
+            boardElement.appendChild(flashSize);
+            boardElement.appendChild(ramStart);
+            boardElement.appendChild(ramSize);
+            boardElement.appendChild(fpuType);
+            boardElement.appendChild(exClk);
+            boardElement.appendChild(ibootSize);
+            
+            root.appendChild(boardElement);      
 
            TransformerFactory transformerFactory = TransformerFactory.newInstance();  
            Transformer transformer = transformerFactory.newTransformer();  
@@ -67,8 +71,9 @@ public class CreateBoardXml {
                  
            StringWriter writer = new StringWriter();  
            transformer.transform(new DOMSource(document), new StreamResult(writer));  
-           transformer.transform(new DOMSource(document), new StreamResult(file));
-		} catch (ParserConfigurationException | TransformerException e) {
+           transformer.transform(new DOMSource(document), new StreamResult(new File(xmlPath)));
+           writer.close();
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

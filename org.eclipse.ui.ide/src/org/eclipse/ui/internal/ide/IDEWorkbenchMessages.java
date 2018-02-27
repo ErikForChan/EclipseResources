@@ -204,6 +204,7 @@ public class IDEWorkbenchMessages extends NLS {
 
 	public static String Workbench_shortcuts;
 	public static String Workbench_openNewWindow;
+	public static String WorkbenchWindow_shellTitle;
 
 
 	// --- Help Menu ---

@@ -115,6 +115,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	private URI lastProjectLocation = null;
 	private CWizardHandler savedHandler = null;
 	private WorkingSetGroup workingSetGroup;
+	String boardModuleTrimPath;
 	
 	public Cpu cpu;
 	boolean isToCreat = false;
@@ -142,16 +143,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		fMainPage= new DjyosMainWizardPage(CUIPlugin.getResourceString(PREFIX));
 		fMainPage.setTitle(wz_title);
 		fMainPage.setDescription(wz_desc);
-		
 		addPage(fMainPage);
 	}
-	
-//	public void addModuleCfgPage() {
-//		mcPage= new ModuleConfigurationWizard("basicModuleCfgPage");
-//		mcPage.setTitle("Module Configuration");
-//		mcPage.setDescription("Check the Module you need");
-//		addPage(mcPage);
-//	}
 
 	public String getTemplateName() {
 		int tIndex = fMainPage.getTemplateIndex();
@@ -170,7 +163,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	
 	public String getEclipsePath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,fullPath.length()-8);
+		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		System.out.println("eclipsePath:  "+eclipsePath);
 		return eclipsePath;
 	}
@@ -201,36 +194,35 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	
 	public void handleBoard() {
 		String eclipsePath = getEclipsePath();
-		String templateName = getTemplateName();
+		String projectName = fMainPage.getProjectName();
 		String boardName = fMainPage.getBoardName();
 		cpu = fMainPage.getSelectCpu();
 		Board board = fMainPage.getSelectBoard();
+		
 		String startupPath = eclipsePath+"demo/Startup/cpudrv";
 		String startupDestPath = eclipsePath+"djysrc/bsp/startup";
-		String boardCodePath = eclipsePath+"demo/Board";
+		
+		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/"+board.getBoardName();
 		String newBoardPath = eclipsePath+"djysrc/bsp/boarddrv/"+boardName;
-		String newBoardXmlPath = eclipsePath+"djysrc/bsp/boarddrv/"+boardName+"/"+boardName+".xml";
+		String boardXmlPath = eclipsePath+"djysrc/bsp/boarddrv/board.xml";
 		
 		File srcFolder = new File(boardCodePath);
 		File folder = new File(newBoardPath);
-		File file = new File(newBoardXmlPath);
+//		File file = new File(newBoardXmlPath);
 		if(!folder.exists()) {
-			try {
-				folder.mkdir();
-				file.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			folder.mkdir();
 		}
 		CreateBoardXml cbx = new CreateBoardXml();
-		cbx.creatBoard(board, file);				
+					
 		try {
 			copyFolder(srcFolder,folder);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		board.setBoardName(boardName);
+		cbx.creatBoard(board, boardXmlPath);	
 		
 		File stpSrcFolder = new File(startupPath);
 		File stpDestFolder = new File(startupDestPath+"/"+cpu.getDevice());
@@ -243,22 +235,17 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-			
-		ReviseVariableToXML rvtx = new ReviseVariableToXML();
-		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+eclipsePath+"djysrc", 
-				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(templateName).getFile(".project"));
-		ReviseLinkToXML rltx = new ReviseLinkToXML();
-		System.out.println(IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(templateName).getFile(".project").getLocation().toString());
-		rltx.reviseXmlLink("src/libos/bsp/boarddrv",boardName, "DJYOS_SRC_LOCATION/bsp/boarddrv",cpu.getDevice(), 
-				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(templateName).getFile(".project"),false);
-		rltx.reviseXmlLink("src/libos/bsp/startup",boardName, "DJYOS_SRC_LOCATION/bsp/startup",cpu.getDevice(), 
-				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(templateName).getFile(".project"),true);
+		
 	}
 	
 	public void handleCProject() {
-		String templateName = getTemplateName();
+		String eclipsePath = getEclipsePath();
+		String projectName = fMainPage.getProjectName();
 		Board board = fMainPage.getSelectBoard();
-		final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(templateName);
+		final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		String boardName = fMainPage.getBoardName();
+		cpu = fMainPage.getSelectCpu();
+		System.out.println("project.getFullPath().toString():           "+project.getFullPath().toString());
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	
 		for(int i=0;i<conds.length;i++) {
@@ -280,13 +267,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-//			System.out.println("rds.getId():   -----------------------------"+rds.getId());
-//			System.out.println("conds[i].getId():   "+conds[i].getId());
-//			System.out.println("conds[i].getName():   "+conds[i].getName());
-//			System.out.println("conds[i].getBuildSystemId():   "+conds[i].getBuildSystemId());
-//			System.out.println("conds[i].getDescription():   "+conds[i].getDescription());
-//			System.out.println("conds[i].getType():   "+conds[i].getType());
-//			System.out.println("conds[i].getId():   "+conds[i].getBuildSetting());
 		}
 		try {
 			CoreModel.getDefault().setProjectDescription(project, local_prjd);
@@ -294,6 +274,37 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		
+		ReviseVariableToXML rvtx = new ReviseVariableToXML();
+		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+eclipsePath+"djysrc", 
+				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),projectName);
+		ReviseLinkToXML rltx = new ReviseLinkToXML();
+		rltx.reviseXmlLink("src/libos/bsp/boarddrv",boardName, "DJYOS_SRC_LOCATION/bsp/boarddrv",cpu.getDevice(), 
+				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"boarddrv");
+		rltx.reviseXmlLink("src/libos/bsp/startup",boardName, "DJYOS_SRC_LOCATION/bsp/startup",cpu.getDevice(), 
+				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"startup");
+		
+		String core= board.cpu.getCore();
+		if(core.equals("cortex-m7")) {
+			rltx.reviseXmlLink("src/libos/bsp/arch","cortex-m7", "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m/armv7e-m","cortex-m7", 
+					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"arch");
+			rltx.reviseXmlLink("src/libos/bsp/cpudrv","stm32f7", "DJYOS_SRC_LOCATION/bsp/cpudrv/cortex-m7","stm32f7", 
+					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"cpudrv");
+		}else if(core.equals("cortex-m4")) {
+			rltx.reviseXmlLink("src/libos/bsp/arch","cortex-m4", "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m/armv7e-m","cortex-m4", 
+					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"arch");
+			rltx.reviseXmlLink("src/libos/bsp/cpudrv","stm32f4xx", "DJYOS_SRC_LOCATION/bsp/cpudrv/cortex-m7","stm32f4xx",
+					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"cpudrv");
+		}
+		
+		
+		
+//		if (arch.equals("armv7e-m")) {
+//
+//		} else if (arch.equals("cortex-m4")) {
+//
+//		}
+		
 	}
 	
 	private void copyFileToFolder(File src, File dest, String boardName) throws IOException {  
@@ -335,19 +346,22 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		int tIndex = fMainPage.getTemplateIndex();
 		String projectName = fMainPage.getProjectName();
 		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,fullPath.length()-8);
+		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		String destPath = null;
 		String srcPath = null;
 		String templateName = getTemplateName();
-		srcPath = eclipsePath + "demo\\" + templateName;
-		destPath = workspace.getRoot().getLocationURI().toString().substring(6) + "/" + templateName;
+		srcPath = eclipsePath + "demo/" + templateName;
+		destPath = fMainPage.locationArea.locationPathField.getText();
 		
 		String projectPath = workspace.getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
+		
 		File src = new File(srcPath);
 		File dest = new File(destPath);
+		
 		File projectFile = new File(projectPath);
 
 		if(!dest.exists() && !projectFile.exists()) {
+			dest.mkdir();
 			try {
 				copyFolder(src,dest);
 			} catch (IOException e) {
@@ -381,14 +395,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-					
-			handleCProject();
-			
-			boolean isToCreat = fMainPage.isToCreat();
-			if(isToCreat) {
-				handleBoard();
-			}
-			
+				
+			isToCreat = fMainPage.isToCreat();
+						
 		}else {
 			fMainPage.setExistedMessage();
 		}		
@@ -399,7 +408,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		
 		SubMonitor subMonitor = SubMonitor.convert(mon, 3);
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		final IProject project = workspace.getRoot().getProject(templateName);
+		final IProject project = workspace.getRoot().getProject(projectName);
 		
 		try {
 			SubMonitor subTask = subMonitor.split(1).setWorkRemaining(100);
@@ -460,9 +469,10 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	@Override
 	public boolean performFinish() {
 		String projectName = fMainPage.getProjectName();
+		String projectPath = fMainPage.locationArea.locationPathField.getText();
 		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
-    	String path = sourcePath+"/src/app/OS_prjcfg/include/module_init.h";
-    	String testpath = sourcePath+"/src/app/OS_prjcfg/include";
+    	String path = projectPath+"/src/app/OS_prjcfg/include/moduleinit.h";
+    	String testpath = projectPath+"/src/app/OS_prjcfg/include";
     	File testFile = new File(testpath);
     	getMemoryToLds();
     	if(testFile.exists()) {
@@ -513,46 +523,60 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		String templateName = getTemplateName();
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		
-		if(projectName == null) {
-			if(templateName != null) {
-				try {
-					final IProject project = workspace.getRoot().getProject(templateName);
-					if(project.exists()) {
-						project.delete(true, true, null);
-					}	
-				} catch (CoreException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}		
-		}else {
-			System.out.println("projectName:  "+projectName);
+		if(addedModule) {
 			IProject project = workspace.getRoot().getProject(projectName);
-//			System.out.println("project.toString():  "+project.getLocation().toString());
-			if(project.exists()) {
-				System.out.println("projectName:  "+project.getName());
+
+			if (project.exists()) {
+				System.out.println("projectName:  " + project.getName());
 				try {
 					project.delete(true, true, null);
 				} catch (CoreException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}else {
-				System.out.println("project==null");
-				if(templateName != null) {
-					try {
-						project = workspace.getRoot().getProject(templateName);
-						if(project.exists()) {
-							project.delete(true, true, null);
-						}				
-					} catch (CoreException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}		
 			}
-			
 		}
+		
+//		if(projectName == null) {
+//			if(templateName != null) {
+//				try {
+//					final IProject project = workspace.getRoot().getProject(templateName);
+//					if(project.exists()) {
+//						project.delete(true, true, null);
+//					}	
+//				} catch (CoreException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}		
+//		}else {
+//			System.out.println("projectName:  "+projectName);
+//			IProject project = workspace.getRoot().getProject(projectName);
+////			System.out.println("project.toString():  "+project.getLocation().toString());
+//			if(project.exists()) {
+//				System.out.println("projectName:  "+project.getName());
+//				try {
+//					project.delete(true, true, null);
+//				} catch (CoreException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}else {
+//				System.out.println("project==null");
+//				if(templateName != null) {
+//					try {
+//						project = workspace.getRoot().getProject(templateName);
+//						if(project.exists()) {
+//							project.delete(true, true, null);
+//						}				
+//					} catch (CoreException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}		
+//			}
+//			
+//		}
 		
     }
 
@@ -567,14 +591,16 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		File file = new File(path);
 		String content = ldsHead + ldsDesc;
 		
-		if(!file.exists()) {
-			try {
-				file.createNewFile();
-				addMemoryToLds(content,path);	
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		if(file.exists()) {
+			file.delete();
+		}
+		
+		try {
+			file.createNewFile();
+			addMemoryToLds(content,path);	
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
     }
@@ -589,13 +615,17 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 
     @Override
 	public boolean canFinish() {
-    	if (fMainPage.h_selected != null) {
-    		if(!fMainPage.h_selected.canFinish())
+    	if(addedModule) {
+    		if(modulePage.moduleCompleted) {
+    			return true;
+    		}else {
     			return false;
-    		String s = fMainPage.h_selected.getErrorMessage();
-    		if (s != null) return false;
+    		}
+    		
+    	}else {
+    		return false;
     	}
-    	return super.canFinish();
+//    	return super.canFinish();
     }
     
     public  boolean addMemoryToLds(String content, String path) throws IOException { 
@@ -652,6 +682,23 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 //			}
 //		}
 		return true;
+	}
+    
+	public void createModuleTrim(String boardModuleTrimPath,String destModuleTrimPath) {
+		String fileName = boardModuleTrimPath.substring(boardModuleTrimPath.lastIndexOf("/")+1, boardModuleTrimPath.length());
+		String moduleTrimPath = destModuleTrimPath+"/"+fileName;
+		File moduleTrim = new File(moduleTrimPath);
+		try {
+			copyFolder(new File(boardModuleTrimPath),new File(destModuleTrimPath));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+//		if(moduleTrim.exists()) {
+//			 String newName = boardModuleTrimPath.substring(0, boardModuleTrimPath.lastIndexOf("."))+".c";  
+//             File newFile = new File(newName);  
+//             boolean flag = moduleTrim.renameTo(newFile);  
+//		}
 	}
     
 	@Override

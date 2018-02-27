@@ -69,10 +69,9 @@ public class Cpu {
 	}
 	
 	
-	public Cpu(int id, String device, String core, String flashStart, String flashSize, String ramStart,
+	public Cpu(String device, String core, String flashStart, String flashSize, String ramStart,
 			String ramSize, String architecture, String fpuType) {
 		super();
-		this.id = id;
 		this.device = device;
 		this.core = core;
 		this.flashStart = flashStart;

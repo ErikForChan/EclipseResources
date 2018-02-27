@@ -3,9 +3,11 @@ package org.eclipse.cdt.ui.wizards;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,6 +94,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		String boardName = "";
 		Board boardSelected;
 		Cpu selectCpu;
+		String boardModuleTrimPath = "";
 		
 		private String[] BoardDetailsComboLabels = {
 				"Architecture","Family"
@@ -131,8 +134,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		
 		public String getEclipsePath() {
 			String fullPath = Platform.getInstallLocation().getURL().toString();
-			String eclipsePath = fullPath.substring(6,fullPath.length()-8);
-			System.out.println("eclipsePath:  "+eclipsePath);
+			String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 			return eclipsePath;
 		}
 		
@@ -307,18 +309,27 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		@Override
 		protected Control createDialogArea(Composite parent) {
 			// TODO Auto-generated method stub
+			String tipText = "板件模板会陆续添加.";
 			CompilerImportBoardAdapter adapter = new CompilerImportBoardAdapter();
 			Composite composite = (Composite) super.createDialogArea(parent);
 			GridLayout layout = new GridLayout();
+			layout.marginHeight = 5;
+			layout.numColumns = 1;
+			layout.marginLeft=5;
+			Composite tipCpt = new Composite(composite, SWT.NONE);
+			tipCpt.setLayout(layout);
+			tipCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+			Label tipLabel = new Label(tipCpt,SWT.NONE);
+			tipLabel.setText(tipText);
 			layout.marginHeight = 25;
 			layout.numColumns = 3;
 			layout.marginLeft=5;
 			selectBaordCpt = new Composite(composite, SWT.NONE);
 			selectBaordCpt.setLayout(layout);
 			selectBaordCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-			radioBtns[0] = new Button(selectBaordCpt, SWT.RADIO | SWT.LEFT);
-			radioBtns[0].setText("Select board: ");
-			radioBtns[0].setToolTipText("Select board");
+
+			Label boardSelectLabel = new Label(selectBaordCpt,SWT.NONE);
+			boardSelectLabel.setText("Select board: ");
 			boardSelectField = new Text(selectBaordCpt, SWT.BORDER);
 			boardSelectField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 //			boardSelectField.setEnabled(false);
@@ -369,7 +380,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			MCUCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			Label MCULabel = new Label(MCUCpt, SWT.NONE);
 			MCULabel.setLayoutData(new GridData(GridData.BEGINNING));
-			MCULabel.setText(BoardDetailsTextLabels[0]+":         ");
+			MCULabel.setText(BoardDetailsTextLabels[0]+":    ");
 			MCUNameField = new Text(MCUCpt, SWT.BORDER);
 			MCUNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			MCUNameField.setEnabled(false);
@@ -520,13 +531,6 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 //				fComboDialogFields[1].setText(selectCpu.getCore());
 				boardSelected = new Board();
 				boardSelected.setCpu(selectCpu);
-//				boardDetailsDesc.setText("Device: "+selectCpu.getDevice()+"			Core: "+selectCpu.getCore()+"\n"+
-//						"Architecture: "+selectCpu.getArchitecture()+"		FpuType: "+selectCpu.getFpuType()+"\n"+
-//						"Flash Start: "+selectCpu.getFlashStart()+"		Flash Size: "+selectCpu.getFlashSize()+"\n"+
-//						"Ram Start: "+selectCpu.getRamStart()+"		Ram Size: "+selectCpu.getRamSize()
-//						);
-				// BoardDetails details = dialog.getResult();
-				// fBoardNameField.setText(details.boardName);
 			}
 		}
 	
@@ -535,31 +539,44 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		 */
 		protected void handleImportButtonPressed() {
 	
-			String dirName = getEclipsePath()+"djysrc\\bsp\\boarddrv";
-			FileDialog dialog = new FileDialog(selectBaordCpt.getShell(), SWT.OPEN | SWT.MULTI);
-			dialog.setText("Choose Board");
-			dialog.setFilterPath(dirName);
-			String selectedDirectory = dialog.open();
-	
-			if (selectedDirectory != null) {
-				String boardName = selectedDirectory.substring(selectedDirectory.lastIndexOf("\\") + 1,
-						selectedDirectory.lastIndexOf("."));
-				boardSelectField.setText(boardName);
-			}
-	
-			ReadBoardByDom rbbd = new ReadBoardByDom();
-			try {
-				boardSelected = rbbd.getBoard(selectedDirectory);
+			ChooseBoardDialog dialog = new ChooseBoardDialog(getShell());
+			if (dialog.open() == Window.OK) {
+				boardSelected = dialog.getSelectBoard();
+				boardModuleTrimPath = getEclipsePath()+"djysrc/bsp/boarddrv/"+boardSelected.getBoardName()+"/module-trim.bak";
+				boardSelectField.setText(boardSelected.getBoardName());
 				MCUNameField.setText(boardSelected.cpu.getDevice());
 				selectCpu = boardSelected.cpu;
 				fDialogFields[1].getTextControl(detailsCpt).setText(boardSelected.getExClk());
 				fDialogFields[2].getTextControl(detailsCpt).setText(boardSelected.getIbootSize());
 //				fComboDialogFields[0].getComboControl(detailsCpt).setText(boardSelected.cpu.getArchitecture());
 //				fComboDialogFields[1].getComboControl(detailsCpt).setText(boardSelected.cpu.getCore());
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+	
 			}
+//			String dirName = getEclipsePath()+"djysrc/bsp/boarddrv";
+//			FileDialog dialog = new FileDialog(selectBaordCpt.getShell(), SWT.OPEN | SWT.MULTI);
+//			dialog.setText("Choose Board");
+//			dialog.setFilterPath(dirName);
+//			String selectedDirectory = dialog.open();
+//	
+//			if (selectedDirectory != null) {
+//				String boardName = selectedDirectory.substring(selectedDirectory.lastIndexOf("\\") + 1,
+//						selectedDirectory.lastIndexOf("."));
+//				boardSelectField.setText(boardName);
+//			}
+//	
+//			ReadBoardByDom rbbd = new ReadBoardByDom();
+//			try {
+//				boardSelected = rbbd.getBoard(selectedDirectory);
+//				MCUNameField.setText(boardSelected.cpu.getDevice());
+//				selectCpu = boardSelected.cpu;
+//				fDialogFields[1].getTextControl(detailsCpt).setText(boardSelected.getExClk());
+//				fDialogFields[2].getTextControl(detailsCpt).setText(boardSelected.getIbootSize());
+////				fComboDialogFields[0].getComboControl(detailsCpt).setText(boardSelected.cpu.getArchitecture());
+////				fComboDialogFields[1].getComboControl(detailsCpt).setText(boardSelected.cpu.getCore());
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 	
 		}
 

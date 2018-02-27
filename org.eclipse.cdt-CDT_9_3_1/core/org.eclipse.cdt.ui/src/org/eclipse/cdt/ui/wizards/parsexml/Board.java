@@ -2,6 +2,7 @@ package org.eclipse.cdt.ui.wizards.parsexml;
 
 public class Board {
 
+	public String boardName;
 	public String exClk;
 	public String ibootSize;
 	public Cpu cpu;
@@ -28,11 +29,20 @@ public class Board {
 		cpu = new Cpu();
 		// TODO Auto-generated constructor stub
 	}
-	public Board(String exClk, String ibootSize, Cpu cpu) {
+	public String getBoardName() {
+		return boardName;
+	}
+	public void setBoardName(String boardName) {
+		this.boardName = boardName;
+	}
+	public Board(String boardName, String exClk, String ibootSize, Cpu cpu) {
 		super();
+		this.boardName = boardName;
 		this.exClk = exClk;
 		this.ibootSize = ibootSize;
 		this.cpu = cpu;
 	}
+	
+	
 		
 }

@@ -1,5 +1,6 @@
 package org.eclipse.cdt.ui.wizards;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.List;
 
@@ -196,18 +197,29 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		composite.setLayout(new GridLayout());
 		initializeDialogUnits(parent);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
-		TabFolder folder= new TabFolder(composite, SWT.NONE);
-		folder.setLayout(new TabFolderLayout());
-		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-		TabItem item= new TabItem(folder, SWT.NONE);
-		item.setText("ROM"); //$NON-NLS-1$
-		item.setControl(createROMTabContent(folder));
-
-		item= new TabItem(folder, SWT.NONE);
-		item.setText("RAM"); //$NON-NLS-1$
-		item.setControl(createRAMTabContent(folder));
-		System.out.println("createControl");
+		Group RomGroup = ControlFactory.createGroup(composite, "ROM", 1);
+		RomGroup.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL));
+		RomGroup.setLayout(new GridLayout(1,true));
+		createROMContent(RomGroup);
+		
+		Group RamGroup = ControlFactory.createGroup(composite, "RAM", 1);
+		RamGroup.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL));
+		RamGroup.setLayout(new GridLayout(1,true));
+		createRAMContent(RamGroup);
+		
+//		TabFolder folder= new TabFolder(composite, SWT.NONE);
+//		folder.setLayout(new TabFolderLayout());
+//		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
+//		
+//		TabItem item= new TabItem(folder, SWT.NONE);
+//		item.setText("ROM"); //$NON-NLS-1$
+//		item.setControl(createROMTabContent(folder));
+//
+//		item= new TabItem(folder, SWT.NONE);
+//		item.setText("RAM"); //$NON-NLS-1$
+//		item.setControl(createRAMTabContent(folder));
+//		System.out.println("createControl");
 		// Show description on opening
 		setErrorMessage(null);
 		setMessage(null);
@@ -227,31 +239,31 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 			romOnStartText[0].setEnabled(false);
 			romOnSizeText[0].setText(cpu.getFlashSize());
 			romOnSizeText[0].setEnabled(false);
-			romOffBox[0].setSelection(true);
-			romOffBox[0].setEnabled(false);
-			romOffStartText[0].setText(cpu.getRamStart());
-			romOffStartText[0].setEnabled(false);
-			romOffSizeText[0].setText(cpu.getRamSize());
-			romOffSizeText[0].setEnabled(false);
+			ramOnBox[0].setSelection(true);
+			ramOnBox[0].setEnabled(false);
+			ramOnStartText[0].setText(cpu.getRamStart());
+			ramOnStartText[0].setEnabled(false);
+			ramOnSizeText[0].setText(cpu.getRamSize());
+			ramOnSizeText[0].setEnabled(false);			
 		}
 //		createDynamicGroup((Composite)getControl());
 
 	}
 
-	private Control createROMTabContent(TabFolder folder) {
+	private Control createROMContent(Group group) {
 		// TODO Auto-generated method stub
 		Button fFoldingCheckbox1_on,fFoldingCheckbox2_on;
 		Button fFoldingCheckbox1_off,fFoldingCheckbox2_off;
 		Label startLabel,sizeLabel;
 		
-		Composite composite= new Composite(folder, SWT.NULL);
+		Composite composite= new Composite(group, SWT.NULL);
 		GridData gd= new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		GridData gdBox= new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL);
 		GridData gdLabel= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		GridData gdText= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		composite.setLayoutData(gd);
 		GridLayout gd1 = new GridLayout(2,true);
-		gd1.marginHeight=35;
+		gd1.marginHeight=15;
 		composite.setLayout(gd1);
 		
 		//group_onChip
@@ -331,20 +343,20 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		return composite;
 	}
 
-	private Control createRAMTabContent(TabFolder folder) {
+	private Control createRAMContent(Group group) {
 		// TODO Auto-generated method stub
 		Button sFoldingCheckbox1_on,sFoldingCheckbox2_on;
 		Button sFoldingCheckbox1_off,sFoldingCheckbox2_off;
 		Label startLabel,sizeLabel;
 		System.out.println("createRAMTabContent");
-		Composite composite= new Composite(folder, SWT.NULL);
+		Composite composite= new Composite(group, SWT.NULL);
 		GridData gd= new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		GridData gdBox= new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL);
 		GridData gdLabel= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		GridData gdText= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		composite.setLayoutData(gd);
 		GridLayout gd1 = new GridLayout(2,true);
-		gd1.marginHeight=35;
+		gd1.marginHeight=15;
 		composite.setLayout(gd1);
 		
 		//group_onChip
@@ -430,20 +442,21 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 	public IWizardPage getNextPage() {
 		// TODO Auto-generated method stub
 		System.out.println("getNextPage MM");
+		String modulePageTip = "本版本为测试版，暂无添加依赖关系，以后版本将会陆续添加.";
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
 		if(! nmWizard.addedModule) {		
 			nmWizard.modulePage = new ModuleConfigurationWizard("basicModuleCfgPage");
 			nmWizard.modulePage.setTitle("Module Configuration");
-			nmWizard.modulePage.setDescription("Check the Module you need");
+			nmWizard.modulePage.setDescription(modulePageTip);
 			nmWizard.addPage(nmWizard.modulePage);
 			nmWizard.modulePage.setPageComplete(false);
 			nmWizard.addedModule = true;
-			nmWizard.importTemplate();
-			nmWizard.reName();
+			if(nmWizard.isToCreat) {
+				nmWizard.handleBoard();
+			}
+			nmWizard.handleCProject();
 		}		
 		
-//    	final IProject project = nmWizard.importTemplate();
-//    	IndexerPreferences.setScope(project, IndexerPreferences.SCOPE_PROJECT_SHARED);
 		return super.getNextPage();
 	}
 	

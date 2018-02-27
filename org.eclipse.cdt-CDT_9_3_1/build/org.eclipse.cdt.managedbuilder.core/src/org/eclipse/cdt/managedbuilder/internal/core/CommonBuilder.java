@@ -744,29 +744,29 @@ public class CommonBuilder extends ACBuilder {
 		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
 		Configuration configuration = (Configuration) bInfo.getConfiguration();		
 		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
-		if(!folder.exists()) {
-			if(folder.getName().startsWith("libOS")) {
-				configuration.enableInternalBuilder(true);
-				builder = configuration.getEditableBuilder();
-				bInfo = getCfgBuildInfo(builder, true);
-			}	
-		}else {
-			Boolean makefileExist = false;
-			IPath path = folder.getLocation();
-			File file = path.toFile();
-			if(folder.getName().startsWith("libOS")) {
-				for (File cfile : file.listFiles()) {
-					if(cfile.getName().equals("makefile")) {
-						makefileExist = true;
-					}
-				}		
-			}	
-			if(!makefileExist) {
-				configuration.enableInternalBuilder(true);
-				builder = configuration.getEditableBuilder();
-				bInfo = getCfgBuildInfo(builder, true);
-			}
-		}
+//		if(!folder.exists()) {
+//			if(folder.getName().startsWith("libOS")) {
+//				configuration.enableInternalBuilder(true);
+//				builder = configuration.getEditableBuilder();
+//				bInfo = getCfgBuildInfo(builder, true);
+//			}	
+//		}else {
+//			Boolean makefileExist = false;
+//			IPath path = folder.getLocation();
+//			File file = path.toFile();
+//			if(folder.getName().startsWith("libOS")) {
+//				for (File cfile : file.listFiles()) {
+//					if(cfile.getName().equals("makefile")) {
+//						makefileExist = true;
+//					}
+//				}		
+//			}	
+//			if(!makefileExist) {
+//				configuration.enableInternalBuilder(true);
+//				builder = configuration.getEditableBuilder();
+//				bInfo = getCfgBuildInfo(builder, true);
+//			}
+//		}
 		
 		BuildStatus status = new BuildStatus(builder);
 

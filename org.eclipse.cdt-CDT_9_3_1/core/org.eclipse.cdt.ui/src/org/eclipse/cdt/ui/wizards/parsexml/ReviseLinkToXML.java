@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
 public class ReviseLinkToXML {
 	DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
 	
-	public void reviseXmlLink(String boardNamePath,String boardName,String localPath,String cpuName,IFile iFile,boolean isStartup) {
+	public void reviseXmlLink(String boardNamePath,String boardName,String localPath,String cpuName,IFile iFile,String flag) {
 		factory.setIgnoringElementContentWhitespace(true);
 		 // 从XML文档中获取DOM文档实例
 		 // 获取Document对象
@@ -53,14 +53,15 @@ public class ReviseLinkToXML {
 					}
 					if(nodeName.equals("locationURI")) {					
 						if(linkContent.contains(localPath)) {
-							if(isStartup) {
-								cNode.setTextContent(localPath+"/"+cpuName+"/"+boardName);							
-								System.out.println("cNode.setTextContent2 : "+localPath+"/"+cpuName+"/"+boardName);
-								
-							}else {
+							if(flag.equals("boarddrv")) {
+								cNode.setTextContent(localPath+"/"+boardName);							
+							}else if(flag.equals("startup")){
+								cNode.setTextContent(localPath+"/"+cpuName+"/"+boardName);					
+							}else if(flag.equals("arch")){
 								cNode.setTextContent(localPath+"/"+boardName);
-								System.out.println("cNode.setTextContent1 : "+localPath+"/"+boardName);
-							}					
+							}else if(flag.equals("cpudrv")){
+								cNode.setTextContent(localPath+"/"+boardName);
+							}							
 						}
 			        	
 					}	  	        	

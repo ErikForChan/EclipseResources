@@ -80,7 +80,7 @@ public class ProjectContentsLocationArea {
 
 	private Label locationLabel;
 
-	private Text locationPathField;
+	public Text locationPathField;
 
 	private Button browseButton;
 
@@ -223,7 +223,7 @@ public class ProjectContentsLocationArea {
 			}
 		});
 
-		createFileSystemSelection(composite);
+		//createFileSystemSelection(composite);
 
 		if (defaultEnabled) {
 			locationPathField.setText(TextProcessor

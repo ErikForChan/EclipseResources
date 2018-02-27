@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
 public class ReviseVariableToXML {
 	DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
 	
-	public void reviseXmlVariable(String locationName,String localtionPath,IFile iFile) {
+	public void reviseXmlVariable(String locationName,String localtionPath,IFile iFile,String projectName) {
 		factory.setIgnoringElementContentWhitespace(true);
 		 // 从XML文档中获取DOM文档实例
 		 // 获取Document对象
@@ -33,6 +33,10 @@ public class ReviseVariableToXML {
 			doc = db.parse(iFile.getLocation().toFile());
 	        // 获取根节点
 	        Element root = doc.getDocumentElement();
+	        NodeList nameList = doc.getElementsByTagName("name");
+	        Node titleNode = nameList.item(0);
+	        titleNode.setTextContent(projectName);
+	        
 	        NodeList linkList = doc.getElementsByTagName("variable");
 	        String srcLocation = null;
 	        for(int i=0;i<linkList.getLength();i++) {

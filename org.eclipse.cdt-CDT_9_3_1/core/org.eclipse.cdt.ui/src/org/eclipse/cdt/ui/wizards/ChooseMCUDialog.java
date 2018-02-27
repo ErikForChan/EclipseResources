@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -42,11 +43,13 @@ public class ChooseMCUDialog extends StatusDialog{
 
 	public ChooseMCUDialog(Shell parent) {
 		super(parent);
-		setTitle("ChooseMCU");
+		setTitle("ChooseCPU");
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );		
 	}
 	
-	String cpuXmlPath = "E:\\ALL_Eclipse\\Eclipse_Oxygen_Plugin\\demo\\cpu.xml";
+	String fullPath = Platform.getInstallLocation().getURL().toString();
+	String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+	String cpuXmlPath = eclipsePath+"/demo/cpu.xml";
 	private Button addMCUBtn;
 	private Label MCUTypeLabel;
 	private Combo MCUTypeCombo;

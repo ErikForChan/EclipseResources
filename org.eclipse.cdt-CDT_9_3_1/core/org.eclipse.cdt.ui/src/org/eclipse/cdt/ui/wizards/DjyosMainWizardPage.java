@@ -1,5 +1,6 @@
 package org.eclipse.cdt.ui.wizards;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.List;
 
@@ -96,6 +97,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	Cpu selectedCpu;
 	Board selectedBoard;
 	boolean isToCreat;
+	String boardModuleTrimPath;
 	
 	public boolean isToCreat() {
 		return isToCreat;
@@ -124,20 +126,26 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	}
 	
 	@SuppressWarnings("restriction")
-	private static ProjectContentsLocationArea locationArea;
+	public static ProjectContentsLocationArea locationArea;
 
+	boolean nameValid = false;
+	
 	private  Listener nameModifyListener = e -> {
 		setLocationForSelection();
 		boolean valid = validatePageBefore();
-		setPageComplete(valid);
-
+		if(nameValid!=valid) {
+			setPageComplete(valid);
+			nameValid = valid;
+		}
+		
+		System.out.println("nameModifyListener()");
 	};
 	
 	private  Listener boardModifyListener = e -> {
 		//setLocationForSelection();
 		boolean valid = validatePageBefore();
 		setPageComplete(valid);
-
+		System.out.println("boardModifyListener()");
 	};
 	
 	void setLocationForSelection() {
@@ -183,12 +191,12 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		}
 		// Scale the button based on the rest of the dialog
 		setButtonLayoutData(locationArea.getBrowseButton());
+		
 		// Show description on opening
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
 		Dialog.applyDialogFont(composite);
-		setPageComplete(validatePageBefore());
 	}
 
 	private void createProjectAndBoardGroup(Composite parent) {
@@ -238,47 +246,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
             			System.out.println("boardName: ;   "+boardName);
             			fBoardNameField.setText(boardName);
             			isToCreat = dialog.isToCreat();
-//            			board = dialog.boardSelected;
-//            			String templateName = "Demo";
-//            			final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(templateName);
-//            			final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
-//            			ICConfigurationDescription[] conds = local_prjd.getConfigurations();	
-//            			for(int i=0;i<conds.length;i++) {
-//            				ICResourceDescription rds = conds[i].getRootFolderDescription();
-//            				IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
-//            				IResourceInfo resourceInfo = cfg.getRootFolderInfo();
-//            				IToolChain toolchain = resourceInfo.getParent().getToolChain();          				
-////            				IToolChain toolchainRevise = toolchain;
-//            				IOption option1 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.architecture");
-//            				IOption option2 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.family");        				
-//            				IOption option3 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit");
-//							try {
-//								option1.setValue(
-//										"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.arch."+board.cpu.getArchitecture());
-//								option2.setValue(
-//										"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.mcpu."+board.cpu.getCore());
-//								option3.setValue(
-//										"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit."+board.cpu.getFpuType());
-//							} catch (BuildException e1) {
-//								// TODO Auto-generated catch block
-//								e1.printStackTrace();
-//							}
-////							IResourceInfo resourceInfo2 = toolchainRevise.getParentFolderInfo();
-////							copyHoldsOptions(toolchainRevise,resourceInfo.getParent().getToolChain(),resourceInfo);
-//            				System.out.println("rds.getId():   -----------------------------"+rds.getId());
-//            				System.out.println("conds[i].getId():   "+conds[i].getId());
-//            				System.out.println("conds[i].getName():   "+conds[i].getName());
-//            				System.out.println("conds[i].getBuildSystemId():   "+conds[i].getBuildSystemId());
-//            				System.out.println("conds[i].getDescription():   "+conds[i].getDescription());
-//            				System.out.println("conds[i].getType():   "+conds[i].getType());
-//            				System.out.println("conds[i].getId():   "+conds[i].getBuildSetting());
-//            			}
-//						try {
-//							CoreModel.getDefault().setProjectDescription(project, local_prjd);
-//						} catch (CoreException e1) {
-//							// TODO Auto-generated catch block
-//							e1.printStackTrace();
-//						}
+            			boardModuleTrimPath = dialog.boardModuleTrimPath;
         			}
             }
         });  
@@ -367,6 +335,12 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		String[] templateLabels = { "Iboot And App Project", "Iboot Only Project", "App Project",
 				"Bare App Project" };
 
+		String[] templateDescs = {
+				"用于开发iboot和App的工程,App由iboot启动",
+				"用于开发iboot的工程",
+				"用于开发App的工程",
+				"用于开发无需iboot,自启动运行的App工程"
+		};
 		for (int i = 0; i < radioBtns.length; i++) {
 			radioBtns[i] = new Button(RADIOCpt, SWT.RADIO | SWT.LEFT);
 			radioBtns[i].setText(templateLabels[i]);
@@ -375,15 +349,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 			radioBtns[i].addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					if (a == 0) {
-						projectTypeDesc.setText("用于开发iboot和App的工程,App由iboot启动");
-					} else if (a == 1) {
-						projectTypeDesc.setText("用于开发iboot的工程");
-					} else if (a == 2) {
-						projectTypeDesc.setText("用于开发App的工程");
-					} else if (a == 3) {
-						projectTypeDesc.setText("用于开发无需iboot,自启动运行的App工程");
-					}
+					projectTypeDesc.setText(templateDescs[a]);
 				}
 
 			});
@@ -399,8 +365,23 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		templateLabel.setText("Project Tepmlate Description: ");
 		projectTypeDesc = new Text(right, SWT.MULTI | SWT.WRAP);
 		projectTypeDesc.setLayoutData(new GridData(GridData.FILL_BOTH));
-		projectTypeDesc.setText("用于开发iboot和App的工程,App由iboot启动");
+		projectTypeDesc.setText(templateDescs[0]);
+//		try {
+//			projectTypeDesc.setText(new String(templateDescs[0].getBytes(),"GBK"));
+//		} catch (UnsupportedEncodingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
+	}
+
+	
+	boolean clickedNext = true;
+	@Override
+	public boolean canFlipToNextPage() {
+		// TODO Auto-generated method stub
+		clickedNext = false;
+		return super.canFlipToNextPage();
 	}
 
 	@Override
@@ -412,13 +393,34 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 			nmWizard.memoryPage.setTitle("Memory Map");
 			nmWizard.memoryPage.setDescription("Define flash and RAM sizes");
 			nmWizard.addPage(nmWizard.memoryPage);
-			nmWizard.memoryPage.setPageComplete(false);
-			nmWizard.addedMemory = true;
+			nmWizard.addedMemory = true;		
+		}else {
+			if(clickedNext) {
+				nmWizard.importTemplate();
+				final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+				IProject project = workspace.getRoot().getProject(getProjectNameFieldValue());
+				String eclipsePath = nmWizard.getEclipsePath();
+				int index = getTemplateIndex();
+				String projectPath = locationArea.locationPathField.getText();
+				System.out.println("projectPath:  "+projectPath);
+				if(index==0) {
+					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
+					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
+				}else if(index==1) {
+					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
+				}else if(index==2){
+					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
+				}else if(index==3){
+					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
+				}
+			}		
 		}
-				
+		clickedNext = true;		
 		return super.getNextPage();
 	}
 
+	
+	
 	public URI getProjectLocation() {
 		return useDefaults() ? null : getLocationURI();
 	}
@@ -458,6 +460,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 			}
 
 			setPageComplete(valid);
+			System.out.println("getErrorReporter()");
 		};
 	}
 
@@ -483,7 +486,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		String boardFieldContents = getBoardNameFieldValue();
 		if (boardFieldContents.equals("")) { //$NON-NLS-1$
 			setErrorMessage(null);
-			setMessage("Tip:!!! Board name must be specified");
+			setMessage("Board must be selected !!!");
 			return false;
 		}
 
