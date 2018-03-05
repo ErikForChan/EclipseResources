@@ -411,7 +411,9 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 						.setLayoutData(new GridData(GridData.BEGINNING));
 				fDialogFields[i].getTextControl(detailsCpt)
 						.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-				fDialogFields[i].getTextControl(detailsCpt).setEnabled(false);
+				if(i==1) {
+					fDialogFields[i].getTextControl(detailsCpt).setEnabled(false);
+				}		
 			}
 			
 //			for(int i=0;i<fComboDialogFields.length;i++) {

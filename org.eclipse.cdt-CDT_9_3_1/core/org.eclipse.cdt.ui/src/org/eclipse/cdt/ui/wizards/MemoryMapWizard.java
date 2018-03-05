@@ -263,7 +263,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		GridData gdText= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		composite.setLayoutData(gd);
 		GridLayout gd1 = new GridLayout(2,true);
-		gd1.marginHeight=15;
+		gd1.marginHeight=5;
 		composite.setLayout(gd1);
 		
 		//group_onChip
@@ -356,7 +356,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		GridData gdText= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		composite.setLayoutData(gd);
 		GridLayout gd1 = new GridLayout(2,true);
-		gd1.marginHeight=15;
+		gd1.marginHeight=5;
 		composite.setLayout(gd1);
 		
 		//group_onChip

@@ -1,5 +1,8 @@
 package org.eclipse.cdt.ui.wizards;
 
+import java.awt.Desktop;
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.List;
@@ -137,15 +140,13 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 			setPageComplete(valid);
 			nameValid = valid;
 		}
-		
-		System.out.println("nameModifyListener()");
+
 	};
 	
 	private  Listener boardModifyListener = e -> {
 		//setLocationForSelection();
 		boolean valid = validatePageBefore();
 		setPageComplete(valid);
-		System.out.println("boardModifyListener()");
 	};
 	
 	void setLocationForSelection() {
@@ -182,6 +183,21 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		layout.verticalSpacing = 20;
 		composite.setLayout(layout);
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+//		Button pageDescBtn = new Button(composite, SWT.PUSH | SWT.RIGHT);
+//		pageDescBtn.setText("Page Description");
+//		pageDescBtn.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+//		pageDescBtn.addSelectionListener(new SelectionAdapter(){  
+//            public void widgetSelected(SelectionEvent e){         	
+//            	try {
+//					Desktop.getDesktop().open(new File("E:/GoogleJava.pdf"));
+//				} catch (IOException e1) {
+//					// TODO Auto-generated catch block
+//					e1.printStackTrace();
+//				}
+//            }
+//        });  
+		
 		creatTemplateUI(composite);
 		createProjectAndBoardGroup(composite);
 		//createBoardGroup(composite);
@@ -202,7 +218,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	private void createProjectAndBoardGroup(Composite parent) {
 		Composite projectGroup = new Composite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
+		layout.numColumns = 3;
 		layout.verticalSpacing = 20;
 		projectGroup.setLayout(layout);
 		projectGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -215,23 +231,25 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		fProjectNameField.setLayoutData(data);
 		fProjectNameField.addListener(SWT.Modify, nameModifyListener);
-		BidiUtils.applyBidiProcessing(fProjectNameField, BidiUtils.BTD_DEFAULT);	
+		BidiUtils.applyBidiProcessing(fProjectNameField, BidiUtils.BTD_DEFAULT);
+		Button testBtn = new Button(projectGroup, SWT.PUSH);
+		testBtn.setVisible(false);
 		
 		Label boardLabel = new Label(projectGroup, SWT.NONE);
 		boardLabel.setText("Board name:");
 		// new project name entry field
-		Composite selectOrCreateGroup = new Composite(projectGroup, SWT.NONE);
-		GridLayout selectOrCreateGl = new GridLayout();
-		selectOrCreateGl.numColumns = 2;
-		selectOrCreateGroup.setLayout(selectOrCreateGl);
-		selectOrCreateGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		fBoardNameField = new Text(selectOrCreateGroup, SWT.BORDER);
+//		Composite selectOrCreateGroup = new Composite(projectGroup, SWT.NONE);
+//		GridLayout selectOrCreateGl = new GridLayout();
+//		selectOrCreateGl.numColumns = 2;
+//		selectOrCreateGroup.setLayout(selectOrCreateGl);
+//		selectOrCreateGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		fBoardNameField = new Text(projectGroup, SWT.BORDER);
 		fBoardNameField.setLayoutData(data);
 		fBoardNameField.setEnabled(false);
 		fBoardNameField.addListener(SWT.Modify, boardModifyListener);
 		fBoardNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		BidiUtils.applyBidiProcessing(fBoardNameField, BidiUtils.BTD_DEFAULT);
-		Button selectOrCreateOrNewBtn = new Button(selectOrCreateGroup, SWT.PUSH);
+		Button selectOrCreateOrNewBtn = new Button(projectGroup, SWT.PUSH);
 		selectOrCreateOrNewBtn.setText("Select/Create ...");
 		selectOrCreateOrNewBtn.addSelectionListener(new SelectionAdapter(){  
             public void widgetSelected(SelectionEvent e){         	
@@ -419,8 +437,6 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		return super.getNextPage();
 	}
 
-	
-	
 	public URI getProjectLocation() {
 		return useDefaults() ? null : getLocationURI();
 	}
