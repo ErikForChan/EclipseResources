@@ -58,6 +58,9 @@ public class PlainTextExporter implements IMemoryExporter {
 	
 	private IDialogSettings fProperties;
 	
+	int byteNum = 0;
+	String endType = "";
+	
 	public Control createControl(final Composite parent, IMemoryBlock memBlock, IDialogSettings properties, ExportMemoryDialog parentDialog)
 	{
 		fMemoryBlock = memBlock;
@@ -475,7 +478,36 @@ public class PlainTextExporter implements IMemoryExporter {
 		return Messages.getString("PlainTextExporter.Name"); //$NON-NLS-1$
 	}
 	
-	public void exportMemory() {
+	public void exportMemory(int byteComboIndex,int endComboIndex) {
+		
+		switch(byteComboIndex){
+		case 0:
+			byteNum = 1;
+			break;
+		case 1:
+			byteNum = 2;
+			break;
+		case 2:
+			byteNum = 4;
+			break;
+		case 3:
+			byteNum = 8;
+			break;
+		default:
+			byteNum = 1;
+			break;
+		}
+		switch (endComboIndex) {
+		case 0:
+			endType = "Big End";
+			break;
+		case 1:
+			endType = "Little End";
+			break;
+		default:
+			endType = "Big End";
+			break;
+		}
 		Job job = new Job("Memory Export to Plain Text File"){ //$NON-NLS-1$
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
@@ -486,7 +518,7 @@ public class PlainTextExporter implements IMemoryExporter {
 					// These variables control how the output will be formatted
 					
 					// The output data is split by chunks of 1 addressable unit size.
-					final BigInteger dataCellSize = BigInteger.valueOf(1);
+					final BigInteger dataCellSize = BigInteger.valueOf(1); 
 					// show 32 bytes of data per line, total. Adjust number of columns to compensate
 					// for longer addressable unit size
 					final BigInteger numberOfColumns = BigInteger.valueOf(32).divide(addressableSize);
@@ -518,13 +550,33 @@ public class PlainTextExporter implements IMemoryExporter {
 						
 						StringBuilder buf = new StringBuilder();
 						
-						for(int i = 0; i < length.divide(dataCellSize).intValue(); i++)
+						for(int i = 0; i < length.divide(dataCellSize).intValue(); i++)//i=0--31
 						{
-							if(i != 0)
+							BigInteger addrAdd = dataCellSize.multiply(BigInteger.valueOf(i));
+							if(endComboIndex == 0) {
+								int remainded = i%4;
+								switch(remainded) {
+								case 0:
+									addrAdd = (dataCellSize.multiply(BigInteger.valueOf(i))).add(BigInteger.valueOf(3));
+									break;
+								case 1:
+									addrAdd = (dataCellSize.multiply(BigInteger.valueOf(i))).add(BigInteger.valueOf(1));
+									break;
+								case 2:
+									addrAdd = (dataCellSize.multiply(BigInteger.valueOf(i))).subtract(BigInteger.valueOf(1));
+									break;
+								case 3:
+									addrAdd = (dataCellSize.multiply(BigInteger.valueOf(i))).subtract(BigInteger.valueOf(3));
+									break;
+								}
+							}
+								
+							if(i != 0 && (i%byteNum)==0)
 								buf.append(" "); //$NON-NLS-1$
 							MemoryByte bytes[] = ((IMemoryBlockExtension) fMemoryBlock).getBytesFromAddress(
-								transferAddress.add(dataCellSize.multiply(BigInteger.valueOf(i))), 
+								transferAddress.add(addrAdd), 
 								dataCellSize.longValue());
+						
 							for(int byteIndex = 0; byteIndex < bytes.length; byteIndex++)
 							{
 								String bString = BigInteger.valueOf(0xFF & bytes[byteIndex].getValue()).toString(16);
@@ -536,7 +588,7 @@ public class PlainTextExporter implements IMemoryExporter {
 						
 						writer.write(buf.toString().toUpperCase());
 						writer.write("\n"); //$NON-NLS-1$
-						
+	
 						transferAddress = transferAddress.add(length);
 						
 						jobCount = jobCount.add(BigInteger.ONE);

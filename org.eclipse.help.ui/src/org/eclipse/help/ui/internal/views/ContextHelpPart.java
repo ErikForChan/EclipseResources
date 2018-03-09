@@ -330,9 +330,9 @@ public class ContextHelpPart extends SectionPart implements IHelpPart {
 			helpText = createContextHelp(c);
 		}
 
-		String djyosProjectDesc = "DJYOS Project";
-		String memoryMapDesc = "Memory Map";
-		String moduleConfigDesc = "Module Configuration";
+		String djyosProjectDesc = "DJYOS Project页面帮助正在增加中...";
+		String memoryMapDesc = "Memory Map页面帮助正在增加中...";
+		String moduleConfigDesc = "Module Configuration页面帮助正在增加中...";
 		
 		updateTitle(c);
 		if(pageTitle.equals("DJYOS Project")) {

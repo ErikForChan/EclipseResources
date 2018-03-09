@@ -24,7 +24,7 @@ public class AddCpuDialog extends StatusDialog{
 	
 	public AddCpuDialog(Shell parent) {
 		super(parent);
-		setTitle("AddMCU");
+		setTitle("AddCpu");
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );		
 		// TODO Auto-generated constructor stub
 	}

@@ -77,7 +77,6 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	private static final String CLASS_NAME = "class"; //$NON-NLS-1$
 	public static final String DESC = "EntryDescriptor"; //$NON-NLS-1$
 	
-	
 	// Widgets
 	private Tree tree;
 	private Composite right;
@@ -101,19 +100,10 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	Board selectedBoard;
 	boolean isToCreat;
 	String boardModuleTrimPath;
+	boolean clickedNext = true;
 	
 	public boolean isToCreat() {
 		return isToCreat;
-	}
-	
-	public static class BoardDetails {
-		public String boardName;
-		public String MCU;
-		public String Arch;
-		public String archFamily;
-		public String hClk;
-		public String lClk;
-		public String ibootSize;
 	}
 	
 	public String getBoardName() {
@@ -261,7 +251,6 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
             				System.out.println("selectedCpu = dialog.getSelectCpu();");
             			}
             			selectedBoard = dialog.getSelectBoard();
-            			System.out.println("boardName: ;   "+boardName);
             			fBoardNameField.setText(boardName);
             			isToCreat = dialog.isToCreat();
             			boardModuleTrimPath = dialog.boardModuleTrimPath;
@@ -384,17 +373,9 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		projectTypeDesc = new Text(right, SWT.MULTI | SWT.WRAP);
 		projectTypeDesc.setLayoutData(new GridData(GridData.FILL_BOTH));
 		projectTypeDesc.setText(templateDescs[0]);
-//		try {
-//			projectTypeDesc.setText(new String(templateDescs[0].getBytes(),"GBK"));
-//		} catch (UnsupportedEncodingException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 
 	}
 
-	
-	boolean clickedNext = true;
 	@Override
 	public boolean canFlipToNextPage() {
 		// TODO Auto-generated method stub

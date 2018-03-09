@@ -19,12 +19,14 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -35,13 +37,13 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.wizards.datatransfer.DataTransferMessages;
 
-import org.eclipse.cdt.ui.wizards.DjyosMainWizardPage.BoardDetails;
 import org.eclipse.cdt.ui.wizards.parsexml.Board;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
 import org.eclipse.cdt.ui.wizards.parsexml.CreateBoardXml;
 import org.eclipse.cdt.ui.wizards.parsexml.ReadBoardByDom;
 import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByJDom;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseLinkToXML;
+import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.ui.ICHelpContextIds;
 import org.eclipse.cdt.internal.ui.dialogs.StatusInfo;
@@ -87,7 +89,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 
 		private Text boardSelectField;
 		private Text boardCreateField;
-		private StringDialogField[] fDialogFields = new StringDialogField[3];
+		private StringDialogField[] fDialogFields = new StringDialogField[2];
 		private ComboDialogField[] fComboDialogFields = new ComboDialogField[2];
 		private static Button[] radioBtns = new Button[2];
 		int selectIndex = 0;
@@ -101,7 +103,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		};
 		
 		private String[] BoardDetailsTextLabels = {
-				"CPU Name","External clock(Hz)","Iboot size"
+				"CPU Name","External clock"
 		};
 		
 		private String[] Architectures = {
@@ -112,7 +114,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 				"cortex-m0","cortex-m3","cortex-m4","cortex-m7"
 		};
 		
-		Composite detailsCpt,selectBaordCpt,baordDescCpt,createBaordCpt,MCUCpt;
+		Composite content,baordDescCpt;
 		Text boardDetailsDesc,MCUNameField;
 		Button importMCUBtn;
 		boolean toCreat = false;
@@ -182,13 +184,11 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 				if(toCreat) {
 					importMCUBtn.setEnabled(true);
 					for(int i=1;i<fDialogFields.length;i++) {
-						fDialogFields[i].getTextControl(detailsCpt).setEnabled(true);
+						fDialogFields[i].getTextControl(content).setEnabled(true);
 					}
 				}else {
 					importMCUBtn.setEnabled(false);
-					for(int i=1;i<fDialogFields.length;i++) {
-						fDialogFields[i].getTextControl(detailsCpt).setEnabled(false);
-					}
+					fDialogFields[1].getTextControl(content).setEnabled(false);
 				}
 			}
 		};
@@ -219,24 +219,16 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			for(String board:boards) {
 				if(board.equals(boardName)) {
 					toCreat = false;
-					System.out.println("The Board:  "+board);
 				}
 			}
 			if(toCreat) {
-				boardSelected.setExClk(fDialogFields[1].getTextControl(detailsCpt).getText());
-				boardSelected.setIbootSize(fDialogFields[2].getTextControl(detailsCpt).getText());
+				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
 				if(selectCpu == null) {
 					selectCpu = defaultCpu;
 				}
 			}else {
 				selectCpu = defaultCpu;
-				boardSelected.setExClk(fDialogFields[1].getTextControl(detailsCpt).getText());
-				boardSelected.setIbootSize(fDialogFields[2].getTextControl(detailsCpt).getText());
-				System.out.println("fDialogFields[2].getTextControl(detailsCpt).getText(): "+fDialogFields[2].getTextControl(detailsCpt).getText());
-			}
-
-			if(selectCpu==null) {
-				System.out.println("Default = dialog.getSelectCpu();");
+				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
 			}
 			super.okPressed();
 		}
@@ -303,7 +295,15 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		public SelectOrCreateBoardDialog(Shell parent) {
 			super(parent);
 			setTitle("SelectOrCreateBoardDialog");
-			setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );		
+			setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
+		}
+		
+		
+
+		@Override
+		protected Point getInitialSize() {
+			// TODO Auto-generated method stub
+			return new Point(500,500);
 		}
 
 		@Override
@@ -312,30 +312,33 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			String tipText = "板件模板会陆续添加.";
 			CompilerImportBoardAdapter adapter = new CompilerImportBoardAdapter();
 			Composite composite = (Composite) super.createDialogArea(parent);
+			composite.setSize(500,500);
 			GridLayout layout = new GridLayout();
 			layout.marginHeight = 5;
 			layout.numColumns = 1;
 			layout.marginLeft=5;
 			Composite tipCpt = new Composite(composite, SWT.NONE);
 			tipCpt.setLayout(layout);
-			tipCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+			tipCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			Label tipLabel = new Label(tipCpt,SWT.NONE);
 			tipLabel.setText(tipText);
-			layout.marginHeight = 25;
+			
+			content = new Composite(composite, SWT.NONE);
 			layout.numColumns = 3;
-			layout.marginLeft=5;
-			selectBaordCpt = new Composite(composite, SWT.NONE);
-			selectBaordCpt.setLayout(layout);
-			selectBaordCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+			content.setLayout(layout);
+			content.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+//			selectBaordCpt = new Composite(composite, SWT.NONE);
+//			selectBaordCpt.setLayout(layout);
+//			selectBaordCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-			Label boardSelectLabel = new Label(selectBaordCpt,SWT.NONE);
+			Label boardSelectLabel = new Label(content,SWT.NONE);
 			boardSelectLabel.setText("Select board: ");
-			boardSelectField = new Text(selectBaordCpt, SWT.BORDER);
+			boardSelectField = new Text(content, SWT.BORDER);
+			boardSelectField.setSize(50, 10);
 			boardSelectField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 //			boardSelectField.setEnabled(false);
-			Button importOrNewBtn = new Button(selectBaordCpt, SWT.PUSH);
+			Button importOrNewBtn = new Button(content, SWT.PUSH);
 			importOrNewBtn.setText(" Select...  ");
-//			importOrNewBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			importOrNewBtn.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -343,48 +346,20 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 				}
 			});
 			boardSelectField.addListener(SWT.Modify, boardModifyListener);
-		
-//			boardSelectField = new StringDialogField();
-//			boardSelectField.setLabelText("Select board: ");
-//			boardSelectField.getLabelControl(selectBaordCpt)
-//					.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
-//			boardSelectField.getTextControl(selectBaordCpt)
-//					.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//			boardSelectField.setDialogFieldListener(adapter);
-//			boardSelectField.getTextControl(selectBaordCpt).setEnabled(false);
-			
-//			layout.marginHeight = 10;
-//			layout.numColumns = 3;
-//			layout.marginLeft=5;
-//			createBaordCpt = new Composite(composite, SWT.NONE);
-//			createBaordCpt.setLayout(layout);
-//			createBaordCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-//			radioBtns[1] = new Button(createBaordCpt, SWT.RADIO | SWT.LEFT);
-//			radioBtns[1].setText("Create board:");
-//			radioBtns[1].setToolTipText("Create board");
-//			boardCreateField = new Text(createBaordCpt, SWT.BORDER);
-//			boardCreateField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//			boardCreateField.setEnabled(false);
-//			boardCreateField = new StringDialogField();
-//			boardCreateField.setLabelText("Create board:");		
-//			boardCreateField.getLabelControl(createBaordCpt)
-//					.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
-//			boardCreateField.getTextControl(createBaordCpt).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//			boardCreateField.getTextControl(createBaordCpt).setToolTipText("填写此处后将自动设置为新建Board");
 
-			MCUCpt = new Composite(composite, SWT.NONE);
-			layout.marginHeight = 15;
-			layout.numColumns = 3;
-			layout.marginLeft=10;
-			MCUCpt.setLayout(layout);
-			MCUCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-			Label MCULabel = new Label(MCUCpt, SWT.NONE);
+//			MCUCpt = new Composite(composite, SWT.NONE);
+//			layout.marginHeight = 15;
+//			layout.numColumns = 3;
+//			layout.marginLeft=10;
+//			MCUCpt.setLayout(layout);
+//			MCUCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+			Label MCULabel = new Label(content, SWT.NONE);
 			MCULabel.setLayoutData(new GridData(GridData.BEGINNING));
 			MCULabel.setText(BoardDetailsTextLabels[0]+":    ");
-			MCUNameField = new Text(MCUCpt, SWT.BORDER);
+			MCUNameField = new Text(content, SWT.BORDER);
 			MCUNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			MCUNameField.setEnabled(false);
-			importMCUBtn = new Button(MCUCpt, SWT.PUSH);
+			importMCUBtn = new Button(content, SWT.PUSH);
 			importMCUBtn.setText("Choose...");
 			importMCUBtn.setEnabled(false);
 			importMCUBtn.addSelectionListener(new SelectionAdapter() {
@@ -396,98 +371,20 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			});
 			MCUNameField.addListener(SWT.Modify, cpuModifyListener);
 					
-			detailsCpt = new Composite(composite, SWT.NONE);
-			layout.marginHeight = 5;
-			layout.numColumns = 4;
-			layout.marginLeft=10;
-			layout.verticalSpacing = 20;
-			detailsCpt.setLayout(layout);
-			detailsCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-			
-			for(int i=1;i<fDialogFields.length;i++) {
-				fDialogFields[i] = new StringDialogField();
-				fDialogFields[i].setLabelText(BoardDetailsTextLabels[i]+":");
-				fDialogFields[i].getLabelControl(detailsCpt)
-						.setLayoutData(new GridData(GridData.BEGINNING));
-				fDialogFields[i].getTextControl(detailsCpt)
-						.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-				if(i==1) {
-					fDialogFields[i].getTextControl(detailsCpt).setEnabled(false);
-				}		
-			}
-			
-//			for(int i=0;i<fComboDialogFields.length;i++) {
-//				fComboDialogFields[i] = new ComboDialogField(SWT.READ_ONLY | SWT.DROP_DOWN);
-//				fComboDialogFields[i].setLabelText(BoardDetailsComboLabels[i]+":");
-//				fComboDialogFields[i].getLabelControl(detailsCpt)
-//						.setLayoutData(new GridData(GridData.BEGINNING));
-//				fComboDialogFields[i].getComboControl(detailsCpt)
-//						.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//			}
-//			fComboDialogFields[0].setItems(Architectures);
-//			fComboDialogFields[0].selectItem(0);
-//			fComboDialogFields[1].setItems(Families);
-//			fComboDialogFields[1].selectItem(0);
-			
-//			radioBtns[0].addSelectionListener(new SelectionAdapter() {
-//				@Override
-//				public void widgetSelected(SelectionEvent e) {
-//					if(radioBtns[0].getSelection()) {
-//						radioBtns[1].setSelection(false);
-//						boardCreateField.setEnabled(false);
-//						importMCUBtn.setEnabled(false);
-//					
-//						fDialogFields[1].getTextControl(detailsCpt).setEnabled(false);
-//						fDialogFields[2].getTextControl(detailsCpt).setEnabled(false);
-//						fComboDialogFields[0].getComboControl(detailsCpt).setEnabled(false);
-//						fComboDialogFields[1].getComboControl(detailsCpt).setEnabled(false);
-//
-//						importOrNewBtn.setEnabled(true);
-//						selectIndex = 0;
-//					}
-//				}
-//
-//			});
-//
-//			radioBtns[1].addSelectionListener(new SelectionAdapter() {
-//				@Override
-//				public void widgetSelected(SelectionEvent e) {
-//					if(radioBtns[1].getSelection()) {
-//						radioBtns[0].setSelection(false);
-//						boardCreateField.setEnabled(true);
-//						importMCUBtn.setEnabled(true);
-//						fDialogFields[1].getTextControl(detailsCpt).setEnabled(true);
-//						fDialogFields[2].getTextControl(detailsCpt).setEnabled(true);
-//						fComboDialogFields[0].getComboControl(detailsCpt).setEnabled(true);
-//						fComboDialogFields[1].getComboControl(detailsCpt).setEnabled(true);
-//						importOrNewBtn.setEnabled(false);
-//						selectIndex = 1;
-//					}
-//				}
-//
-//			});
-			
-			//sc.setItems(WEEK); String[] WEEK = { "Monday", "Tuesday", "Wednesday"};
-			
 //			detailsCpt = new Composite(composite, SWT.NONE);
-//			layout.marginHeight = 15;
+//			layout.marginHeight = 5;
 //			layout.numColumns = 4;
 //			layout.marginLeft=10;
 //			layout.verticalSpacing = 20;
 //			detailsCpt.setLayout(layout);
 //			detailsCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//			
-//			for(int i=0;i<fDialogFields.length;i++) {
-//				fDialogFields[i] = new StringDialogField();
-//				fDialogFields[i].setLabelText(BoardDetailsLabels[i]+":");
-//				fDialogFields[i].getLabelControl(detailsCpt)
-//						.setLayoutData(new GridData(GridData.BEGINNING));
-//				fDialogFields[i].getTextControl(detailsCpt)
-//						.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//				if(i%2==0) {
-//					fDialogFields[i].getTextControl(detailsCpt).setEnabled(false);
-//				}
-//			}
+			
+			fDialogFields[1] = new StringDialogField();
+			fDialogFields[1].setLabelText(BoardDetailsTextLabels[1] + ":");
+			fDialogFields[1].getLabelControl(content).setLayoutData(new GridData(GridData.BEGINNING));
+			fDialogFields[1].getTextControl(content).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+			fDialogFields[1].getTextControl(content).setEnabled(false);
+			ControlFactory.createLabel(content, "HZ");
 			
 			baordDescCpt = new Composite(composite, SWT.NONE);
 			GridLayout gl = new GridLayout();
@@ -513,7 +410,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			
 			boardDetailsDesc.setEditable(false);
 			boardDetailsDesc.setBounds(0, 0, 200, 700);
-			
+			super.createDialogArea(parent);
 			return super.createDialogArea(parent);
 		}
 		
@@ -529,8 +426,6 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 					System.out.println("selectCpu == null");
 				}
 				MCUNameField.setText(selectCpu.getDevice());
-//				fComboDialogFields[0].setText(selectCpu.getArchitecture());
-//				fComboDialogFields[1].setText(selectCpu.getCore());
 				boardSelected = new Board();
 				boardSelected.setCpu(selectCpu);
 			}
@@ -548,37 +443,8 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 				boardSelectField.setText(boardSelected.getBoardName());
 				MCUNameField.setText(boardSelected.cpu.getDevice());
 				selectCpu = boardSelected.cpu;
-				fDialogFields[1].getTextControl(detailsCpt).setText(boardSelected.getExClk());
-				fDialogFields[2].getTextControl(detailsCpt).setText(boardSelected.getIbootSize());
-//				fComboDialogFields[0].getComboControl(detailsCpt).setText(boardSelected.cpu.getArchitecture());
-//				fComboDialogFields[1].getComboControl(detailsCpt).setText(boardSelected.cpu.getCore());
-	
+				fDialogFields[1].getTextControl(content).setText(boardSelected.getExClk());
 			}
-//			String dirName = getEclipsePath()+"djysrc/bsp/boarddrv";
-//			FileDialog dialog = new FileDialog(selectBaordCpt.getShell(), SWT.OPEN | SWT.MULTI);
-//			dialog.setText("Choose Board");
-//			dialog.setFilterPath(dirName);
-//			String selectedDirectory = dialog.open();
-//	
-//			if (selectedDirectory != null) {
-//				String boardName = selectedDirectory.substring(selectedDirectory.lastIndexOf("\\") + 1,
-//						selectedDirectory.lastIndexOf("."));
-//				boardSelectField.setText(boardName);
-//			}
-//	
-//			ReadBoardByDom rbbd = new ReadBoardByDom();
-//			try {
-//				boardSelected = rbbd.getBoard(selectedDirectory);
-//				MCUNameField.setText(boardSelected.cpu.getDevice());
-//				selectCpu = boardSelected.cpu;
-//				fDialogFields[1].getTextControl(detailsCpt).setText(boardSelected.getExClk());
-//				fDialogFields[2].getTextControl(detailsCpt).setText(boardSelected.getIbootSize());
-////				fComboDialogFields[0].getComboControl(detailsCpt).setText(boardSelected.cpu.getArchitecture());
-////				fComboDialogFields[1].getComboControl(detailsCpt).setText(boardSelected.cpu.getCore());
-//			} catch (Exception e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
 	
 		}
 

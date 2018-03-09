@@ -507,7 +507,7 @@ public class SRecordExporter implements IMemoryExporter
 		return Messages.getString("SRecordExporter.Name"); //$NON-NLS-1$
 	}
 	
-	public void exportMemory() 
+	public void exportMemory(int byteComboIndex,int endComboIndex) 
 	{
 		Job job = new Job("Memory Export to S-Record File"){ //$NON-NLS-1$
 			public IStatus run(IProgressMonitor monitor) {

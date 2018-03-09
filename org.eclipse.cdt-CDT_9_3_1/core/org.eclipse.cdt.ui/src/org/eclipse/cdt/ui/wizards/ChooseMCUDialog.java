@@ -72,7 +72,9 @@ public class ChooseMCUDialog extends StatusDialog{
 		Pattern pattern = Pattern.compile(keyWord,Pattern.CASE_INSENSITIVE);
 		for(int i=0;i<allCpus.size();i++) {
 			Matcher matcher = pattern.matcher((allCpus.get(i)).getDevice());
-			if(matcher.find()) {
+			Matcher matcher2 = pattern.matcher((allCpus.get(i)).getCore());
+			Matcher matcher3 = pattern.matcher((allCpus.get(i)).getArchitecture());
+			if(matcher.find() || matcher2.find() || matcher3.find()) {
 				cpusFiltered.add(allCpus.get(i));
 			}
 		}

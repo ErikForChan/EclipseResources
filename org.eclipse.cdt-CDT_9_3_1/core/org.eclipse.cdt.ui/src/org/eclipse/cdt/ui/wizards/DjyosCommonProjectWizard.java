@@ -168,6 +168,93 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return eclipsePath;
 	}
 	
+	public void importTemplate() {
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		int tIndex = fMainPage.getTemplateIndex();
+		String projectName = fMainPage.getProjectName();
+		String fullPath = Platform.getInstallLocation().getURL().toString();
+		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+		String destPath = null;
+		String srcPath = null;
+		String templateName = getTemplateName();
+		srcPath = eclipsePath + "demo/" + templateName;
+		destPath = fMainPage.locationArea.locationPathField.getText();
+		
+		String projectPath = workspace.getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
+		
+		File src = new File(srcPath);
+		File dest = new File(destPath);
+		
+		File projectFile = new File(projectPath);
+
+		if(!dest.exists() && !projectFile.exists()) {
+			dest.mkdir();
+			try {
+				copyFolder(src,dest);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			final String importName = templateName;
+			WorkspaceModifyOperation op = new WorkspaceModifyOperation() {
+				@Override
+				protected void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					SubMonitor subMonitor = SubMonitor.convert(monitor, 1);
+					// Import as many projects as we can; accumulate errors to
+					// report to the user
+					MultiStatus status = new MultiStatus(IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
+							DataTransferMessages.WizardProjectsImportPage_projectsInWorkspaceAndInvalid, null);
+					importExistingProject(subMonitor.split(1),projectName,importName);		
+					
+					if (!status.isOK()) {
+						throw new InvocationTargetException(new CoreException(status));
+					}
+				}
+			};
+			
+			try {
+				getContainer().run(true, true, op);
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+				
+			isToCreat = fMainPage.isToCreat();
+						
+		}else {
+			fMainPage.setExistedMessage();
+		}		
+			
+	}
+	
+	private IStatus importExistingProject(IProgressMonitor mon, String projectName, String templateName) {
+
+		SubMonitor subMonitor = SubMonitor.convert(mon, 3);
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		final IProject project = workspace.getRoot().getProject(projectName);
+
+		try {
+			SubMonitor subTask = subMonitor.split(1).setWorkRemaining(100);
+			subTask.setTaskName(DataTransferMessages.WizardProjectsImportPage_CreateProjectsTask);
+			project.create(subTask.split(30));
+			project.open(IResource.BACKGROUND_REFRESH, subTask.split(70));
+			subTask.setTaskName(""); //$NON-NLS-1$
+
+		} catch (OperationCanceledException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return Status.OK_STATUS;
+	}
+	
 	public void reName() {
 		String templateName = getTemplateName();
 		String projectName = fMainPage.getProjectName();
@@ -183,13 +270,11 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			} catch (CoreException e1) {
 				e1.printStackTrace();
 			}
-		}	
-		
+		}		
 		final IProject jProject = workspace.getRoot().getProject(projectName);
 		if(!jProject.exists()) {
 			reName();
-		}
-		
+		}	
 	}
 	
 	public void handleBoard() {
@@ -199,8 +284,11 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		cpu = fMainPage.getSelectCpu();
 		Board board = fMainPage.getSelectBoard();
 		
-		String startupPath = eclipsePath+"demo/Startup/cpudrv";
-		String startupDestPath = eclipsePath+"djysrc/bsp/startup";
+//		String startupPath = eclipsePath+"demo/Startup/cpudrv";
+//		String startupDestPath = eclipsePath+"djysrc/bsp/startup";
+		
+		String startupPath = eclipsePath+"djysrc/bsp/startup/"+board.getCpu().getDevice()+board.getBoardName();
+		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getDevice()+boardName;
 		
 		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/"+board.getBoardName();
 		String newBoardPath = eclipsePath+"djysrc/bsp/boarddrv/"+boardName;
@@ -225,12 +313,13 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		cbx.creatBoard(board, boardXmlPath);	
 		
 		File stpSrcFolder = new File(startupPath);
-		File stpDestFolder = new File(startupDestPath+"/"+cpu.getDevice());
+		File stpDestFolder = new File(startupDestPath);
 		if(!stpDestFolder.exists()) {
 			stpDestFolder.mkdir();
 		}
 		try {
-			copyFileToFolder(stpSrcFolder,stpDestFolder,boardName);
+			copyFolder(stpSrcFolder,stpDestFolder);
+//			copyFileToFolder(stpSrcFolder,stpDestFolder,boardName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -297,137 +386,41 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"cpudrv");
 		}
 		
-		
-		
-//		if (arch.equals("armv7e-m")) {
-//
-//		} else if (arch.equals("cortex-m4")) {
-//
-//		}
-		
 	}
 	
-	private void copyFileToFolder(File src, File dest, String boardName) throws IOException {  
-	    if (src.isDirectory()) {  
-	        if (!dest.exists()) {  
-	            dest.mkdir(); 
-	            dest.renameTo(new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))+"\\"+boardName));
-	            dest = new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))+"\\"+boardName);
-	        }  
-	        String files[] = src.list();  
-	        for (String file : files) {  
-	            File srcFile = new File(src, file);  
-	            File destFile = new File(dest, file); 
-	            System.out.println(destFile.getName());
-	            // 递归复制  
-	            copyFileToFolder(srcFile, destFile,boardName);  
-	        }  
-	    } else {  
-	    	if(!dest.exists()) {
-	    		InputStream in = new FileInputStream(src);  
-	 	        OutputStream out = new FileOutputStream(dest);  
-	 	  
-	 	        byte[] buffer = new byte[1024];  
-	 	  
-	 	        int length;  
-	 	          
-	 	        while ((length = in.read(buffer)) > 0) {  
-	 	            out.write(buffer, 0, length);  
-	 	        }  
-	 	        in.close();  
-	 	        out.close();  
-	    	}	       
-	    }  
-	}  
-		
-	public void importTemplate() {
-
-		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		int tIndex = fMainPage.getTemplateIndex();
-		String projectName = fMainPage.getProjectName();
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		String destPath = null;
-		String srcPath = null;
-		String templateName = getTemplateName();
-		srcPath = eclipsePath + "demo/" + templateName;
-		destPath = fMainPage.locationArea.locationPathField.getText();
-		
-		String projectPath = workspace.getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
-		
-		File src = new File(srcPath);
-		File dest = new File(destPath);
-		
-		File projectFile = new File(projectPath);
-
-		if(!dest.exists() && !projectFile.exists()) {
-			dest.mkdir();
-			try {
-				copyFolder(src,dest);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			final String importName = templateName;
-			WorkspaceModifyOperation op = new WorkspaceModifyOperation() {
-				@Override
-				protected void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					SubMonitor subMonitor = SubMonitor.convert(monitor, 1);
-					// Import as many projects as we can; accumulate errors to
-					// report to the user
-					MultiStatus status = new MultiStatus(IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
-							DataTransferMessages.WizardProjectsImportPage_projectsInWorkspaceAndInvalid, null);
-					importExistingProject(subMonitor.split(1),projectName,importName);		
-					
-					if (!status.isOK()) {
-						throw new InvocationTargetException(new CoreException(status));
-					}
-				}
-			};
-			
-			try {
-				getContainer().run(true, true, op);
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-				
-			isToCreat = fMainPage.isToCreat();
-						
-		}else {
-			fMainPage.setExistedMessage();
-		}		
-			
-	}
-	
-	private IStatus importExistingProject(IProgressMonitor mon,String projectName,String templateName) {
-		
-		SubMonitor subMonitor = SubMonitor.convert(mon, 3);
-		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		final IProject project = workspace.getRoot().getProject(projectName);
-		
-		try {
-			SubMonitor subTask = subMonitor.split(1).setWorkRemaining(100);
-			subTask.setTaskName(DataTransferMessages.WizardProjectsImportPage_CreateProjectsTask);
-			project.create(subTask.split(30));
-			project.open(IResource.BACKGROUND_REFRESH, subTask.split(70));			
-			subTask.setTaskName(""); //$NON-NLS-1$
-		
-		} catch (OperationCanceledException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		return Status.OK_STATUS;
-	}
-	
+//	private void copyFileToFolder(File src, File dest, String boardName) throws IOException {  
+//	    if (src.isDirectory()) {  
+//	        if (!dest.exists()) {  
+//	            dest.mkdir(); 
+//	            dest.renameTo(new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))+"\\"+boardName));
+//	            dest = new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))+"\\"+boardName);
+//	        }  
+//	        String files[] = src.list();  
+//	        for (String file : files) {  
+//	            File srcFile = new File(src, file);  
+//	            File destFile = new File(dest, file); 
+//	            System.out.println(destFile.getName());
+//	            // 递归复制  
+//	            copyFileToFolder(srcFile, destFile,boardName);  
+//	        }  
+//	    } else {  
+//	    	if(!dest.exists()) {
+//	    		InputStream in = new FileInputStream(src);  
+//	 	        OutputStream out = new FileOutputStream(dest);  
+//	 	  
+//	 	        byte[] buffer = new byte[1024];  
+//	 	  
+//	 	        int length;  
+//	 	          
+//	 	        while ((length = in.read(buffer)) > 0) {  
+//	 	            out.write(buffer, 0, length);  
+//	 	        }  
+//	 	        in.close();  
+//	 	        out.close();  
+//	    	}	       
+//	    }  
+//	}  
+//		
 	private void copyFolder(File src, File dest) throws IOException {  
 	    if (src.isDirectory()) {  
 	        if (!dest.exists()) {  
@@ -456,6 +449,123 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	    }  
 	}  
 
+	protected boolean setCreated() throws CoreException {
+		ICProjectDescriptionManager mngr = CoreModel.getDefault().getProjectDescriptionManager();
+
+		ICProjectDescription des = mngr.getProjectDescription(newProject, false);
+
+		if(des == null ) {
+			return false;
+		}
+
+		if(des.isCdtProjectCreating()){
+			des = mngr.getProjectDescription(newProject, true);
+			des.setCdtProjectCreated();
+			mngr.setProjectDescription(newProject, des, false, null);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean addMemoryToLds(String content, String path) throws IOException {
+
+		String projectName = fMainPage.getProjectName();
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		final IProject project = workspace.getRoot().getProject(projectName);
+		FileWriter writer;
+		try {
+			writer = new FileWriter(path);
+			writer.write(content);
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			project.refreshLocal(IResource.DEPTH_INFINITE, null);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		// File tmp = File.createTempFile("tmp", null);
+		// FileOutputStream tmpOut = new FileOutputStream(tmp);
+		// FileInputStream tmpIn = new FileInputStream(tmp);
+		// RandomAccessFile raf = null;
+		// try {
+		// raf = new RandomAccessFile(file, "rw");
+		// byte[] buf = new byte[64];
+		// int hasRead = 0;
+		// while ((hasRead = raf.read(buf)) > 0) {
+		// // 把原有内容读入临时文件
+		// tmpOut.write(buf, 0, hasRead);
+		// }
+		// raf.seek(0L);
+		// raf.write(content.getBytes());
+		// // 追加临时文件内容
+		// while ((hasRead = tmpIn.read(buf)) > 0) {
+		// raf.write(buf, 0, hasRead);
+		// }
+		// } catch (IOException e) {
+		// System.out.println("写入失败！");
+		// e.printStackTrace();
+		// return false;
+		// } finally {
+		// try {
+		// raf.close();
+		// } catch (IOException e) {
+		// System.out.println("写入失败，关闭流失败！");
+		// e.printStackTrace();
+		// return false;
+		// }
+		// }
+		return true;
+	}
+
+	public void createModuleTrim(String boardModuleTrimPath, String destModuleTrimPath) {
+		String fileName = boardModuleTrimPath.substring(boardModuleTrimPath.lastIndexOf("/") + 1,
+				boardModuleTrimPath.length());
+		String moduleTrimPath = destModuleTrimPath + "/" + fileName;
+		File moduleTrim = new File(moduleTrimPath);
+		try {
+			copyFolder(new File(boardModuleTrimPath), new File(destModuleTrimPath));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// if(moduleTrim.exists()) {
+		// String newName = boardModuleTrimPath.substring(0,
+		// boardModuleTrimPath.lastIndexOf("."))+".c";
+		// File newFile = new File(newName);
+		// boolean flag = moduleTrim.renameTo(newFile);
+		// }
+	}
+	
+    public void getMemoryToLds() {
+    	String ldsHead = memoryPage.getLdsHead();
+    	String ldsDesc = memoryPage.getLdsDesc();
+    	String templateName = getTemplateName();
+    	String projectName = fMainPage.getProjectName();
+		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
+    	String path = sourcePath+"/src/lds/memory.lds";
+		File file = new File(path);
+		String content = ldsHead + ldsDesc;
+		
+		if(file.exists()) {
+			file.delete();
+		}
+		
+		try {
+			file.createNewFile();
+			addMemoryToLds(content,path);	
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+    }
+    
 	private void clearProject() {
 		if (lastProjectName == null) return;
 		try {
@@ -492,24 +602,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return true;
 	}
 	
-	protected boolean setCreated() throws CoreException {
-		ICProjectDescriptionManager mngr = CoreModel.getDefault().getProjectDescriptionManager();
-
-		ICProjectDescription des = mngr.getProjectDescription(newProject, false);
-
-		if(des == null ) {
-			return false;
-		}
-
-		if(des.isCdtProjectCreating()){
-			des = mngr.getProjectDescription(newProject, true);
-			des.setCdtProjectCreated();
-			mngr.setProjectDescription(newProject, des, false, null);
-			return true;
-		}
-		return false;
-	}
-
     @Override
 	public boolean performCancel() {
     	clearNewProject();
@@ -536,75 +628,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 				}
 			}
 		}
-		
-//		if(projectName == null) {
-//			if(templateName != null) {
-//				try {
-//					final IProject project = workspace.getRoot().getProject(templateName);
-//					if(project.exists()) {
-//						project.delete(true, true, null);
-//					}	
-//				} catch (CoreException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}		
-//		}else {
-//			System.out.println("projectName:  "+projectName);
-//			IProject project = workspace.getRoot().getProject(projectName);
-////			System.out.println("project.toString():  "+project.getLocation().toString());
-//			if(project.exists()) {
-//				System.out.println("projectName:  "+project.getName());
-//				try {
-//					project.delete(true, true, null);
-//				} catch (CoreException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}else {
-//				System.out.println("project==null");
-//				if(templateName != null) {
-//					try {
-//						project = workspace.getRoot().getProject(templateName);
-//						if(project.exists()) {
-//							project.delete(true, true, null);
-//						}				
-//					} catch (CoreException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}		
-//			}
-//			
-//		}
-		
     }
 
-    public void getMemoryToLds() {
-    	Board board = fMainPage.getSelectBoard();
-    	String ldsHead = memoryPage.getLdsHead();
-    	String ldsDesc = memoryPage.getLdsDesc(board);
-    	String templateName = getTemplateName();
-    	String projectName = fMainPage.getProjectName();
-		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
-    	String path = sourcePath+"/src/lds/memory.lds";
-		File file = new File(path);
-		String content = ldsHead + ldsDesc;
-		
-		if(file.exists()) {
-			file.delete();
-		}
-		
-		try {
-			file.createNewFile();
-			addMemoryToLds(content,path);	
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-    }
-    
 	@Override
 	public abstract String[] getNatures();
 
@@ -627,79 +652,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
     	}
 //    	return super.canFinish();
     }
-    
-    public  boolean addMemoryToLds(String content, String path) throws IOException { 
-    	
-    	String projectName = fMainPage.getProjectName();
-    	final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		final IProject project = workspace.getRoot().getProject(projectName);
-    	FileWriter writer;
-		try {
-			writer = new FileWriter(path);
-			writer.write(content);
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		try {
-			project.refreshLocal(IResource.DEPTH_INFINITE, null);
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	
-//		File tmp = File.createTempFile("tmp", null);
-//		FileOutputStream tmpOut = new FileOutputStream(tmp);
-//		FileInputStream tmpIn = new FileInputStream(tmp);
-//		RandomAccessFile raf = null;
-//		try {
-//			raf = new RandomAccessFile(file, "rw");
-//			byte[] buf = new byte[64];
-//			int hasRead = 0;
-//			while ((hasRead = raf.read(buf)) > 0) {
-//				// 把原有内容读入临时文件
-//				tmpOut.write(buf, 0, hasRead);
-//			}
-//			raf.seek(0L);
-//			raf.write(content.getBytes());
-//			// 追加临时文件内容
-//			while ((hasRead = tmpIn.read(buf)) > 0) {
-//				raf.write(buf, 0, hasRead);
-//			}
-//		} catch (IOException e) {
-//			System.out.println("写入失败！");
-//			e.printStackTrace();
-//			return false;
-//		} finally {
-//			try {
-//				raf.close();
-//			} catch (IOException e) {
-//				System.out.println("写入失败，关闭流失败！");
-//				e.printStackTrace();
-//				return false;
-//			}
-//		}
-		return true;
-	}
-    
-	public void createModuleTrim(String boardModuleTrimPath,String destModuleTrimPath) {
-		String fileName = boardModuleTrimPath.substring(boardModuleTrimPath.lastIndexOf("/")+1, boardModuleTrimPath.length());
-		String moduleTrimPath = destModuleTrimPath+"/"+fileName;
-		File moduleTrim = new File(moduleTrimPath);
-		try {
-			copyFolder(new File(boardModuleTrimPath),new File(destModuleTrimPath));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		if(moduleTrim.exists()) {
-//			 String newName = boardModuleTrimPath.substring(0, boardModuleTrimPath.lastIndexOf("."))+".c";  
-//             File newFile = new File(newName);  
-//             boolean flag = moduleTrim.renameTo(newFile);  
-//		}
-	}
     
 	@Override
 	public String getLastProjectName() {

@@ -49,7 +49,7 @@ public class ExportMemoryDialog extends SelectionDialog
 
 	private Combo fFormatCombo;
 	private Combo fByteCombo;
-	private Combo fPortCombo;
+	private Combo fEndCombo;
 	
 	private IMemoryBlock fMemoryBlock;
 	
@@ -57,6 +57,8 @@ public class ExportMemoryDialog extends SelectionDialog
 	
 	private IMemoryExporter fFormatExporters[];
 	private String fFormatNames[];
+	private String fByteNames[] = {"1","2","4","8"};
+	private String fEndNames[] = {"Big End","Little End"};
 	
 	private IDialogSettings fProperties = MemoryTransportPlugin.getDefault().getDialogSettings(EXPORT_SETTINGS);
 	
@@ -140,7 +142,7 @@ public class ExportMemoryDialog extends SelectionDialog
 		if(fCurrentControl != null)
 			fCurrentControl.dispose();
 		IMemoryExporter currentExporter = getCurrentExporter();
-		currentExporter.exportMemory();
+		currentExporter.exportMemory(fByteCombo.getSelectionIndex(),fEndCombo.getSelectionIndex());
 	
 		fProperties.put(SELECTED_EXPORTER, currentExporter.getId());
 	
@@ -193,8 +195,8 @@ public class ExportMemoryDialog extends SelectionDialog
 		
 		// port
 		Label portLabel = new Label(composite, SWT.NONE);
-		portLabel.setText(Messages.getString("ExportMemoryDialog.Port")); //$NON-NLS-1$
-		fPortCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
+		portLabel.setText(Messages.getString("ExportMemoryDialog.End")); //$NON-NLS-1$
+		fEndCombo = new Combo(composite, SWT.BORDER | SWT.READ_ONLY);
 
 		FormData portData = new FormData();
 		portData.top = new FormAttachment(byteLabel, 0, SWT.CENTER);
@@ -204,7 +206,7 @@ public class ExportMemoryDialog extends SelectionDialog
 		portData = new FormData();
 		portData.top = new FormAttachment(fFormatCombo, 0, SWT.CENTER);
 		portData.left = new FormAttachment(portLabel);
-		fPortCombo.setLayoutData(portData);
+		fEndCombo.setLayoutData(portData);
 		
 		Vector<IMemoryExporter> exporters = new Vector<IMemoryExporter>();
 		
@@ -272,6 +274,10 @@ public class ExportMemoryDialog extends SelectionDialog
 		container.setLayoutData(data);
 		
 		fFormatCombo.setItems(fFormatNames);
+		fByteCombo.setItems(fByteNames);
+		fEndCombo.setItems(fEndNames);
+		fByteCombo.select(0);
+		fEndCombo.select(0);
 		
 		fFormatCombo.addSelectionListener(new SelectionAdapter(){
 			@Override

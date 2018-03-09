@@ -3,6 +3,7 @@ package org.eclipse.cdt.ui.wizards;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
@@ -17,6 +18,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.util.BidiUtils;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -47,6 +49,7 @@ import org.eclipse.ui.internal.ide.dialogs.ProjectContentsLocationArea;
 import org.eclipse.ui.internal.ide.dialogs.ProjectContentsLocationArea.IErrorMessageReporter;
 
 import org.eclipse.cdt.core.CCorePlugin;
+import org.eclipse.cdt.core.CCorePreferenceConstants;
 import org.eclipse.cdt.core.CProjectNature;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 import org.eclipse.cdt.ui.CUIPlugin;
@@ -85,6 +88,8 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 	private Text[] ramOffSizeText = new Text[5];
 	
 	public Cpu cpu;
+	private IntegerFieldEditor fIbootSize;
+	private Composite ibootComposite;
 	
 //	public boolean validatePage() {
 //		int typeFilled = 0;
@@ -159,9 +164,9 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		return ldsHead;
 	}
 	
-	public String getLdsDesc(Board board) {
-		
-		ldsDesc += "\nIboot Size = "+board.getIbootSize()+"K;\n";
+	public String getLdsDesc() {
+		int ibootSize = Integer.parseInt(fIbootSize.getTextControl(ibootComposite).getText());
+		ldsDesc += "\nIboot Size = "+ibootSize+"K;\n";
 		for(int i=0;i<romOnBox.length;i++) {
 			if(romOnBox[i].getSelection()) {
 				ldsDesc += "\n InnerFlash"+(i+1)+"Offset = "+"ORIGIN(InnerFlash"+(i+1)+");";
@@ -208,6 +213,24 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		RamGroup.setLayout(new GridLayout(1,true));
 		createRAMContent(RamGroup);
 		
+		Group IbootSizeGroup = ControlFactory.createGroup(composite, "Others", 1);
+		IbootSizeGroup.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL));
+		IbootSizeGroup.setLayout(new GridLayout(1,true));
+		
+		Composite content = new Composite(IbootSizeGroup, SWT.NULL);
+		GridLayout gd = new GridLayout(2,true);
+		content.setLayout(gd);
+		content.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		ibootComposite = new Composite(content, SWT.NULL);
+		gd = new GridLayout(2,true);
+		ibootComposite.setLayout(gd);
+		ibootComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		fIbootSize= new IntegerFieldEditor(CCorePreferenceConstants.MAX_INDEX_DB_CACHE_SIZE_MB, "Iboot Size: ", ibootComposite, 4);
+		fIbootSize.setValidRange(1, 10000);
+		fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify, ibootSizeModifyListener);
+		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
+		ControlFactory.createLabel(content, "K");
 //		TabFolder folder= new TabFolder(composite, SWT.NONE);
 //		folder.setLayout(new TabFolderLayout());
 //		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -225,7 +248,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		setMessage(null);
 		setControl(composite);
 		Dialog.applyDialogFont(composite);
-		setPageComplete(true);
 		
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
 		cpu = nmWizard.getCpu();
@@ -348,7 +370,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		Button sFoldingCheckbox1_on,sFoldingCheckbox2_on;
 		Button sFoldingCheckbox1_off,sFoldingCheckbox2_off;
 		Label startLabel,sizeLabel;
-		System.out.println("createRAMTabContent");
 		Composite composite= new Composite(group, SWT.NULL);
 		GridData gd= new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		GridData gdBox= new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL);
@@ -417,20 +438,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 			ramOffStartText[i].setLayoutData(gdText);
 			ramOffSizeText[i] = new Text(group_offChip, SWT.BORDER);
 			ramOffSizeText[i].setLayoutData(gdText);
-//			ramOffBox[i].addSelectionListener(new SelectionListener() {
-//
-//				@Override
-//				public void widgetSelected(SelectionEvent e) {
-//					// TODO Auto-generated method stub
-//					setPageComplete(validatePage());
-//				}
-//
-//				@Override
-//				public void widgetDefaultSelected(SelectionEvent e) {
-//					// TODO Auto-generated method stub
-//
-//				}
-//			});
 		}
 		
 		return composite;
@@ -459,17 +466,30 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		
 		return super.getNextPage();
 	}
-	
-//	boardDetailsDesc.setText("Device: "+""+
-//			"\n"+"Core: "+""+
-//			"\n"+"Architecture: "+""+
-//			"\n"+"FpuType: "+""+
-//			"\n"+"Flash Start: "+""+
-//			"\n"+"Flash Size: "+""+
-//			"\n"+"Ram Start: "+""+
-//			"\n"+"Ram Size: "+""
-//			);
 
+	private  Listener ibootSizeModifyListener = e -> {
+		//setLocationForSelection();
+		boolean valid = validatePage();
+		setPageComplete(valid);
+	};
+	
+	private boolean validatePage() {
+		// TODO Auto-generated method stub
+		String ibootSizeContent = fIbootSize.getTextControl(ibootComposite).getText();
+		Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+		if (ibootSizeContent.equals("")) { //$NON-NLS-1$
+			setErrorMessage(null);
+			setMessage("iboot Size must be specified !");
+			return false;
+		}else if(! pattern.matcher(ibootSizeContent).matches()) {
+			setErrorMessage(null);
+			setMessage("iboot Size must be integer !");
+			return false;
+		}
+		setMessage("Define flash and RAM sizes");
+		return true;
+	}
+	
 	@Override
 	public void toolChainListChanged(int count) {
 		// TODO Auto-generated method stub

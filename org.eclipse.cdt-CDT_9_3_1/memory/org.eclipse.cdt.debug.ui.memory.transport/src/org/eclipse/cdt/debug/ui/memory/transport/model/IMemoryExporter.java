@@ -32,7 +32,7 @@ public interface IMemoryExporter
 	 */
 	public Control createControl(Composite parent, IMemoryBlock memBlock, IDialogSettings properties, ExportMemoryDialog parentDialog);
 		
-	public void exportMemory();
+	public void exportMemory(int byteComboIndex,int endComboIndex);
 	
 	public String getId();
 	

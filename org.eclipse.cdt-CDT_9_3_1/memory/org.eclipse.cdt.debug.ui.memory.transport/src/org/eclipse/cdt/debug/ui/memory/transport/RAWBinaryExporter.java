@@ -477,7 +477,7 @@ public class RAWBinaryExporter implements IMemoryExporter
 		return Messages.getString("RAWBinaryExporter.Name"); //$NON-NLS-1$
 	}
 	
-	public void exportMemory() 
+	public void exportMemory(int byteComboIndex,int endComboIndex) 
 	{
 		Job job = new Job("Memory Export to RAW Binary File"){ //$NON-NLS-1$
 			@Override

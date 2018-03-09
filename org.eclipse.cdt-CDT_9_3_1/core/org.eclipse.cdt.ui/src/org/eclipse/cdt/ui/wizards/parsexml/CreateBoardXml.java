@@ -46,8 +46,6 @@ public class CreateBoardXml {
             fpuType.setTextContent(board.cpu.getFpuType());
             Element exClk = document.createElement("exClk");
             exClk.setTextContent(board.getExClk());
-            Element ibootSize = document.createElement("ibootSize");
-            ibootSize.setTextContent(board.getIbootSize());
             
             boardElement.appendChild(boardName);
             boardElement.appendChild(device);
@@ -59,7 +57,6 @@ public class CreateBoardXml {
             boardElement.appendChild(ramSize);
             boardElement.appendChild(fpuType);
             boardElement.appendChild(exClk);
-            boardElement.appendChild(ibootSize);
             
             root.appendChild(boardElement);      
 

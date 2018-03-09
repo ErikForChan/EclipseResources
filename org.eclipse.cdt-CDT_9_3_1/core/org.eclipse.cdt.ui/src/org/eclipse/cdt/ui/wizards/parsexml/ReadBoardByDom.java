@@ -49,7 +49,6 @@ public class ReadBoardByDom {
             Cpu cpu = new Cpu(contents.get(1),contents.get(2),contents.get(4),
             		contents.get(5),contents.get(6),contents.get(7),contents.get(3),contents.get(8));
             board.setExClk(contents.get(9));
-            board.setIbootSize(contents.get(10));
             board.setCpu(cpu);
             boards.add(board); 
     		
