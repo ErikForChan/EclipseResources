@@ -38,8 +38,8 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
  */
 public class NewWizardMenu extends BaseNewWizardMenu {
 
-    private final IAction newExampleAction;
-    private final IAction newProjectAction;
+//    private final IAction newExampleAction;
+//    private final IAction newProjectAction;
 
     private boolean enabled = true;
 
@@ -70,8 +70,8 @@ public class NewWizardMenu extends BaseNewWizardMenu {
      */
     public NewWizardMenu(IWorkbenchWindow window, String id) {
         super(window, id);
-        newExampleAction = new NewExampleAction(window);
-        newProjectAction = new NewProjectAction(window);
+//        newExampleAction = new NewExampleAction(window);
+//        newProjectAction = new NewProjectAction(window);
     }
 
     /**
@@ -172,17 +172,17 @@ public class NewWizardMenu extends BaseNewWizardMenu {
 				list.add(curr);
 			}
 		}
-		list.add(new ActionContributionItem(newProjectAction));
+//		list.add(new ActionContributionItem(newProjectAction));
         list.add(new Separator());
         if (!shortCuts.isEmpty()) {
         	list.addAll(shortCuts);
         	list.add(new Separator());
         }
-        if (hasExamples()) {
-            list.add(new ActionContributionItem(newExampleAction));
-            list.add(new Separator());
-        }
-        list.add(new ActionContributionItem(getShowDialogAction()));
+//        if (hasExamples()) {
+//            list.add(new ActionContributionItem(newExampleAction));
+//            list.add(new Separator());
+//        }
+//        list.add(new ActionContributionItem(getShowDialogAction()));
     }
 
 	private boolean isNewProjectWizardAction(IAction action) {

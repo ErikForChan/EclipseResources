@@ -1207,6 +1207,28 @@ public abstract class ActionFactory {
         }
     };
 
+    /**
+	 * Workbench action (id: "save", commandId: "org.eclipse.ui.file.save"): Save the active editor.
+	 * This action maintains its enablement state.
+	 */
+    public static final ActionFactory NEW_PROJECT = new ActionFactory("newProject", //$NON-NLS-1$
+    		IWorkbenchCommandConstants.FILE_NEW_PROJECT) {
+
+        @Override
+		public IWorkbenchAction create(IWorkbenchWindow window) {
+            if (window == null) {
+                throw new IllegalArgumentException();
+            }
+			WorkbenchCommandAction action = new WorkbenchCommandAction(getCommandId(), window);
+			action.setText("New Project");
+			action.setToolTipText("New Project");
+            action.setId(getId());
+			window.getWorkbench().getHelpSystem()
+					.setHelp(action, IWorkbenchHelpContextIds.NEW_PROJECT_ACTION);
+            return action;
+        }
+    };
+    
 	/**
 	 * Workbench action (id: "save", commandId: "org.eclipse.ui.file.save"): Save the active editor.
 	 * This action maintains its enablement state.

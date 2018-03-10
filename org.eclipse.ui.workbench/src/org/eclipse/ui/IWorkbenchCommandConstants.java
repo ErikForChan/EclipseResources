@@ -76,6 +76,8 @@ public interface IWorkbenchCommandConstants {
 	 */
 	public static final String FILE_EXPORT_PARM_WIZARDID = "exportWizardId"; //$NON-NLS-1$
 
+	public static final String FILE_NEW_PROJECT = "org.eclipse.ui.file.newProject"; //$NON-NLS-1$
+	
     /**
      * Id for command "Save" in category "File"
      * (value is <code>"org.eclipse.ui.file.save"</code>).

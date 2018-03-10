@@ -89,6 +89,8 @@ public final class WorkbenchActionBuilder extends ActionBarAdvisor {
 
     private IWorkbenchAction closeAllSavedAction;
 
+    private IWorkbenchAction newProjectAction;
+    
     private IWorkbenchAction saveAction;
 
     private IWorkbenchAction saveAllAction;
@@ -469,6 +471,8 @@ public final class WorkbenchActionBuilder extends ActionBarAdvisor {
             menu.add(newMenu);
         }
 
+        
+//        menu.add(newProjectAction);
         menu.add(new GroupMarker(IWorkbenchActionConstants.NEW_EXT));
         menu.add(new Separator());
 
@@ -846,6 +850,7 @@ public final class WorkbenchActionBuilder extends ActionBarAdvisor {
         closeAllAction = null;
         closeAllSavedAction = null;
         closeOthersAction = null;
+        newProjectAction = null;
         saveAction = null;
         saveAllAction = null;
         newWindowAction = null;
@@ -986,6 +991,9 @@ public final class WorkbenchActionBuilder extends ActionBarAdvisor {
                 .create(window);
         register(toggleAutoBuildAction);
 
+        newProjectAction = ActionFactory.NEW_PROJECT.create(window);
+        register(newProjectAction);
+        
         saveAction = ActionFactory.SAVE.create(window);
         register(saveAction);
 

@@ -58,6 +58,8 @@ public interface IWorkbenchHelpContextIds {
 			+ "save_all_action_context"; //$NON-NLS-1$
 
 	public static final String SAVE_ACTION = PREFIX + "save_action_context"; //$NON-NLS-1$
+	
+	public static final String NEW_PROJECT_ACTION = PREFIX + "new_project_action_context"; //$NON-NLS-1$
 
 	public static final String ABOUT_ACTION = PREFIX + "about_action_context"; //$NON-NLS-1$
 
