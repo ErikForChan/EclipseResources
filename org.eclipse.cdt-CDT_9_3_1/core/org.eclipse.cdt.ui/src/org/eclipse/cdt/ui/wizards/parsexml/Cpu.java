@@ -10,6 +10,7 @@ public class Cpu {
 	public String ramSize;
 	public String architecture;
 	public String fpuType;
+	public String category;
 	public String getDevice() {
 		return device;
 	}
@@ -68,10 +69,16 @@ public class Cpu {
 		this.ramSize = ramSize;
 	}
 	
-	
-	public Cpu(String device, String core, String flashStart, String flashSize, String ramStart,
-			String ramSize, String architecture, String fpuType) {
+	public String getCategory() {
+		return category;
+	}
+	public void setCategory(String category) {
+		this.category = category;
+	}
+	public Cpu(int id, String device, String core, String flashStart, String flashSize, String ramStart,
+			String ramSize, String architecture, String fpuType, String category) {
 		super();
+		this.id = id;
 		this.device = device;
 		this.core = core;
 		this.flashStart = flashStart;
@@ -80,11 +87,11 @@ public class Cpu {
 		this.ramSize = ramSize;
 		this.architecture = architecture;
 		this.fpuType = fpuType;
+		this.category = category;
 	}
 	public Cpu() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	
 	
 }

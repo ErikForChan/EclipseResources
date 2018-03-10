@@ -46,6 +46,8 @@ public class AddCpuToXML {
            ramSize.setTextContent(cpu.getRamSize());
            Element fpuType = document.createElement("fpuType");
            fpuType.setTextContent(cpu.getFpuType());
+           Element category = document.createElement("category");
+           fpuType.setTextContent(cpu.getCategory());
            cpuElement.appendChild(device);
            cpuElement.appendChild(core);
            cpuElement.appendChild(architecture);
@@ -54,6 +56,7 @@ public class AddCpuToXML {
            cpuElement.appendChild(ramStart);
            cpuElement.appendChild(ramSize);
            cpuElement.appendChild(fpuType);
+           cpuElement.appendChild(category);
 
            root.appendChild(cpuElement);     
 

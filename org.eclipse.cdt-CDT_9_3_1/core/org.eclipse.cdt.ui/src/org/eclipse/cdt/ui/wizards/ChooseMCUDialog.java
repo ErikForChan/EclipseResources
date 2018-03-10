@@ -35,7 +35,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.cdt.ui.wizards.parsexml.AddCpuToXML;
 import org.eclipse.cdt.ui.wizards.parsexml.Board;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
-import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByJDom;
+import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByDom;
 
 import org.eclipse.cdt.internal.ui.newui.Messages;
 
@@ -119,7 +119,7 @@ public class ChooseMCUDialog extends StatusDialog{
     }  
 	
 	public void setMCUList() {
-		ReadCpuByJDom rcb = new ReadCpuByJDom();
+		ReadCpuByDom rcb = new ReadCpuByDom();
 		try {
 			cpus = rcb.getCpus(cpuXmlPath);
 			cpusFiltered = cpus;

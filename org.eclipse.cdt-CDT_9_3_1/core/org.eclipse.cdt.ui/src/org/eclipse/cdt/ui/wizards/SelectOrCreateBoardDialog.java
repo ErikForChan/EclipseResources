@@ -41,7 +41,7 @@ import org.eclipse.cdt.ui.wizards.parsexml.Board;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
 import org.eclipse.cdt.ui.wizards.parsexml.CreateBoardXml;
 import org.eclipse.cdt.ui.wizards.parsexml.ReadBoardByDom;
-import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByJDom;
+import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByDom;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseLinkToXML;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
@@ -144,7 +144,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			if(MCUNameField.getText().trim() != null) {
 				Cpu defaultCpu = null;
 				String cpuXmlPath = getEclipsePath()+"demo\\cpu.xml";
-				ReadCpuByJDom rcb = new ReadCpuByJDom();
+				ReadCpuByDom rcb = new ReadCpuByDom();
 				List<Cpu> cpus = null;
 				try {
 					cpus = rcb.getCpus(cpuXmlPath);
@@ -198,7 +198,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			// TODO Auto-generated method stub
 			String cpuXmlPath = getEclipsePath()+"demo\\cpu.xml";
 			List<Cpu> cpus = new ArrayList<Cpu>();
-			ReadCpuByJDom rcb = new ReadCpuByJDom();
+			ReadCpuByDom rcb = new ReadCpuByDom();
 			Cpu defaultCpu = null;
 			try {
 				cpus = rcb.getCpus(cpuXmlPath);
@@ -384,7 +384,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			fDialogFields[1].getLabelControl(content).setLayoutData(new GridData(GridData.BEGINNING));
 			fDialogFields[1].getTextControl(content).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			fDialogFields[1].getTextControl(content).setEnabled(false);
-			ControlFactory.createLabel(content, "HZ");
+			ControlFactory.createLabel(content, "MHz");
 			
 			baordDescCpt = new Composite(composite, SWT.NONE);
 			GridLayout gl = new GridLayout();

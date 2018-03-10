@@ -553,7 +553,7 @@ public class PlainTextExporter implements IMemoryExporter {
 						for(int i = 0; i < length.divide(dataCellSize).intValue(); i++)//i=0--31
 						{
 							BigInteger addrAdd = dataCellSize.multiply(BigInteger.valueOf(i));
-							if(endComboIndex == 0) {
+							if(endComboIndex == 1) {
 								int remainded = i%4;
 								switch(remainded) {
 								case 0:

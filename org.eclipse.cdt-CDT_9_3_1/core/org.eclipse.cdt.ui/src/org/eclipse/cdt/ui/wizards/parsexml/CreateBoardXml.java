@@ -28,34 +28,13 @@ public class CreateBoardXml {
         	
         	Element boardName = document.createElement("boardName");
         	boardName.setTextContent(board.getBoardName());
-            Element device = document.createElement("device");
+            Element device = document.createElement("cpu");
             device.setTextContent(board.cpu.getDevice());
-            Element core = document.createElement("core");
-            core.setTextContent(board.cpu.getCore());
-            Element architecture = document.createElement("architecture");
-            architecture.setTextContent(board.cpu.getArchitecture());
-            Element flashStart = document.createElement("flashStart");
-            flashStart.setTextContent(board.cpu.getFlashStart());
-            Element flashSize = document.createElement("flashSize");
-            flashSize.setTextContent(board.cpu.getFlashSize());
-            Element ramStart = document.createElement("ramStart");
-            ramStart.setTextContent(board.cpu.getRamStart());
-            Element ramSize = document.createElement("ramSize");
-            ramSize.setTextContent(board.cpu.getRamSize());
-            Element fpuType = document.createElement("fpuType");
-            fpuType.setTextContent(board.cpu.getFpuType());
             Element exClk = document.createElement("exClk");
             exClk.setTextContent(board.getExClk());
             
             boardElement.appendChild(boardName);
             boardElement.appendChild(device);
-            boardElement.appendChild(core);
-            boardElement.appendChild(architecture);
-            boardElement.appendChild(flashStart);
-            boardElement.appendChild(flashSize);
-            boardElement.appendChild(ramStart);
-            boardElement.appendChild(ramSize);
-            boardElement.appendChild(fpuType);
             boardElement.appendChild(exClk);
             
             root.appendChild(boardElement);      

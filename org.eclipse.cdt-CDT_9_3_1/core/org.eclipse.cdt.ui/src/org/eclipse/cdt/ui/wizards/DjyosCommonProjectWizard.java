@@ -287,8 +287,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 //		String startupPath = eclipsePath+"demo/Startup/cpudrv";
 //		String startupDestPath = eclipsePath+"djysrc/bsp/startup";
 		
-		String startupPath = eclipsePath+"djysrc/bsp/startup/"+board.getCpu().getDevice()+board.getBoardName();
-		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getDevice()+boardName;
+		String startupPath = eclipsePath+"djysrc/bsp/startup/"+board.getCpu().getCategory()+"/"+board.getBoardName();
+		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getCategory()+"/"+boardName;
 		
 		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/"+board.getBoardName();
 		String newBoardPath = eclipsePath+"djysrc/bsp/boarddrv/"+boardName;
@@ -581,13 +581,17 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		String projectName = fMainPage.getProjectName();
 		String projectPath = fMainPage.locationArea.locationPathField.getText();
 		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
+		int index = fMainPage.getTemplateIndex();
     	String path = projectPath+"/src/app/OS_prjcfg/include/moduleinit.h";
-    	String testpath = projectPath+"/src/app/OS_prjcfg/include";
-    	File testFile = new File(testpath);
+    	String pathIboot = projectPath+"/src/iboot/OS_prjcfg/include/moduleinit.h";
+//    	String testpath = projectPath+"/src/app/OS_prjcfg/include";
+//    	File testFile = new File(testpath);
     	getMemoryToLds();
-    	if(testFile.exists()) {
+    	
+    	if(index == 0) {
     		File file = new File(path);
-    		if(!file.exists()) {
+    		File fileIboot = new File(pathIboot);
+    		if (!file.exists()) {
     			try {
     				file.createNewFile();
     			} catch (IOException e) {
@@ -595,10 +599,40 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
     				e.printStackTrace();
     			}
     		}
-    		
+    		if (!fileIboot.exists()) {
+    			try {
+    				fileIboot.createNewFile();
+    			} catch (IOException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+    		}
+    		modulePage.fillModuleinit(path);
+    		modulePage.fillModuleinit(pathIboot);
+    	}else if(index==1) {
+    		File fileIboot = new File(pathIboot);
+    		if (!fileIboot.exists()) {
+    			try {
+    				fileIboot.createNewFile();
+    			} catch (IOException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+    		}
+    		modulePage.fillModuleinit(pathIboot);
+    	}else{
+    		File file = new File(path);
+    		if (!file.exists()) {
+    			try {
+    				file.createNewFile();
+    			} catch (IOException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+    		}
     		modulePage.fillModuleinit(path);
     	}
-		
+
 		return true;
 	}
 	
