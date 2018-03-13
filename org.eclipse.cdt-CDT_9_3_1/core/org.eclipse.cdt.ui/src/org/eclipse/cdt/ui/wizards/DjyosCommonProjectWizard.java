@@ -582,54 +582,36 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		String projectPath = fMainPage.locationArea.locationPathField.getText();
 		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
 		int index = fMainPage.getTemplateIndex();
-    	String path = projectPath+"/src/app/OS_prjcfg/include/moduleinit.h";
-    	String pathIboot = projectPath+"/src/iboot/OS_prjcfg/include/moduleinit.h";
+    	String path = projectPath+"/src/app/OS_prjcfg/cfg/moduleinit.h";
+    	String pathIboot = projectPath+"/src/iboot/OS_prjcfg/cfg/moduleinit.h";
 //    	String testpath = projectPath+"/src/app/OS_prjcfg/include";
 //    	File testFile = new File(testpath);
     	getMemoryToLds();
-    	
-    	if(index == 0) {
-    		File file = new File(path);
-    		File fileIboot = new File(pathIboot);
-    		if (!file.exists()) {
-    			try {
-    				file.createNewFile();
-    			} catch (IOException e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}
+    	File file = new File(path);
+		File fileIboot = new File(pathIboot);
+		
+    	if(index == 0 || index == 1){
+    		if (fileIboot.exists()) {
+    			fileIboot.delete();
     		}
-    		if (!fileIboot.exists()) {
-    			try {
-    				fileIboot.createNewFile();
-    			} catch (IOException e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}
-    		}
-    		modulePage.fillModuleinit(path);
+    		try {
+				fileIboot.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     		modulePage.fillModuleinit(pathIboot);
-    	}else if(index==1) {
-    		File fileIboot = new File(pathIboot);
-    		if (!fileIboot.exists()) {
-    			try {
-    				fileIboot.createNewFile();
-    			} catch (IOException e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}
+    	}
+    	if(index == 0 || index == 2 || index == 3){
+    		if (file.exists()) {
+    			file.delete();
     		}
-    		modulePage.fillModuleinit(pathIboot);
-    	}else{
-    		File file = new File(path);
-    		if (!file.exists()) {
-    			try {
-    				file.createNewFile();
-    			} catch (IOException e) {
-    				// TODO Auto-generated catch block
-    				e.printStackTrace();
-    			}
-    		}
+    		try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     		modulePage.fillModuleinit(path);
     	}
 

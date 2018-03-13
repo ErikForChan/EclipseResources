@@ -401,7 +401,6 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 				String eclipsePath = nmWizard.getEclipsePath();
 				int index = getTemplateIndex();
 				String projectPath = locationArea.locationPathField.getText();
-				System.out.println("projectPath:  "+projectPath);
 				if(index==0) {
 					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
 					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
