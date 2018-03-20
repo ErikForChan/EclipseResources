@@ -47,7 +47,7 @@ public class AddCpuToXML {
            Element fpuType = document.createElement("fpuType");
            fpuType.setTextContent(cpu.getFpuType());
            Element category = document.createElement("category");
-           fpuType.setTextContent(cpu.getCategory());
+           category.setTextContent(cpu.getCategory());
            cpuElement.appendChild(device);
            cpuElement.appendChild(core);
            cpuElement.appendChild(architecture);

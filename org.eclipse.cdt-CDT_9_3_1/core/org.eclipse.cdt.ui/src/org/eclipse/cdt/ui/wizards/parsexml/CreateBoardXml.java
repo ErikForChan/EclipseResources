@@ -32,10 +32,22 @@ public class CreateBoardXml {
             device.setTextContent(board.cpu.getDevice());
             Element exClk = document.createElement("exClk");
             exClk.setTextContent(board.getExClk());
+            Element extromStart = document.createElement("extromStart");
+            extromStart.setTextContent(board.getExtromStart());
+            Element extromSize = document.createElement("extromSize");
+            extromSize.setTextContent(board.getExtromSize());
+            Element extramStart = document.createElement("extramStart");
+            extramStart.setTextContent(board.getExtramStart());
+            Element extramSize = document.createElement("extramSize");
+            extramSize.setTextContent(board.getExtramSize());
             
             boardElement.appendChild(boardName);
             boardElement.appendChild(device);
             boardElement.appendChild(exClk);
+            boardElement.appendChild(extromStart);
+            boardElement.appendChild(extromSize);
+            boardElement.appendChild(extramStart);
+            boardElement.appendChild(extramSize);
             
             root.appendChild(boardElement);      
 

@@ -88,6 +88,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 	private Text[] ramOffSizeText = new Text[5];
 	
 	public Cpu cpu;
+	public Board board;
 	private IntegerFieldEditor fIbootSize;
 	private Composite ibootComposite;
 	
@@ -251,22 +252,46 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
 		cpu = nmWizard.getCpu();
+		board = nmWizard.getBoard();
 		if(cpu==null) {
 			System.out.println("cpu==null");
 		}
-		if(cpu!=null) {
+		if(cpu!=null) {	
 			romOnBox[0].setSelection(true);
 			romOnBox[0].setEnabled(false);
 			romOnStartText[0].setText(cpu.getFlashStart());
 			romOnStartText[0].setEnabled(false);
 			romOnSizeText[0].setText(cpu.getFlashSize());
 			romOnSizeText[0].setEnabled(false);
-			ramOnBox[0].setSelection(true);
-			ramOnBox[0].setEnabled(false);
-			ramOnStartText[0].setText(cpu.getRamStart());
-			ramOnStartText[0].setEnabled(false);
-			ramOnSizeText[0].setText(cpu.getRamSize());
-			ramOnSizeText[0].setEnabled(false);			
+			
+			String[] ramStarts = cpu.getRamStart().split(",");
+			String[] ramSizes = cpu.getRamSize().split(",");
+			for (int i = 0; i < ramStarts.length; i++) {
+				ramOnBox[i].setSelection(true);
+				ramOnBox[i].setEnabled(false);
+				ramOnStartText[i].setText(ramStarts[i]);
+				ramOnStartText[i].setEnabled(false);
+				ramOnSizeText[i].setText(ramSizes[i]);
+				ramOnSizeText[i].setEnabled(false);
+			}	
+		}
+		if(! nmWizard.isToCreat) {
+			if (! board.getExtromStart().equals("null")) {
+				romOffBox[0].setSelection(true);
+				romOffBox[0].setEnabled(false);
+				romOffStartText[0].setText(board.getExtromStart());
+				romOffStartText[0].setEnabled(false);
+				romOffSizeText[0].setText(board.getExtromSize());
+				romOffSizeText[0].setEnabled(false);
+			}
+			if (! board.getExtramStart().equals("null")) {
+				ramOffBox[0].setSelection(true);
+				ramOffBox[0].setEnabled(false);
+				ramOffStartText[0].setText(board.getExtramStart());
+				ramOffStartText[0].setEnabled(false);
+				ramOffSizeText[0].setText(board.getExtramSize());
+				ramOffSizeText[0].setEnabled(false);
+			}
 		}
 //		createDynamicGroup((Composite)getControl());
 
@@ -285,7 +310,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		GridData gdText= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		composite.setLayoutData(gd);
 		GridLayout gd1 = new GridLayout(2,true);
-		gd1.marginHeight=5;
 		composite.setLayout(gd1);
 		
 		//group_onChip
@@ -346,20 +370,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 			romOffStartText[i].setLayoutData(gdText);
 			romOffSizeText[i] = new Text(group_offChip, SWT.BORDER);
 			romOffSizeText[i].setLayoutData(gdText);
-//			romOffBox[i].addSelectionListener(new SelectionListener() {
-//
-//				@Override
-//				public void widgetSelected(SelectionEvent e) {
-//					// TODO Auto-generated method stub
-//					setPageComplete(validatePage());
-//				}
-//
-//				@Override
-//				public void widgetDefaultSelected(SelectionEvent e) {
-//					// TODO Auto-generated method stub
-//
-//				}
-//			});
 		}
 		
 		return composite;
@@ -377,7 +387,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		GridData gdText= new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.FILL_HORIZONTAL);
 		composite.setLayoutData(gd);
 		GridLayout gd1 = new GridLayout(2,true);
-		gd1.marginHeight=5;
 		composite.setLayout(gd1);
 		
 		//group_onChip
@@ -401,20 +410,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 			ramOnStartText[i].setLayoutData(gdText);
 			ramOnSizeText[i] = new Text(group_onChip, SWT.BORDER);
 			ramOnSizeText[i].setLayoutData(gdText);
-//			ramOnBox[i].addSelectionListener(new SelectionListener() {
-//
-//				@Override
-//				public void widgetSelected(SelectionEvent e) {
-//					// TODO Auto-generated method stub
-//					setPageComplete(validatePage());
-//				}
-//
-//				@Override
-//				public void widgetDefaultSelected(SelectionEvent e) {
-//					// TODO Auto-generated method stub
-//
-//				}
-//			});
 		}
 			
 		//group_offChip

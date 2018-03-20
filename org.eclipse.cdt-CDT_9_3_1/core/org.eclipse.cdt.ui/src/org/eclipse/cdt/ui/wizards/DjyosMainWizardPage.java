@@ -351,7 +351,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		for (int i = 0; i < radioBtns.length; i++) {
 			radioBtns[i] = new Button(RADIOCpt, SWT.RADIO | SWT.LEFT);
 			radioBtns[i].setText(templateLabels[i]);
-			radioBtns[i].setToolTipText(templateLabels[i]);
+//			radioBtns[i].setToolTipText(templateLabels[i]);
 			int a = i;
 			radioBtns[i].addSelectionListener(new SelectionAdapter() {
 				@Override

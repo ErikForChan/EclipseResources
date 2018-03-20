@@ -97,6 +97,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 
 	boolean addedMemory = false;
 	boolean addedModule = false;
+	boolean createdProject = false;
 	protected IConfigurationElement fConfigElement;
 	protected DjyosMainWizardPage fMainPage;
 	
@@ -122,6 +123,10 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 
 	public DjyosCommonProjectWizard() {
 		this(Messages.NewModelProjectWizard_0,Messages.NewModelProjectWizard_1);
+	}
+	
+	public Board getBoard() {
+		return fMainPage.getSelectBoard();
 	}
 	
 	public Cpu getCpu() {
@@ -224,6 +229,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			}
 				
 			isToCreat = fMainPage.isToCreat();
+			createdProject = true;
 						
 		}else {
 			fMainPage.setExistedMessage();
@@ -334,7 +340,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
 		String boardName = fMainPage.getBoardName();
 		cpu = fMainPage.getSelectCpu();
-		System.out.println("project.getFullPath().toString():           "+project.getFullPath().toString());
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	
 		for(int i=0;i<conds.length;i++) {
@@ -631,11 +636,10 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		String templateName = getTemplateName();
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		
-		if(addedModule) {
+		if(createdProject) {
 			IProject project = workspace.getRoot().getProject(projectName);
 
 			if (project.exists()) {
-				System.out.println("projectName:  " + project.getName());
 				try {
 					project.delete(true, true, null);
 				} catch (CoreException e) {

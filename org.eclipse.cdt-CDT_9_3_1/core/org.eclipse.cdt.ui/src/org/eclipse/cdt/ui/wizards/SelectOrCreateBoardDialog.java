@@ -1,5 +1,6 @@
 package org.eclipse.cdt.ui.wizards;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -222,6 +223,11 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 				}
 			}
 			if(toCreat) {
+//				boardSelected = new Board();
+//				boardSelected.setBoardName(boardName);
+//				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
+//				selectCpu = defaultCpu;
+//				boardSelected.setCpu(selectCpu);
 				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
 				if(selectCpu == null) {
 					selectCpu = defaultCpu;
@@ -322,6 +328,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			tipCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			Label tipLabel = new Label(tipCpt,SWT.NONE);
 			tipLabel.setText(tipText);
+			tipLabel.setForeground(tipCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
 			
 			content = new Composite(composite, SWT.NONE);
 			layout.numColumns = 3;
@@ -419,12 +426,6 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			ChooseMCUDialog dialog = new ChooseMCUDialog(getShell());
 			if (dialog.open() == Window.OK) {
 				selectCpu = dialog.getSelectCpu();
-				if(selectCpu==null) {
-    				System.out.println("selectCpu = dialog.getSelectCpu();");
-    			}
-				if(selectCpu == null) {
-					System.out.println("selectCpu == null");
-				}
 				MCUNameField.setText(selectCpu.getDevice());
 				boardSelected = new Board();
 				boardSelected.setCpu(selectCpu);
