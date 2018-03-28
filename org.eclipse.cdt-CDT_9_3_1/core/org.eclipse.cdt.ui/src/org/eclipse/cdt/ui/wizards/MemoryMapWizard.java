@@ -73,20 +73,21 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 	
 	public String ldsHead = "";
 	public String ldsDesc = "";
-	private Button[] romOnBox = new Button[5];
-	private Button[] romOffBox = new Button[5];
-	private Button[] ramOnBox = new Button[5];
-	private Button[] ramOffBox = new Button[5];
+	private Button[] romOnBox = new Button[4];
+	private Button[] romOffBox = new Button[4];
+	private Button[] ramOnBox = new Button[4];
+	private Button[] ramOffBox = new Button[4];
 	
-	private Text[] romOnStartText = new Text[5];
-	private Text[] romOnSizeText = new Text[5];
-	private Text[] romOffStartText = new Text[5];
-	private Text[] romOffSizeText = new Text[5];
-	private Text[] ramOnStartText = new Text[5];
-	private Text[] ramOnSizeText = new Text[5];
-	private Text[] ramOffStartText = new Text[5];
-	private Text[] ramOffSizeText = new Text[5];
+	private Text[] romOnStartText = new Text[4];
+	private Text[] romOnSizeText = new Text[4];
+	private Text[] romOffStartText = new Text[4];
+	private Text[] romOffSizeText = new Text[4];
+	private Text[] ramOnStartText = new Text[4];
+	private Text[] ramOnSizeText = new Text[4];
+	private Text[] ramOffStartText = new Text[4];
+	private Text[] ramOffSizeText = new Text[4];
 	
+	boolean clickedNext = false;
 	public Cpu cpu;
 	public Board board;
 	private IntegerFieldEditor fIbootSize;
@@ -326,7 +327,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		sizeLabel.setText("size");
 		sizeLabel.setLayoutData(gdLabel);
 		
-		for(int i=0;i<5;i++) {
+		for(int i=0;i<4;i++) {
 			romOnBox[i] = new Button(group_onChip, SWT.CHECK);
 			romOnBox[i].setLayoutData(gdBox);
 			romOnStartText[i] = new Text(group_onChip, SWT.BORDER);
@@ -363,7 +364,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		sizeLabel.setText("size");
 		sizeLabel.setLayoutData(gdLabel);
 		
-		for(int i=0;i<5;i++) {
+		for(int i=0;i<4;i++) {
 			romOffBox[i] = new Button(group_offChip, SWT.CHECK);
 			romOffBox[i].setLayoutData(gdBox);
 			romOffStartText[i] = new Text(group_offChip, SWT.BORDER);
@@ -403,7 +404,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		sizeLabel.setText("size");
 		sizeLabel.setLayoutData(gdLabel);
 		
-		for(int i=0;i<5;i++) {
+		for(int i=0;i<4;i++) {
 			ramOnBox[i] = new Button(group_onChip, SWT.CHECK);
 			ramOnBox[i].setLayoutData(gdBox);
 			ramOnStartText[i] = new Text(group_onChip, SWT.BORDER);
@@ -426,7 +427,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		sizeLabel.setText("size");
 		sizeLabel.setLayoutData(gdLabel);
 		
-		for(int i=0;i<5;i++) {
+		for(int i=0;i<4;i++) {
 			ramOffBox[i] = new Button(group_offChip, SWT.CHECK);
 			ramOffBox[i].setLayoutData(gdBox);
 			ramOffStartText[i] = new Text(group_offChip, SWT.BORDER);
@@ -438,8 +439,18 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		return composite;
 	}
 	
-	boolean added = false;
 	
+	
+	@Override
+	public boolean canFlipToNextPage() {
+		// TODO Auto-generated method stub
+		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
+		if(nmWizard.addedModule) {
+			nmWizard.modulePage.moduleCompleted = true;
+		}	
+		return super.canFlipToNextPage();
+	}
+
 	@Override
 	public IWizardPage getNextPage() {
 		// TODO Auto-generated method stub
@@ -451,7 +462,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 			nmWizard.modulePage.setTitle("Module Configuration");
 			nmWizard.modulePage.setDescription(modulePageTip);
 			nmWizard.addPage(nmWizard.modulePage);
-			nmWizard.modulePage.setPageComplete(false);
+//			nmWizard.modulePage.setPageComplete(false);
 			nmWizard.addedModule = true;
 			if(nmWizard.isToCreat) {
 				nmWizard.handleBoard();

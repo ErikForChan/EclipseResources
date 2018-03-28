@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
@@ -194,6 +195,16 @@ public class ChooseMCUDialog extends StatusDialog{
 //				if (buttonIsEnabled(2) && table.getSelectionIndex() != -1)
 //					buttonPressed(2);
 			}
+		});
+		MCUListTable.addListener(SWT.MouseDoubleClick, new Listener() {
+
+			@Override
+			public void handleEvent(Event event) {
+				// TODO Auto-generated method stub
+				selectIndex = MCUListTable.getSelectionIndex();
+				okPressed();
+			}
+			
 		});
 
 		tv = new TableViewer(MCUListTable);

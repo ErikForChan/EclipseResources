@@ -365,7 +365,7 @@ public class ProjectContentsLocationArea {
 	 *
 	 * @param selectedPath
 	 */
-	private void updateLocationField(String selectedPath) {
+	public void updateLocationField(String selectedPath) {
 		locationPathField.setText(TextProcessor.process(selectedPath));
 	}
 

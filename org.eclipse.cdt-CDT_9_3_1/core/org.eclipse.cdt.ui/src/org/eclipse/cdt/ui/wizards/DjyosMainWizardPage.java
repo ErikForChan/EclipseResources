@@ -101,6 +101,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	boolean isToCreat;
 	String boardModuleTrimPath;
 	boolean clickedNext = true;
+	String projectPath;
 	
 	public boolean isToCreat() {
 		return isToCreat;
@@ -197,7 +198,6 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		}
 		// Scale the button based on the rest of the dialog
 		setButtonLayoutData(locationArea.getBrowseButton());
-		
 		// Show description on opening
 		setErrorMessage(null);
 		setMessage(null);
@@ -380,6 +380,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	public boolean canFlipToNextPage() {
 		// TODO Auto-generated method stub
 		clickedNext = false;
+		projectPath = locationArea.locationPathField.getText();
 		return super.canFlipToNextPage();
 	}
 
@@ -395,12 +396,15 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 			nmWizard.addedMemory = true;		
 		}else {
 			if(clickedNext) {
-				nmWizard.importTemplate();
+				nmWizard.importTemplate(projectPath);
 				final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 				IProject project = workspace.getRoot().getProject(getProjectNameFieldValue());
 				String eclipsePath = nmWizard.getEclipsePath();
 				int index = getTemplateIndex();
 				String projectPath = locationArea.locationPathField.getText();
+				if(!projectPath.contains(getProjectName())) {
+					projectPath = projectPath+"/"+getProjectName();
+				}
 				if(index==0) {
 					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
 					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");

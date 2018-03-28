@@ -76,7 +76,7 @@ public class ChangeBuildConfigActionBase {
 			// Store names and detect active configuration
 			for (ICConfigurationDescription cfgDesc : cfgDescs) {
 				String s = cfgDesc.getName();
-				if (!configNames.contains(s)) 
+				if (!configNames.contains(s) && (s.contains("Debug") || s.contains("Release"))) 
 					configNames.add(s);
 				if (cfgDesc.isActive())	
 					sActiveConfig = s;

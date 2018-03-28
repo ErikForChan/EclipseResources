@@ -9,7 +9,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 
+import org.eclipse.cdt.core.CCProjectNature;
 import org.eclipse.cdt.core.CCorePlugin;
+import org.eclipse.cdt.core.CProjectNature;
 import org.eclipse.cdt.core.DjyosProjectNature;
 
 import org.eclipse.cdt.internal.ui.newui.Messages;
@@ -25,7 +27,7 @@ public class DjyosProjectWizard extends DjyosCommonProjectWizard {
 
 	@Override
 	public String[] getNatures() {
-		return new String[] { DjyosProjectNature.DJYOS_NATURE_ID };
+		return new String[] { DjyosProjectNature.C_NATURE_ID, CCProjectNature.CC_NATURE_ID };
 	}
 	
 	@Override
@@ -36,7 +38,8 @@ public class DjyosProjectWizard extends DjyosCommonProjectWizard {
 		
 		try {
 			continueCreationMonitor.beginTask("Add DJYOS Project Nature", 1);
-			DjyosProjectNature.addDjyosNature(prj, new SubProgressMonitor(continueCreationMonitor, 1));
+			DjyosProjectNature.addCNature(prj, new SubProgressMonitor(continueCreationMonitor, 1));
+			CCProjectNature.addCCNature(prj, new SubProgressMonitor(continueCreationMonitor, 1));
 		} catch (CoreException e) {}
 		finally {continueCreationMonitor.done();}
 		return prj;
@@ -44,7 +47,7 @@ public class DjyosProjectWizard extends DjyosCommonProjectWizard {
 
 	@Override
 	public String[] getContentTypeIDs() {
-		return new String[] { CCorePlugin.CONTENT_TYPE_CSOURCE, CCorePlugin.CONTENT_TYPE_CHEADER };
+		return new String[] { CCorePlugin.CONTENT_TYPE_CXXSOURCE, CCorePlugin.CONTENT_TYPE_CXXHEADER };
 	}
 
 	@Override

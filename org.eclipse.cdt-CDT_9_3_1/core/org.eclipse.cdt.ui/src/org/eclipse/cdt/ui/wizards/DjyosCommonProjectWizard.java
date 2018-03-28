@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
@@ -53,6 +55,7 @@ import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.dialogs.WorkingSetGroup;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
+import org.eclipse.ui.internal.ide.filesystem.FileSystemConfiguration;
 import org.eclipse.ui.internal.registry.WorkingSetDescriptor;
 import org.eclipse.ui.internal.registry.WorkingSetRegistry;
 import org.eclipse.ui.internal.wizards.datatransfer.DataTransferMessages;
@@ -120,6 +123,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	
 	public Cpu cpu;
 	boolean isToCreat = false;
+	String eclipsePath = getEclipsePath();
+	private IProject curProject;
 
 	public DjyosCommonProjectWizard() {
 		this(Messages.NewModelProjectWizard_0,Messages.NewModelProjectWizard_1);
@@ -173,24 +178,24 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return eclipsePath;
 	}
 	
-	public void importTemplate() {
+	
+	public void importTemplate(String projectPath) {
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		int tIndex = fMainPage.getTemplateIndex();
 		String projectName = fMainPage.getProjectName();
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		String destPath = null;
 		String srcPath = null;
 		String templateName = getTemplateName();
 		srcPath = eclipsePath + "demo/" + templateName;
 		destPath = fMainPage.locationArea.locationPathField.getText();
-		
-		String projectPath = workspace.getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
+		if(!destPath.contains(projectName)) {
+			destPath = destPath+"/"+projectName;
+		}
 		
 		File src = new File(srcPath);
 		File dest = new File(destPath);
 		
-		File projectFile = new File(projectPath);
+		File projectFile = new File(projectPath+"/"+projectName);
 
 		if(!dest.exists() && !projectFile.exists()) {
 			dest.mkdir();
@@ -210,7 +215,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 					// report to the user
 					MultiStatus status = new MultiStatus(IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
 							DataTransferMessages.WizardProjectsImportPage_projectsInWorkspaceAndInvalid, null);
-					importExistingProject(subMonitor.split(1),projectName,importName);		
+					importExistingProject(subMonitor.split(1),projectName,projectPath);		
 					
 					if (!status.isOK()) {
 						throw new InvocationTargetException(new CoreException(status));
@@ -237,27 +242,49 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			
 	}
 	
-	private IStatus importExistingProject(IProgressMonitor mon, String projectName, String templateName) {
+	private IStatus importExistingProject(IProgressMonitor mon, String projectName, String projectPath) {
 
 		SubMonitor subMonitor = SubMonitor.convert(mon, 3);
+		
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		final IProject project = workspace.getRoot().getProject(projectName);
 
-		try {
-			SubMonitor subTask = subMonitor.split(1).setWorkRemaining(100);
-			subTask.setTaskName(DataTransferMessages.WizardProjectsImportPage_CreateProjectsTask);
-			project.create(subTask.split(30));
-			project.open(IResource.BACKGROUND_REFRESH, subTask.split(70));
-			subTask.setTaskName(""); //$NON-NLS-1$
+		IProject project = workspace.getRoot().getProject(projectName);
+		final IProgressMonitor monitor = new NullProgressMonitor();
 
-		} catch (OperationCanceledException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(! projectPath.contains(projectName)) {
+			IPath locationPath = new Path(projectPath+"/"+projectName);
+			IProjectDescription description = workspace.newProjectDescription(projectName);
+			description.setLocation(locationPath);
+			try {
+				SubMonitor subTask = subMonitor.split(1).setWorkRemaining(100);
+				subTask.setTaskName(DataTransferMessages.WizardProjectsImportPage_CreateProjectsTask);
+				project.create(description,subTask.split(30));
+				project.open(IResource.BACKGROUND_REFRESH, subTask.split(70));
+				subTask.setTaskName(""); //$NON-NLS-1$
+			} catch (OperationCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (CoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}	
+		}else {
+			try {
+				SubMonitor subTask = subMonitor.split(1).setWorkRemaining(100);
+				subTask.setTaskName(DataTransferMessages.WizardProjectsImportPage_CreateProjectsTask);
+				project.create(subTask.split(30));
+				project.open(IResource.BACKGROUND_REFRESH, subTask.split(70));
+				subTask.setTaskName(""); //$NON-NLS-1$
+			} catch (OperationCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (CoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}	
 		}
-
+		
+		curProject = project;
 		return Status.OK_STATUS;
 	}
 	
@@ -284,7 +311,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	}
 	
 	public void handleBoard() {
-		String eclipsePath = getEclipsePath();
 		String projectName = fMainPage.getProjectName();
 		String boardName = fMainPage.getBoardName();
 		cpu = fMainPage.getSelectCpu();
@@ -334,14 +360,28 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	}
 	
 	public void handleCProject() {
-		String eclipsePath = getEclipsePath();
 		String projectName = fMainPage.getProjectName();
 		Board board = fMainPage.getSelectBoard();
-		final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		String projectPath = fMainPage.locationArea.locationPathField.getText();
+
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
 		String boardName = fMainPage.getBoardName();
 		cpu = fMainPage.getSelectCpu();
+		
+		if(! projectPath.contains(projectName)) {
+			project = curProject;
+		}	
+		
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	
+
+    	for (ICConfigurationDescription cfgDesc : conds) {
+			String s = cfgDesc.getName();
+			if(s.equals("Debug") || s.equals("Release")) {
+				cfgDesc.setName(projectName+"_"+s);
+			}
+		}
+    	
 		for(int i=0;i<conds.length;i++) {
 			ICResourceDescription rds = conds[i].getRootFolderDescription();
 			IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
@@ -371,24 +411,24 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		
 		ReviseVariableToXML rvtx = new ReviseVariableToXML();
 		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+eclipsePath+"djysrc", 
-				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),projectName);
+				project.getFile(".project"),projectName);
 		ReviseLinkToXML rltx = new ReviseLinkToXML();
 		rltx.reviseXmlLink("src/libos/bsp/boarddrv",boardName, "DJYOS_SRC_LOCATION/bsp/boarddrv",cpu.getDevice(), 
-				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"boarddrv");
+				project.getFile(".project"),"boarddrv");
 		rltx.reviseXmlLink("src/libos/bsp/startup",boardName, "DJYOS_SRC_LOCATION/bsp/startup",cpu.getDevice(), 
-				IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"startup");
+				project.getFile(".project"),"startup");
 		
 		String core= board.cpu.getCore();
 		if(core.equals("cortex-m7")) {
 			rltx.reviseXmlLink("src/libos/bsp/arch","cortex-m7", "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m/armv7e-m","cortex-m7", 
-					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"arch");
+					project.getFile(".project"),"arch");
 			rltx.reviseXmlLink("src/libos/bsp/cpudrv","stm32f7", "DJYOS_SRC_LOCATION/bsp/cpudrv/cortex-m7","stm32f7", 
-					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"cpudrv");
+					project.getFile(".project"),"cpudrv");
 		}else if(core.equals("cortex-m4")) {
 			rltx.reviseXmlLink("src/libos/bsp/arch","cortex-m4", "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m/armv7e-m","cortex-m4", 
-					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"arch");
+					project.getFile(".project"),"arch");
 			rltx.reviseXmlLink("src/libos/bsp/cpudrv","stm32f4xx", "DJYOS_SRC_LOCATION/bsp/cpudrv/cortex-m7","stm32f4xx",
-					IDEWorkbenchPlugin.getPluginWorkspace().getRoot().getProject(projectName).getFile(".project"),"cpudrv");
+					project.getFile(".project"),"cpudrv");
 		}
 		
 	}
@@ -494,37 +534,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			e.printStackTrace();
 		}
 
-		// File tmp = File.createTempFile("tmp", null);
-		// FileOutputStream tmpOut = new FileOutputStream(tmp);
-		// FileInputStream tmpIn = new FileInputStream(tmp);
-		// RandomAccessFile raf = null;
-		// try {
-		// raf = new RandomAccessFile(file, "rw");
-		// byte[] buf = new byte[64];
-		// int hasRead = 0;
-		// while ((hasRead = raf.read(buf)) > 0) {
-		// // 把原有内容读入临时文件
-		// tmpOut.write(buf, 0, hasRead);
-		// }
-		// raf.seek(0L);
-		// raf.write(content.getBytes());
-		// // 追加临时文件内容
-		// while ((hasRead = tmpIn.read(buf)) > 0) {
-		// raf.write(buf, 0, hasRead);
-		// }
-		// } catch (IOException e) {
-		// System.out.println("写入失败！");
-		// e.printStackTrace();
-		// return false;
-		// } finally {
-		// try {
-		// raf.close();
-		// } catch (IOException e) {
-		// System.out.println("写入失败，关闭流失败！");
-		// e.printStackTrace();
-		// return false;
-		// }
-		// }
 		return true;
 	}
 
@@ -552,9 +561,15 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
     	String ldsDesc = memoryPage.getLdsDesc();
     	String templateName = getTemplateName();
     	String projectName = fMainPage.getProjectName();
-		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
+		String sourcePath = fMainPage.projectPath;
+		if(!sourcePath.contains(projectName)) {
+			sourcePath = sourcePath+"/"+projectName;
+		}
     	String path = sourcePath+"/src/lds/memory.lds";
 		File file = new File(path);
+		if(file.exists()) {
+			file.delete();
+		}
 		String content = ldsHead + ldsDesc;
 		
 		if(file.exists()) {
@@ -585,6 +600,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	public boolean performFinish() {
 		String projectName = fMainPage.getProjectName();
 		String projectPath = fMainPage.locationArea.locationPathField.getText();
+		if(!projectPath.contains(projectName)) {
+			projectPath = projectPath+"/"+projectName;
+		}
 		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
 		int index = fMainPage.getTemplateIndex();
     	String path = projectPath+"/src/app/OS_prjcfg/cfg/moduleinit.h";
@@ -666,12 +684,23 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
     		}else {
     			return false;
     		}
-    		
     	}else {
     		return false;
     	}
 //    	return super.canFinish();
     }
+    
+	private ICConfigurationDescription[] getCfgs(IProject prj) {
+		ICProjectDescription prjd = CoreModel.getDefault().getProjectDescription(prj, false);
+		if (prjd != null) { 
+			ICConfigurationDescription[] cfgs = prjd.getConfigurations();
+			if (cfgs != null) {
+				return cfgs;
+			}
+		}
+		
+		return new ICConfigurationDescription[0];
+	}
     
 	@Override
 	public String getLastProjectName() {
