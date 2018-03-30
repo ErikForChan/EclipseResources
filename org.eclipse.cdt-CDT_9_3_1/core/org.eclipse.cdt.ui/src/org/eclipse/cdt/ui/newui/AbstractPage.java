@@ -777,9 +777,7 @@ implements
 			if (cfgDescs[i].isActive()) {
 				name = name + "  " + Messages.AbstractPage_16; //$NON-NLS-1$
 			}
-			if(name.contains("Debug") || name.contains("Release")) {
-				configSelector.add(name);
-			}		
+			configSelector.add(name);
 		}
 
 		// Ensure that the last selected config is selected by default
