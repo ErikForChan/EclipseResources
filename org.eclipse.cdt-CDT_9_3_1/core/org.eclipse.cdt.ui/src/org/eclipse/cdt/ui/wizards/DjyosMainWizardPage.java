@@ -102,13 +102,14 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 	String boardModuleTrimPath;
 	boolean clickedNext = true;
 	String projectPath;
+	Cpu defaultCpu;
 	
 	public boolean isToCreat() {
 		return isToCreat;
 	}
 	
 	public String getBoardName() {
-		return boardName;
+		return fBoardNameField.getText().trim();
 	}
 	
 	public Cpu getSelectCpu() {
@@ -247,9 +248,7 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
             		if (dialog.open() == Window.OK) {
             			boardName = dialog.getBoardName();
             			selectedCpu = dialog.getSelectCpu();
-            			if(selectedCpu==null) {
-            				System.out.println("selectedCpu = dialog.getSelectCpu();");
-            			}
+            			defaultCpu = dialog.defaultCpu;
             			selectedBoard = dialog.getSelectBoard();
             			fBoardNameField.setText(boardName);
             			isToCreat = dialog.isToCreat();

@@ -313,13 +313,11 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	public void handleBoard() {
 		String projectName = fMainPage.getProjectName();
 		String boardName = fMainPage.getBoardName();
+		Cpu defaultCpu = fMainPage.defaultCpu;
 		cpu = fMainPage.getSelectCpu();
 		Board board = fMainPage.getSelectBoard();
 		
-//		String startupPath = eclipsePath+"demo/Startup/cpudrv";
-//		String startupDestPath = eclipsePath+"djysrc/bsp/startup";
-		
-		String startupPath = eclipsePath+"djysrc/bsp/startup/"+board.getCpu().getCategory()+"/"+board.getBoardName();
+		String startupPath = eclipsePath+"djysrc/bsp/startup/"+defaultCpu.getCategory()+"/"+board.getBoardName();
 		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getCategory()+"/"+boardName;
 		
 		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/"+board.getBoardName();
@@ -328,7 +326,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		
 		File srcFolder = new File(boardCodePath);
 		File folder = new File(newBoardPath);
-//		File file = new File(newBoardXmlPath);
 		if(!folder.exists()) {
 			folder.mkdir();
 		}
@@ -357,6 +354,10 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public IProject getProject() {
+		return curProject;
 	}
 	
 	public void handleCProject() {
@@ -432,40 +433,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		}
 		
 	}
-	
-//	private void copyFileToFolder(File src, File dest, String boardName) throws IOException {  
-//	    if (src.isDirectory()) {  
-//	        if (!dest.exists()) {  
-//	            dest.mkdir(); 
-//	            dest.renameTo(new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))+"\\"+boardName));
-//	            dest = new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))+"\\"+boardName);
-//	        }  
-//	        String files[] = src.list();  
-//	        for (String file : files) {  
-//	            File srcFile = new File(src, file);  
-//	            File destFile = new File(dest, file); 
-//	            System.out.println(destFile.getName());
-//	            // µÝ¹é¸´ÖÆ  
-//	            copyFileToFolder(srcFile, destFile,boardName);  
-//	        }  
-//	    } else {  
-//	    	if(!dest.exists()) {
-//	    		InputStream in = new FileInputStream(src);  
-//	 	        OutputStream out = new FileOutputStream(dest);  
-//	 	  
-//	 	        byte[] buffer = new byte[1024];  
-//	 	  
-//	 	        int length;  
-//	 	          
-//	 	        while ((length = in.read(buffer)) > 0) {  
-//	 	            out.write(buffer, 0, length);  
-//	 	        }  
-//	 	        in.close();  
-//	 	        out.close();  
-//	    	}	       
-//	    }  
-//	}  
-//		
+
 	private void copyFolder(File src, File dest) throws IOException {  
 	    if (src.isDirectory()) {  
 	        if (!dest.exists()) {  

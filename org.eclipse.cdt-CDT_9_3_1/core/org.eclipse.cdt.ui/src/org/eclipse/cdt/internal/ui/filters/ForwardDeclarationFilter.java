@@ -30,6 +30,10 @@ public class ForwardDeclarationFilter extends ViewerFilter {
 			return true;
 		
 		final ICElement celem= (ICElement) element;
+		String elemName = celem.getPath().toString();
+		if(elemName.contains("libos")) {
+			return false;
+		}
 		ICElement tu= celem;
 		while (tu != null && !(tu instanceof ITranslationUnit)) {
 			tu= tu.getParent();

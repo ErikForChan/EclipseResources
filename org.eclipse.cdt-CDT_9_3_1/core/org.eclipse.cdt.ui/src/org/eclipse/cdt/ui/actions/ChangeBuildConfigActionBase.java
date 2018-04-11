@@ -71,12 +71,12 @@ public class ChangeBuildConfigActionBase {
 		boolean bCurrentConfig = true;
 		for (IProject prj : fProjects) {
 			ICConfigurationDescription[] cfgDescs = getCfgs(prj);
-
+			// libos_demo_o0 libos_demo_o2 Iboot
 			String sActiveConfig = null;
 			// Store names and detect active configuration
 			for (ICConfigurationDescription cfgDesc : cfgDescs) {
 				String s = cfgDesc.getName();
-				if (!configNames.contains(s) && (s.contains("Debug") || s.contains("Release"))) 
+				if (!configNames.contains(s) && !s.equals("Iboot") && !s.equals("libos_demo_o0") && !s.equals("libos_demo_o2")) 
 					configNames.add(s);
 				if (cfgDesc.isActive())	
 					sActiveConfig = s;

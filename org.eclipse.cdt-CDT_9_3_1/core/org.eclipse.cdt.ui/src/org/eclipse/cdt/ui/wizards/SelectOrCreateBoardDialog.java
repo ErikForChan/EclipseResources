@@ -98,7 +98,8 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		Board boardSelected;
 		Cpu selectCpu;
 		String boardModuleTrimPath = "";
-		
+		Cpu defaultCpu;
+				
 		private String[] BoardDetailsComboLabels = {
 				"Architecture","Family"
 		};
@@ -179,16 +180,15 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 				for(String board:boards) {
 					if(board.equals(boardName)) {
 						toCreat = false;
-						System.out.println("The Board:  "+board);
 					}
 				}
 				if(toCreat) {
-					importMCUBtn.setEnabled(true);
+//					importMCUBtn.setEnabled(true);
 					for(int i=1;i<fDialogFields.length;i++) {
 						fDialogFields[i].getTextControl(content).setEnabled(true);
 					}
 				}else {
-					importMCUBtn.setEnabled(false);
+//					importMCUBtn.setEnabled(false);
 					fDialogFields[1].getTextControl(content).setEnabled(false);
 				}
 			}
@@ -200,7 +200,6 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			String cpuXmlPath = getEclipsePath()+"demo\\cpu.xml";
 			List<Cpu> cpus = new ArrayList<Cpu>();
 			ReadCpuByDom rcb = new ReadCpuByDom();
-			Cpu defaultCpu = null;
 			try {
 				cpus = rcb.getCpus(cpuXmlPath);
 			} catch (Exception e1) {
@@ -232,6 +231,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 				if(selectCpu == null) {
 					selectCpu = defaultCpu;
 				}
+				boardSelected.setCpu(selectCpu);
 			}else {
 				selectCpu = defaultCpu;
 				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
@@ -368,7 +368,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			MCUNameField.setEnabled(false);
 			importMCUBtn = new Button(content, SWT.PUSH);
 			importMCUBtn.setText("Choose...");
-			importMCUBtn.setEnabled(false);
+//			importMCUBtn.setEnabled(false);
 			importMCUBtn.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -427,8 +427,9 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			if (dialog.open() == Window.OK) {
 				selectCpu = dialog.getSelectCpu();
 				MCUNameField.setText(selectCpu.getDevice());
-				boardSelected = new Board();
-				boardSelected.setCpu(selectCpu);
+				if(boardSelected != null) {
+					boardSelected.setCpu(selectCpu);
+				}			
 			}
 		}
 	
@@ -437,7 +438,15 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		 */
 		protected void handleImportButtonPressed() {
 	
-			ChooseBoardDialog dialog = new ChooseBoardDialog(getShell());
+			ChooseBoardDialog dialog;
+			String sCpu = MCUNameField.getText();
+			
+			if(sCpu.equals("")) {
+				dialog = new ChooseBoardDialog(getShell());
+			}else {
+				dialog = new ChooseBoardDialog(getShell(),sCpu);
+			}
+			
 			if (dialog.open() == Window.OK) {
 				boardSelected = dialog.getSelectBoard();
 				boardModuleTrimPath = getEclipsePath()+"djysrc/bsp/boarddrv/"+boardSelected.getBoardName()+"/module-trim.bak";

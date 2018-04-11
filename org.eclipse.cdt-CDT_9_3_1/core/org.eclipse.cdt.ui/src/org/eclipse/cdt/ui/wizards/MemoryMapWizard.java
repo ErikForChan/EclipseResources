@@ -437,9 +437,7 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		}
 		
 		return composite;
-	}
-	
-	
+	}	
 	
 	@Override
 	public boolean canFlipToNextPage() {

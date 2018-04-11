@@ -80,7 +80,7 @@ Export-Package: org.eclipse.debug.internal.ui; x-friends:="org.eclipse
  ,org.eclipse.debug.ui.memory,org.eclipse.debug.ui.sourcelookup,org.ec
  lipse.debug.ui.stringsubstitution
 Bundle-Name: %pluginName
-Bundle-Version: 3.12.0.v20170605-1534
+Bundle-Version: 3.12.50.v20170920-1329
 Bundle-Localization: plugin
 Bundle-ClassPath: .
 Bundle-Activator: org.eclipse.debug.internal.ui.DebugUIPlugin

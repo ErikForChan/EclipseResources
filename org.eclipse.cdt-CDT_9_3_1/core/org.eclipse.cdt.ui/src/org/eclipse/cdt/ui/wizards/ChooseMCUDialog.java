@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
-import org.eclipse.cdt.ui.wizards.parsexml.AddCpuToXML;
+import org.eclipse.cdt.ui.wizards.parsexml.CreateCpuXml;
 import org.eclipse.cdt.ui.wizards.parsexml.Board;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
 import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByDom;
@@ -161,7 +161,7 @@ public class ChooseMCUDialog extends StatusDialog{
 			private void handleAddButtonPressed() {
 				// TODO Auto-generated method stub
 				AddCpuDialog dialog = new AddCpuDialog(getShell());
-				AddCpuToXML actx = new AddCpuToXML();
+				CreateCpuXml actx = new CreateCpuXml();
 				if (dialog.open() == Window.OK) {
 					Cpu cpu = dialog.getCpu();
 					if(cpu == null) {
