@@ -104,12 +104,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	protected IConfigurationElement fConfigElement;
 	protected DjyosMainWizardPage fMainPage;
 	
-	protected MemoryMapWizard mmPage;
-	protected BoardConfigurationWizard bcPage;
-	protected ModuleConfigurationWizard mcPage;
-	
-	protected MemoryMapWizard memoryPage;
-	protected ModuleConfigurationWizard modulePage;
+	protected MemoryMapWizard memoryPage;//Memory向导界面
+	protected ModuleConfigurationWizard modulePage;//Module向导界面
 	protected IProject newProject;
 	private String wz_title;
 	private String wz_desc;
@@ -137,6 +133,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	public Cpu getCpu() {
 		return fMainPage.getSelectCpu();
 	}
+//																									  ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}
+//	for /r  %%i in (*.o) do ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} %%i && @echo ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} %%i
 
 	public DjyosCommonProjectWizard(String title, String desc) {
 		super();
@@ -156,6 +154,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		addPage(fMainPage);
 	}
 
+	/*
+	 * 获取用户选中模板的信息
+	 */
 	public String getTemplateName() {
 		int tIndex = fMainPage.getTemplateIndex();
 		String templateName = null;
@@ -171,6 +172,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return templateName;
 	}
 	
+	/*
+	 * 获取当前Eclipse的路径
+	 */
 	public String getEclipsePath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
@@ -178,7 +182,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return eclipsePath;
 	}
 	
-	
+	/*
+	 * 创建工程
+	 */
 	public void importTemplate(String projectPath) {
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		int tIndex = fMainPage.getTemplateIndex();
@@ -242,6 +248,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			
 	}
 	
+	/*
+	 * 导入模板工程到当前工作空间
+	 */
 	private IStatus importExistingProject(IProgressMonitor mon, String projectName, String projectPath) {
 
 		SubMonitor subMonitor = SubMonitor.convert(mon, 3);
@@ -288,6 +297,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return Status.OK_STATUS;
 	}
 	
+	/*
+	 * 重命名当前工程
+	 */
 	public void reName() {
 		String templateName = getTemplateName();
 		String projectName = fMainPage.getProjectName();
@@ -310,6 +322,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		}	
 	}
 	
+	/*
+	 * 处理板件的新建
+	 */
 	public void handleBoard() {
 		String projectName = fMainPage.getProjectName();
 		String boardName = fMainPage.getBoardName();
@@ -360,6 +375,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return curProject;
 	}
 	
+	/*
+	 * 修改工程的配置信息，通过修改.cproject
+	 */
 	public void handleCProject() {
 		String projectName = fMainPage.getProjectName();
 		Board board = fMainPage.getSelectBoard();
@@ -434,6 +452,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		
 	}
 
+	/*
+	 * 拷贝工程到另外一个目录
+	 */
 	private void copyFolder(File src, File dest) throws IOException {  
 	    if (src.isDirectory()) {  
 	        if (!dest.exists()) {  
@@ -480,6 +501,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return false;
 	}
 
+	/*
+	 * 创建meomory.lds文件
+	 */
 	public boolean addMemoryToLds(String content, String path) throws IOException {
 
 		String projectName = fMainPage.getProjectName();
@@ -505,6 +529,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		return true;
 	}
 
+	/*
+	 * 创建moduletrim.c文件
+	 */
 	public void createModuleTrim(String boardModuleTrimPath, String destModuleTrimPath) {
 		String fileName = boardModuleTrimPath.substring(boardModuleTrimPath.lastIndexOf("/") + 1,
 				boardModuleTrimPath.length());
@@ -516,14 +543,11 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// if(moduleTrim.exists()) {
-		// String newName = boardModuleTrimPath.substring(0,
-		// boardModuleTrimPath.lastIndexOf("."))+".c";
-		// File newFile = new File(newName);
-		// boolean flag = moduleTrim.renameTo(newFile);
-		// }
 	}
 	
+	/*
+	 * 获取用户配置的momory信息
+	 */
     public void getMemoryToLds() {
     	String ldsHead = memoryPage.getLdsHead();
     	String ldsDesc = memoryPage.getLdsDesc();
@@ -575,9 +599,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		int index = fMainPage.getTemplateIndex();
     	String path = projectPath+"/src/app/OS_prjcfg/cfg/moduleinit.h";
     	String pathIboot = projectPath+"/src/iboot/OS_prjcfg/cfg/moduleinit.h";
-//    	String testpath = projectPath+"/src/app/OS_prjcfg/include";
-//    	File testFile = new File(testpath);
     	getMemoryToLds();
+    	memoryPage.createMemoryMap(projectPath+"/data/MemoryMap.xml");
     	File file = new File(path);
 		File fileIboot = new File(pathIboot);
 		
@@ -615,6 +638,9 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
         return true;
     }
     
+    /*
+     * 删除新建的工程
+     */
     public void clearNewProject() {
     	
     	int tIndex = fMainPage.getTemplateIndex();

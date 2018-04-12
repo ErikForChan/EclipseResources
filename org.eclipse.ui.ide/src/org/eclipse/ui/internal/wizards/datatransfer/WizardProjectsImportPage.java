@@ -25,7 +25,12 @@
 
 package org.eclipse.ui.internal.wizards.datatransfer;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -45,6 +50,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -55,6 +61,8 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -95,6 +103,7 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.StatusUtil;
 import org.eclipse.ui.internal.registry.WorkingSetDescriptor;
 import org.eclipse.ui.internal.registry.WorkingSetRegistry;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.eclipse.ui.wizards.datatransfer.FileSystemStructureProvider;
 import org.eclipse.ui.wizards.datatransfer.ImportOperation;
@@ -1202,7 +1211,6 @@ public class WizardProjectsImportPage extends WizardDataTransferPage {
 	 */
 	public boolean createProjects() {
 		saveWidgetValues();
-
 		final Object[] selected = projectsList.getCheckedElements();
 		createdProjects = new ArrayList<>();
 		WorkspaceModifyOperation op = new WorkspaceModifyOperation() {
@@ -1244,7 +1252,54 @@ public class WizardProjectsImportPage extends WizardDataTransferPage {
 			return false;
 		} finally {
 			ArchiveFileManipulations.closeStructureProvider(structureProvider, getShell());
+			for (IProject element : createdProjects) {
+				boolean containScope = false;
+				String filePath = element.getLocation().toString()+"/.settings/org.eclipse.cdt.codan.core.prefs";
+				File infile = new File(filePath); 
+				BufferedReader br = null;
+		        String readedLine;
+		        StringBuffer buffer = new StringBuffer("");
+				try {
+					br = new BufferedReader(new FileReader(infile));
+					while ((readedLine = br.readLine()) != null) {
+						if (readedLine.contains("useParentScope=false")) {
+							containScope = true;
+							continue;
+						}
+						buffer.append(readedLine + "\n");
+					}
+				} catch (Exception e) {
+		            e.printStackTrace();
+		        } finally {
+		            try {
+		                if (br != null) {
+		                    br.close();
+		                }
+		            } catch (IOException e) {
+		                e.printStackTrace();
+		            }
+		        }
+				
+				if(containScope) {
+					infile.delete();
+					try {
+						infile.createNewFile();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					try {
+						BufferedWriter writer = new BufferedWriter(new FileWriter(infile));
+						writer.write(buffer.toString());
+						writer.flush();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 
+			}
 			// Ensure the projects to the working sets
 			addToWorkingSets();
 		}

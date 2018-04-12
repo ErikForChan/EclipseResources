@@ -1,5 +1,7 @@
 package org.eclipse.cdt.ui.wizards;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.List;
@@ -59,6 +61,8 @@ import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
 
+import org.eclipse.cdt.internal.ui.djyproperties.MemoryMap;
+import org.eclipse.cdt.internal.ui.djyproperties.parsexml.CreateMemoryMapXml;
 import org.eclipse.cdt.internal.ui.newui.Messages;
 import org.eclipse.cdt.internal.ui.wizards.ICDTCommonProjectWizard;
 import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
@@ -135,30 +139,77 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		setPageComplete(false);
 	}
 	
+	public void createMemoryMap(String filePath) {
+		MemoryMap mMap;
+		String flashStart = "",flashSize = "",ramStart= "",ramSize= "",
+				extromStart = "",extromSize = "",extramStart = "",extramSize = "",ibootSize = "";
+		for(int i=0;i<romOnBox.length;i++) {
+			if(romOnBox[i].getSelection()) {
+				String startBuffer = (i==0?romOnStartText[i].getText():","+romOnStartText[i].getText());
+				String sizeBuffer = (i==0?romOnSizeText[i].getText():","+romOnSizeText[i].getText());
+				flashStart+=startBuffer;
+				flashSize+=sizeBuffer;
+			}
+			if(romOffBox[i].getSelection()) {
+				String startBuffer = (i==0?romOffStartText[i].getText():","+romOffStartText[i].getText());
+				String sizeBuffer = (i==0?romOffSizeText[i].getText():","+romOffSizeText[i].getText());
+				ramStart+=startBuffer;
+				ramSize+=sizeBuffer;		
+			}
+			if(ramOnBox[i].getSelection()) {
+				String startBuffer = (i==0?ramOnStartText[i].getText():","+ramOnStartText[i].getText());
+				String sizeBuffer = (i==0?ramOnSizeText[i].getText():","+ramOnSizeText[i].getText());
+				extromStart+=startBuffer;
+				extromSize+=sizeBuffer;
+			}
+			if(ramOffBox[i].getSelection()) {
+				String startBuffer = (i==0?ramOffStartText[i].getText():","+ramOffStartText[i].getText());
+				String sizeBuffer = (i==0?ramOffSizeText[i].getText():","+ramOffSizeText[i].getText());
+				extramStart+=startBuffer;
+				extramSize+=sizeBuffer;	
+			}
+		}
+		ibootSize = fIbootSize.getTextControl(ibootComposite).getText()+"K";
+		mMap = new MemoryMap(flashStart==""?"null":flashStart,flashSize==""?"null":flashSize,ramStart==""?"null":ramStart,
+				ramSize==""?"null":ramSize,extromStart==""?"null":extromStart,extromSize==""?"null":extromSize,
+				extramStart==""?"null":extramStart,extramSize==""?"null":extramSize,ibootSize);
+		
+		File file = new File(filePath);
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		CreateMemoryMapXml cmmx = new CreateMemoryMapXml();
+		cmmx.creatMemoryMap(mMap, filePath);
+	}
+	
 	public String getLdsHead() {
 		ldsHead += "MEMORY\n"
 				+ "{";
 		for(int i=0;i<romOnBox.length;i++) {
 			if(romOnBox[i].getSelection()) {
-				ldsHead += "\n\t InnerFlash"+(i+1)+"(RX) : ORIGIN = "+romOnStartText[i].getText()
+				ldsHead += "\n\tInnerFlash"+(i+1)+"(RX) : ORIGIN = "+romOnStartText[i].getText()
 						+", LENGTH = "+romOnSizeText[i].getText();
 			}
 		}
 		for(int i=0;i<romOffBox.length;i++) {
 			if(romOffBox[i].getSelection()) {
-				ldsHead += "\n\t extrom"+(i+1)+"(RX) : ORIGIN = "+romOffStartText[i].getText()
+				ldsHead += "\n\textrom"+(i+1)+"(RX) : ORIGIN = "+romOffStartText[i].getText()
 						+", LENGTH = "+romOffSizeText[i].getText();
 			}
 		}
 		for(int i=0;i<ramOnBox.length;i++) {
 			if(ramOnBox[i].getSelection()) {
-				ldsHead += "\n\t RAM"+(i+1)+"(RXW) : ORIGIN = "+ramOnStartText[i].getText()
+				ldsHead += "\n\tRAM"+(i+1)+"(RXW) : ORIGIN = "+ramOnStartText[i].getText()
 						+", LENGTH = "+ramOnSizeText[i].getText();
 			}
 		}
 		for(int i=0;i<ramOffBox.length;i++) {
 			if(ramOffBox[i].getSelection()) {
-				ldsHead += "\n\t extram"+(i+1)+"(RXW) : ORIGIN = "+ramOffStartText[i].getText()
+				ldsHead += "\n\textram"+(i+1)+"(RXW) : ORIGIN = "+ramOffStartText[i].getText()
 						+", LENGTH = "+ramOffSizeText[i].getText();
 			}
 		}
@@ -168,29 +219,29 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 	
 	public String getLdsDesc() {
 		int ibootSize = Integer.parseInt(fIbootSize.getTextControl(ibootComposite).getText());
-		ldsDesc += "\nIboot Size = "+ibootSize+"K;\n";
+		ldsDesc += "\nIbootSize = "+ibootSize+"K;\n";
 		for(int i=0;i<romOnBox.length;i++) {
 			if(romOnBox[i].getSelection()) {
-				ldsDesc += "\n InnerFlash"+(i+1)+"Offset = "+"ORIGIN(InnerFlash"+(i+1)+");";
-				ldsDesc += "\n InnerFlash"+(i+1)+"Range = "+"LENGTH(InnerFlash"+(i+1)+");";
+				ldsDesc += "\nInnerFlash"+(i+1)+"Offset = "+"ORIGIN(InnerFlash"+(i+1)+");";
+				ldsDesc += "\nInnerFlash"+(i+1)+"Range = "+"LENGTH(InnerFlash"+(i+1)+");";
 			}
 		}
 		for(int i=0;i<romOffBox.length;i++) {
 			if(romOffBox[i].getSelection()) {
-				ldsDesc += "\n ExtRom"+(i+1)+"Start = "+"ORIGIN(extRom"+(i+1)+");";
-				ldsDesc += "\n ExtRom"+(i+1)+"Size = "+"LENGTH(extRom"+(i+1)+");";
+				ldsDesc += "\nExtRom"+(i+1)+"Start = "+"ORIGIN(extRom"+(i+1)+");";
+				ldsDesc += "\nExtRom"+(i+1)+"Size = "+"LENGTH(extRom"+(i+1)+");";
 			}
 		}
 		for(int i=0;i<ramOnBox.length;i++) {
 			if(ramOnBox[i].getSelection()) {
-				ldsDesc += "\n InnerRAM"+(i+1)+"Start = "+"ORIGIN(RAM"+(i+1)+");";
-				ldsDesc += "\n InnerRAM"+(i+1)+"Size = "+"LENGTH(RAM"+(i+1)+");";
+				ldsDesc += "\nInnerRAM"+(i+1)+"Start = "+"ORIGIN(RAM"+(i+1)+");";
+				ldsDesc += "\nInnerRAM"+(i+1)+"Size = "+"LENGTH(RAM"+(i+1)+");";
 			}
 		}
 		for(int i=0;i<ramOffBox.length;i++) {
 			if(ramOffBox[i].getSelection()) {
-				ldsDesc += "\n ExtRam"+(i+1)+"Start = "+"ORIGIN(extRam"+(i+1)+");";
-				ldsDesc += "\n ExtRam"+(i+1)+"Size = "+"LENGTH(extRam"+(i+1)+");";
+				ldsDesc += "\nExtRam"+(i+1)+"Start = "+"ORIGIN(extRam"+(i+1)+");";
+				ldsDesc += "\nExtRam"+(i+1)+"Size = "+"LENGTH(extRam"+(i+1)+");";
 			}
 		}
 		return ldsDesc;

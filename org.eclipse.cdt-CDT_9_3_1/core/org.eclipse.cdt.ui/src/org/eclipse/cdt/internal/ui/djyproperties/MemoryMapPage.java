@@ -87,9 +87,11 @@ public class MemoryMapPage extends PropertyPage{
 			romOnSizeText[i].setText(flashSizes[i]);
 		}	
 		for (int i = 0; i < ramStarts.length; i++) {
-			romOffBox[i].setSelection(true);
-			romOffStartText[i].setText(ramStarts[i]);
-			romOffSizeText[i].setText(ramSizes[i]);
+			if(! ramStarts[i].equals("null")) {
+				romOffBox[i].setSelection(true);
+				romOffStartText[i].setText(ramStarts[i]);
+				romOffSizeText[i].setText(ramSizes[i]);
+			}		
 		}	
 		for (int i = 0; i < extromStarts.length; i++) {
 			if(! extromStarts[i].equals("null")) {
@@ -100,9 +102,11 @@ public class MemoryMapPage extends PropertyPage{
 			
 		}	
 		for (int i = 0; i < extramStarts.length; i++) {
-			ramOffBox[i].setSelection(true);
-			ramOffStartText[i].setText(extramStarts[i]);
-			ramOffSizeText[i].setText(extramSizes[i]);
+			if(! extramStarts[i].equals("null")) {
+				ramOffBox[i].setSelection(true);
+				ramOffStartText[i].setText(extramStarts[i]);
+				ramOffSizeText[i].setText(extramSizes[i]);
+			}			
 		}
 		fIbootSize.getTextControl(ibootComposite).setText(ibootSize.substring(0, ibootSize.length()-1));
 	}
@@ -168,7 +172,7 @@ public class MemoryMapPage extends PropertyPage{
 	private void updateMemoryMap() {
 		MemoryMap mMap;
 		IProject project = getProject();
-		String filePath = project.getLocation().toString()+"/src/data/MemoryMap.xml";
+		String filePath = project.getLocation().toString()+"data/MemoryMap.xml";
 		String flashStart = "",flashSize = "",ramStart= "",ramSize= "",
 				extromStart = "",extromSize = "",extramStart = "",extramSize = "",ibootSize = "";
 		for(int i=0;i<romOnBox.length;i++) {
