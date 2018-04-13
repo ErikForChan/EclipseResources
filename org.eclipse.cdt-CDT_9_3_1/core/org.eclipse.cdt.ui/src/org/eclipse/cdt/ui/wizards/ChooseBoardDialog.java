@@ -20,6 +20,7 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -60,6 +61,7 @@ public class ChooseBoardDialog extends StatusDialog{
 	private Text boardEditText;
 	private TableViewer tv;
 	private TableColumn[] tableColumns = new TableColumn[3];
+	private Button filterBoardBox;
 	private String[] boardDetails = {"Board name","Cpu name","External clock(MHz)"};
 	List<Board> boards = new ArrayList<Board>();
 	List<Board> boardsFiltered = new ArrayList<Board>();
@@ -119,9 +121,6 @@ public class ChooseBoardDialog extends StatusDialog{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		if(curCpuName != null) {
-			boards = getBoardsFiltered(boards,curCpuName);
-		}
 		tv.setInput(boards);
 	}
 	
@@ -177,12 +176,43 @@ public class ChooseBoardDialog extends StatusDialog{
 	
 		
 		Composite boardListCpt = new Composite(composite, SWT.NONE);
-		layout.marginWidth = 0;
-		boardListCpt.setLayout(layout);
+		GridLayout boardLayout = new GridLayout();
+		boardLayout.marginWidth = 0;
+		boardLayout.numColumns = 1;
+		boardListCpt.setLayout(boardLayout);
 		boardListCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
+		filterBoardBox = new Button(boardListCpt, SWT.CHECK);
+		filterBoardBox.setText("Only display the Board with the cpu selected.");
 		boardListTable = new Table(boardListCpt, SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.H_SCROLL | SWT.FULL_SELECTION);
 		boardListTable.setHeaderVisible(true);
 		boardListTable.setLinesVisible(true);
+		filterBoardBox.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				ReadBoardByDom rbbd = new ReadBoardByDom();
+				try {
+					boards = rbbd.getBoards(boardXmlPath);
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			
+				if(filterBoardBox.getSelection()) {
+					if(!curCpuName.equals("")) {
+						boards = getBoardsFiltered(boards,curCpuName);
+					}
+				}
+				tv.setInput(boards);
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 		boardListTable.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {

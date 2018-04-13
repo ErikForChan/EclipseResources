@@ -441,11 +441,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			ChooseBoardDialog dialog;
 			String sCpu = MCUNameField.getText();
 			
-			if(sCpu.equals("")) {
-				dialog = new ChooseBoardDialog(getShell());
-			}else {
-				dialog = new ChooseBoardDialog(getShell(),sCpu);
-			}
+			dialog = new ChooseBoardDialog(getShell(),sCpu);
 			
 			if (dialog.open() == Window.OK) {
 				boardSelected = dialog.getSelectBoard();
