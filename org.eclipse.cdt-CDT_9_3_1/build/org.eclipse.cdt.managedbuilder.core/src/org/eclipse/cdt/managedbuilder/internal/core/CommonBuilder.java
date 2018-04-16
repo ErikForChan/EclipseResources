@@ -451,23 +451,23 @@ public class CommonBuilder extends ACBuilder {
 			outputTrace(project.getName(), ">>build requested, type = " + kind); //$NON-NLS-1$
 		setAllConfigBuild(false);
 		IProject[] projects = null;
-		String path = "E:\\source\\content.txt";
-		File file = new File(path);
-		if(!file.exists()) {
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		FileWriter writer = null;
-		try {		
-			writer = new FileWriter(path, true);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+//		String path = "E:\\source\\content.txt";
+//		File file = new File(path);
+//		if(!file.exists()) {
+//			try {
+//				file.createNewFile();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
+//		FileWriter writer = null;
+//		try {		
+//			writer = new FileWriter(path, true);
+//		} catch (IOException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 		if (needAllConfigBuild()) {
 			IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
 			IConfiguration[] cfgs = info.getManagedProject().getConfigurations();

@@ -79,7 +79,7 @@ public class ChangeBuildConfigActionBase {
 				//if (!configNames.contains(s) && !s.equals("Iboot") && !s.equals("libos_demo_o0") && !s.equals("libos_demo_o2"))
 				if (!configNames.contains(s)) 
 					configNames.add(s);
-				if (cfgDesc.isActive())	
+				if (cfgDesc.isActive())
 					sActiveConfig = s;
 			}
 

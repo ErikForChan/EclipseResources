@@ -69,7 +69,7 @@ import org.eclipse.cdt.internal.ui.newui.Messages;
 import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
 
 @SuppressWarnings("restriction")
-public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListListener {
+public class DjyosMainWizardPage extends WizardPage{
 	public static final String PAGE_ID = "org.eclipse.cdt.managedbuilder.ui.wizard.NewModelProjectWizardPage"; //$NON-NLS-1$
 
 	private static final String EXTENSION_POINT_ID = "org.eclipse.cdt.ui.CDTWizard"; //$NON-NLS-1$
@@ -459,7 +459,6 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 			}
 
 			setPageComplete(valid);
-			System.out.println("getErrorReporter()");
 		};
 	}
 
@@ -575,35 +574,8 @@ public class DjyosMainWizardPage extends WizardPage implements IWizardItemsListL
 		setErrorMessage(null);
 		return true;
 	}
-
-	@Override
-	public void toolChainListChanged(int count) {
-		getWizard().getContainer().updateButtons();
-	}
-
-	@Override
-	public boolean isCurrent() {
-		return isCurrentPage();
-	}
-	
-	@Override
-	public List<EntryDescriptor> filterItems(List<EntryDescriptor> items) {
-		return items;
-	}
-	
-	@Override
-	public void setVisible(boolean visible) {
-		super.setVisible(visible);
-		if (visible) {
-			// projectNameField.setFocus();
-		}
-	}
 	
     public boolean useDefaults() {
 		return locationArea.isDefault();
-	}
-
-	public IWorkingSet[] getSelectedWorkingSets() {
-		return workingSetGroup == null ? new IWorkingSet[0] : workingSetGroup.getSelectedWorkingSets();
 	}
 }

@@ -23,9 +23,11 @@ import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceRuleFactory;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -42,6 +44,8 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.core.runtime.content.IContentTypeManager;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.deferred.ChangeQueue.Change;
@@ -74,11 +78,16 @@ import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.managedbuilder.core.BuildException;
+import org.eclipse.cdt.managedbuilder.core.IBuilder;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
 import org.eclipse.cdt.managedbuilder.core.IOption;
 import org.eclipse.cdt.managedbuilder.core.IResourceInfo;
 import org.eclipse.cdt.managedbuilder.core.IToolChain;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.BuildStatus;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.CfgBuildInfo;
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.parsexml.Board;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
@@ -90,7 +99,6 @@ import org.eclipse.cdt.internal.ui.newui.Messages;
 import org.eclipse.cdt.internal.ui.wizards.ICDTCommonProjectWizard;
 
 public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
-implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 {
 	private static final String PREFIX= "CProjectWizard"; //$NON-NLS-1$
 	private static final String OP_ERROR= "CProjectWizard.op_error"; //$NON-NLS-1$
@@ -133,8 +141,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	public Cpu getCpu() {
 		return fMainPage.getSelectCpu();
 	}
-//																									  ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}
-//	for /r  %%i in (*.o) do ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} %%i && @echo ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} %%i
 
 	public DjyosCommonProjectWizard(String title, String desc) {
 		super();
@@ -160,15 +166,17 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	public String getTemplateName() {
 		int tIndex = fMainPage.getTemplateIndex();
 		String templateName = null;
-		if(tIndex==0) {
-			templateName = "ibootapp";
-		}else if(tIndex==1){
-			templateName = "iboot";
-		}else if(tIndex==2){
-			templateName = "App";
-		}else if(tIndex==3){
-			templateName = "Apponly";
+		switch(tIndex) {
+		case 0:
+			templateName = "ibootapp";break;
+		case 1:
+			templateName = "iboot";break;
+		case 2:
+			templateName = "App";break;
+		default:
+			templateName = "Apponly";break;
 		}
+		
 		return templateName;
 	}
 	
@@ -178,7 +186,6 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	public String getEclipsePath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		System.out.println("eclipsePath:  "+eclipsePath);
 		return eclipsePath;
 	}
 	
@@ -294,6 +301,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		}
 		
 		curProject = project;
+	
 		return Status.OK_STATUS;
 	}
 	
@@ -367,8 +375,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
+		}	
 	}
 	
 	public IProject getProject() {
@@ -438,17 +445,38 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 				project.getFile(".project"),"startup");
 		
 		String core= board.cpu.getCore();
+		String category = cpu.getCategory();
+		String armv = null;
+		String stm = null;
+		String cpudrv = null;
 		if(core.equals("cortex-m7")) {
-			rltx.reviseXmlLink("src/libos/bsp/arch","cortex-m7", "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m/armv7e-m","cortex-m7", 
-					project.getFile(".project"),"arch");
-			rltx.reviseXmlLink("src/libos/bsp/cpudrv","stm32f7", "DJYOS_SRC_LOCATION/bsp/cpudrv/cortex-m7","stm32f7", 
-					project.getFile(".project"),"cpudrv");
+			armv = "armv7e-m";
+			stm = "stm32f7";
 		}else if(core.equals("cortex-m4")) {
-			rltx.reviseXmlLink("src/libos/bsp/arch","cortex-m4", "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m/armv7e-m","cortex-m4", 
-					project.getFile(".project"),"arch");
-			rltx.reviseXmlLink("src/libos/bsp/cpudrv","stm32f4xx", "DJYOS_SRC_LOCATION/bsp/cpudrv/cortex-m7","stm32f4xx",
-					project.getFile(".project"),"cpudrv");
+			armv = "armv7e-m";
+			stm = "stm32f4";
+		}else if(core.equals("cortex-m3")) {
+			armv = "armv7-m";
+			stm = "stm32f3";
 		}
+		
+		if(category.contains("stm32f7")) {
+			cpudrv = "stm32f7";
+		}else if(category.contains("stm32f4")) {
+			cpudrv = "stm32f4xx";
+		}else if(category.contains("stm32f3")) {
+			cpudrv = "stm32f7";
+		}else if(category.contains("stm32l4")) {
+			cpudrv = "stm32L4xx";
+		}else if(category.contains("stm32f1")) {
+			cpudrv = "stm32f1xx";
+		}
+		rltx.reviseXmlLink("src/libos/bsp/cpudrv",cpudrv, "DJYOS_SRC_LOCATION/bsp/cpudrv",category,
+				project.getFile(".project"),"cpudrv");
+		rltx.reviseXmlLink("src/libos/bsp/arch",core, "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m"+armv,category, 
+				project.getFile(".project"),"arch");
+//		rltx.reviseXmlLink("src/libos/third",stm, "DJYOS_SRC_LOCATION/third/firmware",cpu.getCategory(), 
+//				project.getFile(".project"),"third");
 		
 	}
 
@@ -482,25 +510,7 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 	        out.close();  
 	    }  
 	}  
-
-	protected boolean setCreated() throws CoreException {
-		ICProjectDescriptionManager mngr = CoreModel.getDefault().getProjectDescriptionManager();
-
-		ICProjectDescription des = mngr.getProjectDescription(newProject, false);
-
-		if(des == null ) {
-			return false;
-		}
-
-		if(des.isCdtProjectCreating()){
-			des = mngr.getProjectDescription(newProject, true);
-			des.setCdtProjectCreated();
-			mngr.setProjectDescription(newProject, des, false, null);
-			return true;
-		}
-		return false;
-	}
-
+	
 	/*
 	 * 创建meomory.lds文件
 	 */
@@ -599,8 +609,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 		int index = fMainPage.getTemplateIndex();
     	String path = projectPath+"/src/app/OS_prjcfg/cfg/moduleinit.h";
     	String pathIboot = projectPath+"/src/iboot/OS_prjcfg/cfg/moduleinit.h";
-    	getMemoryToLds();
-    	memoryPage.createMemoryMap(projectPath+"/data/MemoryMap.xml");
+    	getMemoryToLds();//根据MemoryMap配置的内容添加memory.lds文件
+    	memoryPage.createMemoryMap(projectPath+"/data/MemoryMap.xml");//根据MemoryMap配置的内容添加memoryMap.xml文件
     	File file = new File(path);
 		File fileIboot = new File(pathIboot);
 		
@@ -628,7 +638,14 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			}
     		modulePage.fillModuleinit(path);
     	}
-
+    	
+//    	ICConfigurationDescription[] cfgDescs = getCfgs(curProject);
+//		for (ICConfigurationDescription cfgDesc : cfgDescs) {
+//			System.out.println("cfgDesc.getName()"+cfgDesc.getName());
+//		}
+    	
+    	createBuild(curProject);
+		
 		return true;
 	}
 	
@@ -638,11 +655,59 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
         return true;
     }
     
+	@SuppressWarnings("restriction")
+	public boolean createBuild(IProject project) {
+		CommonBuilder cb = new CommonBuilder();
+		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
+		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+		for (IConfiguration cfg : cfgs) {
+			IBuilder builder = cfg.getEditableBuilder();
+			String cfgName = cfg.getName();
+			// String builderName = builder.getName();
+			// if(builderName.equals("Gnu Make Builder")) {
+			if (cfgName.equals("libos_demo_o0") || cfgName.equals("libos_demo_o2")) {
+				CfgBuildInfo binfo = new CfgBuildInfo(builder, true);
+				BuildStatus status = new BuildStatus(builder);
+				status.setRebuild();
+				IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace().getRuleFactory();
+				final ISchedulingRule rule = ruleFactory.modifyRule(binfo.getProject());
+				Job backgroundJob = new Job("CDT Common Builder") {
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						// TODO Auto-generated method stub
+						try {
+							ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+								@Override
+								public void run(IProgressMonitor monitor) throws CoreException {
+//									cb.performPrebuildGeneration(IncrementalProjectBuilder.FULL_BUILD, binfo,
+//											status, monitor);
+									cb.build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
+								}
+							}, rule, IWorkspace.AVOID_UPDATE, monitor);
+						} catch (CoreException e) {
+							return e.getStatus();
+						}
+						IStatus returnStatus = Status.OK_STATUS;
+						return returnStatus;
+					}
+				};
+				backgroundJob.setRule(rule);
+				backgroundJob.schedule();
+			}
+		}
+		try {
+			project.refreshLocal(IResource.DEPTH_INFINITE, null);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return true;
+	}
+    
     /*
      * 删除新建的工程
      */
     public void clearNewProject() {
-    	
     	int tIndex = fMainPage.getTemplateIndex();
 		String projectName = fMainPage.getProjectNameFieldValue();
 		String templateName = getTemplateName();
@@ -663,16 +728,15 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
     }
 
 	@Override
-	public abstract String[] getNatures();
-
-	@Override
 	public void dispose() {
 		fMainPage.dispose();
 	}
 
     @Override
 	public boolean canFinish() {
+    	
     	if(addedModule) {
+    		System.out.println("modulePage.moduleCompleted:  "+modulePage.moduleCompleted);
     		if(modulePage.moduleCompleted) {
     			return true;
     		}else {
@@ -681,9 +745,11 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
     	}else {
     		return false;
     	}
-//    	return super.canFinish();
     }
     
+    /*
+     * 获取当前工程的所有配置项
+     */
 	private ICConfigurationDescription[] getCfgs(IProject prj) {
 		ICProjectDescription prjd = CoreModel.getDefault().getProjectDescription(prj, false);
 		if (prjd != null) { 
@@ -691,63 +757,8 @@ implements IExecutableExtension, IWizardWithMemory, ICDTCommonProjectWizard
 			if (cfgs != null) {
 				return cfgs;
 			}
-		}
-		
+		}		
 		return new ICConfigurationDescription[0];
 	}
-    
-	@Override
-	public String getLastProjectName() {
-		return lastProjectName;
-	}
-
-	@Override
-	public URI getLastProjectLocation() {
-		return lastProjectLocation;
-	}
-
-	@Override
-	public IProject getLastProject() {
-		return newProject;
-	}
-
-	protected IProgressMonitor continueCreationMonitor;
-	protected abstract IProject continueCreation(IProject prj);
-
-	@Override
-	public IProject createIProject(String name, URI location) throws CoreException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IProject createIProject(String name, URI location, IProgressMonitor monitor) throws CoreException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String[] getExtensions() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String[] getLanguageIDs() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IProject getProject(boolean defaults) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IProject getProject(boolean defaults, boolean onFinish) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+   
 }

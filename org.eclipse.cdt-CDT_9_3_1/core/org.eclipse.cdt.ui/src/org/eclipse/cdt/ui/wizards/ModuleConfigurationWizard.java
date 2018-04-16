@@ -190,7 +190,6 @@ public class ModuleConfigurationWizard extends WizardPage implements IWizardItem
 	    DocumentBuilder db = null;  
 	    Document document = null;
 	    String filePath = project.getLocation().toString()+"/data/ModuleCfg.xml";
-	    System.out.println("filePath:  "+filePath);
 	    try {  
             dbFactory = DocumentBuilderFactory.newInstance();  
             db = dbFactory.newDocumentBuilder();
@@ -298,8 +297,6 @@ public class ModuleConfigurationWizard extends WizardPage implements IWizardItem
 		if (childModule.getHaveChild().equals("yes")) {
 			depth++;
 			String moduleName = childModule.getName();
-			System.out.println("(allModules.size(): "+allModules.size());
-			System.out.println("(allItems.length: "+allItems.length);
 			for (int j = 0; j < allModules.size(); j++) {
 				if(! allModules.get(j).getParent().equals("root")) {
 					Module module = allModules.get(j);

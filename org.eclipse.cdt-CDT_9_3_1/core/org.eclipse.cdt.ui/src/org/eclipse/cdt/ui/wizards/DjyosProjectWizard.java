@@ -24,37 +24,5 @@ public class DjyosProjectWizard extends DjyosCommonProjectWizard {
 	public DjyosProjectWizard() {
 		super(Messages.NewModelProjectWizard_6, Messages.NewModelProjectWizard_7);
 	}
-
-	@Override
-	public String[] getNatures() {
-		return new String[] { DjyosProjectNature.C_NATURE_ID, CCProjectNature.CC_NATURE_ID };
-	}
-	
-	@Override
-	protected IProject continueCreation(IProject prj) {
-		if (continueCreationMonitor == null) {
-			continueCreationMonitor = new NullProgressMonitor();
-		}
-		
-		try {
-			continueCreationMonitor.beginTask("Add DJYOS Project Nature", 1);
-			DjyosProjectNature.addCNature(prj, new SubProgressMonitor(continueCreationMonitor, 1));
-			CCProjectNature.addCCNature(prj, new SubProgressMonitor(continueCreationMonitor, 1));
-		} catch (CoreException e) {}
-		finally {continueCreationMonitor.done();}
-		return prj;
-	}
-
-	@Override
-	public String[] getContentTypeIDs() {
-		return new String[] { CCorePlugin.CONTENT_TYPE_CXXSOURCE, CCorePlugin.CONTENT_TYPE_CXXHEADER };
-	}
-
-	@Override
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data)
-			throws CoreException {
-		// TODO Auto-generated method stub
-		
-	}
 	
 }

@@ -60,7 +60,10 @@ public class ReviseLinkToXML {
 								cNode.setTextContent(localPath+"/"+boardName);
 							}else if(flag.equals("cpudrv")){
 								cNode.setTextContent(localPath+"/"+boardName);
-							}							
+							}else if(flag.equals("third")){
+								cNode.setTextContent(localPath+"/"+boardName);
+							}	
+							
 						}
 			        	
 					}	  	        	

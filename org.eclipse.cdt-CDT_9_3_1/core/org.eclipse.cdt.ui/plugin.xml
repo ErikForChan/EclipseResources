@@ -472,6 +472,34 @@
             %DJYOSproject.desc
         </description>
      </wizard>
+        <wizard
+            canFinishEarly="false"
+            category="org.eclipse.cdt.ui.newCWizards"
+            class="org.eclipse.cdt.ui.wizards.cpu.CpuWizard"
+            finalPerspective="org.eclipse.cdt.ui.CPerspective"
+            hasPages="true"
+            icon="icons/elcl16/newmngc_app.gif"
+            id="org.eclipse.cdt.ui.wizards.cpu"
+            name="%Cpu.title"
+            project="true">
+        <description>
+            %Cpu.desc
+        </description>
+     </wizard>
+        <wizard
+            canFinishEarly="false"
+            category="org.eclipse.cdt.ui.newCWizards"
+            class="org.eclipse.cdt.ui.wizards.board.BoardWizard"
+            finalPerspective="org.eclipse.cdt.ui.CPerspective"
+            hasPages="true"
+            icon="icons/elcl16/newmngc_app.gif"
+            id="org.eclipse.cdt.ui.wizards.board"
+            name="%Board.title"
+            project="true">
+        <description>
+            %Board.desc
+        </description>
+     </wizard>
        <wizard
              canFinishEarly="false"
              category="org.eclipse.cdt.ui.newCWizards"

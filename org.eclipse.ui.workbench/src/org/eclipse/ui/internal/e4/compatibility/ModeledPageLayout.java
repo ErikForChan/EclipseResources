@@ -75,6 +75,8 @@ public class ModeledPageLayout implements IPageLayout {
 		if(tagPrefix.equals(NEW_WIZARD_TAG)) {
 			if(model.getLabel().equals("<C/C++>")) {
 				result.add("org.eclipse.cdt.ui.wizards.NewCWizard3");
+				result.add("org.eclipse.cdt.ui.wizards.cpu");
+				result.add("org.eclipse.cdt.ui.wizards.board");
 			}else {
 				for (String tag : model.getTags()) {
 					if (tag.startsWith(tagPrefix)) {
