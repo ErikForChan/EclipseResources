@@ -303,7 +303,6 @@ public class ModuleConfigurationWizard extends WizardPage implements IWizardItem
 					if (!module.isVisited()) {
 						String parentName = module.getParent();
 						if (parentName.equals(moduleName)) {
-							System.out.println("(allItems[j]: "+j);
 							if(allItems[j].getChecked()) {
 								for(int i=0;i<depth;i++) {
 									moduleInit+="\t";
@@ -331,7 +330,6 @@ public class ModuleConfigurationWizard extends WizardPage implements IWizardItem
 						if (parentName.equals(moduleName)) {
 							allItems[childCount] = new TreeItem(curItem, SWT.NONE);
 							allItems[childCount].setText(module.getName());
-							System.out.println("childCount  "+childCount);
 							if(childModule.isChecked()) {
 								allItems[childCount].setChecked(true);
 							}

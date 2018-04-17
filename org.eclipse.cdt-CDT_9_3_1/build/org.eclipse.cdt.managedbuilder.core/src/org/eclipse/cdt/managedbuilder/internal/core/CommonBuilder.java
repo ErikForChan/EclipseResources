@@ -737,13 +737,14 @@ public class CommonBuilder extends ACBuilder {
 		}
 	}
 
-	public void build(int kind, CfgBuildInfo bInfo, IProgressMonitor monitor) throws CoreException{
+	public boolean build(int kind, CfgBuildInfo bInfo, IProgressMonitor monitor) throws CoreException{
 		if(VERBOSE)
 			outputTrace(bInfo.getProject().getName(), "building cfg " + bInfo.getConfiguration().getName() + " with builder " + bInfo.getBuilder().getName()); //$NON-NLS-1$ //$NON-NLS-2$
 		IBuilder builder = bInfo.getBuilder();
-		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
-		Configuration configuration = (Configuration) bInfo.getConfiguration();		
-		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
+		boolean clean = false;
+//		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
+//		Configuration configuration = (Configuration) bInfo.getConfiguration();		
+//		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
 //		if(!folder.exists()) {
 //			if(folder.getName().startsWith("libOS")) {
 //				configuration.enableInternalBuilder(true);
@@ -771,7 +772,7 @@ public class CommonBuilder extends ACBuilder {
 		BuildStatus status = new BuildStatus(builder);
 
 		if (!shouldBuild(kind, builder)) {
-			return;
+			return false;
 		}
 //		if (kind == IncrementalProjectBuilder.AUTO_BUILD) {
 //			IResourceDelta delta = getDelta(getProject());
@@ -819,17 +820,19 @@ public class CommonBuilder extends ACBuilder {
 						}
 						cfg.setRebuildState(false);
 					}
+					clean = isClean;
 				} catch(CoreException e){
 					cfg.setRebuildState(true);
 					throw e;
 				}
-
+				
 				PropertyManager.getInstance().serialize(cfg);
 			} else if(status.getConsoleMessagesList().size() != 0) {
 				emitMessage(bInfo, concatMessages(status.getConsoleMessagesList()));
 			}
 		}
 		checkCancel(monitor);
+		return clean;
 	}
 
 

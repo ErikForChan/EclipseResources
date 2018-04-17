@@ -103,7 +103,7 @@ Export-Package: org.eclipse.ui;ui.workbench=split;mandatory:="ui.workb
  ipse.ui.splash,org.eclipse.ui.statushandlers,org.eclipse.ui.swt,org.e
  clipse.ui.themes,org.eclipse.ui.views,org.eclipse.ui.wizards
 Bundle-Name: %pluginName
-Bundle-Version: 3.110.0.v20170612-1255
+Bundle-Version: 3.110.1.v20170704-1208
 Bundle-ClassPath: .
 Bundle-Localization: plugin
 Bundle-Activator: org.eclipse.ui.internal.WorkbenchPlugin

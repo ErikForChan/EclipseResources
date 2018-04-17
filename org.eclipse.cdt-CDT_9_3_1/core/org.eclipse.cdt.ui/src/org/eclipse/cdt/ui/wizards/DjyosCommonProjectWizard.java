@@ -643,7 +643,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 //		for (ICConfigurationDescription cfgDesc : cfgDescs) {
 //			System.out.println("cfgDesc.getName()"+cfgDesc.getName());
 //		}
-    	
+//    	
     	createBuild(curProject);
 		
 		return true;
@@ -658,13 +658,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	@SuppressWarnings("restriction")
 	public boolean createBuild(IProject project) {
 		CommonBuilder cb = new CommonBuilder();
+		boolean isClean = false;
 		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
 		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
 		for (IConfiguration cfg : cfgs) {
 			IBuilder builder = cfg.getEditableBuilder();
 			String cfgName = cfg.getName();
-			// String builderName = builder.getName();
-			// if(builderName.equals("Gnu Make Builder")) {
 			if (cfgName.equals("libos_demo_o0") || cfgName.equals("libos_demo_o2")) {
 				CfgBuildInfo binfo = new CfgBuildInfo(builder, true);
 				BuildStatus status = new BuildStatus(builder);
@@ -681,7 +680,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 								public void run(IProgressMonitor monitor) throws CoreException {
 //									cb.performPrebuildGeneration(IncrementalProjectBuilder.FULL_BUILD, binfo,
 //											status, monitor);
-									cb.build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
+									boolean isClean = cb.build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
 								}
 							}, rule, IWorkspace.AVOID_UPDATE, monitor);
 						} catch (CoreException e) {
@@ -701,6 +700,35 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		if(isClean) {
+			System.out.println("createBuild :file");
+			File o0File = new File(project.getLocation().toString()+"libos_demo_o0");
+			File o2File = new File(project.getLocation().toString()+"libos_demo_o2");
+			File[] o0files = o0File.listFiles();
+			File[] o2files = o2File.listFiles();
+			File libFile = new File(project.getLocation().toString()+"lib");
+			for(File file:o0files) {
+				if(file.getName().endsWith(".a")) {
+					try {
+						copyFolder(file,libFile);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			for(File file:o2files) {
+				if(file.getName().endsWith(".a")) {
+					try {
+						copyFolder(file,libFile);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
 		return true;
 	}
     

@@ -388,6 +388,7 @@ public class DjyosMainWizardPage extends WizardPage{
 		System.out.println("getNextPage DW");
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
 		if(! nmWizard.addedMemory) {
+			System.out.println("nmWizard.addedMemory...");
 			nmWizard.memoryPage = new MemoryMapWizard("basicMemoryMapPage");
 			nmWizard.memoryPage.setTitle("Memory Map");
 			nmWizard.memoryPage.setDescription("Define flash and RAM sizes");

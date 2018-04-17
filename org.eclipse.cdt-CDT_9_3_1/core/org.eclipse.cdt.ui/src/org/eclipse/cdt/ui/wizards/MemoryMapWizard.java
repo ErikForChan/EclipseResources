@@ -495,6 +495,8 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		// TODO Auto-generated method stub
 		return super.canFlipToNextPage();
 	}
+	
+	
 
 	@Override
 	public IWizardPage getNextPage() {
@@ -502,12 +504,12 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		System.out.println("getNextPage MM");
 		String modulePageTip = "本版本为测试版，暂无添加依赖关系，以后版本将会陆续添加.";
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
-		if(! nmWizard.addedModule) {		
+		if(! nmWizard.addedModule) {
+			System.out.println("nmWizard.addedModule...");
 			nmWizard.modulePage = new ModuleConfigurationWizard("basicModuleCfgPage");
 			nmWizard.modulePage.setTitle("Module Configuration");
 			nmWizard.modulePage.setDescription(modulePageTip);
 			nmWizard.addPage(nmWizard.modulePage);
-			System.out.println("nmWizard.addPage(nmWizard.modulePage);");
 			nmWizard.addedModule = true;
 			if(nmWizard.isToCreat) {
 				nmWizard.handleBoard();
