@@ -257,6 +257,7 @@ public final class IDEActionFactory {
                 throw new IllegalArgumentException();
             }
             // @issue we are creating a NEW action just to pass to NewWizardDropDownAction
+            System.out.println("newWizardDropDown");
             IWorkbenchAction innerAction = ActionFactory.NEW.create(window);
             NewWizardMenu newWizardMenu = new NewWizardMenu(window);
             IWorkbenchAction action = new NewWizardDropDownAction(window,

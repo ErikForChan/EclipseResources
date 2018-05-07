@@ -164,7 +164,7 @@ public abstract class WizardHandler extends AbstractHandler implements IElementU
 	 * Default handler for launching new wizards.
 	 */
 	public static final class New extends WizardHandler {
-
+		
 		/**
 	     * The wizard dialog width
 	     */

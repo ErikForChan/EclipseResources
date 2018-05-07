@@ -403,7 +403,7 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 		switch (buttonId) {
 		case IDialogConstants.HELP_ID: {
 			System.out.println("helpPressed");
-//			helpPressed();
+			helpPressed();
 			break;
 		}
 		case IDialogConstants.BACK_ID: {
@@ -1296,7 +1296,7 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 		}
 		finishButton.setEnabled(canFinish);
 		// finish is default unless it is disabled and next is enabled
-		if (canFlipToNextPage && !canFinish) {
+		if (canFlipToNextPage) {// && !canFinish 只要next id enable 就默认选中next
 			getShell().setDefaultButton(nextButton);
 		} else {
 			getShell().setDefaultButton(finishButton);

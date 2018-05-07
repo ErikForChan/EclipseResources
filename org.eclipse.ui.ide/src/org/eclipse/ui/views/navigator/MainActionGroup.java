@@ -144,7 +144,6 @@ public class MainActionGroup extends ResourceNavigatorActionGroup {
     @Override
 	protected void makeActions() {
         IShellProvider provider = navigator.getSite();
-
         newWizardMenu = new NewWizardMenu(navigator.getSite().getWorkbenchWindow());
         addBookmarkAction = new AddBookmarkAction(provider, true);
         addTaskAction = new AddTaskAction(provider);

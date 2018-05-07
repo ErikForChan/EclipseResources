@@ -55,7 +55,7 @@ import org.eclipse.cdt.core.CCorePreferenceConstants;
 import org.eclipse.cdt.core.CProjectNature;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 import org.eclipse.cdt.ui.CUIPlugin;
-import org.eclipse.cdt.ui.wizards.parsexml.Board;
+import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
@@ -67,7 +67,7 @@ import org.eclipse.cdt.internal.ui.newui.Messages;
 import org.eclipse.cdt.internal.ui.wizards.ICDTCommonProjectWizard;
 import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
 
-public class MemoryMapWizard extends WizardPage implements IWizardItemsListListener {
+public class MemoryMapWizard extends WizardPage {
 	public static final String PAGE_ID = "org.eclipse.cdt.managedbuilder.ui.wizard.NewModelProjectWizardPage"; //$NON-NLS-1$
 
 	private static final String EXTENSION_POINT_ID = "org.eclipse.cdt.ui.CDTWizard"; //$NON-NLS-1$
@@ -187,7 +187,9 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 	}
 	
 	public String getLdsHead() {
-		ldsHead += "MEMORY\n"
+		ldsHead += "\n"
+				+ "/*由于MEMORY命令不能使用符号，这些常量的定义，必须与MEMORY命令处一致 */ \n\n"
+				+ "MEMORY\n"
 				+ "{";
 		for(int i=0;i<romOnBox.length;i++) {
 			if(romOnBox[i].getSelection()) {
@@ -505,7 +507,6 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		String modulePageTip = "本版本为测试版，暂无添加依赖关系，以后版本将会陆续添加.";
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
 		if(! nmWizard.addedModule) {
-			System.out.println("nmWizard.addedModule...");
 			nmWizard.modulePage = new ModuleConfigurationWizard("basicModuleCfgPage");
 			nmWizard.modulePage.setTitle("Module Configuration");
 			nmWizard.modulePage.setDescription(modulePageTip);
@@ -545,21 +546,4 @@ public class MemoryMapWizard extends WizardPage implements IWizardItemsListListe
 		return true;
 	}
 	
-	@Override
-	public void toolChainListChanged(int count) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isCurrent() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public List<EntryDescriptor> filterItems(List<EntryDescriptor> items) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

@@ -164,7 +164,6 @@ public class NewWizardMenu extends BaseNewWizardMenu {
 	protected void addItems(List list) {
     	ArrayList shortCuts= new ArrayList();
     	addShortcuts(shortCuts);
-
     	for (Iterator iterator= shortCuts.iterator(); iterator.hasNext();) {
 			Object curr= iterator.next();
 			if (curr instanceof ActionContributionItem && isNewProjectWizardAction(((ActionContributionItem) curr).getAction())) {

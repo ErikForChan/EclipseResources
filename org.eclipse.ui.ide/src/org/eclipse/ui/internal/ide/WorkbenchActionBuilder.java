@@ -967,7 +967,7 @@ public final class WorkbenchActionBuilder extends ActionBarAdvisor {
 	protected void makeActions(final IWorkbenchWindow window) {
         // @issue should obtain from ConfigurationItemFactory
         statusLineItem = new StatusLineContributionItem("ModeContributionItem"); //$NON-NLS-1$
-
+        System.out.println("makeActions");
         newWizardAction = ActionFactory.NEW.create(window);
         register(newWizardAction);
 

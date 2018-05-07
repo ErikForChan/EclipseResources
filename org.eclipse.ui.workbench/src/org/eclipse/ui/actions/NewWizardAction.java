@@ -90,7 +90,7 @@ public class NewWizardAction extends Action implements
      * @param window
      */
     public NewWizardAction(IWorkbenchWindow window) {
-        super(WorkbenchMessages.NewWizardAction_text);
+    	super(WorkbenchMessages.NewWizardAction_text); 
         if (window == null) {
             throw new IllegalArgumentException();
         }

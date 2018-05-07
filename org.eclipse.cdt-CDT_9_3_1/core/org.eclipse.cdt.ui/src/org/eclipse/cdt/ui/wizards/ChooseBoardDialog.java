@@ -1,10 +1,10 @@
 package org.eclipse.cdt.ui.wizards;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -30,7 +30,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.cdt.ui.wizards.parsexml.Board;
+import org.eclipse.cdt.ui.wizards.board.Board;
+import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
 import org.eclipse.cdt.ui.wizards.parsexml.ReadBoardByDom;
 
@@ -55,10 +56,11 @@ public class ChooseBoardDialog extends StatusDialog{
 	
 	String fullPath = Platform.getInstallLocation().getURL().toString();
 	String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-	String boardXmlPath = eclipsePath+"djysrc/bsp/boarddrv/board.xml";
 	private Label boardSearchLabel;
+	private Label cpuSelectLabel;
 	private Table boardListTable;
 	private Text boardEditText;
+	private Button selectCpuBtn;
 	private TableViewer tv;
 	private TableColumn[] tableColumns = new TableColumn[3];
 	private Button filterBoardBox;
@@ -112,10 +114,32 @@ public class ChooseBoardDialog extends StatusDialog{
         }  
     }  
 	
+	public List<Board> getBoards(){
+		
+		ReadBoardXml rbx = new ReadBoardXml();
+		List<Board> boards = new ArrayList<Board>();
+		String boardForderPath = eclipsePath+"djysrc/bsp/boarddrv/demo/";
+		File boardForder = new File(boardForderPath);
+		File[] files = boardForder.listFiles();
+		for(File file : files) {
+			Board board = new Board();
+			String xmlName = "board_"+file.getName()+".xml";
+			try {
+				board=rbx.getBoard(boardForderPath+file.getName()+"/"+xmlName);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			boards.add(board);
+		}
+		return boards;
+		
+	}
+	
 	public void setBoardList() {
 		ReadBoardByDom rbbd = new ReadBoardByDom();
 		try {
-			boards = rbbd.getBoards(boardXmlPath);
+			boards = getBoards();
 			boardsFiltered = boards;
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
@@ -123,9 +147,7 @@ public class ChooseBoardDialog extends StatusDialog{
 		}
 		tv.setInput(boards);
 	}
-	
-	
-	
+		
 	@Override
 	protected void okPressed() {
 		// TODO Auto-generated method stub
@@ -137,13 +159,11 @@ public class ChooseBoardDialog extends StatusDialog{
 		// TODO Auto-generated method stub
 		Composite composite = (Composite) super.createDialogArea(parent);
 		GridData gd;
-		
+		getBoards();
 		Composite boardSearchCpt = new Composite(composite, SWT.NONE);
 		GridLayout layout = new GridLayout();
-		layout.numColumns = 3;
-		layout.makeColumnsEqualWidth = false;
-		layout.marginWidth = 0;
-		layout.verticalSpacing=10;
+		layout.numColumns = 4;
+		layout.horizontalSpacing=10;
 		boardSearchCpt.setLayout(layout);
 		boardSearchCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		boardSearchLabel = new Label(boardSearchCpt, SWT.None);
@@ -151,68 +171,61 @@ public class ChooseBoardDialog extends StatusDialog{
 		boardEditText = new Text(boardSearchCpt, SWT.BORDER);
 		boardEditText.addListener(SWT.Modify, searchModifyListener);
 		
-//		addMCUBtn = new Button(boardSearchCpt, SWT.PUSH);
-//		addMCUBtn.setText("New Cpu");
-//		addMCUBtn.addSelectionListener(new SelectionAdapter() {
-//			@Override
-//			public void widgetSelected(SelectionEvent e) {
-//				handleAddButtonPressed();
-//			}
-//
-//			private void handleAddButtonPressed() {
-//				// TODO Auto-generated method stub
-//				AddCpuDialog dialog = new AddCpuDialog(getShell());
-//				AddCpuToXML actx = new AddCpuToXML();
-//				if (dialog.open() == Window.OK) {
-//					Cpu cpu = dialog.getCpu();
-//					if(cpu == null) {
-//						System.out.println("selectCpu == null");
-//					}
-//					actx.addCpu(cpu,boardXmlPath);
-//					setMCUList();
-//				}
-//			}
-//		});
-	
-		
+//		Composite cpuSelectCpt = new Composite(boardSearchCpt, SWT.NONE);
+//		GridLayout cpuSelectLayout = new GridLayout();
+//		cpuSelectLayout.numColumns = 2;
+//		cpuSelectLayout.horizontalSpacing= 5;
+//		cpuSelectLayout.marginLeft = 5;
+		cpuSelectLabel = new Label(boardSearchCpt, SWT.None);
+		cpuSelectLabel.setText("Select Cpu :");
+		selectCpuBtn = new Button(boardSearchCpt, SWT.PUSH);
+		selectCpuBtn.setText("Choose...");
+		selectCpuBtn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				handleSelectCpuPressed();
+			}
+
+		});
+
 		Composite boardListCpt = new Composite(composite, SWT.NONE);
 		GridLayout boardLayout = new GridLayout();
 		boardLayout.marginWidth = 0;
 		boardLayout.numColumns = 1;
 		boardListCpt.setLayout(boardLayout);
 		boardListCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
-		filterBoardBox = new Button(boardListCpt, SWT.CHECK);
-		filterBoardBox.setText("Only display the Board with the cpu selected.");
+//		filterBoardBox = new Button(boardListCpt, SWT.CHECK);
+//		filterBoardBox.setText("Only display the Board with the cpu selected.");
 		boardListTable = new Table(boardListCpt, SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.H_SCROLL | SWT.FULL_SELECTION);
 		boardListTable.setHeaderVisible(true);
 		boardListTable.setLinesVisible(true);
-		filterBoardBox.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				ReadBoardByDom rbbd = new ReadBoardByDom();
-				try {
-					boards = rbbd.getBoards(boardXmlPath);
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			
-				if(filterBoardBox.getSelection()) {
-					if(!curCpuName.equals("")) {
-						boards = getBoardsFiltered(boards,curCpuName);
-					}
-				}
-				tv.setInput(boards);
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
+//		filterBoardBox.addSelectionListener(new SelectionListener() {
+//			
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				ReadBoardByDom rbbd = new ReadBoardByDom();
+//				try {
+//					boards = getBoards();
+//				} catch (Exception e1) {
+//					// TODO Auto-generated catch block
+//					e1.printStackTrace();
+//				}
+//			
+//				if(filterBoardBox.getSelection()) {
+//					if(!curCpuName.equals("")) {
+//						boards = getBoardsFiltered(boards,curCpuName);
+//					}
+//				}
+//				tv.setInput(boards);
+//			}
+//			
+//			@Override
+//			public void widgetDefaultSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//		});
 		boardListTable.addSelectionListener(new SelectionListener() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -264,15 +277,23 @@ public class ChooseBoardDialog extends StatusDialog{
 			tableColumns[i].setText(boardDetails[i]);
 			tableColumns[i].setWidth(150);
 		}
-		
 		setBoardList();
-
 		gd = new GridData(GridData.FILL_BOTH);
 		gd.horizontalSpan = 3;
 		boardListTable.setLayoutData(gd);
-		
 		return super.createDialogArea(parent);
 	}
-	
+
+	Cpu selectCpu;
+	protected void handleSelectCpuPressed() {
+		// TODO Auto-generated method stub
+		ChooseMCUDialog dialog = new ChooseMCUDialog(getShell());
+		if (dialog.open() == Window.OK) {
+			selectCpu = dialog.getSelectCpu();
+//			MCUNameField.setText(selectCpu.getDevice());
+			 List<Board> boardsFiltered = getBoardsFiltered(boards,selectCpu.getDevice());
+			 tv.setInput(boardsFiltered);
+		}
+	}
 
 }

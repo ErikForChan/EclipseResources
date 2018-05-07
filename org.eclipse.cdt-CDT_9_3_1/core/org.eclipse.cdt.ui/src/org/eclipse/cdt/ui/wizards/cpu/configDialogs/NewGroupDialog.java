@@ -1,0 +1,1311 @@
+package org.eclipse.cdt.ui.wizards.cpu.configDialogs;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.dialogs.StatusDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeColumn;
+import org.eclipse.swt.widgets.TreeItem;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import org.eclipse.cdt.ui.wizards.cpu.Cpu;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.ui.wizards.cpu.core.memory.Memory;
+import org.eclipse.cdt.utils.ui.controls.ControlFactory;
+
+public class NewGroupDialog extends StatusDialog{
+
+	private Tree cpuGroupOnTree;
+	private Tree cpuGroupTree;
+	private String newConfig = null;
+	private Composite configContent;
+	private Tree memoryTree;
+	private Combo memoryTypeCombo;
+	private Text addrField;
+	private Text sizeField;
+	private Group contentGroup;
+	private ScrolledComposite scrolledComposite;
+	private Cpu newCpu = new Cpu();
+	private Core newCore = new Core();
+	private Text groupNameField;
+	private String curPath = null;
+	private String eclipsePath = getEclipsePath();
+	
+	List<String> configsList = new ArrayList<String>();
+	List<String> configsOn = new ArrayList<String>();
+	List<String> attributes = new ArrayList<String>();
+	
+	/*
+	 * 获取当前Eclipse的路径
+	 */
+	public String getEclipsePath() {
+		String fullPath = Platform.getInstallLocation().getURL().toString();
+		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+		return eclipsePath;
+	}
+	
+	private static class MyFileter implements FilenameFilter {
+
+        @Override
+        public boolean accept(File file, String filename) {
+            if (filename != null && !filename.toLowerCase().contains(".")) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+    }
+	
+	//添加或者删除配置时，修改两棵树的内容，并对configsList和configsOn分别进行日安家或者删除操作
+	public void changeConfigsOn(String configName,boolean toAdd) {
+		if(toAdd) {
+			for(int i=0;i<configsList.size();i++) {
+				String curConfig = configsList.get(i);
+				if(curConfig.equals(configName)) {
+					newConfig = curConfig;
+					configsOn.add(configName);
+					configsList.remove(i);
+					break;
+				}
+			}
+		}else {
+			for(int i=0;i<configsOn.size();i++) {
+				String curConfig = configsOn.get(i);
+				if(curConfig.equals(configName)) {
+					newConfig = curConfig;
+					configsList.add(curConfig);
+					configsOn.remove(i);
+					break;
+				}
+			}
+		}
+	}
+	
+	public NewGroupDialog(Shell parent,List<String> configs,Cpu cpu,String curFilePath) {
+		super(parent);
+		setTitle("新建分组");
+		attributes = configs;
+		if(cpu.getCoreNum()!=0) {
+			newCpu.setCoreNum(cpu.getCoreNum());
+			for(int i=0;i<cpu.getCoreNum();i++) {
+				newCpu.getCores().add(new Core());
+			}		
+		}
+		curPath = curFilePath;
+		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
+	}
+
+	@Override
+	protected Control createDialogArea(Composite parent) {
+		// TODO Auto-generated method stub
+		Composite composite = new Composite(parent,SWT.NONE);
+		composite.setLayout(new GridLayout());
+		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Composite groupNameCpt = new Composite(composite,SWT.NONE);
+		GridLayout groupNameLayout = new GridLayout();
+		groupNameLayout.numColumns = 2;
+		groupNameLayout.marginHeight=20;
+		groupNameCpt.setLayout(groupNameLayout);
+		groupNameCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Label nameLabel = new Label(groupNameCpt,SWT.NONE);
+		nameLabel.setText("分组名称: ");
+		groupNameField = new Text(groupNameCpt,SWT.BORDER);
+		groupNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		Composite cpuGroupCpt = new Composite(composite, SWT.NULL);
+		GridLayout layoutAttributes = new GridLayout();
+		layoutAttributes.numColumns = 4;
+		layoutAttributes.marginHeight = 5;
+		cpuGroupCpt.setLayout(layoutAttributes);
+		cpuGroupCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Composite cpuGroupListCpt = new Composite(cpuGroupCpt, SWT.NULL);
+		cpuGroupTree = new Tree(cpuGroupListCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		cpuGroupTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		cpuGroupTree.setHeaderVisible(true);
+		cpuGroupTree.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				TreeItem[] items = cpuGroupTree.getSelection();
+				if (items.length > 0) {
+
+				}
+			}
+		});
+		final TreeColumn columnGroupList = new TreeColumn(cpuGroupTree, SWT.NONE);
+		columnGroupList.setText("Cpu配置项");
+		columnGroupList.setWidth(90);
+		columnGroupList.setResizable(false);
+		columnGroupList.setToolTipText("Cpu Attributes");
+		cpuGroupTree.setSize(100, 170);
+		for(int i=0;i<attributes.size();i++) {
+			configsList.add(attributes.get(i));
+			TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
+			t.setText(attributes.get(i));
+		}
+		Composite btnCpt = new Composite(cpuGroupCpt, SWT.NULL);
+		btnCpt.setLayout(new GridLayout());
+		btnCpt.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_CENTER));
+		Button gotoBtn,backBtn;
+		gotoBtn = new Button(btnCpt,SWT.PUSH);
+		gotoBtn.setText("   》》  ");
+		backBtn = new Button(btnCpt,SWT.PUSH);
+		backBtn.setText(" 《《    ");
+		cpuGroupTree.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				backBtn.setEnabled(false);
+				gotoBtn.setEnabled(true);
+				TreeItem[] items = cpuGroupTree.getSelection();
+				if(items.length>0) {
+					
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	
+		gotoBtn.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				TreeItem[] items = cpuGroupTree.getSelection();
+				if (items.length > 0) {
+					String selectConfigName = items[0].getText();
+					changeConfigsOn(selectConfigName,true);
+					items[0].dispose();
+					updateConfigsOn();
+				}
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		backBtn.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				TreeItem[] items = cpuGroupOnTree.getSelection();
+				if (items.length > 0) {
+					String selectConfigName = items[0].getText();
+					changeConfigsOn(selectConfigName, false);
+					items[0].dispose();
+					updateConfigList();
+				}
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		
+		
+		Composite cpuGroupListCptOn = new Composite(cpuGroupCpt, SWT.NULL);
+		cpuGroupOnTree = new Tree(cpuGroupListCptOn, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		cpuGroupOnTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		cpuGroupOnTree.setHeaderVisible(true);
+		cpuGroupOnTree.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				TreeItem[] items = cpuGroupOnTree.getSelection();
+			}
+		});
+		
+		final TreeColumn columncpuGroupOn = new TreeColumn(cpuGroupOnTree, SWT.NONE);
+		columncpuGroupOn.setText("新分组配置项");
+		columncpuGroupOn.setWidth(90);
+		columncpuGroupOn.setResizable(false);
+		columncpuGroupOn.setToolTipText("Cpu GroupOn");
+		cpuGroupOnTree.setSize(100, 170);
+		
+		contentGroup = ControlFactory.createGroup(cpuGroupCpt, "分组配置", 1);
+		contentGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		contentGroup.setLayout(new GridLayout(1,true));
+		
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
+                | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		configContent = new Composite(scrolledComposite,SWT.NONE);
+		configContent.setLayout(new GridLayout());
+		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+//		
+//		Text text = new Text(configContent,SWT.BORDER);
+//		text.setText("Test");
+		
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+		
+		cpuGroupOnTree.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				gotoBtn.setEnabled(false);
+				backBtn.setEnabled(true);
+				TreeItem[] items = cpuGroupOnTree.getSelection();
+				if (items.length > 0) {
+					String selectConfigName = items[0].getText();
+					contentGroup.setText(selectConfigName);
+					scrolledComposite.dispose();
+					switch (selectConfigName) {
+					case "内核个数":
+						 creatCoreNumContent(contentGroup);
+						break;
+					case "内核配置":
+						creatCoreContent(contentGroup);
+						break;
+					case "存储配置":
+						creatMemoryContent(contentGroup);
+						break;
+					case "浮点配置":
+						creatFloatContent(contentGroup);
+						break;
+					case "复位配置":
+						creatResetContent(contentGroup);
+						break;
+					}		
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		return super.createDialogArea(parent);
+	}
+	
+	protected void creatResetContent(Group contentGroup) {
+		// TODO Auto-generated method stub
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
+                | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		configContent = new Composite(scrolledComposite,SWT.NONE);
+		configContent.setLayout(new GridLayout());
+		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Composite coreSelectCpt = new Composite(configContent,SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		coreSelectCpt.setLayout(layout);
+		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		Label nameLabel = new Label(coreSelectCpt,SWT.NONE);
+		nameLabel.setText("内核选择: ");
+		Combo numCombo = new Combo(coreSelectCpt,SWT.READ_ONLY);
+		for(int i=0;i<newCpu.getCoreNum();i++) {
+			numCombo.add("内核"+(i+1));
+		}
+		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		numCombo.select(0);
+		
+		Group resetGroup = ControlFactory.createGroup(configContent, "配置复位地址", 1);
+		resetGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		resetGroup.setLayout(new GridLayout());
+		
+		Composite coreConfigCpt = new Composite(resetGroup,SWT.NONE);
+		GridLayout coreLayout = new GridLayout();
+		coreLayout.numColumns = 2;
+		coreConfigCpt.setLayout(coreLayout);
+		coreConfigCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Label abiLabel = new Label(coreConfigCpt,SWT.NONE);
+		abiLabel.setText("复位地址： ");
+		Text addrText = new Text(coreConfigCpt,SWT.BORDER);
+		addrText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		if(newCpu.getCoreNum()==0) {
+			coreSelectCpt.setVisible(false);
+			if(newCore.getResetAddr()!=null) {
+				addrText.setText(newCore.getResetAddr());
+			}
+		}
+		numCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				String addr = newCpu.getCores().get(selectIndex).getResetAddr();
+				if(addr!=null) {
+					addrText.setText(addr);
+				}
+				
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		addrText.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				// TODO Auto-generated method stub
+				String resetAddr = addrText.getText().trim();
+				if(newCpu.getCoreNum()!=0) {
+					int selectIndex = numCombo.getSelectionIndex();
+					newCpu.getCores().get(selectIndex).setResetAddr(resetAddr);
+				}else {
+					newCore.setResetAddr(resetAddr);
+				}
+				
+			}
+		});
+		
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+		contentGroup.layout();
+	}
+
+	protected void creatFloatContent(Group contentGroup) {
+		// TODO Auto-generated method stub
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
+                | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		configContent = new Composite(scrolledComposite,SWT.NONE);
+		configContent.setLayout(new GridLayout());
+		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		coreSelectCpt.setLayout(layout);
+		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
+		nameLabel.setText("内核选择: ");
+		Combo numCombo = new Combo(coreSelectCpt, SWT.READ_ONLY);
+		for (int i = 0; i < newCpu.getCoreNum(); i++) {
+			numCombo.add("内核" + (i + 1));
+		}
+		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		Group floatGroup = ControlFactory.createGroup(configContent, "配置浮点", 1);
+		floatGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		floatGroup.setLayout(new GridLayout());
+		
+		Composite coreConfigCpt = new Composite(floatGroup,SWT.NONE);
+		GridLayout coreLayout = new GridLayout();
+		coreLayout.numColumns = 2;
+		coreConfigCpt.setLayout(coreLayout);
+		coreConfigCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Label abiLabel = new Label(coreConfigCpt,SWT.NONE);
+		abiLabel.setText("Float ABI： ");
+		Combo abiCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
+		String[] abis = {"Toolchain default","Library(Soft)","FP instructions(hard)","Library with FP(softfp)"};
+		abiCombo.setItems(abis);
+		abiCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		abiCombo.select(0);
+		
+		Label fpuTypeLabel = new Label(coreConfigCpt,SWT.NONE);
+		fpuTypeLabel.setText("FPU Type： ");
+		Combo fpuTypeCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
+		String[] fpuTypes = {"Toolchain default","fpv5-d16","fpv4-sp-d16","fpv4-d16"};
+		fpuTypeCombo.setItems(fpuTypes);
+		fpuTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		if (newCpu.getCoreNum() == 0) {
+			coreSelectCpt.setVisible(false);
+			if(newCore.getFpuType()!=null) {
+				for(int i=0;i<fpuTypes.length;i++) {
+					if(newCore.getFpuType().equals(fpuTypes[i])) {
+						fpuTypeCombo.select(i);
+					}
+				}
+			}else {
+				fpuTypeCombo.deselectAll();
+			}
+		}
+		numCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				String fpuType = newCpu.getCores().get(selectIndex).getFpuType();
+				if(fpuType!=null) {
+					for(int i=0;i<fpuTypes.length;i++) {
+						if(fpuType.equals(fpuTypes[i])) {
+							fpuTypeCombo.select(i);
+						}
+					}
+				}else {
+					fpuTypeCombo.deselectAll();
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		fpuTypeCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				String fpuType = fpuTypeCombo.getText().trim();
+				if(newCpu.getCoreNum()!=0) {
+					int selectIndex = numCombo.getSelectionIndex();
+					newCpu.getCores().get(selectIndex).setFpuType(fpuType);
+				}else {
+					newCore.setFpuType(fpuType);
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+		contentGroup.layout();
+	}
+
+	protected void creatMemoryContent(Group contentGroup) {
+		// TODO Auto-generated method stub
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
+                | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		configContent = new Composite(scrolledComposite,SWT.NONE);
+		configContent.setLayout(new GridLayout());
+		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		coreSelectCpt.setLayout(layout);
+		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
+		nameLabel.setText("内核选择: ");
+		Combo numCombo = new Combo(coreSelectCpt, SWT.READ_ONLY);
+		for (int i = 0; i < newCpu.getCoreNum(); i++) {
+			numCombo.add("内核" + (i + 1));
+		}
+		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		if (newCpu.getCoreNum() == 0) {
+			coreSelectCpt.setVisible(false);
+		}else {
+			numCombo.select(0);
+		}
+		
+		Group memoryGroup = ControlFactory.createGroup(configContent, "配置内存", 1);
+		GridLayout memoryGroupLayout = new GridLayout();
+		memoryGroupLayout.numColumns = 2;
+		memoryGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		memoryGroup.setLayout(memoryGroupLayout);
+
+		Composite memoryComposite = new Composite(memoryGroup,SWT.NONE);
+		memoryComposite.setLayout(new GridLayout());
+		memoryComposite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		
+		memoryTree = new Tree(memoryComposite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		memoryTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		memoryTree.setHeaderVisible(true);
+		memoryTree.setSize(150, 170);
+		final TreeColumn columnMemory = new TreeColumn(memoryTree, SWT.NONE);
+		columnMemory.setText("片内存储");
+		columnMemory.setWidth(120);
+		columnMemory.setResizable(false);
+		columnMemory.setToolTipText("Inner Memory");
+		
+		Composite btnCpt = new Composite(memoryComposite, SWT.NONE);
+		btnCpt.setLayout(new GridLayout(2,true));
+		btnCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
+		Button addBtn = new Button(btnCpt,SWT.PUSH);
+		addBtn.setText("添加");
+		addBtn.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				
+				int memoryCount = memoryTree.getItemCount();//memoryTree的孩子数量
+				TreeItem t = new TreeItem(memoryTree, SWT.NONE);//添加新的内存
+				TreeItem[] items = memoryTree.getItems();
+				int max = 0;
+				if (memoryCount > 0) {
+					 String maxString = items[memoryCount-1].getText();
+					 max = Integer.parseInt(maxString.substring(6,maxString.length()));
+				}
+				t.setText("memory"+(max+1));
+				Memory memory = new Memory();
+				memory.setName("memory"+(max+1));
+				newCpu.getCores().get(selectIndex).getMemorys().add(memory);
+			
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		Button deleteBtn = new Button(btnCpt,SWT.PUSH);
+		deleteBtn.setText("删除");
+		deleteBtn.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				TreeItem[] items = memoryTree.getSelection();
+				if (items.length > 0) {
+					for(int i=0;i<newCpu.getCores().get(selectIndex).getMemorys().size();i++) {
+						if(newCpu.getCores().get(selectIndex).getMemorys().get(i).getName().equals(items[0].getText().trim())) {
+							newCpu.getCores().get(selectIndex).getMemorys().remove(i);
+						}
+					}
+					items[0].dispose();
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		Composite memoryContentCpt = new Composite(memoryGroup,SWT.NONE);
+		GridLayout detailsLayout = new GridLayout();
+		detailsLayout.marginHeight = 20;
+		detailsLayout.numColumns = 3;
+		memoryContentCpt.setLayout(detailsLayout);
+		memoryContentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		Label typeLabel = new Label(memoryContentCpt,SWT.NONE);
+		typeLabel.setText("类型: ");
+
+		memoryTypeCombo = new Combo(memoryContentCpt,SWT.READ_ONLY);
+		memoryTypeCombo.add("ROM");
+		memoryTypeCombo.add("RAM");
+		memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		Label newLabel = new Label(memoryContentCpt,SWT.NONE);
+		newLabel.setVisible(false);
+		memoryTypeCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+				int comboIndex = memoryTypeCombo.getSelectionIndex();
+				TreeItem[] items = memoryTree.getSelection();
+				if(items.length>0) {
+					String selectMemory = items[0].getText().trim();//选中的内存
+					for(int i=0;i<memorys.size();i++) {
+						Memory memory = memorys.get(i);
+						if(memory.getName().equals(selectMemory)) {
+							String type = memoryTypeCombo.getItem(comboIndex);
+							memory.setType(type);
+							break;
+						}
+					}
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		Label addrLabel = new Label(memoryContentCpt,SWT.NONE);
+		addrLabel.setText("地址: ");
+		addrField = new Text(memoryContentCpt,SWT.BORDER);
+		addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		newLabel = new Label(memoryContentCpt,SWT.NONE);
+		newLabel.setVisible(false);	
+		addrField.addModifyListener(new ModifyListener() {
+
+			@Override
+			public void modifyText(ModifyEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+				TreeItem[] items = memoryTree.getSelection();
+				if (items.length > 0) {
+					String selectMemory = items[0].getText().trim();
+					for (int i = 0; i < memorys.size(); i++) {
+						Memory memory = memorys.get(i);
+						if (memory.getName().equals(selectMemory)) {
+							String addr = addrField.getText().trim();
+							memory.setStartAddr(addr);
+							break;
+						}
+					}
+				}
+
+			}
+		});
+		
+		Label sizeLabel = new Label(memoryContentCpt,SWT.NONE);
+		sizeLabel.setText("大小: ");
+		sizeField = new Text(memoryContentCpt,SWT.BORDER);
+		sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		ControlFactory.createLabel(memoryContentCpt, "K");
+		sizeField.addModifyListener(new ModifyListener() {
+
+			@Override
+			public void modifyText(ModifyEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+				TreeItem[] items = memoryTree.getSelection();
+				if (items.length > 0) {
+					String selectMemory = items[0].getText().trim();
+					String size = sizeField.getText().trim();
+					if (!size.equals("")) {
+						for (int i = 0; i < memorys.size(); i++) {
+							Memory memory = memorys.get(i);
+							if (memory.getName().equals(selectMemory)) {
+								memory.setSize(Integer.parseInt(size));
+								break;
+							}
+						}
+					}
+
+				}
+			}
+		});
+	    
+		numCombo.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();
+				memoryTree.removeAll();
+				if(memorys.size()!=0) {
+					for(int i=0;i<memorys.size();i++) {
+						String memoryName = memorys.get(i).getName();
+						TreeItem t = new TreeItem(memoryTree, SWT.NONE);
+						t.setText(memoryName);
+					}		
+				}
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		
+		memoryTree.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				TreeItem[] items = memoryTree.getSelection();
+				int selectIndex = numCombo.getSelectionIndex();
+				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();
+				if (items.length > 0) {
+					String selectMemoryName = items[0].getText();
+					for(int i=0;i<memorys.size();i++) {
+						String memoryName = memorys.get(i).getName();
+						if(memoryName.equals(selectMemoryName)) {
+							if(memorys.get(i).getType()!=null) {
+								if(memorys.get(i).getType().equals("ROM")) {
+									memoryTypeCombo.select(0);
+								}else if(memorys.get(i).getType().equals("RAM")) {
+									memoryTypeCombo.select(1);
+								}
+							}
+							if(memorys.get(i).getStartAddr()!=null) {
+								addrField.setText(memorys.get(i).getStartAddr());
+							}
+							if(memorys.get(i).getSize()!=0) {
+								sizeField.setText(String.valueOf(memorys.get(i).getSize()));
+							}		
+						}
+					}		
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+		contentGroup.layout();
+		
+	}
+
+	protected void creatCoreContent(Group contentGroup) {
+		// TODO Auto-generated method stub
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
+                | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		configContent = new Composite(scrolledComposite,SWT.NONE);
+		configContent.setLayout(new GridLayout());
+		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		coreSelectCpt.setLayout(layout);
+		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
+		nameLabel.setText("内核选择: ");
+		Combo numCombo = new Combo(coreSelectCpt, SWT.READ_ONLY);
+		for (int i = 0; i < newCpu.getCoreNum(); i++) {
+			numCombo.add("内核" + (i + 1));
+		}
+		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+
+		Group coreGroup = ControlFactory.createGroup(configContent, "配置内核", 1);
+		contentGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		contentGroup.setLayout(new GridLayout());
+		
+		Composite coreConfigCpt = new Composite(coreGroup,SWT.NONE);
+		GridLayout coreLayout = new GridLayout();
+		coreLayout.numColumns = 2;
+		coreConfigCpt.setLayout(coreLayout);
+		coreConfigCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		String typePath = eclipsePath+"djysrc\\bsp\\arch";
+		File typeFile = new File(typePath);
+		File[] files =  typeFile.listFiles();
+		String[] types = new String[files.length];
+		for(int i=0;i<files.length;i++) {
+			types[i] = files[i].getName();
+		}
+		
+		Label typeLabel = new Label(coreConfigCpt,SWT.NONE);
+		typeLabel.setText("类型： ");
+		Combo typeCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
+		typeCombo.setItems(types);
+		typeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));		
+		
+		Label archLabel = new Label(coreConfigCpt,SWT.NONE);
+		archLabel.setText("架构： ");
+		Combo archCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
+		archCombo.setEnabled(false);
+		archCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		//类型下拉框选中的事件处理
+		typeCombo.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				String type = typeCombo.getText().trim();
+				String archPath = typePath+"/"+type;
+				File archFile = new File(archPath);
+				File[] archFiles =  archFile.listFiles(new MyFileter());
+				String[] archs = new String[archFiles.length];
+				for(int i=0;i<archFiles.length;i++) {
+					if(archFiles[i].isDirectory()) {
+						archs[i] = archFiles[i].getName();
+					}	
+				}
+				archCombo.setEnabled(true);
+				archCombo.setItems(archs);
+				if(newCpu.getCoreNum()!=0) {
+					int selectIndex = numCombo.getSelectionIndex();
+					newCpu.getCores().get(selectIndex).setType(type);
+				}else {
+					newCore.setType(type);
+				}	
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+				
+		Label familyLabel = new Label(coreConfigCpt,SWT.NONE);
+		familyLabel.setText("家族： ");
+		Combo familyCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
+		familyCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		familyCombo.setEnabled(false);
+		archCombo.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				String type = typeCombo.getText().trim();
+				String arch = archCombo.getText().trim();
+				String familyPath = typePath+"/"+type+"/"+arch;
+				File familyFile = new File(familyPath);
+				File[] familyFiles =  familyFile.listFiles(new MyFileter());
+				String[] familys = new String[familyFiles.length];
+				for(int i=0;i<familyFiles.length;i++) {
+					familys[i] = familyFiles[i].getName();					
+				}
+				familyCombo.setEnabled(true);
+				familyCombo.setItems(familys);
+				if(newCpu.getCoreNum()!=0) {
+					int selectIndex = numCombo.getSelectionIndex();
+					newCpu.getCores().get(selectIndex).setArch(arch);
+				}else {
+					newCore.setArch(arch);
+				}		
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+		});
+		familyCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				String family = familyCombo.getText().trim();
+				if(newCpu.getCoreNum()!=0) {
+					int selectIndex = numCombo.getSelectionIndex();
+					newCpu.getCores().get(selectIndex).setFamily(family);
+				}else {
+					newCore.setFamily(family);
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		if (newCpu.getCoreNum() == 0) {
+			coreSelectCpt.setVisible(false);
+			if(newCore.getType()!=null) {
+				for(int i=0;i<types.length;i++) {
+					if(newCore.getType().equals(types[i])) {
+						typeCombo.select(i);
+						break;
+					}
+				}
+			}
+			if(newCore.getArch()!=null) {
+				String type = typeCombo.getText().trim();
+				String archPath = typePath+"/"+type;
+				File archFile = new File(archPath);
+				File[] archFiles =  archFile.listFiles(new MyFileter());
+				String[] archs = new String[archFiles.length];
+				for(int i=0;i<archFiles.length;i++) {
+					archs[i] = archFiles[i].getName();
+				}
+				for(int i=0;i<archs.length;i++) {
+					if(newCore.getArch().equals(archs[i])) {
+						archCombo.select(i);
+						break;
+					}
+				}
+			}
+			if(newCore.getFamily()!=null) {
+				String type = typeCombo.getText().trim();
+				String arch = archCombo.getText().trim();
+				String familyPath = typePath+"/"+type+"/"+arch;
+				File familyFile = new File(familyPath);
+				File[] familyFiles =  familyFile.listFiles(new MyFileter());
+				String[] familys = new String[familyFiles.length];
+				for(int i=0;i<familyFiles.length;i++) {
+					familys[i] = familyFiles[i].getName();
+				}
+				for(int i=0;i<familys.length;i++) {
+					if(newCore.getArch().equals(familys[i])) {
+						familyCombo.select(i);
+						break;
+					}
+				}
+			}
+		}else {
+			typeCombo.setEnabled(false);
+		}
+		
+		numCombo.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				typeCombo.setEnabled(true);
+				int selectIndex = numCombo.getSelectionIndex();
+				String type = newCpu.getCores().get(selectIndex).getType();
+				String arch = newCpu.getCores().get(selectIndex).getArch();
+				String family = newCpu.getCores().get(selectIndex).getFamily();
+				if(type!=null) {
+					for(int i=0;i<types.length;i++) {
+						if(type.equals(types[i])) {
+							typeCombo.select(i);
+							break;
+						}
+					}
+				}
+				if (arch!= null) {
+					String stype = typeCombo.getText().trim();
+					String archPath = typePath+"/"+stype;
+					File archFile = new File(archPath);
+					File[] archFiles =  archFile.listFiles(new MyFileter());
+					String[] archs = new String[archFiles.length];
+					for(int i=0;i<archFiles.length;i++) {
+						archs[i] = archFiles[i].getName();
+					}
+					for (int i = 0; i < archs.length; i++) {
+						if (arch.equals(archs[i])) {
+							archCombo.select(i);
+						}
+					}
+				}else {
+					archCombo.deselectAll();
+				}
+				if(family!=null) {
+					String stype = typeCombo.getText().trim();
+					String sarch = archCombo.getText().trim();
+					String familyPath = typePath+"/"+stype+"/"+sarch;
+					File familyFile = new File(familyPath);
+					File[] familyFiles =  familyFile.listFiles(new MyFileter());
+					String[] familys = new String[familyFiles.length];
+					for(int i=0;i<familyFiles.length;i++) {
+						familys[i] = familyFiles[i].getName();
+					}
+					for (int i = 0; i < familys.length; i++) {
+						if (family.equals(familys[i])) {
+							familyCombo.select(i);
+						}
+					}
+				}else {
+					familyCombo.deselectAll();
+				}
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+		
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+		contentGroup.layout();
+	}
+
+	protected void creatCoreNumContent(Group contentGroup) {
+		// TODO Auto-generated method stub
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
+                | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		configContent = new Composite(scrolledComposite,SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		configContent.setLayout(layout);
+		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Label nameLabel = new Label(configContent,SWT.NONE);
+		nameLabel.setText("内核个数: ");
+		Combo numCombo = new Combo(configContent,SWT.READ_ONLY);
+		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		String[] items = {"1","2","3","4","5"};
+		numCombo.setItems(items);
+		if(newCpu.getCoreNum()!=0){
+			int coreNum = newCpu.getCoreNum();
+			numCombo.select(coreNum-1);
+		}
+		numCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int coreNum = Integer.parseInt(numCombo.getText());
+				newCpu = new Cpu();
+				newCpu.setCoreNum(coreNum);
+				for(int i=0;i<coreNum;i++) {
+					newCpu.getCores().add(new Core());
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+		contentGroup.layout();
+	}
+
+	
+	protected void updateConfigList() {
+		// TODO Auto-generated method stub
+		TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
+		t.setText(newConfig);
+	}
+
+	
+	protected void updateConfigsOn() {
+		// TODO Auto-generated method stub
+		TreeItem t = new TreeItem(cpuGroupOnTree, SWT.NONE);
+		t.setText(newConfig);
+	}
+
+	@Override
+	protected Point getInitialSize() {
+		// TODO Auto-generated method stub
+		return new Point(650,500);
+	}
+	
+	@Override
+	protected void okPressed() {
+		// TODO Auto-generated method stub
+		/*
+		 * 点击OK后生成新分组和xml文件
+		 */
+		String groupName = groupNameField.getText();
+		curPath = curPath+"/"+groupName;
+		File newGroupFile = new File(curPath); 
+		newGroupFile.mkdir();
+		File xmlFile = new File(curPath+"/cpu_group_"+groupName+".xml");
+		if(! xmlFile.exists()) {
+			try {
+				xmlFile.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		if(newCpu.getCoreNum()!=0) {
+			createNewCpuXml(newCpu,xmlFile);
+		}else {
+			createPublicXml(newCore,xmlFile);
+		}
+		
+		super.okPressed();
+	}
+	
+	private void createNewCpuXml(Cpu cpu,File file) {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		try { 
+			factory.setIgnoringElementContentWhitespace(false);
+        	DocumentBuilder builder = factory.newDocumentBuilder();             
+        	Document document = builder.newDocument();
+        	
+			Element cpuElement = document.createElement("cpu");
+			for(int i=0;i<cpu.getCores().size();i++) {
+				Element core = document.createElement("core");
+				core.setAttribute("id", String.valueOf(i+1));
+				
+				Core curCore = cpu.getCores().get(i);
+				if(curCore.getArch()!=null) {
+					Element arch = document.createElement("arch");
+					arch.setTextContent(curCore.getArch());
+					core.appendChild(arch);
+				}
+				if(curCore.getFamily()!=null) {
+					Element family = document.createElement("family");
+					family.setTextContent(curCore.getFamily());
+					core.appendChild(family);
+				}
+				if(curCore.getFpuType()!=null) {
+					Element fpuType = document.createElement("fpuType");
+					fpuType.setTextContent(curCore.getFpuType());
+					core.appendChild(fpuType);
+				}
+				if(curCore.getResetAddr()!=null) {
+					Element resetAddr = document.createElement("resetAddr");
+					resetAddr.setTextContent(curCore.getResetAddr());
+					core.appendChild(resetAddr);
+				}
+				if(curCore.getMemorys().size()!=0) {
+					Element memory = document.createElement("memory");
+					for(int j=0;j<curCore.getMemorys().size();j++) {
+						Memory curMemory = curCore.getMemorys().get(j);
+						
+						Element type = document.createElement("type");
+						type.setTextContent(curMemory.getType());
+						memory.appendChild(type);
+						Element startAddr = document.createElement("startAddr");
+						startAddr.setTextContent(curMemory.getStartAddr());
+						memory.appendChild(startAddr);
+						Element size = document.createElement("size");
+						size.setTextContent(String.valueOf(curMemory.getSize()));
+						memory.appendChild(size);
+						
+					}
+					core.appendChild(memory);
+				}
+				
+				cpuElement.appendChild(core);
+			}
+			
+			document.appendChild(cpuElement);
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
+			transformer.setOutputProperty("encoding", "UTF-8");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(writer));
+			transformer.transform(new DOMSource(document), new StreamResult(file));
+			writer.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	private void createPublicXml(Core core,File file) {
+		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
+		try {
+			factory.setIgnoringElementContentWhitespace(false);
+        	DocumentBuilder builder = factory.newDocumentBuilder();             
+        	Document document = builder.newDocument();
+		
+			Element cpuElement = document.createElement("cpu");
+			if (core.getArch() != null) {
+				Element arch = document.createElement("arch");
+				arch.setTextContent(core.getArch());
+				cpuElement.appendChild(arch);
+			}
+			if (core.getFamily() != null) {
+				Element family = document.createElement("family");
+				family.setTextContent(core.getFamily());
+				cpuElement.appendChild(family);
+			}
+			if (core.getFpuType() != null) {
+				Element fpuType = document.createElement("fpuType");
+				fpuType.setTextContent(core.getFpuType());
+				cpuElement.appendChild(fpuType);
+			}
+			if (core.getResetAddr() != null) {
+				Element resetAddr = document.createElement("resetAddr");
+				resetAddr.setTextContent(core.getResetAddr());
+				cpuElement.appendChild(resetAddr);
+			}
+//			if (curCore.getMemorys().size() != 0) {
+//				Element memory = document.createElement("memory");
+//				for (int j = 0; j < curCore.getMemorys().size(); j++) {
+//					Memory curMemory = curCore.getMemorys().get(j);
+//
+//					Element type = document.createElement("type");
+//					type.setTextContent(curMemory.getType());
+//					memory.appendChild(type);
+//					Element startAddr = document.createElement("startAddr");
+//					startAddr.setTextContent(curMemory.getStartAddr());
+//					memory.appendChild(startAddr);
+//					Element size = document.createElement("size");
+//					size.setTextContent(String.valueOf(curMemory.getSize()));
+//					memory.appendChild(size);
+//
+//				}
+//				core.appendChild(memory);
+//			}
+
+			document.appendChild(cpuElement);
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
+			transformer.setOutputProperty("encoding", "UTF-8");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(writer));
+			transformer.transform(new DOMSource(document), new StreamResult(file));
+			writer.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}	
+	
+}

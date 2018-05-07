@@ -133,21 +133,19 @@ public class BaseNewWizardMenu extends CompoundContributionItem {
      */
     protected boolean addShortcuts(List list) {
         boolean added = false;
+    	System.out.println("BaseNewWizardMenu");
         IWorkbenchPage page = workbenchWindow.getActivePage();
         if (page != null) {
             String[] wizardIds = page.getNewWizardShortcuts();
-            for (String wizardId : wizardIds) {
-            	if(wizardId.endsWith("org.eclipse.cdt.ui.wizards.NewCWizard3") ||
-            			wizardId.endsWith("org.eclipse.cdt.ui.wizards.cpu") || 
-            			wizardId.endsWith("org.eclipse.cdt.ui.wizards.board")) {
-            		 IAction action = getAction(wizardId);
-                     if (action != null) {
-                         if (!WorkbenchActivityHelper.filterItem(action)) {
-                             list.add(new ActionContributionItem(action));
-                             added = true;
-                         }
-                     }
-            	}           
+            for (String wizardId : wizardIds) {   
+            		IAction action = getAction(wizardId);
+                    if (action != null) {
+                        if (!WorkbenchActivityHelper.filterItem(action)) {
+                            list.add(new ActionContributionItem(action));
+                            added = true;
+                        }  
+            	}
+            	    
             }
         }
         return added;

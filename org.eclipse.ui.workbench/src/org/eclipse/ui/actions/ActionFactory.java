@@ -712,7 +712,7 @@ public abstract class ActionFactory {
                     .getImageDescriptor(ISharedImages.IMG_TOOL_NEW_WIZARD));
             action.setDisabledImageDescriptor(images
                     .getImageDescriptor(ISharedImages.IMG_TOOL_NEW_WIZARD_DISABLED));
-            action.setText(WorkbenchMessages.NewWizardAction_text);
+            action.setText(WorkbenchMessages.NewWizardAction_text); 
             action.setToolTipText(WorkbenchMessages.NewWizardAction_toolTip);
             window.getWorkbench().getHelpSystem().setHelp(action,
     				IWorkbenchHelpContextIds.NEW_ACTION);

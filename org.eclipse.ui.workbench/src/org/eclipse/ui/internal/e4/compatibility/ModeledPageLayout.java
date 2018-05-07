@@ -73,12 +73,13 @@ public class ModeledPageLayout implements IPageLayout {
 		}
 		ArrayList<String> result = new ArrayList<>();
 		if(tagPrefix.equals(NEW_WIZARD_TAG)) {
-			if(model.getLabel().equals("<C/C++>")) {
+			if(model.getLabel().contains("C/C++")) {
 				result.add("org.eclipse.cdt.ui.wizards.NewCWizard3");
-				result.add("org.eclipse.cdt.ui.wizards.cpu");
-				result.add("org.eclipse.cdt.ui.wizards.board");
+				result.add("org.eclipse.cdt.ui.wizards.NewCWizard4");
+				result.add("org.eclipse.cdt.ui.wizards.NewCWizard5");
 			}else {
 				for (String tag : model.getTags()) {
+					System.out.println("tag: "+tag);
 					if (tag.startsWith(tagPrefix)) {
 						result.add(tag.substring(tagPrefix.length()));
 					}
@@ -224,6 +225,7 @@ public class ModeledPageLayout implements IPageLayout {
 
 	@Override
 	public void addNewWizardShortcut(String id) {
+		System.out.println("addNewWizardShortcut:  "+id);
 		perspModel.getTags().add(NEW_WIZARD_TAG + id);
 	}
 

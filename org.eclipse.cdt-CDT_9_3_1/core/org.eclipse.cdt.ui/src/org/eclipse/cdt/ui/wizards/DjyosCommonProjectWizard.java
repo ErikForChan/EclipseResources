@@ -89,9 +89,9 @@ import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.BuildStatus;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.CfgBuildInfo;
 import org.eclipse.cdt.ui.CUIPlugin;
-import org.eclipse.cdt.ui.wizards.parsexml.Board;
+import org.eclipse.cdt.ui.wizards.board.Board;
+import org.eclipse.cdt.ui.wizards.board.CreatBoardXml;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
-import org.eclipse.cdt.ui.wizards.parsexml.CreateBoardXml;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseLinkToXML;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseVariableToXML;
 
@@ -335,24 +335,33 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	 */
 	public void handleBoard() {
 		String projectName = fMainPage.getProjectName();
-		String boardName = fMainPage.getBoardName();
+		String curBoardName = fMainPage.getBoardName();
 		Cpu defaultCpu = fMainPage.defaultCpu;
 		cpu = fMainPage.getSelectCpu();
-		Board board = fMainPage.getSelectBoard();
+		Board boardTemplate = fMainPage.getSelectBoard();
 		
-		String startupPath = eclipsePath+"djysrc/bsp/startup/"+defaultCpu.getCategory()+"/"+board.getBoardName();
-		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getCategory()+"/"+boardName;
+		String startupPath = eclipsePath+"djysrc/bsp/startup/"+defaultCpu.getCategory()+"/"+boardTemplate.getBoardName();
+		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getCategory()+"/"+curBoardName;
 		
-		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/"+board.getBoardName();
-		String newBoardPath = eclipsePath+"djysrc/bsp/boarddrv/"+boardName;
-		String boardXmlPath = eclipsePath+"djysrc/bsp/boarddrv/board.xml";
+		//新建的板件应该从哪里获取新板件的代码
+		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+boardTemplate.getBoardName();
+		String newBoardPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+curBoardName;
+		File newBoardFile = new File(newBoardPath);
+		if(!newBoardFile.exists()) {
+			try {
+				newBoardFile.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+//		String boardXmlPath = eclipsePath+"djysrc/bsp/boarddrv/demo/board.xml";
 		
 		File srcFolder = new File(boardCodePath);
 		File folder = new File(newBoardPath);
 		if(!folder.exists()) {
 			folder.mkdir();
 		}
-		CreateBoardXml cbx = new CreateBoardXml();
 					
 		try {
 			copyFolder(srcFolder,folder);
@@ -360,9 +369,9 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		board.setBoardName(boardName);
-		cbx.creatBoard(board, boardXmlPath);	
+		CreatBoardXml cbx = new CreatBoardXml();
+		boardTemplate.setBoardName(curBoardName);
+		cbx.creatBoard(boardTemplate, newBoardPath+"/board_"+curBoardName+".xml");	
 		
 		File stpSrcFolder = new File(startupPath);
 		File stpDestFolder = new File(startupDestPath);
@@ -371,7 +380,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		}
 		try {
 			copyFolder(stpSrcFolder,stpDestFolder);
-//			copyFileToFolder(stpSrcFolder,stpDestFolder,boardName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -764,12 +772,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	public boolean canFinish() {
     	
     	if(addedModule) {
-    		System.out.println("modulePage.moduleCompleted:  "+modulePage.moduleCompleted);
-    		if(modulePage.moduleCompleted) {
+//    		System.out.println("modulePage.moduleCompleted:  "+modulePage.moduleCompleted);
+//    		if(modulePage.moduleCompleted) {
     			return true;
-    		}else {
-    			return false;
-    		}
+//    		}else {
+//    			return false;
+//    		}
     	}else {
     		return false;
     	}

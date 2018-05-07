@@ -38,7 +38,7 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.wizards.datatransfer.DataTransferMessages;
 
-import org.eclipse.cdt.ui.wizards.parsexml.Board;
+import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
 import org.eclipse.cdt.ui.wizards.parsexml.CreateBoardXml;
 import org.eclipse.cdt.ui.wizards.parsexml.ReadBoardByDom;
@@ -183,11 +183,13 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 					}
 				}
 				if(toCreat) {
+					importMCUBtn.setVisible(true);
 //					importMCUBtn.setEnabled(true);
 					for(int i=1;i<fDialogFields.length;i++) {
 						fDialogFields[i].getTextControl(content).setEnabled(true);
 					}
 				}else {
+					importMCUBtn.setVisible(false);
 //					importMCUBtn.setEnabled(false);
 					fDialogFields[1].getTextControl(content).setEnabled(false);
 				}
@@ -368,6 +370,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			MCUNameField.setEnabled(false);
 			importMCUBtn = new Button(content, SWT.PUSH);
 			importMCUBtn.setText("Choose...");
+			importMCUBtn.setVisible(false);
 //			importMCUBtn.setEnabled(false);
 			importMCUBtn.addSelectionListener(new SelectionAdapter() {
 				@Override
@@ -445,7 +448,7 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 			
 			if (dialog.open() == Window.OK) {
 				boardSelected = dialog.getSelectBoard();
-				boardModuleTrimPath = getEclipsePath()+"djysrc/bsp/boarddrv/"+boardSelected.getBoardName()+"/module-trim.bak";
+				boardModuleTrimPath = getEclipsePath()+"djysrc/bsp/boarddrv/demo/"+boardSelected.getBoardName()+"/module-trim.bak";
 				boardSelectField.setText(boardSelected.getBoardName());
 				MCUNameField.setText(boardSelected.cpu.getDevice());
 				selectCpu = boardSelected.cpu;

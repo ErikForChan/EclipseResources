@@ -871,7 +871,7 @@
             defaultHandler="org.eclipse.ui.internal.handlers.WizardHandler$New"
             description="%command.newWizard.description"
             id="org.eclipse.ui.newWizard"
-            name="%command.newWizard.name">
+            name="Test">
          <commandParameter
                id="newWizardId"
                name="%command.newWizard.newWizardIdParameter.name"
