@@ -1,4 +1,4 @@
-package org.eclipse.cdt.ui.wizards;
+package org.eclipse.cdt.ui.wizards.djyosProject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -58,7 +58,7 @@ import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.ui.djyproperties.Module;
 
-public class ModuleConfigurationWizard extends WizardPage implements IWizardItemsListListener {
+public class ModuleConfigurationWizard extends WizardPage{
 
 	private static final String EXTENSION_POINT_ID = "org.eclipse.cdt.ui.CDTWizard"; //$NON-NLS-1$
 	private static final String ELEMENT_NAME = "wizard"; //$NON-NLS-1$
@@ -387,23 +387,5 @@ public class ModuleConfigurationWizard extends WizardPage implements IWizardItem
 		// TODO Auto-generated method stub
 		System.out.println("getNextPage MC");
 		return super.getNextPage();
-	}
-	
-	@Override
-	public void toolChainListChanged(int count) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isCurrent() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public List<EntryDescriptor> filterItems(List<EntryDescriptor> items) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

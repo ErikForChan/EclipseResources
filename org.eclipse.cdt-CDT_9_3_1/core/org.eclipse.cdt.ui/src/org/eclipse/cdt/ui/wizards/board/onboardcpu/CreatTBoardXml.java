@@ -20,7 +20,7 @@ import org.eclipse.cdt.ui.wizards.component.Component;
 public class CreatTBoardXml {
 	 DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
 	 	
-     public void creatBoardXml(TBoard board,File file) {
+     public void creatBoardXml(Board board,File file) {
         try {
         	factory.setIgnoringElementContentWhitespace(false);
         	DocumentBuilder builder = factory.newDocumentBuilder();             

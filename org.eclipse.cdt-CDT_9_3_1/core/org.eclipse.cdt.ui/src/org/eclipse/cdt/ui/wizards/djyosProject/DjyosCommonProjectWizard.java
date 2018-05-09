@@ -1,4 +1,4 @@
-package org.eclipse.cdt.ui.wizards;
+package org.eclipse.cdt.ui.wizards.djyosProject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -89,6 +89,7 @@ import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.BuildStatus;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.CfgBuildInfo;
 import org.eclipse.cdt.ui.CUIPlugin;
+import org.eclipse.cdt.ui.wizards.CWizardHandler;
 import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.CreatBoardXml;
 import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
@@ -114,6 +115,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	
 	protected MemoryMapWizard memoryPage;//Memory向导界面
 	protected ModuleConfigurationWizard modulePage;//Module向导界面
+	protected InitDjyosProjectWizard initPage;
 	protected IProject newProject;
 	private String wz_title;
 	private String wz_desc;
@@ -157,6 +159,9 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		fMainPage= new DjyosMainWizardPage(CUIPlugin.getResourceString(PREFIX));
 		fMainPage.setTitle(wz_title);
 		fMainPage.setDescription(wz_desc);
+//		initPage = new InitDjyosProjectWizard("basicModuleCfgPage");
+//		initPage.setTitle("Init Project");
+//		initPage.setDescription("Init the project you are creating");
 		addPage(fMainPage);
 	}
 

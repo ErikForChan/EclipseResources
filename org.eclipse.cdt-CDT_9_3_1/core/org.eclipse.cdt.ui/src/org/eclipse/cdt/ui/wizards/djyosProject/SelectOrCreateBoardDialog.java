@@ -1,4 +1,4 @@
-package org.eclipse.cdt.ui.wizards;
+package org.eclipse.cdt.ui.wizards.djyosProject;
 
 import java.awt.Color;
 import java.io.File;
@@ -93,12 +93,12 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		private StringDialogField[] fDialogFields = new StringDialogField[2];
 		private ComboDialogField[] fComboDialogFields = new ComboDialogField[2];
 		private static Button[] radioBtns = new Button[2];
-		int selectIndex = 0;
-		String boardName = "";
-		Board boardSelected;
-		Cpu selectCpu;
-		String boardModuleTrimPath = "";
-		Cpu defaultCpu;
+		private int selectIndex = 0;
+		private String boardName = "";
+		private Board boardSelected;
+		private Cpu selectCpu;
+		private String boardModuleTrimPath = "";
+		private Cpu defaultCpu;
 				
 		private String[] BoardDetailsComboLabels = {
 				"Architecture","Family"
@@ -229,14 +229,11 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 //				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
 //				selectCpu = defaultCpu;
 //				boardSelected.setCpu(selectCpu);
-				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
 				if(selectCpu == null) {
 					selectCpu = defaultCpu;
 				}
-				boardSelected.setCpu(selectCpu);
 			}else {
 				selectCpu = defaultCpu;
-				boardSelected.setExClk(fDialogFields[1].getTextControl(content).getText());
 			}
 			super.okPressed();
 		}
@@ -441,18 +438,18 @@ public class SelectOrCreateBoardDialog extends StatusDialog{
 		 */
 		protected void handleImportButtonPressed() {
 	
-			ChooseBoardDialog dialog;
+			SelectBoard dialog;
 			String sCpu = MCUNameField.getText();
 			
-			dialog = new ChooseBoardDialog(getShell(),sCpu);
+			dialog = new SelectBoard(getShell(),sCpu);
 			
 			if (dialog.open() == Window.OK) {
 				boardSelected = dialog.getSelectBoard();
-				boardModuleTrimPath = getEclipsePath()+"djysrc/bsp/boarddrv/demo/"+boardSelected.getBoardName()+"/module-trim.bak";
-				boardSelectField.setText(boardSelected.getBoardName());
-				MCUNameField.setText(boardSelected.cpu.getDevice());
-				selectCpu = boardSelected.cpu;
-				fDialogFields[1].getTextControl(content).setText(boardSelected.getExClk());
+//				boardModuleTrimPath = getEclipsePath()+"djysrc/bsp/boarddrv/demo/"+boardSelected.getBoardName()+"/module-trim.bak";
+//				boardSelectField.setText(boardSelected.getBoardName());
+//				MCUNameField.setText(boardSelected.cpu.getDevice());
+//				selectCpu = boardSelected.cpu;
+//				fDialogFields[1].getTextControl(content).setText(boardSelected.getExClk());
 			}
 	
 		}

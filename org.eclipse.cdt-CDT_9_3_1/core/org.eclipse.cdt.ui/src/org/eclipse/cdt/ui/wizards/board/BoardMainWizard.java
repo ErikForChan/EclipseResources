@@ -49,7 +49,7 @@ import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.CreatTBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.Memory;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.TBoard;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.Board;
 import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.ui.wizards.cpu.CpuBak;
@@ -67,7 +67,7 @@ public class BoardMainWizard extends WizardPage{
 	private Tree memoryTree;
 	private Button gotoBtn = null;
 	private Button backBtn = null;
-	private TBoard newBoard = new TBoard();
+	private Board newBoard = new Board();
 	private List<OnBoardCpu> onBoardCpus = new ArrayList<OnBoardCpu>();
 	private CpuBak newCpu;
 	private Component newComponent;
@@ -97,7 +97,7 @@ public class BoardMainWizard extends WizardPage{
 	Group ConfigurationGroup;
 	private String eclipsePath = getEclipsePath();
 	
-	public TBoard getBoard() {
+	public Board getBoard() {
 		String boardName = boardNameField.getText().trim();
 		newBoard.setBoardName(boardName);
 		newBoard.setOnBoardCpus(onBoardCpus);

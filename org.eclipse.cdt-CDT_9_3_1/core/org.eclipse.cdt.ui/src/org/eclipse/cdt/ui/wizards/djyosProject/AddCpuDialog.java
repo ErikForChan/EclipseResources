@@ -1,4 +1,4 @@
-package org.eclipse.cdt.ui.wizards;
+package org.eclipse.cdt.ui.wizards.djyosProject;
 
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.swt.SWT;

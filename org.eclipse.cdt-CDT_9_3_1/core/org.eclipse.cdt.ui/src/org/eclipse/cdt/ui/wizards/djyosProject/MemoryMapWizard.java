@@ -1,4 +1,4 @@
-package org.eclipse.cdt.ui.wizards;
+package org.eclipse.cdt.ui.wizards.djyosProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -307,9 +307,6 @@ public class MemoryMapWizard extends WizardPage {
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
 		cpu = nmWizard.getCpu();
 		board = nmWizard.getBoard();
-		if(cpu==null) {
-			System.out.println("cpu==null");
-		}
 		if(cpu!=null) {	
 			romOnBox[0].setSelection(true);
 			romOnBox[0].setEnabled(false);

@@ -1,10 +1,14 @@
 package org.eclipse.cdt.ui.wizards.component;
 
+import java.util.List;
+
 public class Component {
 	String name;
 	String annotation;
 	String type;
 	String includeFile;
+	List<String> dependents;
+	List<String> mutexs;
 	InitInfo init;
 
 	public String getName() {
@@ -46,13 +50,29 @@ public class Component {
 	public void setInit(InitInfo init) {
 		this.init = init;
 	}
+	
+	public List<String> getDependents() {
+		return dependents;
+	}
+	public void setDependents(List<String> dependents) {
+		this.dependents = dependents;
+	}
+	public List<String> getMutexs() {
+		return mutexs;
+	}
+	public void setMutexs(List<String> mutexs) {
+		this.mutexs = mutexs;
+	}
 
-	public Component(String name, String annotation, String type, String includeFile, InitInfo init) {
+	public Component(String name, String annotation, String type, String includeFile, List<String> dependents,
+			List<String> mutexs, InitInfo init) {
 		super();
 		this.name = name;
 		this.annotation = annotation;
 		this.type = type;
 		this.includeFile = includeFile;
+		this.dependents = dependents;
+		this.mutexs = mutexs;
 		this.init = init;
 	}
 

@@ -475,7 +475,7 @@
       <wizard
             canFinishEarly="false"
             category="org.eclipse.cdt.ui.newCWizards"
-            class="org.eclipse.cdt.ui.wizards.DjyosProjectWizard"
+            class="org.eclipse.cdt.ui.wizards.djyosProject.DjyosProjectWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
             icon="icons/elcl16/newmngc_app.gif"

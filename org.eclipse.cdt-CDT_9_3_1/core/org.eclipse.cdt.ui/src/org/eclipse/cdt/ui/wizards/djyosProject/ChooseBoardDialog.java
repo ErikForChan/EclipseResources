@@ -1,4 +1,4 @@
-package org.eclipse.cdt.ui.wizards;
+package org.eclipse.cdt.ui.wizards.djyosProject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ import org.eclipse.cdt.ui.wizards.parsexml.ReadBoardByDom;
 
 public class ChooseBoardDialog extends StatusDialog{
 
-	String curCpuName = null;
-	
+	private String curCpuName = null;
+	private Cpu selectCpu;
 	public ChooseBoardDialog(Shell parent) {
 		super(parent);
 		// TODO Auto-generated constructor stub
@@ -284,7 +284,6 @@ public class ChooseBoardDialog extends StatusDialog{
 		return super.createDialogArea(parent);
 	}
 
-	Cpu selectCpu;
 	protected void handleSelectCpuPressed() {
 		// TODO Auto-generated method stub
 		ChooseMCUDialog dialog = new ChooseMCUDialog(getShell());

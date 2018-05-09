@@ -1,5 +1,6 @@
 package org.eclipse.cdt.ui.wizards.board.onboardcpu;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.cdt.ui.wizards.component.Component;
@@ -8,9 +9,9 @@ public class OnBoardCpu {
 	private int mianClk;
 	private int rtcClk;
 	private String cpuName;
-	private List<Component> peripherals;
-	private List<Chip> chips;
-	private List<Memory> memorys;
+	private List<Component> peripherals = new ArrayList<Component>();
+	private List<Chip> chips = new ArrayList<Chip>();
+	private List<Memory> memorys = new ArrayList<Memory>();
 	public int getMianClk() {
 		return mianClk;
 	}

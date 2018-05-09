@@ -13,7 +13,7 @@ import org.eclipse.ui.wizards.newresource.BasicNewResourceWizard;
 
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.CreatTBoardXml;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.TBoard;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.Board;
 
 public class BoardCommonWizard extends BasicNewResourceWizard{
 
@@ -54,7 +54,7 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 	@Override
 	public boolean performFinish() {
 		// TODO Auto-generated method stub
-		TBoard board = fMainPage.getBoard();
+		Board board = fMainPage.getBoard();
 		String dirPath = eclipsePath+"djysrc\\bsp\\boarddrv\\"+board.getBoardName();
 		try {
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {

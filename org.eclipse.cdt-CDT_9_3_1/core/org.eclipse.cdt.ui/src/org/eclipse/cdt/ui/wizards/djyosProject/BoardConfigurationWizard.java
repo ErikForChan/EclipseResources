@@ -1,4 +1,4 @@
-package org.eclipse.cdt.ui.wizards;
+package org.eclipse.cdt.ui.wizards.djyosProject;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
 
-public class BoardConfigurationWizard extends WizardPage implements IWizardItemsListListener {
+public class BoardConfigurationWizard extends WizardPage{
 	public static final String PAGE_ID = "org.eclipse.cdt.managedbuilder.ui.wizard.NewModelProjectWizardPage"; //$NON-NLS-1$
 
 	private static final String EXTENSION_POINT_ID = "org.eclipse.cdt.ui.CDTWizard"; //$NON-NLS-1$
@@ -115,23 +115,5 @@ public class BoardConfigurationWizard extends WizardPage implements IWizardItems
 //		group.setLayout(new GridLayout(2, false));
 //		creatTemplateDetailsUI(group);
 			
-	}
-
-	@Override
-	public void toolChainListChanged(int count) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isCurrent() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public List<EntryDescriptor> filterItems(List<EntryDescriptor> items) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

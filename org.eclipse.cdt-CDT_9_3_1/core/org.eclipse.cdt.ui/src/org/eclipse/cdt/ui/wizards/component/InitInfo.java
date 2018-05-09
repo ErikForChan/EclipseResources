@@ -7,8 +7,7 @@ public class InitInfo {
 	String returnType;
 	String grade;
 	List<Parameter> parameters;
-	List<String> dependents;
-	List<String> mutexs;
+	
 	public String getFunName() {
 		return funName;
 	}
@@ -33,28 +32,13 @@ public class InitInfo {
 	public void setParameters(List<Parameter> parameters) {
 		this.parameters = parameters;
 	}
-	public List<String> getDependents() {
-		return dependents;
-	}
-	public void setDependents(List<String> dependents) {
-		this.dependents = dependents;
-	}
-	public List<String> getMutexs() {
-		return mutexs;
-	}
-	public void setMutexs(List<String> mutexs) {
-		this.mutexs = mutexs;
-	}
 	
-	public InitInfo(String funName, String returnType, String grade, List<Parameter> parameters,
-			List<String> dependents, List<String> mutexs) {
+	public InitInfo(String funName, String returnType, String grade, List<Parameter> parameters) {
 		super();
 		this.funName = funName;
 		this.returnType = returnType;
 		this.grade = grade;
 		this.parameters = parameters;
-		this.dependents = dependents;
-		this.mutexs = mutexs;
 	}
 	public InitInfo() {
 		super();
