@@ -1,5 +1,7 @@
 package org.eclipse.cdt.ui.wizards.board;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,12 +9,15 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.eclipse.core.runtime.Platform;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
-import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
-import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByDom;
+import org.eclipse.cdt.ui.wizards.board.Board;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
+import org.eclipse.cdt.ui.wizards.component.Component;
 
 public class ReadBoardXml {
 	private static DocumentBuilderFactory dbFactory = null;
@@ -27,50 +32,77 @@ public class ReadBoardXml {
 			e.printStackTrace();
 		}
 	}
-
-	public static Board getBoard(String fileName) throws Exception {
-		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
-		document = db.parse(fileName);
-		// 按文档顺序返回包含在文档中且具有给定标记名称的所有 Element 的 NodeList
-		NodeList boardList = document.getElementsByTagName("board");
-		board = new Board();
-
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,
-				(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
-		String cpuXmlPath = eclipsePath + "/demo/cpu.xml";
-		ReadCpuByDom rcb = new ReadCpuByDom();
-		List<Cpu> cpus = rcb.getCpus(cpuXmlPath);
-		Cpu cpu = null;
-
+	
+	/*
+	 * 获取板件对象
+	 */
+	public static Board getBoard(File file) throws Exception {
+		document = db.parse(file);
 		Board board = new Board();
-		org.w3c.dom.Node node = document.getElementsByTagName("board").item(0);
-
-		// 获取book结点的子节点,包含了Test类型的换行
-		NodeList cList = node.getChildNodes();// System.out.println(cList.getLength());9
-
-		ArrayList<String> contents = new ArrayList<>();
-		for (int j = 1; j < cList.getLength(); j += 2) {
-			org.w3c.dom.Node cNode = cList.item(j);
-			String content = cNode.getFirstChild().getTextContent();
-			contents.add(content);
-		}
-		board.setBoardName(contents.get(0));
-		for (int j = 0; j < cpus.size(); j++) {
-			if (cpus.get(j).getDevice().equals(contents.get(1))) {
-				cpu = cpus.get(j);
-				break;
+		org.w3c.dom.Node nameNode = document.getElementsByTagName("boardName").item(0);
+		board.setBoardName(nameNode.getTextContent());
+		NodeList onBoardCpuList = document.getElementsByTagName("cpu");
+		List<OnBoardCpu> onBoardCpus = new ArrayList<OnBoardCpu>();
+		for(int x=0;x<onBoardCpuList.getLength();x++) {
+			org.w3c.dom.Node cpuNode = onBoardCpuList.item(x);
+			NodeList cList = cpuNode.getChildNodes();
+			OnBoardCpu cpuOn = new OnBoardCpu();
+			for(int i=1;i<cList.getLength();i+=2){
+				org.w3c.dom.Node cNode = cList.item(i);
+				String nodeName = cNode.getNodeName();
+				String content = cNode.getFirstChild().getTextContent();
+				switch(nodeName) {
+				case "cpuName":
+					cpuOn.setCpuName(content);
+					break;
+				case "mianClk":
+					cpuOn.setMianClk(Integer.parseInt(content));
+					break;
+				case "rtcClk":
+					cpuOn.setRtcClk(Integer.parseInt(content));
+					break;
+				case "chip":
+					NodeList chipList = cNode.getChildNodes();
+					Chip chip = new Chip();
+					for(int j=1;j<chipList.getLength();j+=2) {
+						org.w3c.dom.Node chipNode = chipList.item(j);
+						String mName = chipNode.getNodeName();
+						String mContent = chipNode.getFirstChild().getTextContent();
+						if(mName.equals("interface")) {
+							chip.setTheInterface(mContent);
+						}else if(mName.equals("chipName")) {
+							chip.setChipName(mContent);
+						}
+					}
+					cpuOn.getChips().add(chip);
+					break;
+				case "peripheral":
+					Component component  = new Component();
+					component.setName(content);
+					cpuOn.getPeripherals().add(component);
+					break;
+				case "memory":
+					NodeList memoryList = cNode.getChildNodes();
+					OnBoardMemory memory = new OnBoardMemory();
+					for(int j=1;j<memoryList.getLength();j+=2) {
+						org.w3c.dom.Node memoryNode = memoryList.item(j);
+						String mName = memoryNode.getNodeName();
+						String mContent = memoryNode.getFirstChild().getTextContent();
+						if(mName.equals("type")) {
+							memory.setType(mContent);
+						}else if(mName.equals("startAddr")) {
+							memory.setStartAddr(mContent);
+						}else if(mName.equals("size")) {
+							memory.setSize(Integer.parseInt(mContent));
+						}
+					}
+					cpuOn.getMemorys().add(memory);
+					break;
+				}
 			}
+			onBoardCpus.add(cpuOn);
 		}
-		// Cpu cpu = new Cpu(contents.get(1),contents.get(2),contents.get(4),
-		// contents.get(5),contents.get(6),contents.get(7),contents.get(3),contents.get(8));
-		board.setExClk(contents.get(2));
-		board.setExtromStart(contents.get(3));
-		board.setExtromSize(contents.get(4));
-		board.setExtramStart(contents.get(5));
-		board.setExtramSize(contents.get(6));
-		board.setCpu(cpu);
-
-		return board;   
-    }  
+		board.setOnBoardCpus(onBoardCpus);
+		return board;
+	}
 }

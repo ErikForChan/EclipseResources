@@ -3509,7 +3509,7 @@
 		    </or>          
          </enabledWhen>
       </page> 
-
+<!---
 	  <page
             name="Memory Map"
             class="org.eclipse.cdt.internal.ui.djyproperties.MemoryMapPage"
@@ -3522,7 +3522,7 @@
 		     </adapt>         
          </enabledWhen>
       </page>
-      
+       -->
       <page
             name="Module Configuration"
             class="org.eclipse.cdt.internal.ui.djyproperties.ModuleConfigurationPage"

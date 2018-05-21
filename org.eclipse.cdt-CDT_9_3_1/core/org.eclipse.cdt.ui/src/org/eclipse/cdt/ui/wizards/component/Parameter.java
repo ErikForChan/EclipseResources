@@ -2,8 +2,16 @@ package org.eclipse.cdt.ui.wizards.component;
 
 public class Parameter {
 	private String type;
+	private String value;
 	private String connector;
 	private String annotation;
+	
+	public String getValue() {
+		return value;
+	}
+	public void setValue(String value) {
+		this.value = value;
+	}
 	public String getType() {
 		return type;
 	}
@@ -25,6 +33,14 @@ public class Parameter {
 	public Parameter(String type, String connector, String annotation) {
 		super();
 		this.type = type;
+		this.connector = connector;
+		this.annotation = annotation;
+	}
+	
+	public Parameter(String type, String value, String connector, String annotation) {
+		super();
+		this.type = type;
+		this.value = value;
 		this.connector = connector;
 		this.annotation = annotation;
 	}

@@ -42,12 +42,11 @@ import org.w3c.dom.Element;
 
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
-import org.eclipse.cdt.ui.wizards.cpu.core.memory.Memory;
+import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 public class NewGroupDialog extends StatusDialog{
 
-	private Tree cpuGroupOnTree;
 	private Tree cpuGroupTree;
 	private String newConfig = null;
 	private Composite configContent;
@@ -66,6 +65,7 @@ public class NewGroupDialog extends StatusDialog{
 	List<String> configsList = new ArrayList<String>();
 	List<String> configsOn = new ArrayList<String>();
 	List<String> attributes = new ArrayList<String>();
+	private List<String> firewareLibs = new ArrayList<String>();
 	
 	/*
 	 * 获取当前Eclipse的路径
@@ -88,32 +88,7 @@ public class NewGroupDialog extends StatusDialog{
         }
 
     }
-	
-	//添加或者删除配置时，修改两棵树的内容，并对configsList和configsOn分别进行日安家或者删除操作
-	public void changeConfigsOn(String configName,boolean toAdd) {
-		if(toAdd) {
-			for(int i=0;i<configsList.size();i++) {
-				String curConfig = configsList.get(i);
-				if(curConfig.equals(configName)) {
-					newConfig = curConfig;
-					configsOn.add(configName);
-					configsList.remove(i);
-					break;
-				}
-			}
-		}else {
-			for(int i=0;i<configsOn.size();i++) {
-				String curConfig = configsOn.get(i);
-				if(curConfig.equals(configName)) {
-					newConfig = curConfig;
-					configsList.add(curConfig);
-					configsOn.remove(i);
-					break;
-				}
-			}
-		}
-	}
-	
+		
 	public NewGroupDialog(Shell parent,List<String> configs,Cpu cpu,String curFilePath) {
 		super(parent);
 		setTitle("新建分组");
@@ -172,101 +147,21 @@ public class NewGroupDialog extends StatusDialog{
 		columnGroupList.setWidth(90);
 		columnGroupList.setResizable(false);
 		columnGroupList.setToolTipText("Cpu Attributes");
-		cpuGroupTree.setSize(100, 170);
-		for(int i=0;i<attributes.size();i++) {
-			configsList.add(attributes.get(i));
+		cpuGroupTree.setSize(120, 220);
+		List<String> cons = new ArrayList<String>();
+		cons.add("内核个数");
+		cons.add("复位配置");
+		cons.add("浮点配置");
+		cons.add("内核配置");
+		cons.add("存储配置");
+		cons.add("固件库");
+		//之前是attributes
+		for(int i=0;i<cons.size();i++) {
+			configsList.add(cons.get(i));
 			TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
-			t.setText(attributes.get(i));
+			t.setText(cons.get(i));
 		}
-		Composite btnCpt = new Composite(cpuGroupCpt, SWT.NULL);
-		btnCpt.setLayout(new GridLayout());
-		btnCpt.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_CENTER));
-		Button gotoBtn,backBtn;
-		gotoBtn = new Button(btnCpt,SWT.PUSH);
-		gotoBtn.setText("   》》  ");
-		backBtn = new Button(btnCpt,SWT.PUSH);
-		backBtn.setText(" 《《    ");
-		cpuGroupTree.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				backBtn.setEnabled(false);
-				gotoBtn.setEnabled(true);
-				TreeItem[] items = cpuGroupTree.getSelection();
-				if(items.length>0) {
-					
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-	
-		gotoBtn.addSelectionListener(new SelectionListener() {
 
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				TreeItem[] items = cpuGroupTree.getSelection();
-				if (items.length > 0) {
-					String selectConfigName = items[0].getText();
-					changeConfigsOn(selectConfigName,true);
-					items[0].dispose();
-					updateConfigsOn();
-				}
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		backBtn.addSelectionListener(new SelectionListener() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				TreeItem[] items = cpuGroupOnTree.getSelection();
-				if (items.length > 0) {
-					String selectConfigName = items[0].getText();
-					changeConfigsOn(selectConfigName, false);
-					items[0].dispose();
-					updateConfigList();
-				}
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-		
-		
-		Composite cpuGroupListCptOn = new Composite(cpuGroupCpt, SWT.NULL);
-		cpuGroupOnTree = new Tree(cpuGroupListCptOn, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		cpuGroupOnTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-		cpuGroupOnTree.setHeaderVisible(true);
-		cpuGroupOnTree.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] items = cpuGroupOnTree.getSelection();
-			}
-		});
-		
-		final TreeColumn columncpuGroupOn = new TreeColumn(cpuGroupOnTree, SWT.NONE);
-		columncpuGroupOn.setText("新分组配置项");
-		columncpuGroupOn.setWidth(90);
-		columncpuGroupOn.setResizable(false);
-		columncpuGroupOn.setToolTipText("Cpu GroupOn");
-		cpuGroupOnTree.setSize(100, 170);
-		
 		contentGroup = ControlFactory.createGroup(cpuGroupCpt, "分组配置", 1);
 		contentGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		contentGroup.setLayout(new GridLayout(1,true));
@@ -278,9 +173,6 @@ public class NewGroupDialog extends StatusDialog{
 		configContent = new Composite(scrolledComposite,SWT.NONE);
 		configContent.setLayout(new GridLayout());
 		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
-//		
-//		Text text = new Text(configContent,SWT.BORDER);
-//		text.setText("Test");
 		
 		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		scrolledComposite.setContent(configContent);
@@ -288,14 +180,12 @@ public class NewGroupDialog extends StatusDialog{
 		scrolledComposite.setExpandHorizontal(true);
 	    scrolledComposite.setExpandVertical(true);
 		
-		cpuGroupOnTree.addSelectionListener(new SelectionListener() {
+	    cpuGroupTree.addSelectionListener(new SelectionListener() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				gotoBtn.setEnabled(false);
-				backBtn.setEnabled(true);
-				TreeItem[] items = cpuGroupOnTree.getSelection();
+				TreeItem[] items = cpuGroupTree.getSelection();
 				if (items.length > 0) {
 					String selectConfigName = items[0].getText();
 					contentGroup.setText(selectConfigName);
@@ -316,6 +206,9 @@ public class NewGroupDialog extends StatusDialog{
 					case "复位配置":
 						creatResetContent(contentGroup);
 						break;
+					case "固件库":
+						creatFirmwareLibContent(contentGroup);
+						break;
 					}		
 				}
 			}
@@ -328,6 +221,67 @@ public class NewGroupDialog extends StatusDialog{
 		});
 		
 		return super.createDialogArea(parent);
+	}
+	
+	protected void creatFirmwareLibContent(Group contentGroup2) {
+		// TODO Auto-generated method stub
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
+                | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		configContent = new Composite(scrolledComposite,SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 2;
+		configContent.setLayout(layout);
+		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+		
+		Label nameLabel = new Label(configContent,SWT.NONE);
+		nameLabel.setText("固件库选择: ");
+		Combo firmwareCombo = new Combo(configContent,SWT.READ_ONLY);
+		
+		File firewareFile = new File(eclipsePath+"djysrc\\third\\firmware");
+		File[] files = firewareFile.listFiles();
+		for(int i=0;i<files.length;i++) {
+			firewareLibs.add(files[i].getName());
+		}
+		for(int i=0;i<firewareLibs.size();i++) {
+			firmwareCombo.add(firewareLibs.get(i));
+		}
+		firmwareCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		if(newCpu.getFirmwareLib()!=null) {
+			String firmwareLib = newCpu.getFirmwareLib();
+			for(int i=0;i<firewareLibs.size();i++) {
+				System.out.println(firewareLibs.get(i));
+				if(firmwareLib.equals(firewareLibs.get(i))) {
+					firmwareCombo.select(i);
+				}
+			}
+		}
+		
+		firmwareCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				String firmware = firmwareCombo.getText();
+				newCpu.setFirmwareLib(firmware);
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+		contentGroup.layout();
+		
 	}
 	
 	protected void creatResetContent(Group contentGroup) {
@@ -384,6 +338,8 @@ public class NewGroupDialog extends StatusDialog{
 				String addr = newCpu.getCores().get(selectIndex).getResetAddr();
 				if(addr!=null) {
 					addrText.setText(addr);
+				}else {
+					addrText.setText("");
 				}
 				
 			}
@@ -476,6 +432,7 @@ public class NewGroupDialog extends StatusDialog{
 					}
 				}
 			}else {
+				abiCombo.deselectAll();
 				fpuTypeCombo.deselectAll();
 			}
 		}
@@ -602,7 +559,7 @@ public class NewGroupDialog extends StatusDialog{
 					 max = Integer.parseInt(maxString.substring(6,maxString.length()));
 				}
 				t.setText("memory"+(max+1));
-				Memory memory = new Memory();
+				CoreMemory memory = new CoreMemory();
 				memory.setName("memory"+(max+1));
 				newCpu.getCores().get(selectIndex).getMemorys().add(memory);
 			
@@ -661,13 +618,13 @@ public class NewGroupDialog extends StatusDialog{
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				int selectIndex = numCombo.getSelectionIndex();
-				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+				List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
 				int comboIndex = memoryTypeCombo.getSelectionIndex();
 				TreeItem[] items = memoryTree.getSelection();
 				if(items.length>0) {
 					String selectMemory = items[0].getText().trim();//选中的内存
 					for(int i=0;i<memorys.size();i++) {
-						Memory memory = memorys.get(i);
+						CoreMemory memory = memorys.get(i);
 						if(memory.getName().equals(selectMemory)) {
 							String type = memoryTypeCombo.getItem(comboIndex);
 							memory.setType(type);
@@ -696,12 +653,12 @@ public class NewGroupDialog extends StatusDialog{
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
 				int selectIndex = numCombo.getSelectionIndex();
-				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+				List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
 				TreeItem[] items = memoryTree.getSelection();
 				if (items.length > 0) {
 					String selectMemory = items[0].getText().trim();
 					for (int i = 0; i < memorys.size(); i++) {
-						Memory memory = memorys.get(i);
+						CoreMemory memory = memorys.get(i);
 						if (memory.getName().equals(selectMemory)) {
 							String addr = addrField.getText().trim();
 							memory.setStartAddr(addr);
@@ -724,14 +681,14 @@ public class NewGroupDialog extends StatusDialog{
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
 				int selectIndex = numCombo.getSelectionIndex();
-				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+				List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
 				TreeItem[] items = memoryTree.getSelection();
 				if (items.length > 0) {
 					String selectMemory = items[0].getText().trim();
 					String size = sizeField.getText().trim();
 					if (!size.equals("")) {
 						for (int i = 0; i < memorys.size(); i++) {
-							Memory memory = memorys.get(i);
+							CoreMemory memory = memorys.get(i);
 							if (memory.getName().equals(selectMemory)) {
 								memory.setSize(Integer.parseInt(size));
 								break;
@@ -742,14 +699,14 @@ public class NewGroupDialog extends StatusDialog{
 				}
 			}
 		});
-	    
+	    //选择内核的监听事件
 		numCombo.addSelectionListener(new SelectionListener() {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				int selectIndex = numCombo.getSelectionIndex();
-				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();
+				List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();
 				memoryTree.removeAll();
 				if(memorys.size()!=0) {
 					for(int i=0;i<memorys.size();i++) {
@@ -758,6 +715,9 @@ public class NewGroupDialog extends StatusDialog{
 						t.setText(memoryName);
 					}		
 				}
+				memoryTypeCombo.deselectAll();
+				addrField.setText("");
+				sizeField.setText("");
 			}
 
 			@Override
@@ -774,7 +734,7 @@ public class NewGroupDialog extends StatusDialog{
 				// TODO Auto-generated method stub
 				TreeItem[] items = memoryTree.getSelection();
 				int selectIndex = numCombo.getSelectionIndex();
-				List<Memory> memorys = newCpu.getCores().get(selectIndex).getMemorys();
+				List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();
 				if (items.length > 0) {
 					String selectMemoryName = items[0].getText();
 					for(int i=0;i<memorys.size();i++) {
@@ -786,13 +746,19 @@ public class NewGroupDialog extends StatusDialog{
 								}else if(memorys.get(i).getType().equals("RAM")) {
 									memoryTypeCombo.select(1);
 								}
+							}else {
+								memoryTypeCombo.deselectAll();
 							}
 							if(memorys.get(i).getStartAddr()!=null) {
 								addrField.setText(memorys.get(i).getStartAddr());
+							}else {
+								addrField.setText("");
 							}
 							if(memorys.get(i).getSize()!=0) {
-								sizeField.setText(String.valueOf(memorys.get(i).getSize()));
-							}		
+								sizeField.setText(String.valueOf(memorys.get(i).getSize()));	
+							}else {
+								sizeField.setText("");
+							}
 						}
 					}		
 				}
@@ -1125,24 +1091,10 @@ public class NewGroupDialog extends StatusDialog{
 		contentGroup.layout();
 	}
 
-	
-	protected void updateConfigList() {
-		// TODO Auto-generated method stub
-		TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
-		t.setText(newConfig);
-	}
-
-	
-	protected void updateConfigsOn() {
-		// TODO Auto-generated method stub
-		TreeItem t = new TreeItem(cpuGroupOnTree, SWT.NONE);
-		t.setText(newConfig);
-	}
-
 	@Override
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
-		return new Point(650,500);
+		return new Point(520,400);
 	}
 	
 	@Override
@@ -1209,7 +1161,7 @@ public class NewGroupDialog extends StatusDialog{
 				if(curCore.getMemorys().size()!=0) {
 					Element memory = document.createElement("memory");
 					for(int j=0;j<curCore.getMemorys().size();j++) {
-						Memory curMemory = curCore.getMemorys().get(j);
+						CoreMemory curMemory = curCore.getMemorys().get(j);
 						
 						Element type = document.createElement("type");
 						type.setTextContent(curMemory.getType());

@@ -56,7 +56,10 @@ import org.eclipse.cdt.core.CProjectNature;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.board.Board;
-import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
+import org.eclipse.cdt.ui.wizards.cpu.Cpu;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
@@ -308,42 +311,82 @@ public class MemoryMapWizard extends WizardPage {
 		cpu = nmWizard.getCpu();
 		board = nmWizard.getBoard();
 		if(cpu!=null) {	
-			romOnBox[0].setSelection(true);
-			romOnBox[0].setEnabled(false);
-			romOnStartText[0].setText(cpu.getFlashStart());
-			romOnStartText[0].setEnabled(false);
-			romOnSizeText[0].setText(cpu.getFlashSize());
-			romOnSizeText[0].setEnabled(false);
 			
-			String[] ramStarts = cpu.getRamStart().split(",");
-			String[] ramSizes = cpu.getRamSize().split(",");
-			for (int i = 0; i < ramStarts.length; i++) {
-				ramOnBox[i].setSelection(true);
-				ramOnBox[i].setEnabled(false);
-				ramOnStartText[i].setText(ramStarts[i]);
-				ramOnStartText[i].setEnabled(false);
-				ramOnSizeText[i].setText(ramSizes[i]);
-				ramOnSizeText[i].setEnabled(false);
-			}	
-		}
-		if(! nmWizard.isToCreat) {
-			if (! board.getExtromStart().equals("null")) {
-				romOffBox[0].setSelection(true);
-				romOffBox[0].setEnabled(false);
-				romOffStartText[0].setText(board.getExtromStart());
-				romOffStartText[0].setEnabled(false);
-				romOffSizeText[0].setText(board.getExtromSize());
-				romOffSizeText[0].setEnabled(false);
+			int romCount = 0,ramCount = 0;
+			for(int i=0;i<cpu.getCores().size();i++) {
+				Core core = cpu.getCores().get(i);
+				System.out.println("core!=null   " + core.getMemorys().size());
+				for(int j=0;j<core.getMemorys().size();j++) {
+					CoreMemory memory = core.getMemorys().get(j);
+					if(memory.getType().equals("ROM")) {
+						romOnBox[romCount].setSelection(true);
+						romOnBox[romCount].setEnabled(false);
+						romOnStartText[romCount].setText(memory.getStartAddr());
+						romOnStartText[romCount].setEnabled(false);
+						romOnSizeText[romCount].setText(String.valueOf(memory.getSize()));
+						romOnSizeText[romCount].setEnabled(false);
+						romCount++;
+					}else if(memory.getType().equals("RAM")) {
+						ramOnBox[ramCount].setSelection(true);
+						ramOnBox[ramCount].setEnabled(false);
+						ramOnStartText[ramCount].setText(memory.getStartAddr());
+						ramOnStartText[ramCount].setEnabled(false);
+						ramOnSizeText[ramCount].setText(String.valueOf(memory.getSize()));
+						ramOnSizeText[ramCount].setEnabled(false);
+						ramCount++;
+					}
+				}
+								
 			}
-			if (! board.getExtramStart().equals("null")) {
-				ramOffBox[0].setSelection(true);
-				ramOffBox[0].setEnabled(false);
-				ramOffStartText[0].setText(board.getExtramStart());
-				ramOffStartText[0].setEnabled(false);
-				ramOffSizeText[0].setText(board.getExtramSize());
-				ramOffSizeText[0].setEnabled(false);
+	
+		}
+		
+		if(board != null){
+
+			int romCount = 0,ramCount = 0;
+			for(int i=0;i<board.getOnBoardCpus().size();i++) {
+				OnBoardCpu onBoardCpu = new OnBoardCpu();
+				System.out.println("onBoardCpu!=null   " + onBoardCpu.getMemorys().size());
+				for(int j=0;j<onBoardCpu.getMemorys().size();j++) {
+					if(onBoardCpu.getMemorys().get(j).getType().equals("ROM")) {
+						romOffBox[romCount].setSelection(true);
+						romOffBox[romCount].setEnabled(false);
+						romOffStartText[romCount].setText(onBoardCpu.getMemorys().get(j).getStartAddr());
+						romOffStartText[romCount].setEnabled(false);
+						romOffSizeText[romCount].setText(String.valueOf(onBoardCpu.getMemorys().get(j).getSize()));
+						romOffSizeText[romCount].setEnabled(false);
+						romCount++;
+					}else if(onBoardCpu.getMemorys().get(j).getType().equals("RAM")) {
+						ramOffBox[ramCount].setSelection(true);
+						ramOffBox[ramCount].setEnabled(false);
+						ramOffStartText[ramCount].setText(onBoardCpu.getMemorys().get(j).getStartAddr());
+						ramOffStartText[ramCount].setEnabled(false);
+						ramOffSizeText[ramCount].setText(String.valueOf(onBoardCpu.getMemorys().get(j).getSize()));
+						ramOffSizeText[ramCount].setEnabled(false);
+						ramCount++;
+					}
+					
+				}
 			}
 		}
+//		if(! nmWizard.isToCreat) {
+//			if (! board.getExtromStart().equals("null")) {
+//				romOffBox[0].setSelection(true);
+//				romOffBox[0].setEnabled(false);
+//				romOffStartText[0].setText(board.getExtromStart());
+//				romOffStartText[0].setEnabled(false);
+//				romOffSizeText[0].setText(board.getExtromSize());
+//				romOffSizeText[0].setEnabled(false);
+//			}
+//			if (! board.getExtramStart().equals("null")) {
+//				ramOffBox[0].setSelection(true);
+//				ramOffBox[0].setEnabled(false);
+//				ramOffStartText[0].setText(board.getExtramStart());
+//				ramOffStartText[0].setEnabled(false);
+//				ramOffSizeText[0].setText(board.getExtramSize());
+//				ramOffSizeText[0].setEnabled(false);
+//			}
+//		}
 //		createDynamicGroup((Composite)getControl());
 
 	}
@@ -503,18 +546,15 @@ public class MemoryMapWizard extends WizardPage {
 		System.out.println("getNextPage MM");
 		String modulePageTip = "本版本为测试版，暂无添加依赖关系，以后版本将会陆续添加.";
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
-		if(! nmWizard.addedModule) {
-			nmWizard.modulePage = new ModuleConfigurationWizard("basicModuleCfgPage");
-			nmWizard.modulePage.setTitle("Module Configuration");
-			nmWizard.modulePage.setDescription(modulePageTip);
-			nmWizard.addPage(nmWizard.modulePage);
-			nmWizard.addedModule = true;
-			if(nmWizard.isToCreat) {
-				nmWizard.handleBoard();
-			}
-			nmWizard.handleCProject();
+		if(! nmWizard.addedInit) {
+			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage");
+			nmWizard.initPage.setTitle("Init Project");
+			nmWizard.initPage.setDescription("Init the project you are creating");
+			nmWizard.addPage(nmWizard.initPage);
+			nmWizard.addedInit = true;
+//			nmWizard.handleCProject();
 		}else{
-			nmWizard.modulePage.moduleCompleted = true;
+//			nmWizard.initPage.moduleCompleted = true;
 		}		
 		
 		return super.getNextPage();

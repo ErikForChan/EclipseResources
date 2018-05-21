@@ -85,6 +85,16 @@ public class ModuleConfigurationWizard extends WizardPage{
 	
 	//moduleinit.h
 	public void fillModuleinit(String path) {
+		File file = new File(path);
+		if (file.exists()) {
+			file.delete();
+		}
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		moduleInit = "";
 		moduleInit+="#ifndef __MODULEINIT_H__\r\n" + 
 				"#define __MODULEINIT_H__\r\n\n"+

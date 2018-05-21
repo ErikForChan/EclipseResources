@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
@@ -14,10 +15,15 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.util.BidiUtils;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -39,15 +45,20 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.WorkingSetGroup;
+import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.eclipse.ui.internal.ide.dialogs.ProjectContentsLocationArea;
 import org.eclipse.ui.internal.ide.dialogs.ProjectContentsLocationArea.IErrorMessageReporter;
+import org.eclipse.ui.wizards.IWizardDescriptor;
 
+import org.eclipse.cdt.core.CCorePreferenceConstants;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
@@ -63,7 +74,12 @@ import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.CWizardHandler;
 import org.eclipse.cdt.ui.wizards.board.Board;
-import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
+import org.eclipse.cdt.ui.wizards.board.BoardWizard;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
+import org.eclipse.cdt.ui.wizards.cpu.Cpu;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.ui.newui.Messages;
@@ -77,21 +93,22 @@ public class DjyosMainWizardPage extends WizardPage{
 	private static final String ELEMENT_NAME = "wizard"; //$NON-NLS-1$
 	private static final String CLASS_NAME = "class"; //$NON-NLS-1$
 	public static final String DESC = "EntryDescriptor"; //$NON-NLS-1$
+	public String ldsHead = "";
+	public String ldsDesc = "";
 	
 	// Widgets
+	private static IntegerFieldEditor fIbootSize;
+	private static Composite ibootComposite;
 	private Tree tree;
 	private Composite right;
 	private Button showSup;
 	private Label rightLabel;
-
 	Text fProjectNameField;
 	Text fBoardNameField;
-	
 	public CWizardHandler h_selected;
 	private Label categorySelectedLabel;
 	private String initialProjectFieldValue;
 	private WorkingSetGroup workingSetGroup;
-	
 	static Text projectTypeDesc;
 	private static Button[] radioBtns = new Button[4];
 	Combo boardCombo;
@@ -99,15 +116,11 @@ public class DjyosMainWizardPage extends WizardPage{
 	String boardName;
 	Cpu selectedCpu;
 	Board selectedBoard;
-	boolean isToCreat;
+	Core selectedCore;
 	String boardModuleTrimPath;
 	boolean clickedNext = true;
 	String projectPath;
 	Cpu defaultCpu;
-	
-	public boolean isToCreat() {
-		return isToCreat;
-	}
 	
 	public String getBoardName() {
 		return fBoardNameField.getText().trim();
@@ -119,6 +132,10 @@ public class DjyosMainWizardPage extends WizardPage{
 	
 	public Board getSelectBoard() {
 		return selectedBoard;
+	}
+	
+	public Core getSelectCore() {
+		return selectedCore;
 	}
 	
 	@SuppressWarnings("restriction")
@@ -177,20 +194,6 @@ public class DjyosMainWizardPage extends WizardPage{
 		composite.setLayout(layout);
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-//		Button pageDescBtn = new Button(composite, SWT.PUSH | SWT.RIGHT);
-//		pageDescBtn.setText("Page Description");
-//		pageDescBtn.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
-//		pageDescBtn.addSelectionListener(new SelectionAdapter(){  
-//            public void widgetSelected(SelectionEvent e){         	
-//            	try {
-//					Desktop.getDesktop().open(new File("E:/GoogleJava.pdf"));
-//				} catch (IOException e1) {
-//					// TODO Auto-generated catch block
-//					e1.printStackTrace();
-//				}
-//            }
-//        });  
-		
 		creatTemplateUI(composite);
 		createProjectAndBoardGroup(composite);
 		//createBoardGroup(composite);
@@ -210,12 +213,12 @@ public class DjyosMainWizardPage extends WizardPage{
 	private void createProjectAndBoardGroup(Composite parent) {
 		Composite projectGroup = new Composite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout();
-		layout.numColumns = 3;
+		layout.numColumns = 4;
 		layout.verticalSpacing = 20;
 		projectGroup.setLayout(layout);
 		projectGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-		// new project label
+		// 工程名
 		Label projectLabel = new Label(projectGroup, SWT.NONE);
 		projectLabel.setText(IDEWorkbenchMessages.WizardNewProjectCreationPage_nameLabel);
 		// new project name entry field
@@ -226,41 +229,69 @@ public class DjyosMainWizardPage extends WizardPage{
 		BidiUtils.applyBidiProcessing(fProjectNameField, BidiUtils.BTD_DEFAULT);
 		Button testBtn = new Button(projectGroup, SWT.PUSH);
 		testBtn.setVisible(false);
-		
+		Button test1Btn = new Button(projectGroup, SWT.PUSH);
+		test1Btn.setVisible(false);
+		//板件
 		Label boardLabel = new Label(projectGroup, SWT.NONE);
-		boardLabel.setText("Board name:");
-		// new project name entry field
-//		Composite selectOrCreateGroup = new Composite(projectGroup, SWT.NONE);
-//		GridLayout selectOrCreateGl = new GridLayout();
-//		selectOrCreateGl.numColumns = 2;
-//		selectOrCreateGroup.setLayout(selectOrCreateGl);
-//		selectOrCreateGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		boardLabel.setText("Board:");
 		fBoardNameField = new Text(projectGroup, SWT.BORDER);
 		fBoardNameField.setLayoutData(data);
 		fBoardNameField.setEnabled(false);
 		fBoardNameField.addListener(SWT.Modify, boardModifyListener);
 		fBoardNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		BidiUtils.applyBidiProcessing(fBoardNameField, BidiUtils.BTD_DEFAULT);
-		Button selectOrCreateOrNewBtn = new Button(projectGroup, SWT.PUSH);
-		selectOrCreateOrNewBtn.setText("Select/Create ...");
-		selectOrCreateOrNewBtn.addSelectionListener(new SelectionAdapter(){  
+		Button selectBoardBtn = new Button(projectGroup, SWT.PUSH);
+		selectBoardBtn.setText("Select");
+		Button createBoardBtn = new Button(projectGroup, SWT.PUSH);
+		createBoardBtn.setText("Create");//BoardWizard
+		//创建板件按钮的监听
+		createBoardBtn.addSelectionListener(new SelectionAdapter() {
+			
+			public void widgetSelected(SelectionEvent e) {
+				//获取板件向导的Action，通过run()运行该向导
+				IAction action = getAction("org.eclipse.cdt.ui.wizards.NewCWizard5");
+				action.run();
+			}
+			
+		});
+		//选择板件按钮的监听
+		selectBoardBtn.addSelectionListener(new SelectionAdapter(){  
             public void widgetSelected(SelectionEvent e){         	
-            		SelectOrCreateBoardDialog dialog = new SelectOrCreateBoardDialog(getShell());
+            		GetBoardDialog dialog = new GetBoardDialog(getShell());
             		if (dialog.open() == Window.OK) {
             			boardName = dialog.getBoardName();
             			selectedCpu = dialog.getSelectCpu();
             			defaultCpu = dialog.defaultCpu;
             			selectedBoard = dialog.getSelectBoard();
+            			selectedCore = dialog.getSelectCore();
             			fBoardNameField.setText(boardName);
-            			isToCreat = dialog.isToCreat();
             			boardModuleTrimPath = dialog.boardModuleTrimPath;
         			}
             }
         });  
-//		fBoardNameField.addListener(SWT.Modify, nameModifyListener);
-//		BidiUtils.applyBidiProcessing(fBoardNameField, BidiUtils.BTD_DEFAULT);
 		
 	}
+	
+	/*
+	 * Returns the action for the given wizard id, or null if not found.
+	 */
+	private IAction getAction(String id) {
+		// Keep a cache, rather than creating a new action each time,
+		// so that image caching in ActionContributionItem works.
+		IAction action = null;
+		IWizardDescriptor wizardDesc = WorkbenchPlugin.getDefault().getNewWizardRegistry().findWizard(id);
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		if (wizardDesc != null) {
+			action = new NewWizardShortcutAction(window, wizardDesc);
+			IConfigurationElement element = Adapters.adapt(wizardDesc, IConfigurationElement.class);
+			if (element != null) {
+				window.getExtensionTracker().registerObject(element.getDeclaringExtension(), action,
+						IExtensionTracker.REF_WEAK);
+			}
+		}
+		return action;
+	}
+	
 		
 	private void copyHoldsOptions(IHoldsOptions src, IHoldsOptions dst, IResourceInfo res){
 		if(src instanceof ITool) {
@@ -328,6 +359,107 @@ public class DjyosMainWizardPage extends WizardPage{
 		}
 	}
 	
+	public String getLdsHead() {
+		ldsHead += "\n"
+				+ "/*由于MEMORY命令不能使用符号，这些常量的定义，必须与MEMORY命令处一致 */ \n\n"
+				+ "MEMORY\n"
+				+ "{";
+
+		List<OnBoardMemory> onBoardMemorys_ROM = new ArrayList<OnBoardMemory>();
+		List<OnBoardMemory> onBoardMemorys_RAM = new ArrayList<OnBoardMemory>();
+		List<CoreMemory> coreMemorys_ROM = new ArrayList<CoreMemory>();
+		List<CoreMemory> coreMemorys_RAM = new ArrayList<CoreMemory>();
+		for (int i = 0; i < selectedBoard.getOnBoardCpus().size(); i++) {
+			OnBoardCpu onBoardCpu = selectedBoard.getOnBoardCpus().get(i);
+			for(int j=0;j<onBoardCpu.getMemorys().size();j++) {			
+				if(onBoardCpu.getMemorys().get(j).getType().equals("ROM")) {
+					onBoardMemorys_ROM.add(onBoardCpu.getMemorys().get(j));
+				}else if(onBoardCpu.getMemorys().get(j).getType().equals("RAM")) {
+					onBoardMemorys_RAM.add(onBoardCpu.getMemorys().get(j));
+				}
+			}
+		}	
+		for(int i=0;i<selectedCpu.getCores().size();i++) {
+			Core core = selectedCpu.getCores().get(i);
+			for (int j = 0; j < core.getMemorys().size(); j++) {
+				if(core.getMemorys().get(j).getType().equals("ROM")) {
+					coreMemorys_ROM.add(core.getMemorys().get(j));				
+				}else if(core.getMemorys().get(j).getType().equals("RAM")) {
+					coreMemorys_RAM.add(core.getMemorys().get(j));
+				}				
+			}
+		}
+		
+		for(int i=0;i<coreMemorys_ROM.size();i++) {
+			ldsHead += "\n\textrom"+(i+1)+"(RX) : ORIGIN = "+coreMemorys_ROM.get(i).getStartAddr()
+					+", LENGTH = "+coreMemorys_ROM.get(i).getSize();
+		}
+		for(int i=0;i<coreMemorys_RAM.size();i++) {
+			ldsHead += "\n\tRAM"+(i+1)+"(RXW) : ORIGIN = "+coreMemorys_RAM.get(i).getStartAddr()
+					+", LENGTH = "+coreMemorys_RAM.get(i).getSize();
+		}
+		for(int i=0;i<onBoardMemorys_ROM.size();i++) {
+			ldsHead += "\n\tInnerFlash"+(i+1)+"(RX) : ORIGIN = "+onBoardMemorys_ROM.get(i).getStartAddr()
+					+", LENGTH = "+onBoardMemorys_ROM.get(i).getSize();
+		}
+		for(int i=0;i<onBoardMemorys_RAM.size();i++) {
+			ldsHead += "\n\tRAM"+(i+1)+"(RXW) : ORIGIN = "+onBoardMemorys_RAM.get(i).getStartAddr()
+					+", LENGTH = "+onBoardMemorys_RAM.get(i).getSize();
+		}
+
+		ldsHead += "\n}"+"\n";
+		return ldsHead;
+	}
+	
+	public String getLdsDesc() {
+		int ibootSize = Integer.parseInt(fIbootSize.getTextControl(ibootComposite).getText());
+		ldsDesc += "\nIbootSize = "+ibootSize+"K;\n";
+		
+		List<OnBoardMemory> onBoardMemorys_ROM = new ArrayList<OnBoardMemory>();
+		List<OnBoardMemory> onBoardMemorys_RAM = new ArrayList<OnBoardMemory>();
+		List<CoreMemory> coreMemorys_ROM = new ArrayList<CoreMemory>();
+		List<CoreMemory> coreMemorys_RAM = new ArrayList<CoreMemory>();
+		for (int i = 0; i < selectedBoard.getOnBoardCpus().size(); i++) {
+			OnBoardCpu onBoardCpu = selectedBoard.getOnBoardCpus().get(i);
+			for(int j=0;j<onBoardCpu.getMemorys().size();j++) {			
+				if(onBoardCpu.getMemorys().get(j).getType().equals("ROM")) {
+					onBoardMemorys_ROM.add(onBoardCpu.getMemorys().get(j));
+				}else if(onBoardCpu.getMemorys().get(j).getType().equals("RAM")) {
+					onBoardMemorys_RAM.add(onBoardCpu.getMemorys().get(j));
+				}
+			}
+		}
+		for(int i=0;i<selectedCpu.getCores().size();i++) {
+			Core core = selectedCpu.getCores().get(i);
+			for (int j = 0; j < core.getMemorys().size(); j++) {
+				if(core.getMemorys().get(j).getType().equals("ROM")) {
+					coreMemorys_ROM.add(core.getMemorys().get(j));
+				}else if(core.getMemorys().get(j).getType().equals("RAM")) {
+					coreMemorys_RAM.add(core.getMemorys().get(j));
+				}				
+			}
+		}
+		
+		for(int i=0;i<coreMemorys_ROM.size();i++) {
+			ldsDesc += "\nInnerFlash"+(i+1)+"Offset = "+"ORIGIN(InnerFlash"+(i+1)+");";
+			ldsDesc += "\nInnerFlash"+(i+1)+"Range = "+"LENGTH(InnerFlash"+(i+1)+");";
+		}
+		for(int i=0;i<coreMemorys_RAM.size();i++) {
+			ldsDesc += "\nInnerRAM"+(i+1)+"Start = "+"ORIGIN(RAM"+(i+1)+");";
+			ldsDesc += "\nInnerRAM"+(i+1)+"Size = "+"LENGTH(RAM"+(i+1)+");";
+		}
+		for(int i=0;i<onBoardMemorys_ROM.size();i++) {
+			ldsDesc += "\nExtRom"+(i+1)+"Start = "+"ORIGIN(extRom"+(i+1)+");";
+			ldsDesc += "\nExtRom"+(i+1)+"Size = "+"LENGTH(extRom"+(i+1)+");";
+		}
+		for(int i=0;i<onBoardMemorys_RAM.size();i++) {
+			ldsDesc += "\nExtRam"+(i+1)+"Start = "+"ORIGIN(extRam"+(i+1)+");";
+			ldsDesc += "\nExtRam"+(i+1)+"Size = "+"LENGTH(extRam"+(i+1)+");";
+		}
+		
+		return ldsDesc;
+	}
+	
 	public static void creatTemplateUI(Composite parent) {
 		Group group1 = ControlFactory.createGroup(parent, "Choose Template ", 1);
 		GridLayout gl = new GridLayout(2, false);
@@ -343,10 +475,13 @@ public class DjyosMainWizardPage extends WizardPage{
 				"Bare App Project" };
 
 		String[] templateDescs = {
-				"用于开发iboot和App的工程,App由iboot启动",
-				"用于开发iboot的工程",
-				"用于开发App的工程",
-				"用于开发无需iboot,自启动运行的App工程"
+				"用于开发iboot和App的工程，App由iboot\n启动，"
+				+ "用于App和iboot由一个团队维护的情况",
+				"用于开发iboot的工程，用于App和iboot由不同"
+				+ "团队维护的情况",
+				"用于开发App的工程，App工程需要输入iboot的尺"
+				+ "寸 用于App和iboot由不同团队维护的情况",
+				"用于开发无需iboot，自启动运行的App工程"
 		};
 		for (int i = 0; i < radioBtns.length; i++) {
 			radioBtns[i] = new Button(RADIOCpt, SWT.RADIO | SWT.LEFT);
@@ -357,6 +492,12 @@ public class DjyosMainWizardPage extends WizardPage{
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					projectTypeDesc.setText(templateDescs[a]);
+					if(a==radioBtns.length-1) {
+						fIbootSize.getTextControl(ibootComposite).setEnabled(false);
+					}else {
+						fIbootSize.getTextControl(ibootComposite).setEnabled(true);
+					}
+					
 				}
 
 			});
@@ -373,6 +514,22 @@ public class DjyosMainWizardPage extends WizardPage{
 		projectTypeDesc = new Text(right, SWT.MULTI | SWT.WRAP);
 		projectTypeDesc.setLayoutData(new GridData(GridData.FILL_BOTH));
 		projectTypeDesc.setText(templateDescs[0]);
+		Composite content = new Composite(group1, SWT.NULL);
+		content.setLayout(new GridLayout(1,true));
+		content.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		ibootComposite = new Composite(content, SWT.NULL);
+		GridLayout gd = new GridLayout(3,true);
+		gd.marginLeft = 100;
+		gd.marginHeight = 20;
+		ibootComposite.setLayout(gd);
+		ibootComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		fIbootSize= new IntegerFieldEditor(CCorePreferenceConstants.MAX_INDEX_DB_CACHE_SIZE_MB, "Iboot Size: ", ibootComposite, 4);
+		fIbootSize.setValidRange(1, 10000);
+		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
+		ControlFactory.createLabel(group1, "K");
+		
+//		fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify, ibootSizeModifyListener);
 
 	}
 
@@ -388,35 +545,47 @@ public class DjyosMainWizardPage extends WizardPage{
 	public IWizardPage getNextPage() {
 		System.out.println("getNextPage DW");
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
-		if(! nmWizard.addedMemory) {
-			System.out.println("nmWizard.addedMemory...");
-			nmWizard.memoryPage = new MemoryMapWizard("basicMemoryMapPage");
-			nmWizard.memoryPage.setTitle("Memory Map");
-			nmWizard.memoryPage.setDescription("Define flash and RAM sizes");
-			nmWizard.addPage(nmWizard.memoryPage);
-			nmWizard.addedMemory = true;		
-		}else {
+		if(! nmWizard.addedInit) {
+			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage");
+			nmWizard.initPage.setTitle("Init Project");
+			nmWizard.initPage.setDescription("Init the project you are creating");
+			nmWizard.addPage(nmWizard.initPage);
+			nmWizard.addedInit = true;
+		}else{
 			if(clickedNext) {
 				nmWizard.importTemplate(projectPath);
-				final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-				IProject project = workspace.getRoot().getProject(getProjectNameFieldValue());
-				String eclipsePath = nmWizard.getEclipsePath();
-				int index = getTemplateIndex();
-				String projectPath = locationArea.locationPathField.getText();
-				if(!projectPath.contains(getProjectName())) {
-					projectPath = projectPath+"/"+getProjectName();
-				}
-				if(index==0) {
-					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
-					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
-				}else if(index==1) {
-					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
-				}else if(index==2){
-					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
-				}else if(index==3){
-					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
-				}
-			}		
+//			nmWizard.initPage.moduleCompleted = true;
+		}		
+//		if(! nmWizard.addedMemory) {
+//			System.out.println("nmWizard.addedMemory...");
+//			nmWizard.memoryPage = new MemoryMapWizard("basicMemoryMapPage");
+//			nmWizard.memoryPage.setTitle("Memory Map");
+//			nmWizard.memoryPage.setDescription("Define flash and RAM sizes");
+//			nmWizard.addPage(nmWizard.memoryPage);
+//			nmWizard.addedMemory = true;		
+//		}else {
+//			if(clickedNext) {
+//				nmWizard.importTemplate(projectPath);
+				
+//				final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+//				IProject project = workspace.getRoot().getProject(getProjectNameFieldValue());
+//				String eclipsePath = nmWizard.getEclipsePath();
+//				int index = getTemplateIndex();
+//				String projectPath = locationArea.locationPathField.getText();
+//				if(!projectPath.contains(getProjectName())) {
+//					projectPath = projectPath+"/"+getProjectName();
+//				}
+//				if(index==0) {
+//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
+//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
+//				}else if(index==1) {
+//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
+//				}else if(index==2){
+//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
+//				}else if(index==3){
+//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
+//				}
+//			}		
 		}
 		clickedNext = true;		
 		return super.getNextPage();

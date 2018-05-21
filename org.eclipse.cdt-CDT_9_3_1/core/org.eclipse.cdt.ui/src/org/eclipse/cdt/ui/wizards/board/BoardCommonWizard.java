@@ -10,10 +10,7 @@ import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.wizards.newresource.BasicNewResourceWizard;
-
 import org.eclipse.cdt.ui.CUIPlugin;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.CreatTBoardXml;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.Board;
 
 public class BoardCommonWizard extends BasicNewResourceWizard{
 
@@ -55,7 +52,7 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 	public boolean performFinish() {
 		// TODO Auto-generated method stub
 		Board board = fMainPage.getBoard();
-		String dirPath = eclipsePath+"djysrc\\bsp\\boarddrv\\"+board.getBoardName();
+		String dirPath = eclipsePath+"djysrc\\bsp\\boarddrv\\user\\"+board.getBoardName();
 		try {
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {
 				@Override
@@ -72,7 +69,7 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 					boardDir.mkdirs();
 					String xmlPath = dirPath+"\\Board_"+board.getBoardName()+".xml";
 					File file = new File(xmlPath);
-					CreatTBoardXml ctbx = new CreatTBoardXml();
+					CreatBoardXml ctbx = new CreatBoardXml();
 					if(!file.exists()) {
 						try {
 							file.createNewFile();

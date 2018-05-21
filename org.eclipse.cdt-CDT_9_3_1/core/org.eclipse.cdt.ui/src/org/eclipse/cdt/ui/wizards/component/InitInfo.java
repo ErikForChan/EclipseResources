@@ -1,12 +1,13 @@
 package org.eclipse.cdt.ui.wizards.component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class InitInfo {
 	String funName;
 	String returnType;
 	String grade;
-	List<Parameter> parameters;
+	List<Parameter> parameters = new ArrayList<Parameter>();
 	
 	public String getFunName() {
 		return funName;

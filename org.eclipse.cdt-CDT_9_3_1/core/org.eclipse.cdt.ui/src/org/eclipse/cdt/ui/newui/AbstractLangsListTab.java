@@ -713,6 +713,7 @@ public abstract class AbstractLangsListTab extends AbstractCPropertyTab {
 				}
 			}
 		} else {
+			System.out.println("else");
 			ICLanguageSetting [] sr = getLangSetting(src);
 			ICLanguageSetting [] ds = getLangSetting(dst);
 			if (sr == null || ds == null || sr.length != ds.length) return;
@@ -720,6 +721,7 @@ public abstract class AbstractLangsListTab extends AbstractCPropertyTab {
 				ICLanguageSettingEntry[] ents = null;
 				ents = sr[i].getSettingEntries(getKind());
 				ds[i].setSettingEntries(getKind(), ents);
+				
 			}
 		}
 	}

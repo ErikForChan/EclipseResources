@@ -18,7 +18,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
-import org.eclipse.cdt.ui.wizards.cpu.core.memory.Memory;
+import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 
 public class ReadCpuXml {
 	private static DocumentBuilderFactory dbFactory = null;
@@ -27,8 +27,8 @@ public class ReadCpuXml {
 	String fullPath = Platform.getInstallLocation().getURL().toString();
 	String eclipsePath = fullPath.substring(6,
 			(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
-	List<CpuBak> cpus = new ArrayList<CpuBak>();
-	private CpuBak cpu;
+	List<Cpu> cpus = new ArrayList<Cpu>();
+	private Cpu cpu;
 	static {
 		try {
 			dbFactory = DocumentBuilderFactory.newInstance();
@@ -38,36 +38,63 @@ public class ReadCpuXml {
 		}
 	}
 	
-	public List<CpuBak> getAllCpus() {
+	//获取当前路径下所有Cpu信息，通过扫描各个目下的xml文件
+	public List<Cpu> getAllCpus() {
 		
 		String sourcePath = eclipsePath+"djysrc/bsp/cpudrv/stm32";
-		CpuBak cpu = new CpuBak();
 		File sourceFile = new File(sourcePath);
-		getCpus(cpu,sourceFile);
+		getCpus(sourceFile);
 		return cpus;
 		
 	}
-	
-	public void getCpus(CpuBak cpu, File sourceFile) {
+	//遍历父目录，当父目录名为cpudrv时停止扫描
+	private void traverseParents(Cpu cpu,File parentFile) {
+		if(!parentFile.getName().contains("cpudrv")) {		
+				File xmlFile = getXmlFile(parentFile);
+				try {
+					unitCpu(cpu,xmlFile);
+				}catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				parentFile = parentFile.getParentFile();
+				traverseParents(cpu,parentFile);
+		}
+	}
+	//获取某个文件夹下的xml文件
+	private File getXmlFile(File parentFile) {
+		File file =null;
+		File[] files = parentFile.listFiles();
+		for(int i=0;i<files.length;i++){
+			if(files[i].getName().endsWith(".xml")) {
+				file = files[i];
+			}
+		}
+		return file;
+	}
+	//获取Cpu.xml的信息
+	public void getCpus(File sourceFile) {
 		String filePath = sourceFile.getPath();
 		File[] files = sourceFile.listFiles();
-		boolean isDeap = true;
+		boolean isDeap = true;//是否扫描到最深层的文件
 		for (File file : files) {
-			if (file.isDirectory()) {
+			if (file.isDirectory() && !file.getName().equals("include") && !file.getName().equals("src")) {
 				isDeap = false;
 			}
 		}
 		for (File file : files) {
 			String curFilePath = filePath + "\\" + file.getName();
 			if (file.isDirectory()) {
-				getCpus(cpu, new File(curFilePath));
-			} else if (file.getName().endsWith(".xml")) {
+				if(!file.getName().equals("include") && !file.getName().equals("src")){
+					getCpus(new File(curFilePath));//如果为目录，则继续扫描该目录
+				}			
+			} else if (file.getName().endsWith(".xml")) {//如果为文件，且为xml格式的文件，则遍历所有父目录，获取当前cpu的信息
 				try {			
-					cpu = getCpu(cpu,curFilePath);
+					Cpu cpu = new Cpu();
+					File parentFile = file.getParentFile();
+					traverseParents(cpu,parentFile);
 					if(isDeap) {
-						CpuBak newCpu = new CpuBak(cpu.getName(),cpu.getCoreNum(),cpu.getType(),cpu.getFamily(),cpu.getArchitecture(),
-								cpu.getInstructionSet(),cpu.getEndianeness(),cpu.getFlashStart(),cpu.getFlashSize(),
-								cpu.getRamStart(),cpu.getRamSize(),cpu.getFpuABI(),cpu.getFpuType(),cpu.getResetAddr(),cpu.getCategory());
+						Cpu newCpu = new Cpu(cpu.getCpuName(),cpu.getCores());
 						cpus.add(newCpu);
 					} 
 				} catch (Exception e) {
@@ -78,46 +105,11 @@ public class ReadCpuXml {
 		}
 	}
 	
-	public static CpuBak getCpu(CpuBak cpu,String fileName) throws Exception {
-		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
-		document = db.parse(fileName);
-		org.w3c.dom.Node node = document.getElementsByTagName("cpu").item(0);
-		// 获取book结点的子节点,包含了Test类型的换行
-		NodeList cList = node.getChildNodes();// System.out.println(cList.getLength());9
-
-		ArrayList<String> contents = new ArrayList<>();
-		for (int j = 1; j < cList.getLength(); j += 2) {
-			org.w3c.dom.Node cNode = cList.item(j);
-			String nodeName = cNode.getNodeName();
-			String content = cNode.getFirstChild().getTextContent();
-			switch(nodeName) {
-			case "name":cpu.setName(content);break;
-			case "coreNum":cpu.setCoreNum(Integer.parseInt(content));break;
-			case "type":cpu.setType(content);break;
-			case "family":cpu.setFamily(content);break;
-			case "architecture":cpu.setArchitecture(content);break;
-			case "instructionSet":cpu.setInstructionSet(content);break;
-			case "endianeness":cpu.setEndianeness(content);break;
-			case "flashStart":cpu.setFlashStart(content);break;
-			case "flashSize":cpu.setFlashSize(content);break;
-			case "ramStart":cpu.setRamStart(content);break;
-			case "ramSize":cpu.setRamSize(content);break;
-			case "fpuABI":cpu.setFpuABI(content);break;
-			case "fpuType":cpu.setFpuType(content);break;
-			case "resetAddr":cpu.setResetAddr(content);break;
-			case "category":cpu.setCategory(content);break;			
-			}
-//			contents.add(content);
-		}
-		
-		return cpu;   
-    }  
-	
-	public Cpu unitCpu(Cpu cpu,File file) throws SAXException, IOException {
+	public Cpu unitCpu(Cpu cpu,File file) throws Exception {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
 		document = db.parse(file);
 		
-		NodeList nameList = document.getElementsByTagName("name");
+		NodeList nameList = document.getElementsByTagName("cpuName");
 //		org.w3c.dom.Node nameNode = document.getElementsByTagName("name").item(0);
 		for(int i=0;i<nameList.getLength();i++) {
 			String cpuName = nameList.item(i).getFirstChild().getTextContent();
@@ -137,6 +129,9 @@ public class ReadCpuXml {
 					String nodeName = node.getNodeName();
 					String content = node.getFirstChild().getTextContent();
 					switch(nodeName) {
+					case "type":
+							core.setType(content);
+						break;
 					case "resetAddr":
 							core.setResetAddr(content);
 						break;
@@ -158,6 +153,11 @@ public class ReadCpuXml {
 					String nodeName = node.getNodeName();
 					String content = node.getFirstChild().getTextContent();
 					switch(nodeName) {
+					case "type":
+						for(int j=0;j<cores.size();j++) {
+							cores.get(j).setType(content);
+						}
+						break;
 					case "resetAddr":
 						for(int j=0;j<cores.size();j++) {
 							cores.get(j).setResetAddr(content);
@@ -213,23 +213,24 @@ public class ReadCpuXml {
 					String nodeName = cNode.getNodeName();
 					String content = cNode.getFirstChild().getTextContent();
 					switch(nodeName) {
+					case "type":core.setType(content);break;
 					case "resetAddr":core.setResetAddr(content);break;
 					case "family": core.setFamily(content); break;
 					case "arch": core.setArch(content); break;
 					case "fpuType":core.setFpuType(content);break;
 					case "memory":				
 						NodeList memoryList = cNode.getChildNodes();
-						Memory memory = new Memory();
+						CoreMemory memory = new CoreMemory();
 						for (int k = 1; k < memoryList.getLength(); k += 2) {				
 							org.w3c.dom.Node mNode = memoryList.item(k);
 							String mName = mNode.getNodeName();
 							String mContent = mNode.getFirstChild().getTextContent();
-							if(mName.equals("memoryType")) {
+							if(mName.equals("type")) {
 								memory.setType(mContent);
 							}else if(mName.equals("startAddr")) {
 								memory.setStartAddr(mContent);
 							}else if(mName.equals("size")) {
-								memory.setSize(Integer.parseInt(mContent));
+								memory.setSize(Integer.parseInt(mContent.substring(0,mContent.length())));
 							}
 						}					
 						core.getMemorys().add(memory);

@@ -136,7 +136,6 @@ public class ChooseMCUDialog extends StatusDialog{
 		// TODO Auto-generated method stub
 		Composite composite = (Composite) super.createDialogArea(parent);
 		GridData gd;
-		
 		Composite MCUTypeCpt = new Composite(composite, SWT.NONE);
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 3;

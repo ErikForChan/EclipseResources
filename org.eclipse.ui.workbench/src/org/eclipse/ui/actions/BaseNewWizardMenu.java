@@ -133,7 +133,6 @@ public class BaseNewWizardMenu extends CompoundContributionItem {
      */
     protected boolean addShortcuts(List list) {
         boolean added = false;
-    	System.out.println("BaseNewWizardMenu");
         IWorkbenchPage page = workbenchWindow.getActivePage();
         if (page != null) {
             String[] wizardIds = page.getNewWizardShortcuts();

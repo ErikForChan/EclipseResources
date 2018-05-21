@@ -27,43 +27,46 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 
+import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.BoardMainWizard;
 import org.eclipse.cdt.ui.wizards.board.BoardWizard;
+import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.ReadTBoardXml;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.Board;
 
-public class SelectBoard extends StatusDialog{
+public class SelectBoardDialog extends StatusDialog{
 
 	private String detailsDesc = null;
 	private Text detailsField;
 	private Label boardSearchLabel;
 	private Text boardEditText;
+	private Text cpuEditText;
 	private Label cpuSelectLabel;
 	private Button selectCpuBtn;
 	private Tree boardTree;
 	private List<Board> boards = new ArrayList<Board>();
 	private List<Board> boardsFiltered;
+	private Board boardSelected = null;
 	
 	public Board getSelectBoard() {
-		TreeItem[] items = boardTree.getSelection();
-		Board board = null;
-		if (items.length > 0) {
-			String boardName = items[0].getText();
-			for(int i=0;i<boardsFiltered.size();i++) {
-				if(boardsFiltered.get(i).getBoardName().equals(boardName)) {
-					board = boardsFiltered.get(i);
-					break;
-				}
-			}
-		}
-		return board;
+		return boardSelected;
 	}
 	
 	private  Listener searchModifyListener = e -> {
 		//setLocationForSelection();
 		String keyword = boardEditText.getText().trim();
 		List<Board> boardsFiltered = getBoardsFiltered(boards,keyword);
+		boardTree.removeAll();
+		for(int i=0;i<boardsFiltered.size();i++) {
+			TreeItem t = new TreeItem(boardTree, SWT.NONE);
+			t.setText(boardsFiltered.get(i).getBoardName());
+		}
+//		tv.setInput(boardsFiltered);
+	};
+	
+	private  Listener cpuModifyListener = e -> {
+		//setLocationForSelection();
+		String keyword = cpuEditText.getText().trim();
+		List<Board> boardsFiltered = getBoardsFilteredByCpu(boards,keyword);
 		boardTree.removeAll();
 		for(int i=0;i<boardsFiltered.size();i++) {
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
@@ -86,17 +89,36 @@ public class SelectBoard extends StatusDialog{
 		
 	}
 	
-	public SelectBoard(Shell parent) {
-		super(parent);
-		// TODO Auto-generated constructor stub
-		setTitle("选择板件");
-		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );	
+	public List<Board> getBoardsFilteredByCpu(List<Board> boards,String cpuName){
+		
+		boardsFiltered = new ArrayList<Board>();
+		Pattern pattern = Pattern.compile(cpuName,Pattern.CASE_INSENSITIVE);
+		for(int i=0;i<boards.size();i++) {
+			List<OnBoardCpu> onBoardCpus = boards.get(i).getOnBoardCpus();
+			for(int j=0;j<onBoardCpus.size();j++) {
+				Matcher matcher = pattern.matcher(onBoardCpus.get(j).getCpuName());
+				if(matcher.find()) {
+					boardsFiltered.add(boards.get(i));
+					break;
+				}
+			}
+		}
+		return boardsFiltered;
+		
 	}
-	public SelectBoard(Shell parent,String sCpu) {
+	
+//	public SelectBoardDialog(Shell parent) {
+//		super(parent);
+//		// TODO Auto-generated constructor stub
+//		setTitle("选择板件");
+//		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );	
+//	}
+	
+	public SelectBoardDialog(Shell parent,String sCpu) {
 		super(parent);
 		// TODO Auto-generated constructor stub
 //		curCpuName = sCpu;
-		setTitle("SelectBoard");
+		setTitle("选择板件");
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
 	}
 	
@@ -111,7 +133,6 @@ public class SelectBoard extends StatusDialog{
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
 		Composite composite = (Composite) super.createDialogArea(parent);
-//		getBoards();
 		Composite boardSearchCpt = new Composite(composite, SWT.NONE);
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 4;
@@ -125,16 +146,19 @@ public class SelectBoard extends StatusDialog{
 		boardEditText.addListener(SWT.Modify, searchModifyListener);
 		//通过选择cpu获取相应的板件
 		cpuSelectLabel = new Label(boardSearchCpt, SWT.None);
-		cpuSelectLabel.setText("Select Cpu :");
-		selectCpuBtn = new Button(boardSearchCpt, SWT.PUSH);
-		selectCpuBtn.setText("Choose...");
-		selectCpuBtn.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				handleSelectCpuPressed();
-			}
-
-		});
+		cpuSelectLabel.setText("Search By Cpu :");
+		cpuEditText = new Text(boardSearchCpt, SWT.BORDER);
+		cpuEditText.addListener(SWT.Modify, cpuModifyListener);
+//		selectCpuBtn = new Button(boardSearchCpt, SWT.PUSH);
+//		selectCpuBtn.setText("Choose...");
+//		selectCpuBtn.setVisible(false);
+//		selectCpuBtn.addSelectionListener(new SelectionAdapter() {
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				handleSelectCpuPressed();
+//			}
+//
+//		});
 		Composite boardCpt = new Composite(composite, SWT.NONE);
 		GridLayout boardLayout = new GridLayout();
 		boardLayout.numColumns=2;
@@ -147,6 +171,7 @@ public class SelectBoard extends StatusDialog{
 		detailsField.setEditable(false);
 		Button newBoradBtn = new Button(composite,SWT.PUSH);
 		newBoradBtn.setText("Create new Board");
+		newBoradBtn.setVisible(false);
 		//点击新建板件后弹出新建板件的向导
 		newBoradBtn.addSelectionListener(new SelectionListener() {
 			
@@ -168,6 +193,16 @@ public class SelectBoard extends StatusDialog{
 
 	protected void okPressed() {
 		// TODO Auto-generated method stub
+		TreeItem[] items = boardTree.getSelection();
+		if (items.length > 0) {
+			String boardName = items[0].getText();
+			for(int i=0;i<boardsFiltered.size();i++) {
+				if(boardsFiltered.get(i).getBoardName().equals(boardName)) {
+					boardSelected = boardsFiltered.get(i);
+					break;
+				}
+			}
+		}
 		super.okPressed();
 	}
 	
@@ -183,21 +218,21 @@ public class SelectBoard extends StatusDialog{
 	}
 	
 	private void createTreeForBoards(Composite parent) {
-		ReadTBoardXml rbx = new ReadTBoardXml();
+		ReadBoardXml rbx = new ReadBoardXml();
 		Composite composite = new Composite(parent, SWT.NULL);
 		boardTree = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		boardTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		boardTree.setHeaderVisible(true);
-		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv";
+		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\user";
+//		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\demo";
+//		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv";
 		File boardFile = new File(boardFilePath);
 		File[] files = boardFile.listFiles();
 		for(int i=0;i<files.length;i++){
 			if(files[i].getName().contains("BoardDemo")) {
-				System.out.println(files[i].getName());
 				File file = files[i];
 				File[] mfiles = file.listFiles();
 				for(int j=0;j<mfiles.length;j++) {
-					System.out.println(mfiles[j].getName());
 					if(mfiles[j].getName().endsWith(".xml")) {
 						try {
 							Board board = rbx.getBoard(mfiles[j]);
@@ -230,9 +265,8 @@ public class SelectBoard extends StatusDialog{
 						if(boards.get(i).getBoardName().equals(selectBoardName)) {
 							Board board = boards.get(i);
 							List<OnBoardCpu> cpus = board.getOnBoardCpus();
-							System.out.println("cpus.size(): "+cpus.size());
 							for(int j=0;j<cpus.size();j++) {
-								System.out.println(selectBoardName+"456");
+								System.out.println(selectBoardName);
 								OnBoardCpu cpu = cpus.get(j);
 								String chipString = cpu.getChips().get(0).getChipName();
 								String peripheralString = cpu.getPeripherals().get(0).getName();
@@ -242,7 +276,7 @@ public class SelectBoard extends StatusDialog{
 								for(int k=1;k<cpu.getPeripherals().size();k++) {
 									peripheralString+= (","+cpu.getPeripherals().get(k).getName());
 								}
-								detailsDesc+="Cpu: "+cpu.getCpuName()
+								detailsDesc+="Cpu"+(j+1)+": "+cpu.getCpuName()
 								+"\n主时钟频率: "+cpu.getMianClk()
 								+"\nRtc钟频率: "+cpu.getRtcClk()
 								+"\n芯片: "+chipString
@@ -275,5 +309,6 @@ public class SelectBoard extends StatusDialog{
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		return eclipsePath;
 	}
+	
 	
 }

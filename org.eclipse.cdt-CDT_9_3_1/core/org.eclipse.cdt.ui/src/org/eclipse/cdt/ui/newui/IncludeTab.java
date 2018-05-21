@@ -57,6 +57,7 @@ public void additionalTableSet() {
 			if (dlg.check2) { // isWsp
 				flags = ICSettingEntry.VALUE_WORKSPACE_PATH;
 			}
+			System.out.println("dlg.text1: "+dlg.text1+"   flags: "+flags);
 			return CDataUtil.createCIncludePathEntry(dlg.text1, flags);
 		}
 		return null;

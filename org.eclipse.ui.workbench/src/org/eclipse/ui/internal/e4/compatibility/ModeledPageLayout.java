@@ -79,7 +79,6 @@ public class ModeledPageLayout implements IPageLayout {
 				result.add("org.eclipse.cdt.ui.wizards.NewCWizard5");
 			}else {
 				for (String tag : model.getTags()) {
-					System.out.println("tag: "+tag);
 					if (tag.startsWith(tagPrefix)) {
 						result.add(tag.substring(tagPrefix.length()));
 					}

@@ -11,7 +11,7 @@ public class OnBoardCpu {
 	private String cpuName;
 	private List<Component> peripherals = new ArrayList<Component>();
 	private List<Chip> chips = new ArrayList<Chip>();
-	private List<Memory> memorys = new ArrayList<Memory>();
+	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
 	public int getMianClk() {
 		return mianClk;
 	}
@@ -42,14 +42,14 @@ public class OnBoardCpu {
 	public void setChips(List<Chip> chips) {
 		this.chips = chips;
 	}
-	public List<Memory> getMemorys() {
+	public List<OnBoardMemory> getMemorys() {
 		return memorys;
 	}
-	public void setMemorys(List<Memory> memorys) {
+	public void setMemorys(List<OnBoardMemory> memorys) {
 		this.memorys = memorys;
 	}
 	public OnBoardCpu(int mianClk, int rtcClk, String cpuName, List<Component> peripherals, List<Chip> chips,
-			List<Memory> memorys) {
+			List<OnBoardMemory> memorys) {
 		super();
 		this.mianClk = mianClk;
 		this.rtcClk = rtcClk;

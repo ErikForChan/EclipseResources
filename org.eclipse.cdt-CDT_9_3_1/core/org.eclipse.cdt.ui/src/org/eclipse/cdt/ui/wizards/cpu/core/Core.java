@@ -3,7 +3,7 @@ package org.eclipse.cdt.ui.wizards.cpu.core;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.cdt.ui.wizards.cpu.core.memory.Memory;
+import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 
 public class Core {
 	private int id;
@@ -12,7 +12,7 @@ public class Core {
 	private String family;
 	private String fpuType;
 	private String resetAddr;
-	private List<Memory> memorys = new ArrayList<Memory>();
+	private List<CoreMemory> memorys = new ArrayList<CoreMemory>();
 	
 	public int getId() {
 		return id;
@@ -51,15 +51,15 @@ public class Core {
 	public void setResetAddr(String resetAddr) {
 		this.resetAddr = resetAddr;
 	}
-	public List<Memory> getMemorys() {
+	public List<CoreMemory> getMemorys() {
 		return memorys;
 	}
-	public void setMemorys(List<Memory> memorys) {
+	public void setMemorys(List<CoreMemory> memorys) {
 		this.memorys = memorys;
 	}
 
 	public Core(int id, String type, String arch, String family, String fpuType, String resetAddr,
-			List<Memory> memorys) {
+			List<CoreMemory> memorys) {
 		super();
 		this.id = id;
 		this.type = type;

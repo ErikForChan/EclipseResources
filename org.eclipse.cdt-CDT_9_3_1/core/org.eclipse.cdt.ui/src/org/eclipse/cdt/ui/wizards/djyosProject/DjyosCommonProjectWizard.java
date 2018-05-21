@@ -74,25 +74,39 @@ import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ILanguage;
 import org.eclipse.cdt.core.model.LanguageManager;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICFileDescription;
+import org.eclipse.cdt.core.settings.model.ICFolderDescription;
+import org.eclipse.cdt.core.settings.model.ICLanguageSetting;
+import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
+import org.eclipse.cdt.core.settings.model.ICMultiFolderDescription;
+import org.eclipse.cdt.core.settings.model.ICMultiResourceDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
+import org.eclipse.cdt.core.settings.model.ICSettingBase;
+import org.eclipse.cdt.core.settings.model.MultiLanguageSetting;
+import org.eclipse.cdt.core.settings.model.util.CDataUtil;
 import org.eclipse.cdt.managedbuilder.core.BuildException;
 import org.eclipse.cdt.managedbuilder.core.IBuilder;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
 import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
 import org.eclipse.cdt.managedbuilder.core.IOption;
 import org.eclipse.cdt.managedbuilder.core.IResourceInfo;
+import org.eclipse.cdt.managedbuilder.core.ITool;
 import org.eclipse.cdt.managedbuilder.core.IToolChain;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
+import org.eclipse.cdt.managedbuilder.core.OptionStringValue;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.BuildStatus;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.CfgBuildInfo;
 import org.eclipse.cdt.ui.CUIPlugin;
+import org.eclipse.cdt.ui.newui.CDTPrefUtil;
 import org.eclipse.cdt.ui.wizards.CWizardHandler;
 import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.CreatBoardXml;
-import org.eclipse.cdt.ui.wizards.parsexml.Cpu;
+import org.eclipse.cdt.ui.wizards.component.Component;
+import org.eclipse.cdt.ui.wizards.cpu.Cpu;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseLinkToXML;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseVariableToXML;
 
@@ -108,14 +122,14 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private static final String[] EMPTY_ARR = new String[0];
 
 	boolean addedMemory = false;
-	boolean addedModule = false;
+	boolean addedInit = false;
 	boolean createdProject = false;
 	protected IConfigurationElement fConfigElement;
-	protected DjyosMainWizardPage fMainPage;
-	
+	protected DjyosMainWizardPage fMainPage;//主界面
 	protected MemoryMapWizard memoryPage;//Memory向导界面
 	protected ModuleConfigurationWizard modulePage;//Module向导界面
-	protected InitDjyosProjectWizard initPage;
+	protected InitDjyosProjectWizard initPage;//组件配置界面
+	
 	protected IProject newProject;
 	private String wz_title;
 	private String wz_desc;
@@ -126,9 +140,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private CWizardHandler savedHandler = null;
 	private WorkingSetGroup workingSetGroup;
 	String boardModuleTrimPath;
-	
-	public Cpu cpu;
-	boolean isToCreat = false;
+
 	String eclipsePath = getEclipsePath();
 	private IProject curProject;
 
@@ -251,7 +263,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				e.printStackTrace();
 			}
 				
-			isToCreat = fMainPage.isToCreat();
 			createdProject = true;
 						
 		}else {
@@ -335,84 +346,122 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		}	
 	}
 	
-	/*
-	 * 处理板件的新建
-	 */
-	public void handleBoard() {
-		String projectName = fMainPage.getProjectName();
-		String curBoardName = fMainPage.getBoardName();
-		Cpu defaultCpu = fMainPage.defaultCpu;
-		cpu = fMainPage.getSelectCpu();
-		Board boardTemplate = fMainPage.getSelectBoard();
-		
-		String startupPath = eclipsePath+"djysrc/bsp/startup/"+defaultCpu.getCategory()+"/"+boardTemplate.getBoardName();
-		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getCategory()+"/"+curBoardName;
-		
-		//新建的板件应该从哪里获取新板件的代码
-		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+boardTemplate.getBoardName();
-		String newBoardPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+curBoardName;
-		File newBoardFile = new File(newBoardPath);
-		if(!newBoardFile.exists()) {
-			try {
-				newBoardFile.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-//		String boardXmlPath = eclipsePath+"djysrc/bsp/boarddrv/demo/board.xml";
-		
-		File srcFolder = new File(boardCodePath);
-		File folder = new File(newBoardPath);
-		if(!folder.exists()) {
-			folder.mkdir();
-		}
-					
-		try {
-			copyFolder(srcFolder,folder);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		CreatBoardXml cbx = new CreatBoardXml();
-		boardTemplate.setBoardName(curBoardName);
-		cbx.creatBoard(boardTemplate, newBoardPath+"/board_"+curBoardName+".xml");	
-		
-		File stpSrcFolder = new File(startupPath);
-		File stpDestFolder = new File(startupDestPath);
-		if(!stpDestFolder.exists()) {
-			stpDestFolder.mkdir();
-		}
-		try {
-			copyFolder(stpSrcFolder,stpDestFolder);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
-	}
-	
+//	/*
+//	 * 处理板件的新建
+//	 */
+//	public void handleBoard() {
+//		String projectName = fMainPage.getProjectName();
+//		String curBoardName = fMainPage.getBoardName();
+//		Cpu defaultCpu = fMainPage.defaultCpu;
+//		cpu = fMainPage.getSelectCpu();
+//		Board boardTemplate = fMainPage.getSelectBoard();
+//		
+//		String startupPath = eclipsePath+"djysrc/bsp/startup/"+defaultCpu.getCategory()+"/"+boardTemplate.getBoardName();
+//		String startupDestPath = eclipsePath+"djysrc/bsp/startup/"+cpu.getCategory()+"/"+curBoardName;
+//		
+//		//新建的板件应该从哪里获取新板件的代码
+//		String boardCodePath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+boardTemplate.getBoardName();
+//		String newBoardPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+curBoardName;
+//		File newBoardFile = new File(newBoardPath);
+//		if(!newBoardFile.exists()) {
+//			try {
+//				newBoardFile.createNewFile();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
+////		String boardXmlPath = eclipsePath+"djysrc/bsp/boarddrv/demo/board.xml";
+//		
+//		File srcFolder = new File(boardCodePath);
+//		File folder = new File(newBoardPath);
+//		if(!folder.exists()) {
+//			folder.mkdir();
+//		}
+//					
+//		try {
+//			copyFolder(srcFolder,folder);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		CreatBoardXml cbx = new CreatBoardXml();
+//		boardTemplate.setBoardName(curBoardName);
+//		cbx.creatBoard(boardTemplate, newBoardPath+"/board_"+curBoardName+".xml");	
+//		
+//		File stpSrcFolder = new File(startupPath);
+//		File stpDestFolder = new File(startupDestPath);
+//		if(!stpDestFolder.exists()) {
+//			stpDestFolder.mkdir();
+//		}
+//		try {
+//			copyFolder(stpSrcFolder,stpDestFolder);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}	
+//	}
+//	
 	public IProject getProject() {
 		return curProject;
+	}
+	
+	public ICLanguageSetting[] getLangSetting(ICResourceDescription rcDes) {
+		switch (rcDes.getType()) {
+		case ICSettingBase.SETTING_PROJECT:
+		case ICSettingBase.SETTING_CONFIGURATION:
+		case ICSettingBase.SETTING_FOLDER:
+			ICFolderDescription foDes = (ICFolderDescription)rcDes;
+			return foDes.getLanguageSettings();
+		case ICSettingBase.SETTING_FILE:
+			ICFileDescription fiDes = (ICFileDescription)rcDes;
+			ICLanguageSetting langSetting = fiDes.getLanguageSetting();
+			return (langSetting != null) ? new ICLanguageSetting[] { langSetting } : null;
+		}
+		return null;
+	}
+	
+	private void changeIt(List<ICLanguageSettingEntry>  entries, ICLanguageSettingEntry[] ents, ICLanguageSetting lang) {
+		List<ICLanguageSettingEntry> lsEntries = new ArrayList<ICLanguageSettingEntry>();
+		for(int i=0;i<ents.length;i++) {
+			lsEntries.add(ents[i]);
+		}
+		if (entries != null) {
+			for(int i=0;i<entries.size();i++) {
+				lsEntries.add(entries.get(i));
+			}
+		}
+		setSettingEntries(1, lsEntries, false, lang);
+	}
+	
+	private void setSettingEntries(int kind, List<ICLanguageSettingEntry> incs, boolean toAll, ICLanguageSetting lang) {
+			lang.setSettingEntries(kind, incs);//ICLanguageSetting
 	}
 	
 	/*
 	 * 修改工程的配置信息，通过修改.cproject
 	 */
-	public void handleCProject() {
+	public void handleCProject(List<Component> compontentsChecked) throws BuildException {
 		String projectName = fMainPage.getProjectName();
+		Cpu cpu = fMainPage.getSelectCpu();
 		Board board = fMainPage.getSelectBoard();
+		Core core = fMainPage.getSelectCore();
 		String projectPath = fMainPage.locationArea.locationPathField.getText();
-
+		
+		String cpudrvPath = eclipsePath+"djysrc/bsp/cpudrv";
+		String boardPath = eclipsePath+"djysrc/bsp/boarddrv";
+		File cpudrvFile = new File(cpudrvPath);
+		File[] cpudrvFiles = cpudrvFile.listFiles();
+		
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
 		String boardName = fMainPage.getBoardName();
-		cpu = fMainPage.getSelectCpu();
 		
 		if(! projectPath.contains(projectName)) {
 			project = curProject;
 		}	
 		
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
-		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	
+		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration
 
     	for (ICConfigurationDescription cfgDesc : conds) {
 			String s = cfgDesc.getName();
@@ -421,21 +470,128 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			}
 		}
     	
+    	//给每个Configuration修改配置,增加链接
 		for(int i=0;i<conds.length;i++) {
 			ICResourceDescription rds = conds[i].getRootFolderDescription();
 			IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
 			IResourceInfo resourceInfo = cfg.getRootFolderInfo();
-			IToolChain toolchain = resourceInfo.getParent().getToolChain();          				
+			IToolChain toolchain = resourceInfo.getParent().getToolChain();
+			
+			List<String> links = new ArrayList<String>();
+			String _boardName = board.getBoardName();
+			String _cpuName = cpu.getCpuName();
+			String firmwareLib = cpu.getFirmwareLib();
+			//根据架构类型选择链接
+			if(core.getType().equals("arm")) {
+				links.add("${DJYOS_SRC_LOCATION}/third/firmware/CMSIS/include");
+				links.add("${DJYOS_SRC_LOCATION}/bsp/arch/arm");
+			}
+			//根据cpu链接
+			List<String> cpuLinkStrings = new ArrayList<String>();
+			for(int k=0;k<cpudrvFiles.length;k++) {//cpudrv下的所有文件
+				if(_cpuName.contains(cpudrvFiles[k].getName().toUpperCase())) {
+					cpuLinkStrings = getCpuLinkStrings(cpudrvFiles[k],_cpuName,cpuLinkStrings);
+					break;
+				}
+			}
+			if(cpuLinkStrings!=null) {
+				for(int k=0;k<cpuLinkStrings.size();k++) {
+					links.add(cpuLinkStrings.get(k));
+				}
+			}
+
+			//根据板件名链接
+			File boardDemoFile = new File(boardPath+"/demo");
+			File[] boardDemoFiles = boardDemoFile.listFiles();
+			boolean isDemoBoard = false;
+			for(int j=0;j<boardDemoFiles.length;j++) {
+				if(boardDemoFiles[j].getName().equals(_boardName)) {
+					isDemoBoard = true;
+					break;
+				}
+			}
+			if(isDemoBoard){
+				links.add("${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/"+_boardName);
+				links.add("${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/"+_boardName+"/include");
+				links.add("${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/"+_boardName+"/startup");
+			}else {
+				links.add("${DJYOS_SRC_LOCATION}/bsp/boarddrv/user/"+_boardName);
+				links.add("${DJYOS_SRC_LOCATION}/bsp/boarddrv/user/"+_boardName+"/include");
+				links.add("${DJYOS_SRC_LOCATION}/bsp/boarddrv/user/"+_boardName+"/startup");
+			}
+
+			//根据Cpu的固件库链接
+			//查看
+			if(firmwareLib!=null) {
+				links.add("${DJYOS_SRC_LOCATION}/third/firmware/"+firmwareLib);
+				File file = new File(eclipsePath+"djysrc/third/firmware/"+firmwareLib);
+				File[] files = file.listFiles();
+				for(int j=0;j<files.length;j++) {//  firmware/firmwareLib/.......
+					if(files[j].isDirectory()) {
+						File[] childFiles = files[j].listFiles();
+						for(int k=0;k<childFiles.length;k++) {
+							if(childFiles[k].getName().endsWith(".h")) {//  firmware/firmwareLib/include/
+								links.add("${DJYOS_SRC_LOCATION}/third/firmware/"+firmwareLib+"/"+files[j].getName());
+								break;
+							}
+						}
+					}
+				}
+			}
+			//根据内核类型、架构、家族链接
+			links.add("${DJYOS_SRC_LOCATION}/bsp/arch/"+core.getType()+"/"+core.getArch()+"/"+core.getFamily()+"/include");
+			//根据所选组件链接
+			for(int j=0;j<compontentsChecked.size();j++) {
+				Component component = compontentsChecked.get(j);
+				String componentName = compontentsChecked.get(j).getName();
+				if(component.getAttribute().equals("三方组件")) {
+					links.add("${DJYOS_SRC_LOCATION}/third/"+componentName);
+				}else if(component.getAttribute().equals("功能组件")) {
+					links.add("${DJYOS_SRC_LOCATION}/component/"+componentName);
+				}else if(component.getAttribute().equals("芯片驱动组件")) {
+					links.add("${DJYOS_SRC_LOCATION}/bsp/chipdrv/"+componentName);
+				}else if(component.getAttribute().equals("CPU片内外设驱动组件")) {
+					List<String> linkStrings = new ArrayList<String>();;
+					for(int k=0;k<cpudrvFiles.length;k++) {
+						if(_cpuName.contains(cpudrvFiles[k].getName().toUpperCase())) {
+							linkStrings = getLinkStrings(cpudrvFiles[k],_cpuName,componentName,linkStrings);
+							break;
+						}
+					}
+					if(linkStrings!=null) {
+						for(int k=0;k<linkStrings.size();k++) {
+							links.add(linkStrings.get(k));
+						}
+					}
+				}
+			}
+			
+			ICLanguageSetting[] languageSettings = getLangSetting(rds);
+			for (int j=1; j<languageSettings.length; j++) {
+				ICLanguageSetting lang = languageSettings[j];
+				ICLanguageSettingEntry[] ents = null;
+				List<ICLanguageSettingEntry>  entries = new ArrayList<ICLanguageSettingEntry>();
+				for(int k=0;k<links.size();k++) {
+					ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(links.get(k), 0);
+					entries.add(entry);
+				}
+				ents = lang.getSettingEntries(1);
+				changeIt(entries,ents,lang);
+//				for(int k=0;k<ents.length;k++) {
+//					System.out.println("value: "+ents[k].getValue());//链接内容				
+//				}				
+//				System.out.println("-------------------------------------");
+			}
 			IOption option1 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.architecture");
 			IOption option2 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.family");        				
 			IOption option3 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit");
 			try {
 				option1.setValue(
-						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.arch."+board.cpu.getArchitecture());
+						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.arch."+core.getArch());
 				option2.setValue(
-						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.mcpu."+board.cpu.getCore());
+						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.mcpu."+core.getFamily());
 				option3.setValue(
-						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit."+board.cpu.getFpuType());
+						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit."+core.getFpuType());
 			} catch (BuildException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -448,49 +604,85 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			e1.printStackTrace();
 		}
 		
-		ReviseVariableToXML rvtx = new ReviseVariableToXML();
-		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+eclipsePath+"djysrc", 
-				project.getFile(".project"),projectName);
-		ReviseLinkToXML rltx = new ReviseLinkToXML();
-		rltx.reviseXmlLink("src/libos/bsp/boarddrv",boardName, "DJYOS_SRC_LOCATION/bsp/boarddrv",cpu.getCategory(), 
-				project.getFile(".project"),"boarddrv");
-		rltx.reviseXmlLink("src/libos/bsp/startup",boardName, "DJYOS_SRC_LOCATION/bsp/startup",cpu.getCategory(), 
-				project.getFile(".project"),"startup");
+//		ReviseVariableToXML rvtx = new ReviseVariableToXML();
+//		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+eclipsePath+"djysrc", 
+//				project.getFile(".project"),projectName);
+//		ReviseLinkToXML rltx = new ReviseLinkToXML();
+//		rltx.reviseXmlLink("src/libos/bsp/boarddrv",boardName, "DJYOS_SRC_LOCATION/bsp/boarddrv",cpu.getCategory(), 
+//				project.getFile(".project"),"boarddrv");
+//		rltx.reviseXmlLink("src/libos/bsp/startup",boardName, "DJYOS_SRC_LOCATION/bsp/startup",cpu.getCategory(), 
+//				project.getFile(".project"),"startup");
 		
-		String core= board.cpu.getCore();
-		String category = cpu.getCategory();
-		String armv = null;
-		String stm = null;
-		String cpudrv = null;
-		if(core.equals("cortex-m7")) {
-			armv = "armv7e-m";
-			stm = "stm32f7";
-		}else if(core.equals("cortex-m4")) {
-			armv = "armv7e-m";
-			stm = "stm32f4";
-		}else if(core.equals("cortex-m3")) {
-			armv = "armv7-m";
-			stm = "stm32f3";
-		}
-		
-		if(category.contains("stm32f7")) {
-			cpudrv = "stm32f7";
-		}else if(category.contains("stm32f4")) {
-			cpudrv = "stm32f4xx";
-		}else if(category.contains("stm32f3")) {
-			cpudrv = "stm32f7";
-		}else if(category.contains("stm32l4")) {
-			cpudrv = "stm32L4xx";
-		}else if(category.contains("stm32f1")) {
-			cpudrv = "stm32f1xx";
-		}
-		rltx.reviseXmlLink("src/libos/bsp/cpudrv",cpudrv, "DJYOS_SRC_LOCATION/bsp/cpudrv",category,
-				project.getFile(".project"),"cpudrv");
-		rltx.reviseXmlLink("src/libos/bsp/arch",core, "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m"+armv,category, 
-				project.getFile(".project"),"arch");
+//		String core= board.cpu.getCore();
+//		String category = cpu.getCategory();
+//		String armv = null;
+//		String stm = null;
+//		String cpudrv = null;
+//		if(core.equals("cortex-m7")) {
+//			armv = "armv7e-m";
+//			stm = "stm32f7";
+//		}else if(core.equals("cortex-m4")) {
+//			armv = "armv7e-m";
+//			stm = "stm32f4";
+//		}else if(core.equals("cortex-m3")) {
+//			armv = "armv7-m";
+//			stm = "stm32f3";
+//		}
+//		
+//		if(category.contains("stm32f7")) {
+//			cpudrv = "stm32f7";
+//		}else if(category.contains("stm32f4")) {
+//			cpudrv = "stm32f4xx";
+//		}else if(category.contains("stm32f3")) {
+//			cpudrv = "stm32f7";
+//		}else if(category.contains("stm32l4")) {
+//			cpudrv = "stm32L4xx";
+//		}else if(category.contains("stm32f1")) {
+//			cpudrv = "stm32f1xx";
+//		}
+//		rltx.reviseXmlLink("src/libos/bsp/cpudrv",cpudrv, "DJYOS_SRC_LOCATION/bsp/cpudrv",category,
+//				project.getFile(".project"),"cpudrv");
+//		rltx.reviseXmlLink("src/libos/bsp/arch",core, "DJYOS_SRC_LOCATION/bsp/arch/arm/cortex-m"+armv,category, 
+//				project.getFile(".project"),"arch");
 //		rltx.reviseXmlLink("src/libos/third",stm, "DJYOS_SRC_LOCATION/third/firmware",cpu.getCategory(), 
 //				project.getFile(".project"),"third");
 		
+	}
+
+	private List<String> getCpuLinkStrings(File file, String _cpuName, List<String> cpuLinkStrings) {
+		// TODO Auto-generated method stub
+		File[] files = file.listFiles();
+		String DJYOS_SRC_LOCARION = eclipsePath+"djysrc";
+		for(int j=0;j<files.length;j++) {
+			String path = files[j].getPath();
+			String relativePath = path.substring(DJYOS_SRC_LOCARION.length(), path.length());
+			if(_cpuName.endsWith(files[j].getName().toUpperCase())) {
+				cpuLinkStrings.add("${DJYOS_SRC_LOCATION}"+relativePath+"/include");
+			}else if(_cpuName.contains(files[j].getName().toUpperCase())){
+				getCpuLinkStrings(files[j],_cpuName,cpuLinkStrings);
+			}else if(files[j].getName().equals("include")) {
+				cpuLinkStrings.add("${DJYOS_SRC_LOCATION}"+relativePath);
+			}
+		}
+		return cpuLinkStrings;
+	}
+
+	private List<String> getLinkStrings(File file,String _cpuName,String componentName,List<String> linkStrings) {
+		// TODO Auto-generated method stub
+		File[] files = file.listFiles();
+		String DJYOS_SRC_LOCARION = eclipsePath+"djysrc";
+		for(int j=0;j<files.length;j++) {
+			String path = files[j].getPath();
+			String relativePath = path.substring(DJYOS_SRC_LOCARION.length(), path.length());
+			if(_cpuName.endsWith(files[j].getName().toUpperCase())) {
+				linkStrings.add("${DJYOS_SRC_LOCATION}"+relativePath+"/src"+componentName);
+			}else if(_cpuName.contains(files[j].getName().toUpperCase())){
+				getLinkStrings(files[j],_cpuName,componentName,linkStrings);
+			}else if(files[j].getName().equals("src")) {
+				linkStrings.add("${DJYOS_SRC_LOCATION}"+relativePath);
+			}
+		}
+		return linkStrings;
 	}
 
 	/*
@@ -572,9 +764,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	 * 获取用户配置的momory信息
 	 */
     public void getMemoryToLds() {
-    	String ldsHead = memoryPage.getLdsHead();
-    	String ldsDesc = memoryPage.getLdsDesc();
-    	String templateName = getTemplateName();
+    	String ldsHead = fMainPage.getLdsHead();
+    	String ldsDesc = fMainPage.getLdsDesc();
     	String projectName = fMainPage.getProjectName();
 		String sourcePath = fMainPage.projectPath;
 		if(!sourcePath.contains(projectName)) {
@@ -613,6 +804,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 
 	@Override
 	public boolean performFinish() {
+		
 		String projectName = fMainPage.getProjectName();
 		String projectPath = fMainPage.locationArea.locationPathField.getText();
 		if(!projectPath.contains(projectName)) {
@@ -622,34 +814,26 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		int index = fMainPage.getTemplateIndex();
     	String path = projectPath+"/src/app/OS_prjcfg/cfg/moduleinit.h";
     	String pathIboot = projectPath+"/src/iboot/OS_prjcfg/cfg/moduleinit.h";
+    	String initPath = projectPath+"/src/app/initPrj.c";
+    	String initPathIboot = projectPath+"/src/iboot/initPrj.c";
+    	List<Component> compontentsChecked = initPage.getCompontentsChecked();
+    	
+    	try {
+			handleCProject(compontentsChecked);
+		} catch (BuildException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	getMemoryToLds();//根据MemoryMap配置的内容添加memory.lds文件
-    	memoryPage.createMemoryMap(projectPath+"/data/MemoryMap.xml");//根据MemoryMap配置的内容添加memoryMap.xml文件
-    	File file = new File(path);
-		File fileIboot = new File(pathIboot);
+//    	memoryPage.createMemoryMap(projectPath+"/data/MemoryMap.xml");//根据MemoryMap配置的内容添加memoryMap.xml文件
 		
     	if(index == 0 || index == 1){
-    		if (fileIboot.exists()) {
-    			fileIboot.delete();
-    		}
-    		try {
-				fileIboot.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    		modulePage.fillModuleinit(pathIboot);
+    		initPage.initProject(initPathIboot);
+    		initPage.fillModuleinit(pathIboot);
     	}
     	if(index == 0 || index == 2 || index == 3){
-    		if (file.exists()) {
-    			file.delete();
-    		}
-    		try {
-				file.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    		modulePage.fillModuleinit(path);
+    		initPage.initProject(initPath);
+    		initPage.fillModuleinit(path);
     	}
     	
 //    	ICConfigurationDescription[] cfgDescs = getCfgs(curProject);
@@ -657,7 +841,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 //			System.out.println("cfgDesc.getName()"+cfgDesc.getName());
 //		}
 //    	
-    	createBuild(curProject);
+//    	createBuild(curProject);
 		
 		return true;
 	}
@@ -775,14 +959,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 
     @Override
 	public boolean canFinish() {
-    	
-    	if(addedModule) {
-//    		System.out.println("modulePage.moduleCompleted:  "+modulePage.moduleCompleted);
-//    		if(modulePage.moduleCompleted) {
+    	if(addedInit) {
     			return true;
-//    		}else {
-//    			return false;
-//    		}
     	}else {
     		return false;
     	}

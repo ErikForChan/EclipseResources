@@ -6,8 +6,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.Adapters;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
@@ -41,21 +45,23 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
+import org.eclipse.ui.wizards.IWizardDescriptor;
 
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.CreatTBoardXml;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.Memory;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.Board;
 import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
-import org.eclipse.cdt.ui.wizards.cpu.CpuBak;
+import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
 
 public class BoardMainWizard extends WizardPage{
 	private Tree cpuArhives;
@@ -69,7 +75,7 @@ public class BoardMainWizard extends WizardPage{
 	private Button backBtn = null;
 	private Board newBoard = new Board();
 	private List<OnBoardCpu> onBoardCpus = new ArrayList<OnBoardCpu>();
-	private CpuBak newCpu;
+	private Cpu newCpu;
 	private Component newComponent;
 	private Chip newChip;
 	private Text boardNameField;
@@ -82,14 +88,14 @@ public class BoardMainWizard extends WizardPage{
 	private Text addrField;
 	private Text sizeField;
 	
-	List<CpuBak> cpusList = null;
-	List<CpuBak> cpusOn = null;
-	List<Component> peripheralsList = null;
-	List<Component> peripheralsOn = new ArrayList<Component>();
-	List<Component> allPeripherals = new ArrayList<Component>();
+	List<Cpu> cpusList = null;
+	List<Cpu> cpusOn = null;
+	List<Component> peripheralsList = null;//外设列表
+	List<Component> peripheralsOn = new ArrayList<Component>();//用到的外设
+	List<Component> allPeripherals = new ArrayList<Component>();//所有外设
 	List<Chip> chipsList = null;
 	List<Chip> chipsOn = null;
-	List<Memory> memorys = new ArrayList<Memory>();
+	List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
 	List<Component> thePeripherals;
 	ReadComponentXml rcx = new ReadComponentXml();
 	
@@ -128,30 +134,27 @@ public class BoardMainWizard extends WizardPage{
 	public void changeCpusOn(String cpuName,boolean toAdd) {
 		if(toAdd) {
 			for(int i=0;i<cpusList.size();i++) {
-				String curName = cpusList.get(i).getName();
+				String curName = cpusList.get(i).getCpuName();
 				if(curName.equals(cpuName)) {
-					CpuBak curCpu = cpusList.get(i);
-					newCpu = new CpuBak(curCpu.getName(),curCpu.getCoreNum(),curCpu.getType(),curCpu.getFamily(),
-							curCpu.getArchitecture(),curCpu.getInstructionSet(),curCpu.getEndianeness(),curCpu.getFlashStart(),
-							curCpu.getFlashSize(),curCpu.getRamStart(),curCpu.getRamSize(),curCpu.getFpuABI(),
-							curCpu.getFpuType(),curCpu.getResetAddr(),curCpu.getCategory());
+					Cpu curCpu = cpusList.get(i);
+					newCpu = new Cpu(curCpu.getCpuName(),curCpu.getCores());
 					int count = 0;
 					if(cpusOn.size() != 0) {
 						for(int j=0;j<cpusOn.size();j++) {
-							if(cpusOn.get(j).getName().contains(newCpu.getName())) {
+							if(cpusOn.get(j).getCpuName().contains(newCpu.getCpuName())) {
 								count++;
 							}
 						}	
 					}
 			
-					newCpu.setName(count==0?newCpu.getName():newCpu.getName()+"("+count+")");;				
+					newCpu.setCpuName(count==0?newCpu.getCpuName():newCpu.getCpuName()+"("+count+")");;				
 					cpusOn.add(newCpu);				
 					break;
 				}
 			}
 		}else {
 			for(int i=0;i<cpusOn.size();i++) {
-				if(cpusOn.get(i).getName().equals(cpuName)) {
+				if(cpusOn.get(i).getCpuName().equals(cpuName)) {
 					newCpu =  cpusOn.get(i);
 					cpusOn.remove(i);
 					break;
@@ -161,24 +164,16 @@ public class BoardMainWizard extends WizardPage{
 
 	}
 	
-	public void changeCpudrvOn(String cpudrvName,boolean toAdd) {
+	public void changePeripheralsOn(String cpudrvName,boolean toAdd) {
 		if(toAdd) {
-			for(int i=0;i<peripheralsList.size();i++) {;
+			System.out.println("cpudrvName: "+cpudrvName);
+			for(int i=0;i<peripheralsList.size();i++) {
 				String curName = peripheralsList.get(i).getName();
+				System.out.println("curName: "+curName);
 				if(curName.equals(cpudrvName)) {
 					newComponent = new Component();
 					newComponent.setName(curName);
-					System.out.println("cpudrvName: "+cpudrvName);
-//					int count = 0;
-//					if(peripheralsOn.size() != 0) {
-//						for(int j=0;j<peripheralsOn.size();j++) {
-//							if(peripheralsOn.get(j).getName().contains(newComponent.getName())) {
-//								count++;
-//							}
-//						}	
-//					}
-			
-//					newComponent.setName(count==0?newComponent.getName():newComponent.getName()+"("+count+")");;	
+					System.out.println("true");
 					peripheralsList.remove(i);
 					peripheralsOn.add(newComponent);	
 
@@ -315,11 +310,11 @@ public class BoardMainWizard extends WizardPage{
 		item.setControl(createClkContent(folder));
 
 		item= new TabItem(folder, SWT.NONE);
-		item.setText("外设"); //$NON-NLS-1$
-		item.setControl(createCpudrvContent(folder));
+		item.setText("Cpu外设"); //$NON-NLS-1$
+		item.setControl(createPeripheralsContent(folder));
 		
 		TabItem chipItem= new TabItem(folder, SWT.NONE);
-		chipItem.setText("芯片"); //$NON-NLS-1$
+		chipItem.setText("板载设备"); //$NON-NLS-1$
 		chipItem.setControl(createChipContent(folder));
 		
 		item= new TabItem(folder, SWT.NONE);
@@ -411,7 +406,7 @@ public class BoardMainWizard extends WizardPage{
 				TreeItem[] items = memoryTree.getSelection();
 				if(items.length>0) {
 					String selectMemory = items[0].getText().trim();
-					Memory selectedMemory = null;
+					OnBoardMemory selectedMemory = null;
 					for(int i=0;i<memorys.size();i++) {
 						if(memorys.get(i).getName().equals(selectMemory)) {
 							selectedMemory = memorys.get(i);
@@ -472,7 +467,7 @@ public class BoardMainWizard extends WizardPage{
 					 max = Integer.parseInt(maxString.substring(6,maxString.length()));
 				}
 				t.setText("memory"+(max+1));
-				Memory memory = new Memory();
+				OnBoardMemory memory = new OnBoardMemory();
 				memory.setName("memory"+(max+1));
 				memorys.add(memory);
 				
@@ -553,7 +548,7 @@ public class BoardMainWizard extends WizardPage{
 				if(items.length>0) {
 					String selectMemory = items[0].getText().trim();
 					for(int i=0;i<memorys.size();i++) {
-						Memory memory = memorys.get(i);
+						OnBoardMemory memory = memorys.get(i);
 						if(memory.getName().equals(selectMemory)) {
 							String type = memoryTypeCombo.getItem(comboIndex);
 							memory.setType(type);
@@ -587,7 +582,7 @@ public class BoardMainWizard extends WizardPage{
 				if(items.length>0) {
 					String selectMemory = items[0].getText().trim();
 					for(int i=0;i<memorys.size();i++) {
-						Memory memory = memorys.get(i);
+						OnBoardMemory memory = memorys.get(i);
 						if(memory.getName().equals(selectMemory)) {
 							String addr = addrField.getText().trim();
 							memory.setStartAddr(addr);
@@ -615,7 +610,7 @@ public class BoardMainWizard extends WizardPage{
 					String size = sizeField.getText().trim();
 					if(! size.equals("")) {
 						for(int i=0;i<memorys.size();i++) {
-							Memory memory = memorys.get(i);
+							OnBoardMemory memory = memorys.get(i);
 							if(memory.getName().equals(selectMemory)) {
 								
 								memory.setSize(Integer.parseInt(size));
@@ -660,7 +655,6 @@ public class BoardMainWizard extends WizardPage{
 			chipsList.add(chip);
 		}
 		chipTree.setSize(120, 150);
-		
 		Composite btnCpt = new Composite(composite, SWT.NULL);
 		btnCpt.setLayout(new GridLayout());
 		btnCpt.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_CENTER));
@@ -734,7 +728,21 @@ public class BoardMainWizard extends WizardPage{
 
 			}
 		});
-		
+		chipTree.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				goto2Btn.setEnabled(true);
+				back2Btn.setEnabled(false);
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 		Composite chipTreeOn = new Composite(composite, SWT.NULL);
 		chipOnTree = new Tree(chipTreeOn, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		chipOnTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
@@ -750,6 +758,8 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
+				goto2Btn.setEnabled(false);
+				back2Btn.setEnabled(true);
 				TreeItem[] items = chipOnTree.getSelection();
 				if(items.length>0) {
 					String selectChip = items[0].getText().trim();
@@ -782,7 +792,6 @@ public class BoardMainWizard extends WizardPage{
 		
 		Composite peripheralCpt = new Composite(composite, SWT.NULL);
 		GridLayout peripheralLayout = new GridLayout();
-//		peripheralLayout.numColumns = 1;
 		peripheralCpt.setLayout(peripheralLayout);
 		peripheralCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		Label interfaceLabel = new Label(peripheralCpt,SWT.NONE);
@@ -831,12 +840,11 @@ public class BoardMainWizard extends WizardPage{
 		return composite;
 	}
 
-	private Control createCpudrvContent(TabFolder folder) {
+	private Control createPeripheralsContent(TabFolder folder) {
 		// TODO Auto-generated method stub
 		Composite composite = new Composite(folder, SWT.NULL);
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 3;
-//		layoutAttributes.marginHeight = 10;
 		layout.marginLeft = 30;
 		composite.setLayout(layout);
 		
@@ -862,8 +870,11 @@ public class BoardMainWizard extends WizardPage{
 			Component component = new Component();
 			component.setName(peripheralsList.get(i).getName());
 			component.setAnnotation(peripheralsList.get(i).getAnnotation());
-			component.setType(peripheralsList.get(i).getType());
-			component.setInit(peripheralsList.get(i).getInit());
+			component.setAttribute(peripheralsList.get(i).getAttribute());
+			component.setGrade(peripheralsList.get(i).getGrade());
+			component.setCode(peripheralsList.get(i).getCode());
+			component.setConfigure(peripheralsList.get(i).getConfigure());
+//			component.setInit(peripheralsList.get(i).getInit());
 			component.setIncludeFile(peripheralsList.get(i).getIncludeFile());
 			allPeripherals.add(component);
 //			thePeripherals.add(component);
@@ -892,7 +903,7 @@ public class BoardMainWizard extends WizardPage{
 				if(items.length>0) {
 
 					String selectCpudrvName = items[0].getText();
-					changeCpudrvOn(selectCpudrvName,true);
+					changePeripheralsOn(selectCpudrvName,true);
 					
 					updatePeripheralsOn();
 					
@@ -930,11 +941,13 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
+				goto1Btn.setEnabled(false);
+				back1Btn.setEnabled(true);
 				TreeItem[] items = cpudrvOnTree.getSelection();
 				if(items.length>0) {
 					
 					String selectCpudrvName = items[0].getText();
-					changeCpudrvOn(selectCpudrvName,false);
+					changePeripheralsOn(selectCpudrvName,false);
 
 					updatePeripheralsList();
 					interfaceCombo.removeAll();
@@ -961,10 +974,25 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-
+				goto1Btn.setEnabled(true);
+				back1Btn.setEnabled(false);
 			}
 		});
 		
+		cpudrvTree.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 		Composite compositeTreeOn = new Composite(composite, SWT.NULL);
 		cpudrvOnTree = new Tree(compositeTreeOn, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		cpudrvOnTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
@@ -1081,6 +1109,8 @@ public class BoardMainWizard extends WizardPage{
 		cpuArhivesNeed.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				gotoBtn.setEnabled(false);
+				backBtn.setEnabled(true);
 				TreeItem[] items = cpuArhivesNeed.getSelection();
 				if (items.length > 0) {
 					OnBoardCpu onBoardCpu = new OnBoardCpu();
@@ -1115,32 +1145,33 @@ public class BoardMainWizard extends WizardPage{
 						Component component = new Component();
 						component.setName(allPeripherals.get(i).getName());
 						component.setAnnotation(allPeripherals.get(i).getAnnotation());
-						component.setType(allPeripherals.get(i).getType());
-						component.setInit(allPeripherals.get(i).getInit());
+						component.setAttribute(allPeripherals.get(i).getAttribute());
+						component.setGrade(peripheralsList.get(i).getGrade());
+						component.setCode(peripheralsList.get(i).getCode());
+						component.setConfigure(peripheralsList.get(i).getConfigure());
 						component.setIncludeFile(allPeripherals.get(i).getIncludeFile());
 						thePeripherals.add(component);
 					}
 					int perSize = allPeripherals.size();
-					peripheralsList =  new ArrayList<Component>();
+					//板载外设为空
 					if(boardPeripherals == null) {
-						for(int i=0;i<allPeripherals.size();i++) {
-							Component component = new Component();
-							component.setName(allPeripherals.get(i).getName());
-							component.setAnnotation(allPeripherals.get(i).getAnnotation());
-							component.setType(allPeripherals.get(i).getType());
-							component.setInit(allPeripherals.get(i).getInit());
-							component.setIncludeFile(allPeripherals.get(i).getIncludeFile());
-							peripheralsList.add(component);
-						}
+//						peripheralsList =  new ArrayList<Component>();
+//						for(int i=0;i<allPeripherals.size();i++) {
+//							Component component = new Component();
+//							component.setName(allPeripherals.get(i).getName());
+//							component.setAnnotation(allPeripherals.get(i).getAnnotation());
+//							component.setAttribute(allPeripherals.get(i).getAttribute());
+//							component.setInit(allPeripherals.get(i).getInit());
+//							component.setIncludeFile(allPeripherals.get(i).getIncludeFile());
+//							peripheralsList.add(component);
+//						}
 						peripheralsOn = new ArrayList<Component>();
 						for(int i=0;i<allPeripherals.size();i++) {
 							TreeItem t = new TreeItem(cpudrvTree, SWT.NONE);
 							t.setText(allPeripherals.get(i).getName());
 						}
-					}else {			
-
-						peripheralsOn = boardPeripherals;
-					
+					}else {		//板载外设不为空	
+						peripheralsOn = boardPeripherals;					
 						for(int j=0;j<boardPeripherals.size();j++) {//u1 u2
 							String peripheraOnlName = boardPeripherals.get(j).getName();
 							System.out.println("peripheraOnlName: "+peripheraOnlName);
@@ -1174,10 +1205,10 @@ public class BoardMainWizard extends WizardPage{
 						chipsOn = new ArrayList<Chip>();
 					}
 					
-					List<Memory> memorysOn = onBoardCpu.getMemorys();
+					List<OnBoardMemory> memorysOn = onBoardCpu.getMemorys();
 					memoryTree.removeAll();
 					if(memorysOn == null) {
-						memorys = new ArrayList<Memory>();
+						memorys = new ArrayList<OnBoardMemory>();
 						memoryTypeCombo.setText("");
 						addrField.setText("");
 						sizeField.setText("");
@@ -1194,7 +1225,7 @@ public class BoardMainWizard extends WizardPage{
 				}
 			}
 		});
-		cpusOn = new ArrayList<CpuBak>();
+		cpusOn = new ArrayList<Cpu>();
 		final TreeColumn columnLanguages = new TreeColumn(cpuArhivesNeed, SWT.NONE);
 		columnLanguages.setText("板载Cpu");
 		columnLanguages.setWidth(140);
@@ -1285,14 +1316,16 @@ public class BoardMainWizard extends WizardPage{
 		cpusList =  rcx.getAllCpus();
 		for(int i=0;i<cpusList.size();i++) {
 			TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
-			t.setText(cpusList.get(i).getName());
+			t.setText(cpusList.get(i).getCpuName());
 		}
 		cpuArhives.addSelectionListener(new SelectionListener() {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				  TreeItem[] selection = cpuArhives.getSelection();
+				gotoBtn.setEnabled(true);
+				backBtn.setEnabled(false);
+				TreeItem[] selection = cpuArhives.getSelection();
 
 			}
 
@@ -1336,14 +1369,14 @@ public class BoardMainWizard extends WizardPage{
 	private void updateCpuList() {
 		TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
 		if(newCpu != null) {
-			t.setText(newCpu.getName());
+			t.setText(newCpu.getCpuName());
 		}
 	}
 	
 	private void updateCpuOn() {
 		TreeItem t = new TreeItem(cpuArhivesNeed, SWT.NONE);
 		if(newCpu != null) {
-			t.setText(newCpu.getName());
+			t.setText(newCpu.getCpuName());
 		}
 	}
 	
