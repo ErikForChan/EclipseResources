@@ -22,11 +22,11 @@ import org.xml.sax.SAXException;
 public class ReviseLinkToXML {
 	DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
 	
-	public void reviseXmlLink(String boardNamePath,String boardName,String localPath,String cpuCategory,IFile iFile,String flag) {
+	public void reviseXmlLink(String boardNamePath,String boardName,String localPath,String boardCategory,IFile iFile,String flag) {
 		factory.setIgnoringElementContentWhitespace(true);
 		 // 从XML文档中获取DOM文档实例
 		 // 获取Document对象
-		String projectPath = iFile.getLocation().toString().substring(0,iFile.getLocation().toString().lastIndexOf("/"));
+//		String projectPath = iFile.getLocation().toString().substring(0,iFile.getLocation().toString().lastIndexOf("/"));
         Document doc;
 		try {
 			DocumentBuilder db = factory.newDocumentBuilder();
@@ -40,28 +40,34 @@ public class ReviseLinkToXML {
 				for (int j = 1; j < cList.getLength(); j += 2) {
 					org.w3c.dom.Node cNode = cList.item(j);
 					String nodeName = cNode.getNodeName();
-					String linkContent = cNode.getTextContent();
+					String linkContent = cNode.getTextContent();		
+					//节点名字为name
 					if(nodeName.equals("name")) {
 						if(linkContent.contains(boardNamePath)) {	
-							File dfile = new File(projectPath+"/"+linkContent);
-							if(dfile.exists()) {
-								dfile.delete();
-							}
+//							File dfile = new File(projectPath+"/"+linkContent);
+//							if(dfile.exists()) {
+//								dfile.delete();
+//							}
 							cNode.setTextContent(boardNamePath+"/"+boardName);							
 						}
-					}
-					if(nodeName.equals("locationURI")) {					
+					}else if(nodeName.equals("locationURI")) {//节点名字为locationURI
+						System.out.println("linkContent :"+linkContent);
 						if(linkContent.contains(localPath)) {
-							if(flag.equals("boarddrv")) {
-								cNode.setTextContent(localPath+"/"+boardName);							
-							}else if(flag.equals("startup")){
-								cNode.setTextContent(localPath+"/"+cpuCategory+"/"+boardName);					
+							System.out.println("linkContent2 :"+linkContent);
+							if(flag.equals("boarddrv")) {//src/libos/bsp/boarddrv
+								cNode.setTextContent(localPath+boardCategory+"/"+boardName);							
+							}else if(flag.equals("startup")){//src/libos/bsp/startup
+								cNode.setTextContent("DJYOS_SRC_LOCATION/bsp/boarddrv"+boardCategory+"/"+boardName+"/startup");					
 							}else if(flag.equals("arch")){
 								cNode.setTextContent(localPath+"/"+boardName);
 							}else if(flag.equals("cpudrv")){
-								cNode.setTextContent(localPath+"/"+boardName);
+								cNode.setTextContent(localPath+"/"+boardCategory);
 							}else if(flag.equals("third")){
 								cNode.setTextContent(localPath+"/"+boardName);
+							}else if(flag.equals("firmware")) {
+								cNode.setTextContent(localPath+"/"+boardName);
+							}else if(flag.equals("family")) {
+								cNode.setTextContent(localPath+"/"+boardCategory);
 							}	
 							
 						}

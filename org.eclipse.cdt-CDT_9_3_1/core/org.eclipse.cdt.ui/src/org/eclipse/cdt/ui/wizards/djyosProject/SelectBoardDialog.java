@@ -6,7 +6,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.runtime.Adapters;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -26,12 +30,18 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
+import org.eclipse.ui.wizards.IWizardDescriptor;
 
 import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.BoardMainWizard;
 import org.eclipse.cdt.ui.wizards.board.BoardWizard;
 import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
+import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 
 public class SelectBoardDialog extends StatusDialog{
 
@@ -159,36 +169,64 @@ public class SelectBoardDialog extends StatusDialog{
 //			}
 //
 //		});
-		Composite boardCpt = new Composite(composite, SWT.NONE);
+		Composite boardCpt = new Composite(composite, SWT.NULL);
 		GridLayout boardLayout = new GridLayout();
 		boardLayout.numColumns=2;
 		boardCpt.setLayout(boardLayout);
 		boardCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		createTreeForBoards(boardCpt);
-		boardTree.setSize(170, 200);
+		
+		Composite boardTreeCpt = new Composite(boardCpt, SWT.NULL);
+		boardTreeCpt.setLayout(new GridLayout());
+		createTreeForBoards(boardTreeCpt);
+		boardTree.setSize(150, 200);
+		Button newBoradBtn = new Button(boardTreeCpt,SWT.PUSH);
+		newBoradBtn.setText("Create New Board");
+		newBoradBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		detailsField = new Text(boardCpt,SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
 		detailsField.setLayoutData(new GridData(GridData.FILL_BOTH));
 		detailsField.setEditable(false);
-		Button newBoradBtn = new Button(composite,SWT.PUSH);
-		newBoradBtn.setText("Create new Board");
-		newBoradBtn.setVisible(false);
+
+//		newBoradBtn.setVisible(false);
 		//点击新建板件后弹出新建板件的向导
-		newBoradBtn.addSelectionListener(new SelectionListener() {
-			
+		newBoradBtn.addSelectionListener(new SelectionAdapter() {
+
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-//				BoardMainWizard boardWizard = new BoardMainWizard();
-//				boardWizard.
+				IAction action = getAction("org.eclipse.cdt.ui.wizards.NewCWizard5");
+				action.run();	
+				boardTree.removeAll();
+				for(int i=0;i<boards.size();i++) {
+					TreeItem t = new TreeItem(boardTree, SWT.NONE);
+					t.setText(boards.get(i).getBoardName());
+				}
+
+				super.widgetSelected(e);
 			}
 			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
 		});
 		return super.createDialogArea(parent);
+	}
+	
+	/*
+	 * Returns the action for the given wizard id, or null if not found.
+	 */
+	private IAction getAction(String id) {
+		// Keep a cache, rather than creating a new action each time,
+		// so that image caching in ActionContributionItem works.
+		IAction action = null;
+		IWizardDescriptor wizardDesc = WorkbenchPlugin.getDefault().getNewWizardRegistry().findWizard(id);
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		if (wizardDesc != null) {
+			action = new NewWizardShortcutAction(window, wizardDesc);
+			IConfigurationElement element = Adapters.adapt(wizardDesc, IConfigurationElement.class);
+			if (element != null) {
+				window.getExtensionTracker().registerObject(element.getDeclaringExtension(), action,
+						IExtensionTracker.REF_WEAK);
+			}
+		}
+		return action;
 	}
 
 	protected void okPressed() {
@@ -223,28 +261,36 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTree = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		boardTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		boardTree.setHeaderVisible(true);
-		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\user";
+		List<String> paths = new ArrayList<String>();
+		String userBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\user";
+		String demoBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\demo";
 //		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\demo";
 //		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv";
-		File boardFile = new File(boardFilePath);
-		File[] files = boardFile.listFiles();
-		for(int i=0;i<files.length;i++){
-			if(files[i].getName().contains("BoardDemo")) {
-				File file = files[i];
-				File[] mfiles = file.listFiles();
-				for(int j=0;j<mfiles.length;j++) {
-					if(mfiles[j].getName().endsWith(".xml")) {
-						try {
-							Board board = rbx.getBoard(mfiles[j]);
-							boards.add(board);
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+		paths.add(userBoardFilePath);
+		paths.add(demoBoardFilePath);
+		
+
+		for(int i=0;i<paths.size();i++) {
+			File boardFile = new File(paths.get(i));
+			File[] files = boardFile.listFiles();
+			for(int j=0;j<files.length;j++){
+					File file = files[j];
+					File[] mfiles = file.listFiles();
+					for(int k=0;k<mfiles.length;k++) {
+						if(mfiles[k].getName().endsWith(".xml")) {
+							try {
+								Board board = rbx.getBoard(mfiles[k]);
+								boards.add(board);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							break;
 						}
 					}
-				}
 			}
 		}
+		
 		boardsFiltered = boards;
 		for(int i=0;i<boards.size();i++) {
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
@@ -268,13 +314,16 @@ public class SelectBoardDialog extends StatusDialog{
 							for(int j=0;j<cpus.size();j++) {
 								System.out.println(selectBoardName);
 								OnBoardCpu cpu = cpus.get(j);
-								String chipString = cpu.getChips().get(0).getChipName();
-								String peripheralString = cpu.getPeripherals().get(0).getName();
-								for(int k=1;k<cpu.getChips().size();k++) {
-									chipString+= (","+cpu.getChips().get(k).getChipName());
+								String chipString = "";
+								if( cpu.getChips().size()>0) {
+									for(int k=0;k<cpu.getChips().size();k++) {
+										chipString+= (" "+cpu.getChips().get(k).getChipName());
+									}
 								}
-								for(int k=1;k<cpu.getPeripherals().size();k++) {
-									peripheralString+= (","+cpu.getPeripherals().get(k).getName());
+								
+								String peripheralString = "";
+								for(int k=0;k<cpu.getPeripherals().size();k++) {
+									peripheralString+= (" "+cpu.getPeripherals().get(k).getName());
 								}
 								detailsDesc+="Cpu"+(j+1)+": "+cpu.getCpuName()
 								+"\n主时钟频率: "+cpu.getMianClk()

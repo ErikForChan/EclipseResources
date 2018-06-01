@@ -204,21 +204,27 @@ public class GetBoardDialog extends StatusDialog {
 			+ "CpuÍâÉè: " +peripheralString);
 		}
 	};
-
-	private Listener boardModifyListener = e -> {
-		if (boardSelectField.getText().trim() != null) {
-			importMCUBtn.setEnabled(true);
-		}
-	};
 	
-	private Listener cpuModifyListener = e -> {
-		if (selectCpu != null) {
-			List<Core> cores = selectCpu.getCores();
-			if(cores.size()<2) {
-				coreSelectFiled.setText("Core1");
-			}
+	private Listener clkModifyListener = e -> {
+		if (fDialogFields[1].getTextControl(content).getText().trim() != null) {
+			coreSelected.setCoreClk(Integer.parseInt(fDialogFields[1].getTextControl(content).getText()));
 		}
 	};
+
+//	private Listener boardModifyListener = e -> {
+//		if (boardSelectField.getText().trim() != null) {
+//			importMCUBtn.setEnabled(true);
+//		}
+//	};
+	
+//	private Listener cpuModifyListener = e -> {
+//		if (selectCpu != null) {
+//			List<Core> cores = selectCpu.getCores();
+//			if(cores.size()<2) {
+//				coreSelectFiled.setText("Core1");
+//			}
+//		}
+//	};
 
 	
 	@Override
@@ -326,7 +332,7 @@ public class GetBoardDialog extends StatusDialog {
 		tipCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		Label tipLabel = new Label(tipCpt, SWT.NONE);
 		tipLabel.setText(tipText);
-		tipLabel.setForeground(tipCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
+//		tipLabel.setForeground(tipCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
 
 		content = new Composite(composite, SWT.NONE);
 		layout.numColumns = 3;
@@ -346,7 +352,7 @@ public class GetBoardDialog extends StatusDialog {
 				handleImportButtonPressed();
 			}
 		});
-		boardSelectField.addListener(SWT.Modify, boardModifyListener);
+//		boardSelectField.addListener(SWT.Modify, boardModifyListener);
 
 		Label MCULabel = new Label(content, SWT.NONE);
 		MCULabel.setLayoutData(new GridData(GridData.BEGINNING));
@@ -364,7 +370,7 @@ public class GetBoardDialog extends StatusDialog {
 			}
 
 		});
-		MCUNameField.addListener(SWT.Modify, cpuModifyListener);
+//		MCUNameField.addListener(SWT.Modify, cpuModifyListener);
 		
 		Label CoreLabel = new Label(content, SWT.NONE);
 		CoreLabel.setLayoutData(new GridData(GridData.BEGINNING));
@@ -388,6 +394,7 @@ public class GetBoardDialog extends StatusDialog {
 		fDialogFields[1].setLabelText(BoardDetailsTextLabels[1] + ":");
 		fDialogFields[1].getLabelControl(content).setLayoutData(new GridData(GridData.BEGINNING));
 		fDialogFields[1].getTextControl(content).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		fDialogFields[1].getTextControl(content).addListener(SWT.Modify, clkModifyListener);
 //		fDialogFields[1].getTextControl(content).setEnabled(false);
 		ControlFactory.createLabel(content, "MHz");
 
@@ -436,7 +443,6 @@ public class GetBoardDialog extends StatusDialog {
 	}
 
 	protected void handleChooseButtonPressed() {
-//		System.out.println("CpuSize :  "+boardCpusList.get(0).getCores().get(0).getMemorys().size());
 		SelectCpuDialog dialog = new SelectCpuDialog(getShell(), boardCpusList);
 //		ChooseMCUDialog dialog = new ChooseMCUDialog(getShell());
 		if (dialog.open() == Window.OK) {
@@ -480,6 +486,18 @@ public class GetBoardDialog extends StatusDialog {
 			if(boardCpusList.size()<2) {
 				selectCpu = boardCpusList.get(0);
 				MCUNameField.setText(selectCpu.getCpuName());
+				List<Core> cores = selectCpu.getCores();
+				if (cores.size()<2) {
+					importMCUBtn.setEnabled(false);
+					coreSelected = cores.get(0);
+					coreSelectFiled.setText("Core1");
+					selectCoreBtn.setEnabled(false);
+					// boardSelected.setCpu(selectCpu);
+				}else {
+					selectCoreBtn.setEnabled(true);
+				}
+			}else {
+				importMCUBtn.setEnabled(true);
 			}
 		}
 

@@ -16,7 +16,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -39,13 +38,9 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import org.eclipse.cdt.ui.wizards.component.Component;
-import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
@@ -53,8 +48,8 @@ import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.ui.CPluginImages;
 
-public class NewCpuDialog extends StatusDialog{
-	
+public class ResetConfigurationDialog extends StatusDialog{
+
 	private Tree cpuConfigTree;
 	private Tree memoryTree;
 	private Group contentGroup;
@@ -71,14 +66,14 @@ public class NewCpuDialog extends StatusDialog{
 	private List<String> configsList = new ArrayList<String>();
 	private List<String> attributes = new ArrayList<String>();
 	private List<String> firewareLibs = new ArrayList<String>();
-
-
+	private boolean isCpu = true;
+	
 	public String getEclipsePath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		return eclipsePath;
 	}
-
+	
 	private static class MyFileter implements FilenameFilter {
 
         @Override
@@ -92,10 +87,10 @@ public class NewCpuDialog extends StatusDialog{
 
     }
 	
-	public NewCpuDialog(Shell parent,List<String> configs,Cpu cpu,String curFilePath) {
+	public ResetConfigurationDialog(Shell parent,List<String> configs,Cpu cpu,String curFilePath,boolean isGroup) {
 		super(parent);
 		// TODO Auto-generated constructor stub
-		setTitle("新建Cpu");
+		setTitle("重设配置");
 		attributes = configs;
 		if(cpu.getCoreNum()!=0) {
 			newCpu.setCoreNum(cpu.getCoreNum());
@@ -104,9 +99,12 @@ public class NewCpuDialog extends StatusDialog{
 			}		
 		}
 		curPath = curFilePath;
+		if(isGroup) {
+			isCpu = false;
+		}
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
 	}
-
+	
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
@@ -204,7 +202,7 @@ public class NewCpuDialog extends StatusDialog{
 		cons.add("浮点配置");
 		cons.add("内核配置");
 		cons.add("存储配置");
-//		cons.add("固件库");
+		cons.add("固件库");
 		//之前是attributes
 		for(int i=0;i<cons.size();i++) {
 			configsList.add(cons.get(i));
@@ -410,7 +408,7 @@ public class NewCpuDialog extends StatusDialog{
 		Label abiLabel = new Label(coreConfigCpt,SWT.NONE);
 		abiLabel.setText("Float ABI： ");
 		Combo abiCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
-		String[] abis = {"Toolchain default","Library(soft)","Library with FP(softfp)","FP instructions(hard)"};
+		String[] abis = {"Toolchain default","Library(Soft)","FP instructions(hard)","Library with FP(softfp)"};
 		abiCombo.setItems(abis);
 		abiCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
@@ -432,7 +430,7 @@ public class NewCpuDialog extends StatusDialog{
 				}
 			}
 			if(newCore.getFpuType()!=null) {
-				if(newCore.getFloatABI().equals("Library(soft)")) {
+				if(newCore.getFloatABI().equals("Library(Soft)")) {
 					fpuTypeCombo.select(0);
 					fpuTypeCombo.setEnabled(false);
 				}else {
@@ -459,7 +457,7 @@ public class NewCpuDialog extends StatusDialog{
 				}
 			}
 			if(cores.get(0).getFpuType()!=null) {
-				if(cores.get(0).getFloatABI().equals("Library(soft)")) {
+				if(cores.get(0).getFloatABI().equals("Library(Soft)")) {
 					fpuTypeCombo.select(0);
 					fpuTypeCombo.setEnabled(false);
 				}else {
@@ -506,28 +504,11 @@ public class NewCpuDialog extends StatusDialog{
 				String floatABI = abiCombo.getText();
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
-					if(floatABI.contains("hard")) {
-						newCpu.getCores().get(selectIndex).setFloatABI("hard");
-					}else if(floatABI.contains("softfp")) {
-						newCpu.getCores().get(selectIndex).setFloatABI("softfp");
-					}else if(floatABI.contains("soft")) {
-						newCpu.getCores().get(selectIndex).setFloatABI("soft");
-					}else{
-						newCpu.getCores().get(selectIndex).setFloatABI("default");
-					}
+					newCpu.getCores().get(selectIndex).setFloatABI(floatABI);
 				}else {
-					if(floatABI.contains("hard")) {
-						newCore.setFloatABI("hard");
-					}else if(floatABI.contains("softfp")) {
-						newCore.setFloatABI("softfp");
-					}else if(floatABI.contains("soft")) {
-						newCore.setFloatABI("soft");
-					}else{
-						newCore.setFloatABI("default");
-					}
-					
+					newCore.setFloatABI(floatABI);
 				}
-				if(floatABI.equals("Library(soft)")) {
+				if(floatABI.equals("Library(Soft)")) {
 					fpuTypeCombo.select(0);
 					fpuTypeCombo.setEnabled(false);
 				}else {
@@ -544,17 +525,9 @@ public class NewCpuDialog extends StatusDialog{
 				String fpuType = fpuTypeCombo.getText();
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
-					if(fpuType.contains("default")) {
-						newCpu.getCores().get(selectIndex).setFpuType("default");
-					}else{
-						newCpu.getCores().get(selectIndex).setFpuType(fpuType);
-					}
+					newCpu.getCores().get(selectIndex).setFpuType(fpuType);
 				}else {
-					if(fpuType.contains("default")) {
-						newCore.setFpuType("default");
-					}else{
-						newCore.setFpuType(fpuType);
-					}
+					newCore.setFpuType(fpuType);
 				}
 			}
 			
@@ -678,7 +651,7 @@ public class NewCpuDialog extends StatusDialog{
 		Composite memoryContentCpt = new Composite(memoryGroup,SWT.NONE);
 		GridLayout detailsLayout = new GridLayout();
 		detailsLayout.marginHeight = 20;
-		detailsLayout.numColumns = 2;
+		detailsLayout.numColumns = 3;
 		memoryContentCpt.setLayout(detailsLayout);
 		memoryContentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		Label typeLabel = new Label(memoryContentCpt,SWT.NONE);
@@ -688,8 +661,8 @@ public class NewCpuDialog extends StatusDialog{
 		memoryTypeCombo.add("ROM");
 		memoryTypeCombo.add("RAM");
 		memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		Label newLabel = new Label(memoryContentCpt,SWT.NONE);
-//		newLabel.setVisible(false);
+		Label newLabel = new Label(memoryContentCpt,SWT.NONE);
+		newLabel.setVisible(false);
 		memoryTypeCombo.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -723,8 +696,8 @@ public class NewCpuDialog extends StatusDialog{
 		addrLabel.setText("地址: ");
 		addrField = new Text(memoryContentCpt,SWT.BORDER);
 		addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		newLabel = new Label(memoryContentCpt,SWT.NONE);
-//		newLabel.setVisible(false);	
+		newLabel = new Label(memoryContentCpt,SWT.NONE);
+		newLabel.setVisible(false);	
 		addrField.addModifyListener(new ModifyListener() {
 
 			@Override
@@ -752,7 +725,7 @@ public class NewCpuDialog extends StatusDialog{
 		sizeLabel.setText("大小: ");
 		sizeField = new Text(memoryContentCpt,SWT.BORDER);
 		sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		ControlFactory.createLabel(memoryContentCpt, "K");
+		ControlFactory.createLabel(memoryContentCpt, "K");
 		sizeField.addModifyListener(new ModifyListener() {
 
 			@Override
@@ -834,7 +807,7 @@ public class NewCpuDialog extends StatusDialog{
 								addrField.setText("");
 							}
 							if(memorys.get(i).getSize()!=null) {
-								sizeField.setText(String.valueOf(memorys.get(i).getSize()));
+								sizeField.setText(memorys.get(i).getSize());
 							}else {
 								sizeField.setText("");
 							}	
@@ -1272,28 +1245,56 @@ public class NewCpuDialog extends StatusDialog{
 	@Override
 	protected void okPressed() {
 		// TODO Auto-generated method stub
-		List<String> cpuPieceNames = null;
-		String completeName = "";
-		String cpuName = CpuNameField.getText();
-		curPath = curPath+"/"+cpuName;
-		File newCpuFile = new File(curPath);
-		newCpuFile.mkdir();
-//		List<String> names = new ArrayList<String>();
-//		getGroupNames(newCpuFile,names);
-//		for(int i=names.size()-1;i>=0;i--) {
-//			completeName+=names.get(i);
-//		}
-		
-		File xmlFile = new File(curPath+"/cpu_"+cpuName+".xml");
-		if(! xmlFile.exists()) {
-			try {
-				xmlFile.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		if(isCpu) {
+			List<String> cpuPieceNames = null;
+			String completeName = "";
+			String cpuName = CpuNameField.getText();
+			curPath = curPath+"/"+cpuName;
+			File newCpuFile = new File(curPath);
+			newCpuFile.mkdir();
+			List<String> names = new ArrayList<String>();
+			getGroupNames(newCpuFile,names);
+			for(int i=names.size()-1;i>=0;i--) {
+				completeName+=names.get(i);
+			}
+			
+			File xmlFile = new File(curPath+"/cpu_"+completeName+".xml");
+			if(! xmlFile.exists()) {
+				try {
+					xmlFile.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			createXml(newCpu,xmlFile,completeName);
+		}else {
+			String groupName = CpuNameField.getText();
+			String completeName = "";
+			curPath = curPath+"/"+groupName;
+			File newGroupFile = new File(curPath); 
+			newGroupFile.mkdir();
+			List<String> names = new ArrayList<String>();
+			getGroupNames(newGroupFile,names);
+			for(int i=names.size()-1;i>=0;i--) {
+				completeName+=names.get(i);
+			}
+			File xmlFile = new File(curPath+"/cpu_group_"+completeName+".xml");
+			if(! xmlFile.exists()) {
+				try {
+					xmlFile.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if(newCpu.getCores().size()!=0) {
+				createNewCpuXml(newCpu,xmlFile);
+			}else {
+				createPublicXml(newCore,xmlFile);
 			}
 		}
-		createXml(newCpu,xmlFile,cpuName);
+		
 		super.okPressed();
 	}
 
@@ -1313,9 +1314,6 @@ public class NewCpuDialog extends StatusDialog{
 		return new Point(520,420);
 	}
 	
-	/*
-	 * 创建新建Cpu的XML文件
-	 */
 	private void createXml(Cpu cpu,File file,String completeName) {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		try { 
@@ -1334,11 +1332,6 @@ public class NewCpuDialog extends StatusDialog{
 				core.setAttribute("id", String.valueOf(i+1));
 				
 				Core curCore = cpu.getCores().get(i);
-				if(curCore.getType() != null){
-					Element type = document.createElement("type");
-					type.setTextContent(curCore.getType());
-					core.appendChild(type);
-				}
 				if(curCore.getArch()!=null) {
 					Element arch = document.createElement("arch");
 					arch.setTextContent(curCore.getArch());
@@ -1348,11 +1341,6 @@ public class NewCpuDialog extends StatusDialog{
 					Element family = document.createElement("family");
 					family.setTextContent(curCore.getFamily());
 					core.appendChild(family);
-				}
-				if(curCore.getFloatABI()!=null) {
-					Element floatABI = document.createElement("floatABI");
-					floatABI.setTextContent(curCore.getFloatABI());
-					core.appendChild(floatABI);
 				}
 				if(curCore.getFpuType()!=null) {
 					Element fpuType = document.createElement("fpuType");
@@ -1365,10 +1353,10 @@ public class NewCpuDialog extends StatusDialog{
 					core.appendChild(resetAddr);
 				}
 				if(curCore.getMemorys().size()!=0) {
-					
+					Element memory = document.createElement("memory");
 					for(int j=0;j<curCore.getMemorys().size();j++) {
 						CoreMemory curMemory = curCore.getMemorys().get(j);
-						Element memory = document.createElement("memory");
+						
 						Element type = document.createElement("type");
 						type.setTextContent(curMemory.getType());
 						memory.appendChild(type);
@@ -1378,9 +1366,80 @@ public class NewCpuDialog extends StatusDialog{
 						Element size = document.createElement("size");
 						size.setTextContent(String.valueOf(curMemory.getSize()));
 						memory.appendChild(size);
-						core.appendChild(memory);
+						
 					}
-					
+					core.appendChild(memory);
+				}
+				
+				cpuElement.appendChild(core);
+			}
+			
+			document.appendChild(cpuElement);
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
+			transformer.setOutputProperty("encoding", "UTF-8");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(writer));
+			transformer.transform(new DOMSource(document), new StreamResult(file));
+			writer.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+	}
+
+	private void createNewCpuXml(Cpu cpu,File file) {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		try { 
+			factory.setIgnoringElementContentWhitespace(false);
+        	DocumentBuilder builder = factory.newDocumentBuilder();             
+        	Document document = builder.newDocument();
+        	
+			Element cpuElement = document.createElement("cpu");
+			for(int i=0;i<cpu.getCores().size();i++) {
+				Element core = document.createElement("core");
+				core.setAttribute("id", String.valueOf(i+1));
+				
+				Core curCore = cpu.getCores().get(i);
+				if(curCore.getArch()!=null) {
+					Element arch = document.createElement("arch");
+					arch.setTextContent(curCore.getArch());
+					core.appendChild(arch);
+				}
+				if(curCore.getFamily()!=null) {
+					Element family = document.createElement("family");
+					family.setTextContent(curCore.getFamily());
+					core.appendChild(family);
+				}
+				if(curCore.getFpuType()!=null) {
+					Element fpuType = document.createElement("fpuType");
+					fpuType.setTextContent(curCore.getFpuType());
+					core.appendChild(fpuType);
+				}
+				if(curCore.getResetAddr()!=null) {
+					Element resetAddr = document.createElement("resetAddr");
+					resetAddr.setTextContent(curCore.getResetAddr());
+					core.appendChild(resetAddr);
+				}
+				if(curCore.getMemorys().size()!=0) {
+					Element memory = document.createElement("memory");
+					for(int j=0;j<curCore.getMemorys().size();j++) {
+						CoreMemory curMemory = curCore.getMemorys().get(j);
+						
+						Element type = document.createElement("type");
+						type.setTextContent(curMemory.getType());
+						memory.appendChild(type);
+						Element startAddr = document.createElement("startAddr");
+						startAddr.setTextContent(curMemory.getStartAddr());
+						memory.appendChild(startAddr);
+						Element size = document.createElement("size");
+						size.setTextContent(String.valueOf(curMemory.getSize()));
+						memory.appendChild(size);
+						
+					}
+					core.appendChild(memory);
 				}
 				
 				cpuElement.appendChild(core);
@@ -1403,4 +1462,68 @@ public class NewCpuDialog extends StatusDialog{
 		
 	}
 
+	private void createPublicXml(Core core,File file) {
+		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
+		try {
+			factory.setIgnoringElementContentWhitespace(false);
+        	DocumentBuilder builder = factory.newDocumentBuilder();             
+        	Document document = builder.newDocument();
+		
+			Element cpuElement = document.createElement("cpu");
+			if (core.getArch() != null) {
+				Element arch = document.createElement("arch");
+				arch.setTextContent(core.getArch());
+				cpuElement.appendChild(arch);
+			}
+			if (core.getFamily() != null) {
+				Element family = document.createElement("family");
+				family.setTextContent(core.getFamily());
+				cpuElement.appendChild(family);
+			}
+			if (core.getFpuType() != null) {
+				Element fpuType = document.createElement("fpuType");
+				fpuType.setTextContent(core.getFpuType());
+				cpuElement.appendChild(fpuType);
+			}
+			if (core.getResetAddr() != null) {
+				Element resetAddr = document.createElement("resetAddr");
+				resetAddr.setTextContent(core.getResetAddr());
+				cpuElement.appendChild(resetAddr);
+			}
+//			if (curCore.getMemorys().size() != 0) {
+//				Element memory = document.createElement("memory");
+//				for (int j = 0; j < curCore.getMemorys().size(); j++) {
+//					Memory curMemory = curCore.getMemorys().get(j);
+//
+//					Element type = document.createElement("type");
+//					type.setTextContent(curMemory.getType());
+//					memory.appendChild(type);
+//					Element startAddr = document.createElement("startAddr");
+//					startAddr.setTextContent(curMemory.getStartAddr());
+//					memory.appendChild(startAddr);
+//					Element size = document.createElement("size");
+//					size.setTextContent(String.valueOf(curMemory.getSize()));
+//					memory.appendChild(size);
+//
+//				}
+//				core.appendChild(memory);
+//			}
+
+			document.appendChild(cpuElement);
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
+			transformer.setOutputProperty("encoding", "UTF-8");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(writer));
+			transformer.transform(new DOMSource(document), new StreamResult(file));
+			writer.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}	
+	
+	
 }

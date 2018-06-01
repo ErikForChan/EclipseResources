@@ -59,7 +59,6 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 				public void run(IProgressMonitor monitor)
 						throws InvocationTargetException, InterruptedException {
 
-					// 数字是totalWork
 					monitor.beginTask("创建板件……", 100);
 
 					/*
@@ -80,7 +79,6 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 					}
 					ctbx.creatBoardXml(board, file);
 					monitor.worked(10);
-
 					monitor.done();
 				}
 			};

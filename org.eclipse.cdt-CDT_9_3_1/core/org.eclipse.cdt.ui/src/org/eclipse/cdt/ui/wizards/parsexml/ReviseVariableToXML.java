@@ -46,7 +46,6 @@ public class ReviseVariableToXML {
 					org.w3c.dom.Node cNode = cList.item(j);
 					String nodeName = cNode.getNodeName();
 					String linkContent = cNode.getTextContent();
-					System.out.println("nodeName: "+nodeName);
 					if(nodeName.equals("name")) {
 						if(linkContent.contains(locationName)) {	
 							srcLocation = cNode.getTextContent();		

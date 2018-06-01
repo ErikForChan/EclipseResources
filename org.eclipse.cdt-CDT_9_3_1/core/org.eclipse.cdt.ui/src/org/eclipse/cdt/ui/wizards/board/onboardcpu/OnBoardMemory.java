@@ -4,9 +4,9 @@ public class OnBoardMemory {
 	String name;
 	String type;
 	String startAddr;
-	int size;
+	String size;
 
-	public OnBoardMemory(String name, String type, String startAddr, int size) {
+	public OnBoardMemory(String name, String type, String startAddr, String size) {
 		super();
 		this.name = name;
 		this.type = type;
@@ -38,11 +38,11 @@ public class OnBoardMemory {
 		this.startAddr = startAddr;
 	}
 
-	public int getSize() {
+	public String getSize() {
 		return size;
 	}
 
-	public void setSize(int size) {
+	public void setSize(String size) {
 		this.size = size;
 	}
 

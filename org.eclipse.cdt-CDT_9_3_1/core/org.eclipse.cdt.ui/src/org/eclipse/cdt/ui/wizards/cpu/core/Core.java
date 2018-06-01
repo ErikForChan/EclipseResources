@@ -10,10 +10,24 @@ public class Core {
 	private String type;
 	private String arch;
 	private String family;
+	private String floatABI;
 	private String fpuType;
 	private String resetAddr;
+	private int coreClk;
 	private List<CoreMemory> memorys = new ArrayList<CoreMemory>();
 	
+	public int getCoreClk() {
+		return coreClk;
+	}
+	public void setCoreClk(int coreClk) {
+		this.coreClk = coreClk;
+	}
+	public String getFloatABI() {
+		return floatABI;
+	}
+	public void setFloatABI(String floatABI) {
+		this.floatABI = floatABI;
+	}
 	public int getId() {
 		return id;
 	}

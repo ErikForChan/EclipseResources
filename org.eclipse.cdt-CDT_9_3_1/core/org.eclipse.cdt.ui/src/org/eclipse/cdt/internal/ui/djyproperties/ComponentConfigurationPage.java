@@ -1,16 +1,21 @@
-package org.eclipse.cdt.ui.wizards.djyosProject;
+package org.eclipse.cdt.internal.ui.djyproperties;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.window.Window;
-import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionEvent;
@@ -18,32 +23,28 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowData;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.PropertyPage;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.component.CmpntCheck;
 import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.CreateCheckXml;
-import org.eclipse.cdt.ui.wizards.component.InitInfo;
-import org.eclipse.cdt.ui.wizards.component.Parameter;
+import org.eclipse.cdt.ui.wizards.component.ReadCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
+import org.eclipse.cdt.ui.wizards.djyosProject.ConfigComponentDialog;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
 import org.eclipse.cdt.internal.ui.CPluginImages;
-import org.eclipse.cdt.internal.ui.djyproperties.Module;
 
-public class InitDjyosProjectWizard extends WizardPage{
+public class ComponentConfigurationPage extends PropertyPage{
 
 	private String depedents = "依赖组件: ";
 	private String mutexs = "互斥组件: ";
@@ -57,30 +58,20 @@ public class InitDjyosProjectWizard extends WizardPage{
 	List<Component> bspComponents = new ArrayList<Component>();
 	List<Component> thirdComponents = new ArrayList<Component>();
 	List<Component> userComponents = new ArrayList<Component>();
-	List<CmpntCheck> cmpnts = new ArrayList<CmpntCheck>();
 	private Button[] compontentBtns = null;
 	private Button[] configBtns = null;
-//	private Button[] bspCompontentBtns = null;
-//	private Button[] bspConfigBtns = null;
-//	private Button[] userCompontentBtns = null;
-//	private Button[] userConfigBtns = null;
-//	private Button[] thirdCompontentBtns = null;
-//	private Button[] thirdConfigBtns = null;
 	public String moduleInit;
 	public String defineInit;
 	private Text dependentText;
 	private Text mutexText;
-	private OnBoardCpu onBoardCpu = null;
-	
-	protected InitDjyosProjectWizard(String pageName,OnBoardCpu cpu) {
-		super(pageName);
-		// TODO Auto-generated constructor stub
-		onBoardCpu = cpu;
-		setPageComplete(true);
-	}
-	
-	public List<Component> getCompontentsChecked(){
-		return compontentsChecked;
+	private List<CmpntCheck> cmpntChecks = null;
+	List<CmpntCheck> cmpnts = new ArrayList<CmpntCheck>();
+	private String eclipsePath = getEclipsePath();
+
+	private String getEclipsePath() {
+		String fullPath = Platform.getInstallLocation().getURL().toString();
+		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+		return eclipsePath;
 	}
 	
 	public void initDefineForComponent(String path,Component component) { 
@@ -123,12 +114,12 @@ public class InitDjyosProjectWizard extends WizardPage{
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
-		}
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		for(int i=0;i<compontentsChecked.size();i++) {
 			System.out.println("compontentsChecked: "+compontentsChecked.get(i).getName());
@@ -149,8 +140,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 			String code = compontentsCheckedSort.get(i).getCode();
 			String componentName = compontentsCheckedSort.get(i).getName();
 			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
-				String filePath = compontentsCheckedSort.get(i).getFileName();
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length())+"_config.h",compontentsCheckedSort.get(i));
+				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getFileName()+"_config.h",compontentsCheckedSort.get(i));
 			}
 			
 			if(grade!=null) {
@@ -182,23 +172,120 @@ public class InitDjyosProjectWizard extends WizardPage{
 			e.printStackTrace();
 		}
 		
-		//生成component_check.xml文件
-		File checkFile = new File(path+"/../../"+"data/component_check.xml");
-		if(!checkFile.exists()) {
-			try {
-				checkFile.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		IProject project = getProject();
+		// 生成component_check.xml文件
+		File checkFile = new File(project.getLocation().toString()+ "/data/component_check.xml");
+		if (checkFile.exists()) {
+			checkFile.delete();			
+		}
+		try {
+			checkFile.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		CreateCheckXml ccx = new CreateCheckXml();
 		ccx.createCheck(cmpnts, checkFile);
 		
 	}
+
+	@Override
+	protected void performDefaults() {
+		// TODO Auto-generated method stub
+		cmpnts = new ArrayList<CmpntCheck>();
+		compontentsChecked = new ArrayList<Component>();
+		for(int i=0;i<compontentsList.size();i++) {
+			//当组件为必选且不需要配置时，不显示在界面上
+			if(compontentsList.get(i).getSelectable().equals("必选") && (compontentsList.get(i).getConfigure() == null || compontentsList.get(i).getConfigure().equals(""))) {
+				compontentsChecked.add(compontentsList.get(i));
+			}
+		}
+		for (int i = 0; i < compontentBtns.length; i++) {
+			compontentBtns[i].setSelection(false);
+			Component component = null;
+			if(i<coreComponents.size()) {
+				component = coreComponents.get(i);
+			}else if(i<coreComponents.size()+bspComponents.size()) {
+				component = bspComponents.get(i-coreComponents.size());
+			}else if(i<coreComponents.size()+bspComponents.size()+thirdComponents.size()) {
+				component = thirdComponents.get(i-coreComponents.size()-bspComponents.size());
+			}else if(i<allCompontents.size()) {
+				component = userComponents.get(i-coreComponents.size()-bspComponents.size()-thirdComponents.size());
+			}			
+			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(), "false");
+			// 当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
+			if (component.getSelectable().equals("必选")) {
+				compontentBtns[i].setSelection(true);
+				compontentBtns[i].setEnabled(false);
+				cmpntCheck.setChecked("true");
+				configBtns[i].setEnabled(true);
+				compontentsChecked.add(component);
+			}
+			String configure = component.getConfigure();
+			if (configure == null || configure.equals("")) {
+				configBtns[i].setVisible(false);
+			}
+
+			if (cmpntChecks.get(i).isChecked().equals("true") && !compontentBtns[i].getSelection()) {
+				compontentBtns[i].setSelection(true);
+				configBtns[i].setEnabled(true);
+				cmpntCheck.setChecked("true");
+			}
+			cmpnts.add(cmpntCheck);
+			
+		}
+		super.performDefaults();
+	}
 	
 	@Override
-	public void createControl(Composite parent) {
+	public boolean performOk() {
+		// TODO Auto-generated method stub
+		IProject project = getProject();
+		File appFile = new File(project.getLocation().toString()+"/src/app/initPrj.c");
+		File ibootFile = new File(project.getLocation().toString()+"/src/iboot/initPrj.c");
+		
+		try {
+			IRunnableWithProgress runnable = new IRunnableWithProgress() {
+				@Override
+				public void run(IProgressMonitor monitor)
+						throws InvocationTargetException, InterruptedException {
+					monitor.beginTask("Configuration Reset...", 100);
+					if(appFile.exists()) {
+						File cfgFile = new File(project.getLocation().toString()+"/src/app/OS_prjcfg/cfg");
+						File[] files = cfgFile.listFiles();
+//						appFile.delete();
+						for(File file:files) {
+							file.delete();
+						}
+						initProject(project.getLocation().toString()+"/src/app");
+					}
+					monitor.worked(50);
+					if(ibootFile.exists()) {
+						File cfgFile = new File(project.getLocation().toString()+"/src/iboot/OS_prjcfg/cfg");
+						File[] files = cfgFile.listFiles();
+						for(File file:files) {
+							file.delete();
+						}
+						initProject(project.getLocation().toString()+"/src/iboot");
+					}
+					monitor.worked(50);
+					monitor.done();
+				}
+			};
+			ProgressMonitorDialog dialog = new ProgressMonitorDialog(
+					PlatformUI.getWorkbench().getDisplay().getActiveShell());
+			dialog.setCancelable(false);
+			dialog.run(true, true, runnable);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	
+		return super.performOk();
+	}
+	
+
+	@Override
+	protected Control createContents(Composite parent) {
 		// TODO Auto-generated method stub
 		Composite composite = new Composite(parent, SWT.NONE);
 		initializeDialogUnits(parent);
@@ -238,7 +325,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 		mutexText.setEditable(false);
 		
 		ReadComponentXml rcx = new ReadComponentXml();
-		compontentsList = rcx.getComponents(onBoardCpu);//获取cpudrv/src下的组件
+		compontentsList = rcx.getComponents();//获取cpudrv/src下的组件
 		for(int i=0;i<compontentsList.size();i++) {
 			Component component = new Component();
 			component.setName(compontentsList.get(i).getName());
@@ -280,6 +367,16 @@ public class InitDjyosProjectWizard extends WizardPage{
 			}else if(allCompontents.get(i).getAttribute().equals("用户组件")) {
 				userComponents.add(allCompontents.get(i));
 			}
+		}
+		
+		IProject project = getProject();
+		File checkFile = new File(project.getLocation().toString()+"/data/component_check.xml");
+		ReadCheckXml rccx = new ReadCheckXml();
+		try {
+			cmpntChecks = rccx.getCmpntChecks(checkFile);
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 		
 		// 组件显示界面
@@ -388,7 +485,6 @@ public class InitDjyosProjectWizard extends WizardPage{
 						} else {
 							mutexText.setText(mutexs + allMuts);
 						}
-						
 						cmpnts.get(cur).setChecked("true");
 						
 					} else {
@@ -399,7 +495,6 @@ public class InitDjyosProjectWizard extends WizardPage{
 								break;
 							}
 						}
-						
 						cmpnts.get(cur).setChecked("false");
 					}
 
@@ -411,6 +506,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 
 				}
 			});
+			
 		}
 
 		//设置滚动条属性
@@ -420,17 +516,11 @@ public class InitDjyosProjectWizard extends WizardPage{
 		scrolledComposite.setExpandHorizontal(true);
 	    scrolledComposite.setExpandVertical(true);
 	    
-		setErrorMessage(null);
-		setMessage(null);
-		setControl(composite);
-		Dialog.applyDialogFont(composite);
+		return composite;
 	}
-
+	
 	private Control createCoreTabContent(TabFolder folder,List<Component> coreComponents) {
 		// TODO Auto-generated method stub
-//		scrolledComposite = new ScrolledComposite(folder, SWT.V_SCROLL
-//                | SWT.H_SCROLL);
-//		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		Composite componentCpt = new Composite(folder, SWT.BORDER);
 		GridLayout componentLayout = new GridLayout(4, true);
@@ -451,8 +541,8 @@ public class InitDjyosProjectWizard extends WizardPage{
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
 			if(component.getSelectable().equals("必选")) {
 				compontentBtns[i].setSelection(true);
-				cmpntCheck.setChecked("true");
 				compontentBtns[i].setEnabled(false);
+				cmpntCheck.setChecked("true");
 				configBtns[i].setEnabled(true);
 				compontentsChecked.add(component);
 			}
@@ -460,15 +550,17 @@ public class InitDjyosProjectWizard extends WizardPage{
 			if(configure==null || configure.equals("")) {
 				configBtns[i].setVisible(false);
 			}
+			
+			if(cmpntChecks.get(i).isChecked().equals("true") && !compontentBtns[i].getSelection()) {
+				compontentBtns[i].setSelection(true);
+				configBtns[i].setEnabled(true);
+				cmpntCheck.setChecked("true");
+			}
+			
 			cmpnts.add(cmpntCheck);
+			
 		}
-//		
-//		Point point = componentCpt.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-//		scrolledComposite.setContent(componentCpt);
-//		scrolledComposite.setMinHeight(point.y);
-//		scrolledComposite.setExpandHorizontal(true);
-//	    scrolledComposite.setExpandVertical(true);
-//	    folder.layout();
+
 		return componentCpt;
 	}
 
@@ -494,14 +586,20 @@ public class InitDjyosProjectWizard extends WizardPage{
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
 			if(component.getSelectable().equals("必选")) {
 				compontentBtns[preSize+i].setSelection(true);
-				cmpntCheck.setChecked("true");
 				compontentBtns[preSize+i].setEnabled(false);
+				cmpntCheck.setChecked("true");
 				configBtns[preSize+i].setEnabled(true);
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
 			if(configure==null || configure.equals("")) {
 				configBtns[preSize+i].setVisible(false);
+			}
+			
+			if(cmpntChecks.get(preSize+i).isChecked().equals("true") && !compontentBtns[preSize+i].getSelection()) {
+				compontentBtns[preSize+i].setSelection(true);
+				configBtns[preSize+i].setEnabled(true);
+				cmpntCheck.setChecked("true");
 			}
 			cmpnts.add(cmpntCheck);
 		}
@@ -531,14 +629,19 @@ public class InitDjyosProjectWizard extends WizardPage{
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
 			if(component.getSelectable().equals("必选")) {
 				compontentBtns[preSize+i].setSelection(true);
-				cmpntCheck.setChecked("true");
 				compontentBtns[preSize+i].setEnabled(false);
+				cmpntCheck.setChecked("true");
 				configBtns[preSize+i].setEnabled(true);
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
 			if(configure==null || configure.equals("")) {
 				configBtns[preSize+i].setVisible(false);
+			}
+			if(cmpntChecks.get(preSize+i).isChecked().equals("true") && !compontentBtns[preSize+i].getSelection()) {
+				compontentBtns[preSize+i].setSelection(true);
+				configBtns[preSize+i].setEnabled(true);
+				cmpntCheck.setChecked("true");
 			}
 			cmpnts.add(cmpntCheck);
 		}
@@ -568,14 +671,19 @@ public class InitDjyosProjectWizard extends WizardPage{
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
 			if(component.getSelectable().equals("必选")) {
 				compontentBtns[preSize+i].setSelection(true);
-				cmpntCheck.setChecked("true");
 				compontentBtns[preSize+i].setEnabled(false);
+				cmpntCheck.setChecked("true");
 				configBtns[preSize+i].setEnabled(true);
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
 			if(configure==null || configure.equals("")) {
 				configBtns[preSize+i].setVisible(false);
+			}
+			if(cmpntChecks.get(preSize+i).isChecked().equals("true") && !compontentBtns[preSize+i].getSelection()) {
+				compontentBtns[preSize+i].setSelection(true);
+				configBtns[preSize+i].setEnabled(true);
+				cmpntCheck.setChecked("true");
 			}
 			cmpnts.add(cmpntCheck);
 		}
@@ -622,13 +730,16 @@ public class InitDjyosProjectWizard extends WizardPage{
 		return allDeps;
 	}
 	
-	/*
-	 * 获取当前Eclipse的路径
-	 */
-	private String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
+	private IProject getProject(){
+		Object	element	= getElement();
+		IProject project	= null;
+		
+		if (element instanceof IProject) {
+			project = (IProject) element;
+		} else if (element instanceof IAdaptable) {
+			project= ((IAdaptable)element).getAdapter(IProject.class);
+		}
+		return project;
 	}
 	
 	String djyStart = "ptu32_t __djy_main(void)\r\n" + 
@@ -724,5 +835,5 @@ public class InitDjyosProjectWizard extends WizardPage{
 			"//---------------------------------------------------------------------------\r\n\n"
 			+ "align_type InitStack[CFG_INITSTACK_SIZE/sizeof(align_type)] = {'d'};\r\n" + 
 			"";
-
+	
 }

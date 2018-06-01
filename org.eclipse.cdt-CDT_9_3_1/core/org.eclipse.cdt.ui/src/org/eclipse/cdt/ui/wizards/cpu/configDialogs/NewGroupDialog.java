@@ -45,6 +45,8 @@ import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
+import org.eclipse.cdt.internal.ui.CPluginImages;
+
 public class NewGroupDialog extends StatusDialog{
 
 	private Tree cpuGroupTree;
@@ -98,6 +100,11 @@ public class NewGroupDialog extends StatusDialog{
 			for(int i=0;i<cpu.getCoreNum();i++) {
 				newCpu.getCores().add(new Core());
 			}		
+		}else {
+//			Core onlyCore = 
+//			if() {
+//				
+//			}
 		}
 		curPath = curFilePath;
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
@@ -154,12 +161,15 @@ public class NewGroupDialog extends StatusDialog{
 		cons.add("浮点配置");
 		cons.add("内核配置");
 		cons.add("存储配置");
-		cons.add("固件库");
+//		cons.add("固件库");
 		//之前是attributes
 		for(int i=0;i<cons.size();i++) {
 			configsList.add(cons.get(i));
 			TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
 			t.setText(cons.get(i));
+			if(! attributes.contains(cons.get(i))) {
+				t.setImage(CPluginImages.CFG_DONE_VIEW.createImage());
+			}
 		}
 
 		contentGroup = ControlFactory.createGroup(cpuGroupCpt, "分组配置", 1);
@@ -323,10 +333,15 @@ public class NewGroupDialog extends StatusDialog{
 		Text addrText = new Text(coreConfigCpt,SWT.BORDER);
 		addrText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
-		if(newCpu.getCoreNum()==0) {
+		if(newCpu.getCores().size()==0) {
 			coreSelectCpt.setVisible(false);
 			if(newCore.getResetAddr()!=null) {
 				addrText.setText(newCore.getResetAddr());
+			}
+		}else {
+			if(newCpu.getCores().get(0).getResetAddr()!=null) {
+				numCombo.select(0);
+				addrText.setText(newCpu.getCores().get(0).getResetAddr());
 			}
 		}
 		numCombo.addSelectionListener(new SelectionListener() {
@@ -357,7 +372,7 @@ public class NewGroupDialog extends StatusDialog{
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
 				String resetAddr = addrText.getText().trim();
-				if(newCpu.getCoreNum()!=0) {
+				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setResetAddr(resetAddr);
 				}else {
@@ -385,6 +400,7 @@ public class NewGroupDialog extends StatusDialog{
 		configContent.setLayout(new GridLayout());
 		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
 
+		//内核选择界面
 		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 2;
@@ -398,6 +414,7 @@ public class NewGroupDialog extends StatusDialog{
 		}
 		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
+		//配置浮点界面
 		Group floatGroup = ControlFactory.createGroup(configContent, "配置浮点", 1);
 		floatGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		floatGroup.setLayout(new GridLayout());
@@ -411,31 +428,70 @@ public class NewGroupDialog extends StatusDialog{
 		Label abiLabel = new Label(coreConfigCpt,SWT.NONE);
 		abiLabel.setText("Float ABI： ");
 		Combo abiCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
-		String[] abis = {"Toolchain default","Library(Soft)","FP instructions(hard)","Library with FP(softfp)"};
+		String[] abis = {"Toolchain default","Library(soft)","FP instructions(hard)","Library with FP(softfp)"};
 		abiCombo.setItems(abis);
 		abiCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		abiCombo.select(0);
+//		abiCombo.select(0);
 		
 		Label fpuTypeLabel = new Label(coreConfigCpt,SWT.NONE);
 		fpuTypeLabel.setText("FPU Type： ");
 		Combo fpuTypeCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
-		String[] fpuTypes = {"Toolchain default","fpv5-d16","fpv4-sp-d16","fpv4-d16"};
+		String[] fpuTypes = {"Toolchain default","fpv5-d16","fpv5-sp-d16","fpv4-sp-d16","fpv4-d16"};
 		fpuTypeCombo.setItems(fpuTypes);
 		fpuTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		if (newCpu.getCoreNum() == 0) {
+		//内核个数为0时
+		if (newCpu.getCores().size() == 0) {
 			coreSelectCpt.setVisible(false);
-			if(newCore.getFpuType()!=null) {
-				for(int i=0;i<fpuTypes.length;i++) {
-					if(newCore.getFpuType().equals(fpuTypes[i])) {
-						fpuTypeCombo.select(i);
+			if(newCore.getFloatABI()!=null) {
+				for(int i=0;i<abis.length;i++) {
+					if(newCore.getFloatABI().equals(abis[i])) {
+						abiCombo.select(i);
+						break;
 					}
 				}
+			}
+			if(newCore.getFpuType()!=null) {
+				if(newCore.getFloatABI().equals("Library(soft)")) {
+					fpuTypeCombo.select(0);
+					fpuTypeCombo.setEnabled(false);
+				}else {
+					for(int i=0;i<fpuTypes.length;i++) {
+						if(newCore.getFpuType().equals(fpuTypes[i])) {
+							fpuTypeCombo.select(i);
+							break;
+						}
+					}
+				}
+				
 			}else {
-				abiCombo.deselectAll();
 				fpuTypeCombo.deselectAll();
 			}
+		}else {//内核个数不为0时
+			List<Core> cores = newCpu.getCores();
+			if(cores.get(0).getFloatABI()!=null) {
+				numCombo.select(0);
+				for(int i=0;i<abis.length;i++) {
+					if(cores.get(0).getFloatABI().equals(abis[i])) {
+						abiCombo.select(i);
+						break;
+					}
+				}
+			}
+			if(cores.get(0).getFpuType()!=null) {
+				if(cores.get(0).getFloatABI().equals("Library(soft)")) {
+					fpuTypeCombo.select(0);
+					fpuTypeCombo.setEnabled(false);
+				}else {
+					for(int i=0;i<fpuTypes.length;i++) {
+						if(cores.get(0).getFpuType().equals(fpuTypes[i])) {
+							fpuTypeCombo.select(i);
+							break;
+						}
+					}
+				}
+			}
 		}
+		//内核复选框选择事件
 		numCombo.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -450,6 +506,7 @@ public class NewGroupDialog extends StatusDialog{
 						}
 					}
 				}else {
+					abiCombo.deselectAll();
 					fpuTypeCombo.deselectAll();
 				}
 			}
@@ -460,17 +517,69 @@ public class NewGroupDialog extends StatusDialog{
 				
 			}
 		});
+		//Float ABI复选框选择事件
+		abiCombo.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				String floatABI = abiCombo.getText();
+				if(newCpu.getCores().size()!=0) {
+					int selectIndex = numCombo.getSelectionIndex();
+					if(floatABI.contains("hard")) {
+						newCpu.getCores().get(selectIndex).setFloatABI("hard");
+					}else if(floatABI.contains("softfp")) {
+						newCpu.getCores().get(selectIndex).setFloatABI("softfp");
+					}else if(floatABI.contains("soft")) {
+						newCpu.getCores().get(selectIndex).setFloatABI("soft");
+					}else{
+						newCpu.getCores().get(selectIndex).setFloatABI("default");
+					}
+				}else {
+					if(floatABI.contains("hard")) {
+						newCore.setFloatABI("hard");
+					}else if(floatABI.contains("softfp")) {
+						newCore.setFloatABI("softfp");
+					}else if(floatABI.contains("soft")) {
+						newCore.setFloatABI("soft");
+					}else{
+						newCore.setFloatABI("default");
+					}
+				}
+				if(floatABI.equals("Library(soft)")) {
+					fpuTypeCombo.select(0);
+					fpuTypeCombo.setEnabled(false);
+				}else {
+					fpuTypeCombo.setEnabled(true);
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		//fpuTypeCombo福安选矿选择事件
 		fpuTypeCombo.addSelectionListener(new SelectionListener() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				String fpuType = fpuTypeCombo.getText().trim();
-				if(newCpu.getCoreNum()!=0) {
+				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
-					newCpu.getCores().get(selectIndex).setFpuType(fpuType);
+					if(fpuType.contains("default")) {
+						newCpu.getCores().get(selectIndex).setFpuType("default");
+					}else{
+						newCpu.getCores().get(selectIndex).setFpuType(fpuType);
+					}
 				}else {
-					newCore.setFpuType(fpuType);
+					if(fpuType.contains("default")) {
+						newCore.setFpuType("default");
+					}else{
+						newCore.setFpuType(fpuType);
+					}
 				}
 			}
 			
@@ -512,12 +621,6 @@ public class NewGroupDialog extends StatusDialog{
 		}
 		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
-		if (newCpu.getCoreNum() == 0) {
-			coreSelectCpt.setVisible(false);
-		}else {
-			numCombo.select(0);
-		}
-		
 		Group memoryGroup = ControlFactory.createGroup(configContent, "配置内存", 1);
 		GridLayout memoryGroupLayout = new GridLayout();
 		memoryGroupLayout.numColumns = 2;
@@ -548,8 +651,6 @@ public class NewGroupDialog extends StatusDialog{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				int selectIndex = numCombo.getSelectionIndex();
-				
 				int memoryCount = memoryTree.getItemCount();//memoryTree的孩子数量
 				TreeItem t = new TreeItem(memoryTree, SWT.NONE);//添加新的内存
 				TreeItem[] items = memoryTree.getItems();
@@ -561,7 +662,13 @@ public class NewGroupDialog extends StatusDialog{
 				t.setText("memory"+(max+1));
 				CoreMemory memory = new CoreMemory();
 				memory.setName("memory"+(max+1));
-				newCpu.getCores().get(selectIndex).getMemorys().add(memory);
+				if(newCpu.getCores().size()!=0) {
+					int selectIndex = numCombo.getSelectionIndex();
+					newCpu.getCores().get(selectIndex).getMemorys().add(memory);
+				}else {
+					newCore.getMemorys().add(memory);
+				}
+				
 			
 			}
 			
@@ -600,7 +707,7 @@ public class NewGroupDialog extends StatusDialog{
 		Composite memoryContentCpt = new Composite(memoryGroup,SWT.NONE);
 		GridLayout detailsLayout = new GridLayout();
 		detailsLayout.marginHeight = 20;
-		detailsLayout.numColumns = 3;
+		detailsLayout.numColumns = 2;
 		memoryContentCpt.setLayout(detailsLayout);
 		memoryContentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		Label typeLabel = new Label(memoryContentCpt,SWT.NONE);
@@ -610,8 +717,8 @@ public class NewGroupDialog extends StatusDialog{
 		memoryTypeCombo.add("ROM");
 		memoryTypeCombo.add("RAM");
 		memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		Label newLabel = new Label(memoryContentCpt,SWT.NONE);
-		newLabel.setVisible(false);
+//		Label newLabel = new Label(memoryContentCpt,SWT.NONE);
+//		newLabel.setVisible(false);
 		memoryTypeCombo.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -645,8 +752,8 @@ public class NewGroupDialog extends StatusDialog{
 		addrLabel.setText("地址: ");
 		addrField = new Text(memoryContentCpt,SWT.BORDER);
 		addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		newLabel = new Label(memoryContentCpt,SWT.NONE);
-		newLabel.setVisible(false);	
+//		newLabel = new Label(memoryContentCpt,SWT.NONE);
+//		newLabel.setVisible(false);	
 		addrField.addModifyListener(new ModifyListener() {
 
 			@Override
@@ -674,7 +781,7 @@ public class NewGroupDialog extends StatusDialog{
 		sizeLabel.setText("大小: ");
 		sizeField = new Text(memoryContentCpt,SWT.BORDER);
 		sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		ControlFactory.createLabel(memoryContentCpt, "K");
+//		ControlFactory.createLabel(memoryContentCpt, "K");
 		sizeField.addModifyListener(new ModifyListener() {
 
 			@Override
@@ -690,7 +797,7 @@ public class NewGroupDialog extends StatusDialog{
 						for (int i = 0; i < memorys.size(); i++) {
 							CoreMemory memory = memorys.get(i);
 							if (memory.getName().equals(selectMemory)) {
-								memory.setSize(Integer.parseInt(size));
+								memory.setSize(size);
 								break;
 							}
 						}
@@ -754,7 +861,7 @@ public class NewGroupDialog extends StatusDialog{
 							}else {
 								addrField.setText("");
 							}
-							if(memorys.get(i).getSize()!=0) {
+							if(memorys.get(i).getSize()!=null) {
 								sizeField.setText(String.valueOf(memorys.get(i).getSize()));	
 							}else {
 								sizeField.setText("");
@@ -770,6 +877,37 @@ public class NewGroupDialog extends StatusDialog{
 				
 			}
 		});
+		
+		if (newCpu.getCores().size() == 0) {
+			coreSelectCpt.setVisible(false);
+			List<CoreMemory> memorys = newCore.getMemorys();
+			memoryTree.removeAll();
+			if(memorys.size()!=0) {
+				for(int i=0;i<memorys.size();i++) {
+					String memoryName = memorys.get(i).getName();
+					TreeItem t = new TreeItem(memoryTree, SWT.NONE);
+					t.setText(memoryName);
+				}		
+			}
+			memoryTypeCombo.deselectAll();
+			addrField.setText("");
+			sizeField.setText("");
+		}else {
+			List<Core> cores = newCpu.getCores();
+			if(newCpu.getCores().get(0).getMemorys().size()!=0){
+				numCombo.select(0);
+				List<CoreMemory> memorys = newCpu.getCores().get(0).getMemorys();
+				memoryTree.removeAll();
+				for (int i = 0; i < memorys.size(); i++) {
+					String memoryName = memorys.get(i).getName();
+					TreeItem t = new TreeItem(memoryTree, SWT.NONE);
+					t.setText(memoryName);
+				}
+				memoryTypeCombo.deselectAll();
+				addrField.setText("");
+				sizeField.setText("");
+			}		
+		}
 		
 		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		scrolledComposite.setContent(configContent);
@@ -832,7 +970,7 @@ public class NewGroupDialog extends StatusDialog{
 		Label archLabel = new Label(coreConfigCpt,SWT.NONE);
 		archLabel.setText("架构： ");
 		Combo archCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
-		archCombo.setEnabled(false);
+//		archCombo.setEnabled(false);
 		archCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		//类型下拉框选中的事件处理
 		typeCombo.addSelectionListener(new SelectionListener() {
@@ -852,7 +990,7 @@ public class NewGroupDialog extends StatusDialog{
 				}
 				archCombo.setEnabled(true);
 				archCombo.setItems(archs);
-				if(newCpu.getCoreNum()!=0) {
+				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setType(type);
 				}else {
@@ -871,7 +1009,7 @@ public class NewGroupDialog extends StatusDialog{
 		familyLabel.setText("家族： ");
 		Combo familyCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
 		familyCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		familyCombo.setEnabled(false);
+//		familyCombo.setEnabled(false);
 		archCombo.addSelectionListener(new SelectionListener() {
 
 			@Override
@@ -888,7 +1026,7 @@ public class NewGroupDialog extends StatusDialog{
 				}
 				familyCombo.setEnabled(true);
 				familyCombo.setItems(familys);
-				if(newCpu.getCoreNum()!=0) {
+				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setArch(arch);
 				}else {
@@ -909,7 +1047,7 @@ public class NewGroupDialog extends StatusDialog{
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				String family = familyCombo.getText().trim();
-				if(newCpu.getCoreNum()!=0) {
+				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setFamily(family);
 				}else {
@@ -924,7 +1062,7 @@ public class NewGroupDialog extends StatusDialog{
 			}
 		});
 		
-		if (newCpu.getCoreNum() == 0) {
+		if (newCpu.getCores().size() == 0) {
 			coreSelectCpt.setVisible(false);
 			if(newCore.getType()!=null) {
 				for(int i=0;i<types.length;i++) {
@@ -934,7 +1072,64 @@ public class NewGroupDialog extends StatusDialog{
 					}
 				}
 			}
-			if(newCore.getArch()!=null) {
+			if(newCore.getArch()!=null) {			
+//				archCombo.setEnabled(true);
+				String type = newCore.getType();
+				String archPath = typePath+"/"+type;
+				File archFile = new File(archPath);
+				File[] archFiles =  archFile.listFiles(new MyFileter());
+				String[] archs = new String[archFiles.length];
+				for(int i=0;i<archFiles.length;i++) {
+					archs[i] = archFiles[i].getName();
+				}
+				archCombo.setItems(archs);
+				for(int i=0;i<archs.length;i++) {
+					System.out.println(archs[i]);
+					if(newCore.getArch().equals(archs[i])) {
+						System.out.println("yes");
+						archCombo.select(i);
+						break;
+					}
+				}
+			}else {
+				archCombo.setEnabled(false);
+			}
+			if(newCore.getFamily()!=null) {
+//				familyCombo.setEnabled(true);
+				String type = newCore.getType();
+				String arch = newCore.getArch();
+				String familyPath = typePath+"/"+type+"/"+arch;
+				File familyFile = new File(familyPath);
+				File[] familyFiles =  familyFile.listFiles(new MyFileter());
+				String[] familys = new String[familyFiles.length];
+				for(int i=0;i<familyFiles.length;i++) {
+					familys[i] = familyFiles[i].getName();
+				}
+				familyCombo.setItems(familys);
+				for(int i=0;i<familys.length;i++) {
+					if(newCore.getFamily().equals(familys[i])) {
+						familyCombo.select(i);
+						break;
+					}
+				}
+			}else {
+				familyCombo.setEnabled(false);
+			}
+		}else {
+			List<Core> cores = newCpu.getCores();
+			if(cores.get(0).getType()!=null) {
+				numCombo.select(0);
+				for(int i=0;i<types.length;i++) {
+					if(cores.get(0).getType().equals(types[i])) {
+						typeCombo.select(i);
+						break;
+					}
+				}
+			}else {
+				typeCombo.setEnabled(false);
+			}
+			if (cores.get(0).getArch() != null) {
+//				archCombo.setEnabled(true);
 				String type = typeCombo.getText().trim();
 				String archPath = typePath+"/"+type;
 				File archFile = new File(archPath);
@@ -943,14 +1138,18 @@ public class NewGroupDialog extends StatusDialog{
 				for(int i=0;i<archFiles.length;i++) {
 					archs[i] = archFiles[i].getName();
 				}
+				archCombo.setItems(archs);
 				for(int i=0;i<archs.length;i++) {
-					if(newCore.getArch().equals(archs[i])) {
+					if(cores.get(0).getArch().equals(archs[i])) {
 						archCombo.select(i);
 						break;
 					}
 				}
+			}else {
+				archCombo.setEnabled(false);
 			}
-			if(newCore.getFamily()!=null) {
+			if(cores.get(0).getFamily()!=null) {
+//				familyCombo.setEnabled(true);
 				String type = typeCombo.getText().trim();
 				String arch = archCombo.getText().trim();
 				String familyPath = typePath+"/"+type+"/"+arch;
@@ -960,15 +1159,17 @@ public class NewGroupDialog extends StatusDialog{
 				for(int i=0;i<familyFiles.length;i++) {
 					familys[i] = familyFiles[i].getName();
 				}
+				familyCombo.setItems(familys);
 				for(int i=0;i<familys.length;i++) {
-					if(newCore.getArch().equals(familys[i])) {
+					if(cores.get(0).getFamily().equals(familys[i])) {
 						familyCombo.select(i);
 						break;
 					}
 				}
+			}else {
+				familyCombo.setEnabled(false);
 			}
-		}else {
-			typeCombo.setEnabled(false);
+			
 		}
 		
 		numCombo.addSelectionListener(new SelectionListener() {
@@ -1090,6 +1291,16 @@ public class NewGroupDialog extends StatusDialog{
 	    scrolledComposite.setExpandVertical(true);
 		contentGroup.layout();
 	}
+	
+	private void getGroupNames(File curFile,List<String> names) {//f1 stm32 
+		
+		names.add(curFile.getName());
+		File parentFile = curFile.getParentFile();
+		if(!parentFile.getName().equals("cpudrv")) {
+			getGroupNames(parentFile,names);
+		}
+		
+	}
 
 	@Override
 	protected Point getInitialSize() {
@@ -1104,10 +1315,16 @@ public class NewGroupDialog extends StatusDialog{
 		 * 点击OK后生成新分组和xml文件
 		 */
 		String groupName = groupNameField.getText();
+		String completeName = "";
 		curPath = curPath+"/"+groupName;
 		File newGroupFile = new File(curPath); 
 		newGroupFile.mkdir();
-		File xmlFile = new File(curPath+"/cpu_group_"+groupName+".xml");
+		List<String> names = new ArrayList<String>();
+		getGroupNames(newGroupFile,names);
+		for(int i=names.size()-1;i>=0;i--) {
+			completeName+=names.get(i);
+		}
+		File xmlFile = new File(curPath+"/cpu_group_"+completeName+".xml");
 		if(! xmlFile.exists()) {
 			try {
 				xmlFile.createNewFile();
@@ -1116,7 +1333,7 @@ public class NewGroupDialog extends StatusDialog{
 				e.printStackTrace();
 			}
 		}
-		if(newCpu.getCoreNum()!=0) {
+		if(newCpu.getCores().size()!=0) {
 			createNewCpuXml(newCpu,xmlFile);
 		}else {
 			createPublicXml(newCore,xmlFile);
@@ -1138,6 +1355,11 @@ public class NewGroupDialog extends StatusDialog{
 				core.setAttribute("id", String.valueOf(i+1));
 				
 				Core curCore = cpu.getCores().get(i);
+				if(curCore.getType() != null){
+					Element type = document.createElement("type");
+					type.setTextContent(curCore.getType());
+					core.appendChild(type);
+				}
 				if(curCore.getArch()!=null) {
 					Element arch = document.createElement("arch");
 					arch.setTextContent(curCore.getArch());
@@ -1147,6 +1369,11 @@ public class NewGroupDialog extends StatusDialog{
 					Element family = document.createElement("family");
 					family.setTextContent(curCore.getFamily());
 					core.appendChild(family);
+				}
+				if(curCore.getFloatABI()!=null) {
+					Element floatABI = document.createElement("floatABI");
+					floatABI.setTextContent(curCore.getFloatABI());
+					core.appendChild(floatABI);
 				}
 				if(curCore.getFpuType()!=null) {
 					Element fpuType = document.createElement("fpuType");
@@ -1159,10 +1386,10 @@ public class NewGroupDialog extends StatusDialog{
 					core.appendChild(resetAddr);
 				}
 				if(curCore.getMemorys().size()!=0) {
-					Element memory = document.createElement("memory");
+					
 					for(int j=0;j<curCore.getMemorys().size();j++) {
 						CoreMemory curMemory = curCore.getMemorys().get(j);
-						
+						Element memory = document.createElement("memory");
 						Element type = document.createElement("type");
 						type.setTextContent(curMemory.getType());
 						memory.appendChild(type);
@@ -1172,9 +1399,9 @@ public class NewGroupDialog extends StatusDialog{
 						Element size = document.createElement("size");
 						size.setTextContent(String.valueOf(curMemory.getSize()));
 						memory.appendChild(size);
-						
+						core.appendChild(memory);
 					}
-					core.appendChild(memory);
+					
 				}
 				
 				cpuElement.appendChild(core);
@@ -1205,6 +1432,11 @@ public class NewGroupDialog extends StatusDialog{
         	Document document = builder.newDocument();
 		
 			Element cpuElement = document.createElement("cpu");
+			if(core.getType() != null){
+				Element type = document.createElement("type");
+				type.setTextContent(core.getType());
+				cpuElement.appendChild(type);
+			}
 			if (core.getArch() != null) {
 				Element arch = document.createElement("arch");
 				arch.setTextContent(core.getArch());
@@ -1214,6 +1446,11 @@ public class NewGroupDialog extends StatusDialog{
 				Element family = document.createElement("family");
 				family.setTextContent(core.getFamily());
 				cpuElement.appendChild(family);
+			}
+			if(core.getFloatABI()!=null) {
+				Element floatABI = document.createElement("floatABI");
+				floatABI.setTextContent(core.getFloatABI());
+				cpuElement.appendChild(floatABI);
 			}
 			if (core.getFpuType() != null) {
 				Element fpuType = document.createElement("fpuType");
@@ -1225,24 +1462,24 @@ public class NewGroupDialog extends StatusDialog{
 				resetAddr.setTextContent(core.getResetAddr());
 				cpuElement.appendChild(resetAddr);
 			}
-//			if (curCore.getMemorys().size() != 0) {
-//				Element memory = document.createElement("memory");
-//				for (int j = 0; j < curCore.getMemorys().size(); j++) {
-//					Memory curMemory = curCore.getMemorys().get(j);
-//
-//					Element type = document.createElement("type");
-//					type.setTextContent(curMemory.getType());
-//					memory.appendChild(type);
-//					Element startAddr = document.createElement("startAddr");
-//					startAddr.setTextContent(curMemory.getStartAddr());
-//					memory.appendChild(startAddr);
-//					Element size = document.createElement("size");
-//					size.setTextContent(String.valueOf(curMemory.getSize()));
-//					memory.appendChild(size);
-//
-//				}
-//				core.appendChild(memory);
-//			}
+			if (core.getMemorys().size() != 0) {
+				
+				for (int j = 0; j < core.getMemorys().size(); j++) {
+					CoreMemory curMemory = core.getMemorys().get(j);
+					Element memory = document.createElement("memory");
+					Element type = document.createElement("type");
+					type.setTextContent(curMemory.getType());
+					memory.appendChild(type);
+					Element startAddr = document.createElement("startAddr");
+					startAddr.setTextContent(curMemory.getStartAddr());
+					memory.appendChild(startAddr);
+					Element size = document.createElement("size");
+					size.setTextContent(String.valueOf(curMemory.getSize()));
+					memory.appendChild(size);
+					cpuElement.appendChild(memory);
+				}
+				
+			}
 
 			document.appendChild(cpuElement);
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();

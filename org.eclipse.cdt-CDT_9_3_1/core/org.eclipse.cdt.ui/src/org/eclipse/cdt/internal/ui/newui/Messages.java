@@ -306,7 +306,13 @@ public class Messages extends NLS {
 	public static String SymbolTab_3;
 	public static String WorkingSetConfigAction_21;
 	public static String WorkingSetConfigAction_22;
-
+	
+	public static String Init_DjyStart;
+	public static String Init_DjyEnd;
+	public static String Init_InitStart;
+	public static String Init_InitEnd;
+	public static String Init_InitHead;
+	
 	static {
 		// Initialize resource bundle.
 		NLS.initializeMessages(Messages.class.getName(), Messages.class);

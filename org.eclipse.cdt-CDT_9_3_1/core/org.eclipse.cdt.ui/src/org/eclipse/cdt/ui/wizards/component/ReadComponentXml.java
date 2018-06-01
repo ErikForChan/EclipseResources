@@ -1,8 +1,13 @@
 package org.eclipse.cdt.ui.wizards.component;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -11,8 +16,13 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.core.runtime.Platform;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import org.eclipse.cdt.ui.wizards.board.Board;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 
 public class ReadComponentXml {
 	private static DocumentBuilderFactory dbFactory = null;
@@ -22,6 +32,8 @@ public class ReadComponentXml {
 	String eclipsePath = fullPath.substring(6,
 			(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
 	List<Component> components = new ArrayList<Component>();
+	List<String> componentPaths = new ArrayList<String>();
+	
 	static {
 		try {
 			dbFactory = DocumentBuilderFactory.newInstance();
@@ -30,104 +42,297 @@ public class ReadComponentXml {
 			e.printStackTrace();
 		}
 	}
+	//遍历组件及其子组件
+	private void traverFiles(File file) {
+		File[] allFiles = file.listFiles();
+		Arrays.sort(allFiles, new Comparator<File>() {
+			public int compare(File f1, File f2) {
+				boolean isDiectory = f1.isDirectory();
+				if (isDiectory)
+					return 1;
+				else
+					return -1;// 如果 if 中修改为 返回-1 同时此处修改为返回 1 排序就会是递减
+			}
+
+			public boolean equals(Object obj) {
+				return true;
+			}
+		});
+		for(File f:allFiles) {
+			if(file.getName().equals("charset")) {
+				System.out.println("CharsetChildFile: "+f.getName());
+			}
+			if(f.isFile() && f.getName().endsWith(".xml")) {
+				try {						
+					getComponent(f);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}else if(f.isDirectory()) {
+				traverFiles(f);
+			}
+		}
+	}
 	
 	public List<Component> getComponents(){
 		
-		String sourcePath = eclipsePath+"djysrc\\bsp\\cpudrv\\stm32\\f7\\src";
-		File sourceFile = new File(sourcePath);
-		File[] files = sourceFile.listFiles();
-		for(File file:files) {		
-			if(file.isDirectory()) {
-				File[] allFiles = file.listFiles();
-				for(File f:allFiles) {
-					if(f.getName().endsWith(".xml")) {
-						try {						
-							getComponent(f);
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
+		String componentPath = eclipsePath+"djysrc/component";
+		String djyosPath = eclipsePath+"djysrc/djyos";
+		componentPaths.add(componentPath);
+		componentPaths.add(djyosPath);
+		for(int i=0;i<componentPaths.size();i++) {
+			File sourceFile = new File(componentPaths.get(i));
+			File[] files = sourceFile.listFiles();
+			for(File file:files) {		
+				if(file.isDirectory()) {
+					traverFiles(file);
+//					File[] allFiles = file.listFiles();
+//					for(File f:allFiles) {
+//						if(f.getName().endsWith(".xml")) {
+//							try {						
+//								getComponent(f);
+//							} catch (Exception e) {
+//								// TODO Auto-generated catch block
+//								e.printStackTrace();
+//							}
+//						}
+//					}
 				}
 			}
+		}
+		for(int i=0;i<components.size();i++) {
+			System.out.println("component:  "+components.get(i).getName()+"  "+components.get(i).getSelectable());
 		}
 		return components;
 		
 	}
 	
-	private void getComponent(File file) throws Exception {	
-		document = db.parse(file);
-		org.w3c.dom.Node node = document.getElementsByTagName("component").item(0);
-		NodeList cList = node.getChildNodes();
+	public List<Component> getComponents(OnBoardCpu onBoardCpu) {
+
+		String componentPath = eclipsePath+"djysrc/component";
+		String djyosPath = eclipsePath+"djysrc/djyos";
+		componentPaths.add(componentPath);
+		componentPaths.add(djyosPath);
+		for(int i=0;i<componentPaths.size();i++) {
+			File sourceFile = new File(componentPaths.get(i));
+			File[] files = sourceFile.listFiles();
+			for(File file:files) {		
+				if(file.isDirectory()) {
+					traverFiles(file);
+				}
+			}
+		}
 		
-		for (int j = 1; j < cList.getLength(); j += 2) {
-			Component newComponent = new Component();
-			org.w3c.dom.Node cNode = cList.item(j);
-			NodeList list = cNode.getChildNodes();
-			for(int i=1;i<list.getLength(); i += 2) {
-				org.w3c.dom.Node dNode = list.item(i);
-				String nodeName = dNode.getNodeName();
-				switch(nodeName) {
-				case "name":
-					newComponent.setName(dNode.getTextContent());
-					break;
-				case "annotation":
-					newComponent.setAnnotation(dNode.getTextContent());
-					break;
-				case "attribute":
-					newComponent.setAttribute(dNode.getTextContent());
-					break;
-				case "includeFile":
-					newComponent.setIncludeFile(dNode.getTextContent());
-					break;
-				case "code":
-					newComponent.setCode(dNode.getTextContent());
-					break;
-				case "configure":
-					newComponent.setConfigure(dNode.getTextContent());
-					break;
-				case "init":
-					NodeList iList = dNode.getChildNodes();
-					InitInfo initInfo = new InitInfo();
-					for(int k=0;k<iList.getLength();k++) {
-						org.w3c.dom.Node iNode = iList.item(k);
-						String iNodeName = iNode.getNodeName();
-						if(iNodeName.equals("funName")) {
-							initInfo.setFunName(iNode.getTextContent());
-						}else if(iNodeName.equals("return")) {
-							initInfo.setReturnType(iNode.getTextContent());
-						}else if(iNodeName.equals("Grade")) {
-							initInfo.setGrade(iNode.getTextContent());
-						}else if(iNodeName.equals("parameter")) {
-							NodeList pList = iNode.getChildNodes();
-							Parameter parameter = new Parameter();
-							for(int n=0;n<pList.getLength();n++) {
-								org.w3c.dom.Node pNode = pList.item(n);
-								String pNodeName = pNode.getNodeName();
-								if(pNodeName.equals("type")) {
-									parameter.setType(pNode.getTextContent());
-									System.out.println(pNode.getTextContent());
-								}else if(pNodeName.equals("annotation")) {
-									parameter.setAnnotation(pNode.getTextContent());
-								}else if(pNodeName.equals("interface")) {
-									parameter.setConnector(pNode.getTextContent());
-								}
-							}
-							initInfo.getParameters().add(parameter);
-						}
-					}
-//					newComponent.setInit(initInfo);
-					break;
-				case "Dependence":
-					newComponent.getDependents().add(dNode.getTextContent());
-					break;
-				case "Mutex":
-					newComponent.getMutexs().add(dNode.getTextContent());
+		// 板载cpu的芯片、cpu的src目录
+		List<Chip> chips = onBoardCpu.getChips();
+		List<String> chipNames = new ArrayList<String>();
+		String cpuSrcPath = getCpuSrcPath(onBoardCpu.getCpuName());
+		for(int i=0;i<chips.size();i++) {
+			chipNames.add(chips.get(i).getChipName());
+		}
+		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
+		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
+		// componentPaths.add(componentPath);
+		// componentPaths.add(djyosPath);
+		if(chips.size()>0) {
+			File chipFile = new File(chipPath);
+			File[] chipfiles = chipFile.listFiles();
+			for (File file : chipfiles) {
+				if (file.isDirectory() && chipNames.contains(file.getName())) {
+					traverFiles(file);
+				}
+			}
+		}
+		if(cpuSrcPath!= null) {
+			File cpuFile = new File(cpuSrcPath);
+			File[] cpufiles = cpuFile.listFiles();
+			for (File file : cpufiles) {
+				if (file.isDirectory()) {
+					traverFiles(file);
+				}
+			}
+		}
+	
+		return components;
+
+	}
+	
+	private String getCpuSrcPath(String cpuName) {
+		String sourcePath = eclipsePath+"djysrc/bsp/cpudrv";
+		File sourceFile = new File(sourcePath);
+		File[] files = sourceFile.listFiles();
+		String path = null;
+		for(File file:files){//cpudrv下的所有文件 Atmel stm32
+			if(file.isDirectory()) {
+				getDeapPath(file,cpuName);
+				if(deapPath!=null) {
+					path = deapPath+"/../src";
 					break;
 				}
-
 			}
-			components.add(newComponent);
+			
+		}
+		return path;
+	}
+	
+	private String deapPath = null;
+	public String getDeapPath(File sourceFile,String cpuName) {
+		File[] files = sourceFile.listFiles();
+		String path = null;
+		for (File file : files) {
+			if (file.isDirectory()) {
+				if(file.getName().equals(cpuName)) {
+					deapPath = file.getPath();
+					break;
+				}else if(!file.getName().equals("include") && !file.getName().equals("src")){
+					getDeapPath(file,cpuName);//如果为目录，则继续扫描该目录
+				}			
+			}
+		}
+		return deapPath;
+	}
+	
+	public List<Component> getPeripherals(File file) {
+
+		List<Component> peripherals = new ArrayList<Component>();
+		File[] files = file.listFiles();
+		for(File ifile:files){
+			if(ifile.isDirectory()) {
+				Component peripheral = new Component();
+				peripheral.setName(ifile.getName());
+				peripherals.add(peripheral);
+			}
+		}
+		return peripherals;
+
+	}
+
+	private void getComponent(File file) throws Exception {	
+		document = db.parse(file);
+		Node node = document.getElementsByTagName("component").item(0);
+		NodeList cList = node.getChildNodes();
+		File parentFile =  file.getParentFile();
+		File defaultHFile = new File(parentFile.getPath()+"/"+parentFile.getName()+"_config_default.h");
+		System.out.println("parentFile1:  "+parentFile.getName());
+		for (int j = 0; j < cList.getLength(); j ++) {
+			Node cNode = cList.item(j);
+			if (cNode.getNodeType() == Node.ELEMENT_NODE) {
+				Component newComponent = new Component();
+				if(file.getPath().contains("djysrc\\component")) {
+					newComponent.setLinkFolder("component");
+				}else if(file.getPath().contains("cpudrv")) {
+					newComponent.setLinkFolder("cpudrv");
+				}else if(file.getPath().contains("third")) {
+					newComponent.setLinkFolder("third");
+				}else if(file.getPath().contains("chipdrv")) {
+					newComponent.setLinkFolder("chipdrv");
+				}else if(file.getPath().contains("djyos")){
+					newComponent.setLinkFolder("djyos");
+				}
+				newComponent.setFileName(file.getParentFile().getPath());
+//				newComponent.setFileName(file.getParentFile().getName());
+
+				if(defaultHFile.exists()) {
+					List<String> defaultsStrings = new ArrayList<String>();
+					int initCodeIndex = 0,configureIndex=0;
+					boolean initCodeExist = false,configureExist = false;
+					StringBuffer sbInitCode = new StringBuffer("");
+					StringBuffer sbConfigure = new StringBuffer("");
+					FileReader reader = new FileReader(defaultHFile.getPath());
+					BufferedReader br = new BufferedReader(reader);
+					String str = null;
+					while ((str = br.readLine()) != null) {
+						defaultsStrings.add(str);
+					}
+					for(int i=0;i<defaultsStrings.size();i++) {
+						String annotation = defaultsStrings.get(i).replace("//", "").trim();
+						if(annotation.startsWith("InitCode")) {
+							initCodeIndex = i;
+							initCodeExist = true;
+						}else if(annotation.startsWith("Configure")) {
+							configureIndex = i;
+							configureExist = true;
+						}
+					}
+					if(initCodeExist) {
+						for(int i=initCodeIndex+1;i<configureIndex;i++) {
+							sbInitCode.append(defaultsStrings.get(i)+"\n");
+						}
+					}
+					if(configureExist) {
+						for(int i=configureIndex+1;i<defaultsStrings.size();i++) {
+							sbConfigure.append(defaultsStrings.get(i)+"\n");
+						}
+					}
+					if(parentFile.getName().equals("charset")) {
+						System.out.println("sbInitCode:  "+sbInitCode);
+						System.out.println("sbConfigure:  "+sbConfigure);
+					}				
+					if(sbInitCode!=null && !sbInitCode.toString().equals("")) {
+						newComponent.setCode(sbInitCode.toString().trim());
+					}
+					if(sbConfigure!=null && !sbConfigure.toString().equals("")) {
+						newComponent.setConfigure(sbConfigure.toString().trim());
+					}
+					
+					br.close();
+					reader.close();
+				}
+				
+				NodeList list = cNode.getChildNodes();
+				for (int i = 0; i < list.getLength(); i++) {
+					org.w3c.dom.Node dNode = list.item(i);
+					String nodeName = dNode.getNodeName();
+					if (dNode.getNodeType() == Node.ELEMENT_NODE) {
+						if (parentFile.getName().equals("charset")) {
+							System.out.println("nodeName:  " + nodeName);
+						}
+						switch (nodeName) {
+						case "name":
+							newComponent.setName(dNode.getTextContent());
+							if (parentFile.getName().equals("charset")) {
+								System.out.println("TextContent:  " + dNode.getTextContent());
+							}
+							break;
+						case "parent":
+							newComponent.setParent(dNode.getTextContent());
+							break;
+						case "annotation":
+							newComponent.setAnnotation(dNode.getTextContent());
+							break;
+						case "attribute":
+							newComponent.setAttribute(dNode.getTextContent());
+							break;
+						case "select":
+							newComponent.setSelectable(dNode.getTextContent());
+							if (parentFile.getName().equals("charset")) {
+								System.out.println("TextContent:  " + dNode.getTextContent());
+							}
+							break;
+						case "grade":
+							newComponent.setGrade(dNode.getTextContent());
+							break;
+						case "dependence":
+							if (!dNode.getTextContent().equals("none")) {
+								newComponent.getDependents().add(dNode.getTextContent());
+							}
+							break;
+						case "weakdependence":
+							if (!dNode.getTextContent().equals("none")) {
+								newComponent.getWeakDependents().add(dNode.getTextContent());
+							}
+							break;
+						case "mutex":
+							if (!dNode.getTextContent().equals("none")) {
+								newComponent.getMutexs().add(dNode.getTextContent());
+							}
+							break;
+						}
+					}
+				}
+				components.add(newComponent);
+			}
 		}	
 	}
 }

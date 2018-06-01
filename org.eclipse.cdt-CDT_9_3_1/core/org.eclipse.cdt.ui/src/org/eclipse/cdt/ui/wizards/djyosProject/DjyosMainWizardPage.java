@@ -412,9 +412,13 @@ public class DjyosMainWizardPage extends WizardPage{
 	}
 	
 	public String getLdsDesc() {
-		int ibootSize = Integer.parseInt(fIbootSize.getTextControl(ibootComposite).getText());
-		ldsDesc += "\nIbootSize = "+ibootSize+"K;\n";
-		
+		String _ibootSize = fIbootSize.getTextControl(ibootComposite).getText();
+		//ibootSizeŒ¥ÃÓ£¨‘ÚMemory.lds≤ªÃÌº”ibootSize
+		if(! _ibootSize.equals("")) {
+			int ibootSize = Integer.parseInt(fIbootSize.getTextControl(ibootComposite).getText());
+			ldsDesc += "\nIbootSize = "+ibootSize+"K;\n";
+		}
+
 		List<OnBoardMemory> onBoardMemorys_ROM = new ArrayList<OnBoardMemory>();
 		List<OnBoardMemory> onBoardMemorys_RAM = new ArrayList<OnBoardMemory>();
 		List<CoreMemory> coreMemorys_ROM = new ArrayList<CoreMemory>();
@@ -546,9 +550,17 @@ public class DjyosMainWizardPage extends WizardPage{
 		System.out.println("getNextPage DW");
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
 		if(! nmWizard.addedInit) {
-			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage");
-			nmWizard.initPage.setTitle("Init Project");
-			nmWizard.initPage.setDescription("Init the project you are creating");
+			OnBoardCpu onBoardCpu = null;
+			List<OnBoardCpu> onBoardCpus = selectedBoard.getOnBoardCpus();
+			for(int i=0;i<onBoardCpus.size();i++) {
+				if(onBoardCpus.get(i).getCpuName().equals(selectedCpu.getCpuName())) {
+					onBoardCpu = onBoardCpus.get(i);
+					break;
+				}
+			}
+			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage",onBoardCpu);
+			nmWizard.initPage.setTitle("Project Tailoring");
+			nmWizard.initPage.setDescription("Tailoring and Configurating the Component");
 			nmWizard.addPage(nmWizard.initPage);
 			nmWizard.addedInit = true;
 		}else{

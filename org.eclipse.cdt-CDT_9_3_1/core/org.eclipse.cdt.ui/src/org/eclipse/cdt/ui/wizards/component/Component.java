@@ -4,16 +4,60 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Component {
-	String name;
-	String annotation;
-	String attribute;
-	String grade;
-	String code;
-	String configure;
-	String includeFile;
-	List<String> dependents = new ArrayList<String>();;
-	List<String> mutexs = new ArrayList<String>();
-//	InitInfo init;
+	private String name;
+	private String annotation;
+	private String attribute;
+	private String grade;
+	private String code;
+	private String configure;
+	private String linkFolder;
+	private String fileName;
+	private String selectable;
+	private String parent;
+	private List<String> dependents = new ArrayList<String>();
+	private List<String> weakDependents = new ArrayList<String>();
+	private List<String> mutexs = new ArrayList<String>();
+	private InitInfo init;
+
+	public String getParent() {
+		return parent;
+	}
+
+	public void setParent(String parent) {
+		this.parent = parent;
+	}
+
+	public List<String> getWeakDependents() {
+		return weakDependents;
+	}
+
+	public void setWeakDependents(List<String> weakDependents) {
+		this.weakDependents = weakDependents;
+	}
+
+	public String getSelectable() {
+		return selectable;
+	}
+
+	public void setSelectable(String selectable) {
+		this.selectable = selectable;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public String getLinkFolder() {
+		return linkFolder;
+	}
+
+	public void setLinkFolder(String linkFolder) {
+		this.linkFolder = linkFolder;
+	}
 
 	public String getName() {
 		return name;
@@ -47,21 +91,13 @@ public class Component {
 		this.grade = grade;
 	}
 
-	public String getIncludeFile() {
-		return includeFile;
+	public InitInfo getInit() {
+		return init;
 	}
 
-	public void setIncludeFile(String includeFile) {
-		this.includeFile = includeFile;
+	public void setInit(InitInfo init) {
+		this.init = init;
 	}
-
-//	public InitInfo getInit() {
-//		return init;
-//	}
-//
-//	public void setInit(InitInfo init) {
-//		this.init = init;
-//	}
 	
 	public List<String> getDependents() {
 		return dependents;
@@ -93,7 +129,7 @@ public class Component {
 	}
 
 	public Component(String name, String annotation, String attribute, String grade, String code,
-			String configure, String includeFile, List<String> dependents, List<String> mutexs) {
+			String configure,List<String> dependents, List<String> mutexs) {
 		super();
 		this.name = name;
 		this.annotation = annotation;
@@ -101,7 +137,6 @@ public class Component {
 		this.grade = grade;
 		this.code = code;
 		this.configure = configure;
-		this.includeFile = includeFile;
 		this.dependents = dependents;
 		this.mutexs = mutexs;
 	}

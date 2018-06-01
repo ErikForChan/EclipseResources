@@ -10,6 +10,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.window.Window;
@@ -32,6 +34,7 @@ import org.eclipse.swt.events.DragDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -39,6 +42,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -52,15 +56,19 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.xml.sax.SAXException;
 
+import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.IWizardItemsListListener;
 import org.eclipse.cdt.ui.wizards.cpu.configDialogs.NewCpuDialog;
 import org.eclipse.cdt.ui.wizards.cpu.configDialogs.NewGroupDialog;
+import org.eclipse.cdt.ui.wizards.cpu.configDialogs.ResetConfigurationDialog;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
+import org.eclipse.cdt.internal.ui.CPluginImages;
 import org.eclipse.cdt.internal.ui.newui.Messages;
 
 public class CpuMainWiazrdPage extends WizardPage{
 
+	public static final IPath ICONS_PATH= new Path("$nl$/icons"); //$NON-NLS-1$
 	public static TreeItem fileItem = null;
 	public static TreeItem tmssItem = null;
 	private Tree cpuAttributes;
@@ -133,8 +141,11 @@ public class CpuMainWiazrdPage extends WizardPage{
 		btnLayout.numColumns = 1;
 		btnLayout.verticalSpacing = 10;
 		btnCpt.setLayout(btnLayout);
+
 		Button addGroupBtn = new Button(btnCpt,SWT.PUSH);
 		addGroupBtn.setText("添加分组");
+		System.out.println(CUIPlugin.getDefault().getBundle().toString());
+		addGroupBtn.setImage(CPluginImages.DESC_GROUP_VIEW.createImage());
 
 		addGroupBtn.addSelectionListener(new SelectionListener() {
 			
@@ -181,13 +192,14 @@ public class CpuMainWiazrdPage extends WizardPage{
 
 					if (files != null) {
 						for (int i = 0; i < files.length; i++) {
-								TreeItem item = new TreeItem(root, 0);
-								item.setText(files[i].getName());
-								// 叶子节点对应的数值为相应文件夹的File对象
-								item.setData(files[i]);
-
 								// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-								if (files[i].isDirectory()) {
+								if (files[i].isDirectory() && files[i].getName()!="include" && files[i].getName()!="src") {
+									TreeItem item = new TreeItem(root, 0);
+									item.setText(files[i].getName());
+									item.setImage(CPluginImages.TREE_FLODER_VIEW.createImage());
+									// 叶子节点对应的数值为相应文件夹的File对象
+									item.setData(files[i]);
+
 									new TreeItem(item, 0);
 								}
 						}
@@ -203,9 +215,12 @@ public class CpuMainWiazrdPage extends WizardPage{
 			}
 		});
 		addGroupBtn.setEnabled(false);
-		
+	
 		Button addCpuBtn = new Button(btnCpt,SWT.PUSH);
 		addCpuBtn.setText("添加CPU");
+//		Image image1 = new Image(PlatformUI.getWorkbench().getDisplay(),ICONS_PATH.append(CPluginImages.T_OVR).append("cpu_view.gif").toString()); 
+		addCpuBtn.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
+
 		addCpuBtn.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -241,13 +256,14 @@ public class CpuMainWiazrdPage extends WizardPage{
 
 					if (files != null) {
 						for (int i = 0; i < files.length; i++) {
-								TreeItem item = new TreeItem(root, 0);
-								item.setText(files[i].getName());
-								// 叶子节点对应的数值为相应文件夹的File对象
-								item.setData(files[i]);
 
 								// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-								if (files[i].isDirectory()) {
+								if (files[i].isDirectory() && files[i].getName()!="include" && files[i].getName()!="src") {
+									TreeItem item = new TreeItem(root, 0);
+									item.setText(files[i].getName());
+									item.setImage(CPluginImages.TREE_FLODER_VIEW.createImage());
+									// 叶子节点对应的数值为相应文件夹的File对象
+									item.setData(files[i]);
 									new TreeItem(item, 0);
 								}
 						}
@@ -265,12 +281,41 @@ public class CpuMainWiazrdPage extends WizardPage{
 		
 		Button configBtn = new Button(btnCpt,SWT.PUSH);
 		configBtn.setText("重设配置");
+		configBtn.setImage(CPluginImages.CFG_REVISE_VIEW.createImage());
 		configBtn.setVisible(false);
 		configBtn.addSelectionListener(new SelectionListener() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
+				List<String> configs = null;
+				cpu = new Cpu();
+				TreeItem[] items = tree.getSelection();
+				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+				boolean isGroup = false;
+				
+				if(items.length>0) {
+					File curFile = new File(curFilePath);//当前选中文件
+					File xmlParentFile = getXmlFile(curFile);	
+					if(xmlParentFile!=null) {
+						if(xmlParentFile.getName().contains("group")) {
+							isGroup = true;
+						}
+						try {
+							rcx.unitCpu(cpu,xmlParentFile);
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}					
+					}
+					traverseParents(curFile);		
+					configs = getConfigs(cpu,false);
+				}
+				
+				ResetConfigurationDialog dialog = new ResetConfigurationDialog(getShell(),configs,cpu,curFilePath,isGroup);
+				if (dialog.open() == Window.OK) {
+					
+				}
 				
 			}
 			
@@ -289,6 +334,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 			if (roots[i].getName().equals("cpudrv")) {
 				TreeItem root = new TreeItem(tree, 0);
 				root.setText("Djyos");
+				root.setImage(CPluginImages.TREE_FLODER_VIEW.createImage());
 				root.setData(roots[i]);// 保存当前节点数据
 				new TreeItem(root, 0);// 把当前节点作为目录节点
 			}
@@ -427,17 +473,19 @@ public class CpuMainWiazrdPage extends WizardPage{
 								toExpand = true;
 							}
 						}else if(files[i].isFile()){
-							if(files[i].getName().endsWith(".xml")) {
-								toExpand = true;
-							}
+//							if(files[i].getName().endsWith(".xml")) {
+//								toExpand = true;
+//							}
 						}
 						if(toExpand) {
-							TreeItem item = new TreeItem(root, 0);
-							item.setText(files[i].getName());
-							// 叶子节点对应的数值为相应文件夹的File对象
-							item.setData(files[i]);
+						
 							// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-							if (files[i].isDirectory()) {
+							if (files[i].isDirectory() && files[i].getName()!="include" && files[i].getName()!="src") {
+								TreeItem item = new TreeItem(root, 0);
+								item.setText(files[i].getName());
+								item.setImage(CPluginImages.TREE_FLODER_VIEW.createImage());
+								// 叶子节点对应的数值为相应文件夹的File对象
+								item.setData(files[i]);
 								new TreeItem(item, 0);
 							}
 						}
@@ -503,9 +551,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 			cons.add("复位配置");
 			cons.add("浮点配置");
 			cons.add("内核配置");
-			if(isCpu) {
-				cons.add("存储配置");
-			}
+			cons.add("存储配置");
+//			if(isCpu) {
+//				cons.add("存储配置");
+//			}
 		}else {
 			if(cpu2.getCoreNum() == 0) {
 				cons.add("内核个数");
@@ -514,9 +563,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 				cons.add("复位配置");
 			}
 			if(cpu2.getCores().get(0).getMemorys().size() == 0){
-				if(isCpu) {
-					cons.add("存储配置");
-				}
+				cons.add("存储配置");
+//				if(isCpu) {
+//					cons.add("存储配置");
+//				}
 			}
 			if(cpu2.getCores().get(0).getFpuType() == null){
 				cons.add("浮点配置");
@@ -525,9 +575,9 @@ public class CpuMainWiazrdPage extends WizardPage{
 				cons.add("内核配置");
 			}
 		}
-		if(cpu2.getFirmwareLib()==null) {
-			cons.add("固件库");
-		}
+//		if(cpu2.getFirmwareLib()==null) {
+//			cons.add("固件库");
+//		}
 		return cons;
 	}
 

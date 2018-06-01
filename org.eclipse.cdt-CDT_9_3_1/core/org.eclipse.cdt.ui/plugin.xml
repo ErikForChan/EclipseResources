@@ -458,21 +458,7 @@
              %Cproject.desc
          </description>
       </wizard>
-       <wizard
-            canFinishEarly="false"
-            category="org.eclipse.cdt.ui.newCWizards"
-            class="org.eclipse.cdt.ui.wizards.cpu.CpuWizard"
-            finalPerspective="org.eclipse.cdt.ui.CPerspective"
-            hasPages="true"
-            icon="icons/elcl16/newmngc_app.gif"
-            id="org.eclipse.cdt.ui.wizards.NewCWizard4"
-            name="%Cpu.title"
-            project="true">
-        <description>
-            %Cpu.desc
-        </description>
-     </wizard>
-      <wizard
+         <wizard
             canFinishEarly="false"
             category="org.eclipse.cdt.ui.newCWizards"
             class="org.eclipse.cdt.ui.wizards.djyosProject.DjyosProjectWizard"
@@ -486,13 +472,28 @@
             %DJYOSproject.desc
         </description>
      </wizard>
+       <wizard
+            canFinishEarly="false"
+            category="org.eclipse.cdt.ui.newCWizards"
+            class="org.eclipse.cdt.ui.wizards.cpu.CpuWizard"
+            finalPerspective="org.eclipse.cdt.ui.CPerspective"
+            hasPages="true"
+            icon="icons/ovr16/cpu_view.gif"
+            id="org.eclipse.cdt.ui.wizards.NewCWizard4"
+            name="%Cpu.title"
+            project="true">
+        <description>
+            %Cpu.desc
+        </description>
+     </wizard>
+   
         <wizard
             canFinishEarly="false"
             category="org.eclipse.cdt.ui.newCWizards"
             class="org.eclipse.cdt.ui.wizards.board.BoardWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
-            icon="icons/elcl16/newmngc_app.gif"
+            icon="icons/ovr16/board_view.gif"
             id="org.eclipse.cdt.ui.wizards.NewCWizard5"
             name="%Board.title"
             project="true">
@@ -3524,11 +3525,11 @@
       </page>
        -->
       <page
-            name="Module Configuration"
-            class="org.eclipse.cdt.internal.ui.djyproperties.ModuleConfigurationPage"
+            name="Component Configuration"
+            class="org.eclipse.cdt.internal.ui.djyproperties.ComponentConfigurationPage"
             category="org.eclipse.ui.cdt.djyosGeneral.configurations"
             id="org.eclipse.cdt.ui.moduleConfiguration">
-         <enabledWhen>
+         <enabledWhen>ComponentConfigurationPage
 		     <adapt type="org.eclipse.core.resources.IProject">
 		          <test property="org.eclipse.core.resources.projectNature"
 		                value="org.eclipse.cdt.core.cnature"/>

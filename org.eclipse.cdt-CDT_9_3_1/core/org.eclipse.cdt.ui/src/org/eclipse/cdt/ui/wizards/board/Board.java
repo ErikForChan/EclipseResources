@@ -15,31 +15,21 @@ public class Board {
 		this.onBoardCpus = onBoardCpus;
 	}
 
-
-
 	public String getBoardName() {
 		return boardName;
 	}
-
-
 
 	public void setBoardName(String boardName) {
 		this.boardName = boardName;
 	}
 
-
-
 	public List<OnBoardCpu> getOnBoardCpus() {
 		return onBoardCpus;
 	}
 
-
-
 	public void setOnBoardCpus(List<OnBoardCpu> onBoardCpus) {
 		this.onBoardCpus = onBoardCpus;
 	}
-
-
 
 	public Board() {
 		super();

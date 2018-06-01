@@ -58,12 +58,12 @@ public class CreatBoardXml {
             	List<Chip> chips = onBoardCpus.get(i).getChips();
             	for(int j=0;j<chips.size();j++) {
             		Element chipElement = document.createElement("chip");
-            		Element theInterface = document.createElement("interface");
-            		theInterface.setTextContent(chips.get(j).getTheInterface());
+//            		Element theInterface = document.createElement("interface");
+//            		theInterface.setTextContent(chips.get(j).getTheInterface());
             		Element chipName = document.createElement("chipName");
             		chipName.setTextContent(chips.get(j).getChipName());
             		
-            		chipElement.appendChild(theInterface);
+//            		chipElement.appendChild(theInterface);
             		chipElement.appendChild(chipName);
             		cpuElement.appendChild(chipElement);
             	}
@@ -76,7 +76,7 @@ public class CreatBoardXml {
             		Element startAddr = document.createElement("startAddr");
             		startAddr.setTextContent(memorys.get(j).getStartAddr());
             		Element size = document.createElement("size");
-            		size.setTextContent(String.valueOf(memorys.get(j).getSize()));
+            		size.setTextContent(memorys.get(j).getSize());
             		
             		memoryElement.appendChild(type);
             		memoryElement.appendChild(startAddr);

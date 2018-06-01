@@ -38,6 +38,7 @@ public class ConfigComponentDialog extends StatusDialog {
 		// TODO Auto-generated constructor stub
 		component = componentSelect;
 		configure = component.getConfigure();
+		System.out.println("configure:  "+configure+"  "+component.getName()+"  "+component.getCode());
 		parametersDefined = configure.split("\n");
 		setTitle("配置组件");
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
@@ -52,11 +53,23 @@ public class ConfigComponentDialog extends StatusDialog {
 		// TODO Auto-generated method stub
 		TableItem[] items = table.getItems();
 		String newConfig = "";
-		for (int i = 0; i < items.length; i++) {
-			String[] members = parametersDefined[i].split("\\s+");
-			parametersDefined[i] = members[0]+" "+members[1]+" "+items[i].getText(1)+" // "+members[4]+"\n";
-			newConfig+=parametersDefined[i];
-//			parameters.get(i).setValue(items[i].getText(1));
+		int itemCount = 0;
+		//给所有define重设值
+		for (int i = 0; i < parametersDefined.length; i++) {
+			if(parametersDefined[i].contains("#define")) {
+				String[] defines = parametersDefined[i].trim().split("//");
+	        	String[] members = defines[0].trim().split("\\s+");
+	        	String annotion = null;
+	        	if(defines.length>1) {
+	        		annotion = " //"+defines[1];
+	        	}else {
+	        		annotion = "";
+	        	}
+	        	//define格式化
+				parametersDefined[i] = String.format("%-9s", members[0])+" "+String.format("%-32s", members[1])+" "+String.format("%-18s", items[itemCount].getText(1))+annotion;			
+				itemCount++;
+			}
+			newConfig += parametersDefined[i]+"\n";
 		}
 		component.setConfigure(newConfig);
 		super.okPressed();
@@ -68,7 +81,8 @@ public class ConfigComponentDialog extends StatusDialog {
 		Composite composite = (Composite) super.createDialogArea(parent);
 		table = new Table(composite, SWT.NONE | SWT.FULL_SELECTION);
 		GridData gd = new GridData(SWT.LEFT, SWT.TOP, false, true);
-		gd.heightHint = 100;
+//		gd.heightHint = 260;
+		gd.minimumHeight =100;
 		table.setLayoutData(gd);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -82,17 +96,24 @@ public class ConfigComponentDialog extends StatusDialog {
             // 设置表头可移动，默认为false  
             tableColumn.setMoveable(true);         
             if(i==tableHeader.length-1) {
-            	tableColumn.setWidth(150);
+            	tableColumn.setWidth(220);
             }else {
-            	tableColumn.setWidth(80);
+            	tableColumn.setWidth(130);
             }
         }  
         
         for(int i=0;i<parametersDefined.length;i++) {
-        	TableItem item = new TableItem(table, SWT.NONE);
-        	String[] members = parametersDefined[i].split("\\s+");
-//   s     	item.setText(new String[]{"参数"+(i+1), parameters.get(i).getType(), "", parameters.get(i).getAnnotation()}); 
-        	item.setText(new String[]{members[1], members[2].equals("default  ")?"":members[2], members[4]}); 
+        	System.out.println("parametersDefined:  "+parametersDefined[i]);
+        	if(parametersDefined[i].contains("#define")) {
+        		TableItem item = new TableItem(table, SWT.NONE);
+        		String[] defines = parametersDefined[i].trim().split("//");
+            	String[] members = defines[0].trim().split("\\s+");
+            	for(int j=0;j<members.length;j++) {
+            		System.out.println(members[j]);
+            	}
+//            	item.setText(new String[]{"参数"+(i+1), parameters.get(i).getType(), "", parameters.get(i).getAnnotation()}); 
+            	item.setText(new String[]{members[1], members[2].equals("default")?"":members[2], defines.length>1?defines[1]:""}); 
+        	}	
         }
         	
         	
