@@ -59,9 +59,6 @@ public class ReadComponentXml {
 			}
 		});
 		for(File f:allFiles) {
-			if(file.getName().equals("charset")) {
-				System.out.println("CharsetChildFile: "+f.getName());
-			}
 			if(f.isFile() && f.getName().endsWith(".xml")) {
 				try {						
 					getComponent(f);
@@ -87,33 +84,24 @@ public class ReadComponentXml {
 			for(File file:files) {		
 				if(file.isDirectory()) {
 					traverFiles(file);
-//					File[] allFiles = file.listFiles();
-//					for(File f:allFiles) {
-//						if(f.getName().endsWith(".xml")) {
-//							try {						
-//								getComponent(f);
-//							} catch (Exception e) {
-//								// TODO Auto-generated catch block
-//								e.printStackTrace();
-//							}
-//						}
-//					}
 				}
 			}
 		}
-		for(int i=0;i<components.size();i++) {
-			System.out.println("component:  "+components.get(i).getName()+"  "+components.get(i).getSelectable());
-		}
+//		for(int i=0;i<components.size();i++) {
+//			System.out.println("component:  "+components.get(i).getName()+"  "+components.get(i).getSelectable());
+//		}
 		return components;
 		
 	}
 	
-	public List<Component> getComponents(OnBoardCpu onBoardCpu) {
+	public List<Component> getComponents(OnBoardCpu onBoardCpu,Board board) {
 
 		String componentPath = eclipsePath+"djysrc/component";
 		String djyosPath = eclipsePath+"djysrc/djyos";
+		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName()+"/drv";
 		componentPaths.add(componentPath);
 		componentPaths.add(djyosPath);
+		componentPaths.add(demoPath);
 		for(int i=0;i<componentPaths.size();i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			File[] files = sourceFile.listFiles();
@@ -133,8 +121,6 @@ public class ReadComponentXml {
 		}
 		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
 		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
-		// componentPaths.add(componentPath);
-		// componentPaths.add(djyosPath);
 		if(chips.size()>0) {
 			File chipFile = new File(chipPath);
 			File[] chipfiles = chipFile.listFiles();
@@ -177,6 +163,7 @@ public class ReadComponentXml {
 	}
 	
 	private String deapPath = null;
+	
 	public String getDeapPath(File sourceFile,String cpuName) {
 		File[] files = sourceFile.listFiles();
 		String path = null;
@@ -213,8 +200,8 @@ public class ReadComponentXml {
 		Node node = document.getElementsByTagName("component").item(0);
 		NodeList cList = node.getChildNodes();
 		File parentFile =  file.getParentFile();
-		File defaultHFile = new File(parentFile.getPath()+"/"+parentFile.getName()+"_config_default.h");
-		System.out.println("parentFile1:  "+parentFile.getName());
+		String fileName = file.getName();
+		File defaultHFile = new File(parentFile.getPath()+"/"+fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."))+"_config_default.h");
 		for (int j = 0; j < cList.getLength(); j ++) {
 			Node cNode = cList.item(j);
 			if (cNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -229,9 +216,10 @@ public class ReadComponentXml {
 					newComponent.setLinkFolder("chipdrv");
 				}else if(file.getPath().contains("djyos")){
 					newComponent.setLinkFolder("djyos");
+				}else if(file.getPath().contains("boarddrv")){
+					newComponent.setLinkFolder("boarddrv");
 				}
 				newComponent.setFileName(file.getParentFile().getPath());
-//				newComponent.setFileName(file.getParentFile().getName());
 
 				if(defaultHFile.exists()) {
 					List<String> defaultsStrings = new ArrayList<String>();
@@ -264,14 +252,12 @@ public class ReadComponentXml {
 						for(int i=configureIndex+1;i<defaultsStrings.size();i++) {
 							sbConfigure.append(defaultsStrings.get(i)+"\n");
 						}
-					}
-					if(parentFile.getName().equals("charset")) {
-						System.out.println("sbInitCode:  "+sbInitCode);
-						System.out.println("sbConfigure:  "+sbConfigure);
-					}				
+					}	
+					
 					if(sbInitCode!=null && !sbInitCode.toString().equals("")) {
 						newComponent.setCode(sbInitCode.toString().trim());
 					}
+					
 					if(sbConfigure!=null && !sbConfigure.toString().equals("")) {
 						newComponent.setConfigure(sbConfigure.toString().trim());
 					}
@@ -291,9 +277,6 @@ public class ReadComponentXml {
 						switch (nodeName) {
 						case "name":
 							newComponent.setName(dNode.getTextContent());
-							if (parentFile.getName().equals("charset")) {
-								System.out.println("TextContent:  " + dNode.getTextContent());
-							}
 							break;
 						case "parent":
 							newComponent.setParent(dNode.getTextContent());
@@ -306,9 +289,6 @@ public class ReadComponentXml {
 							break;
 						case "select":
 							newComponent.setSelectable(dNode.getTextContent());
-							if (parentFile.getName().equals("charset")) {
-								System.out.println("TextContent:  " + dNode.getTextContent());
-							}
 							break;
 						case "grade":
 							newComponent.setGrade(dNode.getTextContent());

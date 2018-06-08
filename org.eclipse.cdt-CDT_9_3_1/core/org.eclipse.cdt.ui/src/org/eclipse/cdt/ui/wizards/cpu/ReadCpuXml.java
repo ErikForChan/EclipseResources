@@ -83,21 +83,7 @@ public class ReadCpuXml {
 	public void getCpus(File sourceFile) {//Atmel stm32
 		String filePath = sourceFile.getPath();
 		File[] files = sourceFile.listFiles();
-//		boolean isDeap = false;//是否扫描到最深层的文件
-//		boolean isNeed = false;//是否需要扫描该目录
-//		for (File file : files) {
-//			if (file.isFile() && file.getName().endsWith(".xml") && !file.getName().contains("group") && file.getName().contains("cpu_")) {
-//				isDeap = true;
-//			}
-//			if(file.getName().endsWith(".xml")) {
-//				isNeed = true;
-//			}
-//		}
-//		if(isNeed) {
-//			
-//		}
-		for (File file : files) {//Sam4e
-//			String curFilePath = filePath + "/" + file.getName();
+		for (File file : files) {
 			if (file.isDirectory()) {
 				if(!file.getName().equals("include") && !file.getName().equals("src")){
 					getCpus(file);//如果为目录，则继续扫描该目录
@@ -123,7 +109,7 @@ public class ReadCpuXml {
 	public Cpu unitCpu(Cpu cpu,File file) throws Exception {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
 		document = db.parse(file);
-//		System.out.println("file.getName():  "+file.getName());
+		System.out.println("file.getName():  "+file.getName());
 		NodeList nameList = document.getElementsByTagName("cpuName");
 //		org.w3c.dom.Node nameNode = document.getElementsByTagName("name").item(0);
 		for(int i=0;i<nameList.getLength();i++) {

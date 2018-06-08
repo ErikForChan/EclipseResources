@@ -23,6 +23,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
@@ -70,7 +71,6 @@ public class SelectBoardDialog extends StatusDialog{
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
 			t.setText(boardsFiltered.get(i).getBoardName());
 		}
-//		tv.setInput(boardsFiltered);
 	};
 	
 	private  Listener cpuModifyListener = e -> {
@@ -82,7 +82,6 @@ public class SelectBoardDialog extends StatusDialog{
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
 			t.setText(boardsFiltered.get(i).getBoardName());
 		}
-//		tv.setInput(boardsFiltered);
 	};
 	
 	public List<Board> getBoardsFiltered(List<Board> boards,String keyWord){
@@ -159,16 +158,7 @@ public class SelectBoardDialog extends StatusDialog{
 		cpuSelectLabel.setText("Search By Cpu :");
 		cpuEditText = new Text(boardSearchCpt, SWT.BORDER);
 		cpuEditText.addListener(SWT.Modify, cpuModifyListener);
-//		selectCpuBtn = new Button(boardSearchCpt, SWT.PUSH);
-//		selectCpuBtn.setText("Choose...");
-//		selectCpuBtn.setVisible(false);
-//		selectCpuBtn.addSelectionListener(new SelectionAdapter() {
-//			@Override
-//			public void widgetSelected(SelectionEvent e) {
-//				handleSelectCpuPressed();
-//			}
-//
-//		});
+
 		Composite boardCpt = new Composite(composite, SWT.NULL);
 		GridLayout boardLayout = new GridLayout();
 		boardLayout.numColumns=2;
@@ -181,6 +171,8 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTree.setSize(150, 200);
 		Button newBoradBtn = new Button(boardTreeCpt,SWT.PUSH);
 		newBoradBtn.setText("Create New Board");
+		newBoradBtn.setBackground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+		newBoradBtn.setForeground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_WHITE));
 		newBoradBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
 		detailsField = new Text(boardCpt,SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
@@ -244,17 +236,6 @@ public class SelectBoardDialog extends StatusDialog{
 		super.okPressed();
 	}
 	
-	protected void handleSelectCpuPressed() {
-		// TODO Auto-generated method stub
-		ChooseMCUDialog dialog = new ChooseMCUDialog(getShell());
-		if (dialog.open() == Window.OK) {
-//			selectCpu = dialog.getSelectCpu();
-////			MCUNameField.setText(selectCpu.getDevice());
-//			 List<Board> boardsFiltered = getBoardsFiltered(boards,selectCpu.getDevice());
-//			 tv.setInput(boardsFiltered);
-		}
-	}
-	
 	private void createTreeForBoards(Composite parent) {
 		ReadBoardXml rbx = new ReadBoardXml();
 		Composite composite = new Composite(parent, SWT.NULL);
@@ -296,6 +277,24 @@ public class SelectBoardDialog extends StatusDialog{
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
 			t.setText(boards.get(i).getBoardName());
 		}
+		
+		boardTree.addListener(SWT.MouseDoubleClick, new Listener() {
+			
+			@Override
+			public void handleEvent(Event event) {
+				// TODO Auto-generated method stub
+//				Point point = new Point(event.x, event.y);
+//				TreeItem item = boardTree.getItem(point);
+//				String boardName = item.getText();
+//				for (int i = 0; i < boardsFiltered.size(); i++) {
+//					if (boardsFiltered.get(i).getBoardName().equals(boardName)) {
+//						boardSelected = boardsFiltered.get(i);
+//						break;
+//					}
+//				}
+				okPressed();
+			}
+		});
 
 		boardTree.addSelectionListener(new SelectionListener() {
 			

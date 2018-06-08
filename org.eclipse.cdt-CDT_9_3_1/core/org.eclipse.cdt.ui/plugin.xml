@@ -458,27 +458,13 @@
              %Cproject.desc
          </description>
       </wizard>
-         <wizard
-            canFinishEarly="false"
-            category="org.eclipse.cdt.ui.newCWizards"
-            class="org.eclipse.cdt.ui.wizards.djyosProject.DjyosProjectWizard"
-            finalPerspective="org.eclipse.cdt.ui.CPerspective"
-            hasPages="true"
-            icon="icons/elcl16/newmngc_app.gif"
-            id="org.eclipse.cdt.ui.wizards.NewCWizard3"
-            name="%DJYOSproject"
-            project="true">
-        <description>
-            %DJYOSproject.desc
-        </description>
-     </wizard>
        <wizard
             canFinishEarly="false"
             category="org.eclipse.cdt.ui.newCWizards"
             class="org.eclipse.cdt.ui.wizards.cpu.CpuWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
-            icon="icons/ovr16/cpu_view.gif"
+            icon="icons/ovr16/cpu_icon.gif"
             id="org.eclipse.cdt.ui.wizards.NewCWizard4"
             name="%Cpu.title"
             project="true">
@@ -493,14 +479,30 @@
             class="org.eclipse.cdt.ui.wizards.board.BoardWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
-            icon="icons/ovr16/board_view.gif"
+            icon="icons/ovr16/board_icon.gif"
             id="org.eclipse.cdt.ui.wizards.NewCWizard5"
-            name="%Board.title"
+            name = "%Board.title"
             project="true">
         <description>
             %Board.desc
         </description>
      </wizard>
+     
+      <wizard
+            canFinishEarly="false"
+            category="org.eclipse.cdt.ui.newCWizards"
+            class="org.eclipse.cdt.ui.wizards.djyosProject.DjyosProjectWizard"
+            finalPerspective="org.eclipse.cdt.ui.CPerspective"
+            hasPages="true"
+            icon="icons/ovr16/djyos_logo.gif"
+            id="org.eclipse.cdt.ui.wizards.NewCWizard3"
+            name="%DJYOSproject"
+            project="true">
+        <description>
+            %DJYOSproject.desc
+        </description>
+     </wizard>
+     
        <wizard
              canFinishEarly="false"
              category="org.eclipse.cdt.ui.newCWizards"
@@ -3510,12 +3512,12 @@
 		    </or>          
          </enabledWhen>
       </page> 
-<!---
-	  <page
-            name="Memory Map"
-            class="org.eclipse.cdt.internal.ui.djyproperties.MemoryMapPage"
+
+      <page
+            name="Iboot_Component Cfg"
+            class="org.eclipse.cdt.internal.ui.djyproperties.IbootComponentCfgPage"
             category="org.eclipse.ui.cdt.djyosGeneral.configurations"
-            id="org.eclipse.cdt.ui.memoryMap">
+            id="org.eclipse.cdt.ui.iboot_ComponentConfiguration">
          <enabledWhen>
 		     <adapt type="org.eclipse.core.resources.IProject">
 		          <test property="org.eclipse.core.resources.projectNature"
@@ -3523,13 +3525,13 @@
 		     </adapt>         
          </enabledWhen>
       </page>
-       -->
+      
       <page
-            name="Component Configuration"
-            class="org.eclipse.cdt.internal.ui.djyproperties.ComponentConfigurationPage"
+            name="App_Component Cfg"
+            class="org.eclipse.cdt.internal.ui.djyproperties.AppComponentCfgPage"
             category="org.eclipse.ui.cdt.djyosGeneral.configurations"
-            id="org.eclipse.cdt.ui.moduleConfiguration">
-         <enabledWhen>ComponentConfigurationPage
+            id="org.eclipse.cdt.ui.app_ComponentConfiguration">
+         <enabledWhen>
 		     <adapt type="org.eclipse.core.resources.IProject">
 		          <test property="org.eclipse.core.resources.projectNature"
 		                value="org.eclipse.cdt.core.cnature"/>

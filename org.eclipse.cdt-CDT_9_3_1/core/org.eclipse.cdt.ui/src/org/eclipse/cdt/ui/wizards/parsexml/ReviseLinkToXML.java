@@ -50,10 +50,9 @@ public class ReviseLinkToXML {
 //							}
 							cNode.setTextContent(boardNamePath+"/"+boardName);							
 						}
-					}else if(nodeName.equals("locationURI")) {//节点名字为locationURI
-						System.out.println("linkContent :"+linkContent);
+					}else if(nodeName.equals("locationURI")) {
+//						System.out.println("linkContent :"+linkContent);
 						if(linkContent.contains(localPath)) {
-							System.out.println("linkContent2 :"+linkContent);
 							if(flag.equals("boarddrv")) {//src/libos/bsp/boarddrv
 								cNode.setTextContent(localPath+boardCategory+"/"+boardName);							
 							}else if(flag.equals("startup")){//src/libos/bsp/startup

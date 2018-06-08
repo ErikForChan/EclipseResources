@@ -31,6 +31,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 
+import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.component.CmpntCheck;
 import org.eclipse.cdt.ui.wizards.component.Component;
@@ -60,22 +61,18 @@ public class InitDjyosProjectWizard extends WizardPage{
 	List<CmpntCheck> cmpnts = new ArrayList<CmpntCheck>();
 	private Button[] compontentBtns = null;
 	private Button[] configBtns = null;
-//	private Button[] bspCompontentBtns = null;
-//	private Button[] bspConfigBtns = null;
-//	private Button[] userCompontentBtns = null;
-//	private Button[] userConfigBtns = null;
-//	private Button[] thirdCompontentBtns = null;
-//	private Button[] thirdConfigBtns = null;
 	public String moduleInit;
 	public String defineInit;
 	private Text dependentText;
 	private Text mutexText;
 	private OnBoardCpu onBoardCpu = null;
+	private Board sBoard = null;
 	
-	protected InitDjyosProjectWizard(String pageName,OnBoardCpu cpu) {
+	protected InitDjyosProjectWizard(String pageName,OnBoardCpu cpu,Board board) {
 		super(pageName);
 		// TODO Auto-generated constructor stub
 		onBoardCpu = cpu;
+		sBoard = board;
 		setPageComplete(true);
 	}
 	
@@ -83,7 +80,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 		return compontentsChecked;
 	}
 	
-	public void initDefineForComponent(String path,Component component) { 
+	public void initDefineForComponent(String path,Component component,String componentName) { 
 		File file = new File(path);
 		if (file.exists()) {
 			file.delete();
@@ -95,13 +92,14 @@ public class InitDjyosProjectWizard extends WizardPage{
 			e.printStackTrace();
 		}
 		defineInit = "";
-		defineInit += "#ifndef __INITPROJECT_H__\r\n" + "#define __INITPROJECT_H__\r\n\n"
+		defineInit += "#ifndef __"+componentName.toUpperCase()
+		+"_CONFIG_H__\r\n" + "#define __"+componentName.toUpperCase()+"_CONFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
 
 		if (component.getConfigure() != null)
 			defineInit += component.getConfigure();
 
-		defineInit += "\n#endif";
+		defineInit += "\n\n#endif";
 		FileWriter writer;
 		try {
 			writer = new FileWriter(path);
@@ -114,12 +112,14 @@ public class InitDjyosProjectWizard extends WizardPage{
 		
 	}
 	
-	public void initProject(String path) {
+	public void initProject(String path,boolean isIboot) {
 		String content = "";
 		String firstInit = "";
-		String lastInit = "";
+		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n" + 
+				"\tprintf(\"\\r\\n: info : os starts.\\r\\n\");";
 		String moduleInit = "";
 		String djyMain = "";
+		initHead = "";
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -131,7 +131,6 @@ public class InitDjyosProjectWizard extends WizardPage{
 			e.printStackTrace();
 		}
 		for(int i=0;i<compontentsChecked.size();i++) {
-			System.out.println("compontentsChecked: "+compontentsChecked.get(i).getName());
 			List<String> dependents = compontentsChecked.get(i).getDependents();
 			List<String> weakDependents = compontentsChecked.get(i).getWeakDependents();
 			for(int j=i+1;j<compontentsChecked.size();j++) {
@@ -144,33 +143,44 @@ public class InitDjyosProjectWizard extends WizardPage{
 			}		
 		}
 		for(int i=0;i<compontentsCheckedSort.size();i++) {
-			System.out.println("compontentsCheckedSort: "+compontentsCheckedSort.get(i).getName());
 			String grade = compontentsCheckedSort.get(i).getGrade();
 			String code = compontentsCheckedSort.get(i).getCode();
+			String codeStrings = "";
+			if(code!=null) {
+				String[] codes = code.split("\n");
+				for(int j=0;j<codes.length;j++) {
+					if(codes[j].contains("#include")) {
+						initHead += codes[j].trim()+"\n";
+					}else {
+						codeStrings += "\t"+codes[j].trim()+"\n";
+					}
+				}
+			}
+			
 			String componentName = compontentsCheckedSort.get(i).getName();
 			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
 				String filePath = compontentsCheckedSort.get(i).getFileName();
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length())+"_config.h",compontentsCheckedSort.get(i));
+				initDefineForComponent(path+"/OS_prjcfg/cfg/"+filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length())+"_config.h",compontentsCheckedSort.get(i),filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()));
 			}
 			
-			if(grade!=null) {
+			if(grade!=null && code!=null) {
 				if (grade.equals("main")) {//初始化时机为main
-					djyMain += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n\t" + code + "\n";
+					djyMain += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings + "\n";
 				} else if (grade.equals("init")){//初始化时机为init
 					if (componentName.equals("Stdio_KnlInOut")) {
-						firstInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n\t" + code
+						firstInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings
 								+ "\n";
 					} else if (componentName.equals("Heap_Dynamic")) {
-						lastInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n\t" + code + "\n";
+						lastInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings + "\n";
 					} else {
-						moduleInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n\t" + code
+						moduleInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings
 								+ "\n";
 					}
 				}
 			}
 		}
 		content+=initHead;
-		content+=initStart+firstInit+moduleInit+lastInit+initEnd;
+		content+="\n"+initStart+firstInit+moduleInit+lastInit+initEnd;
 		content+=djyStart+djyMain+djyEnd;
 		FileWriter writer;
 		try {
@@ -183,18 +193,33 @@ public class InitDjyosProjectWizard extends WizardPage{
 		}
 		
 		//生成component_check.xml文件
-		File checkFile = new File(path+"/../../"+"data/component_check.xml");
-		if(!checkFile.exists()) {
+		CreateCheckXml ccx = new CreateCheckXml();
+		if(isIboot) {
+			File ibootcheckFile = new File(path+"/../../"+"data/iboot_component_check.xml");
+			if(ibootcheckFile.exists()) {
+				ibootcheckFile.delete();
+			}
 			try {
-				checkFile.createNewFile();
+				ibootcheckFile.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+			ccx.createCheck(cmpnts, ibootcheckFile);
+		}else {
+			File appcheckFile = new File(path+"/../../"+"data/app_component_check.xml");
+			if(appcheckFile.exists()) {
+				appcheckFile.delete();
+			}
+			try {
+				appcheckFile.createNewFile();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			ccx.createCheck(cmpnts, appcheckFile);
 		}
-		CreateCheckXml ccx = new CreateCheckXml();
-		ccx.createCheck(cmpnts, checkFile);
-		
+
 	}
 	
 	@Override
@@ -238,7 +263,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 		mutexText.setEditable(false);
 		
 		ReadComponentXml rcx = new ReadComponentXml();
-		compontentsList = rcx.getComponents(onBoardCpu);//获取cpudrv/src下的组件
+		compontentsList = rcx.getComponents(onBoardCpu,sBoard);//获取cpudrv/src下的组件
 		for(int i=0;i<compontentsList.size();i++) {
 			Component component = new Component();
 			component.setName(compontentsList.get(i).getName());
@@ -621,10 +646,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 		}
 		return allDeps;
 	}
-	
-	/*
-	 * 获取当前Eclipse的路径
-	 */
+
 	private String getEclipsePath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
@@ -640,89 +662,5 @@ public class InitDjyosProjectWizard extends WizardPage{
 			"{\n";
 	String initEnd = "\treturn ;\r\n" + 
 			"}\n\n";
-	String initHead = "//----------------------------------------------------\r\n" + 
-			"// Copyright (c) 2014, SHENZHEN PENGRUI SOFT CO LTD. All rights reserved.\r\n" + 
-			"\r\n" + 
-			"// Redistribution and use in source and binary forms, with or without\r\n" + 
-			"// modification, are permitted provided that the following conditions are met:\r\n" + 
-			"\r\n" + 
-			"// 1. Redistributions of source code must retain the above copyright notice,\r\n" + 
-			"//    this list of conditions and the following disclaimer.\r\n" + 
-			"// 2. Redistributions in binary form must reproduce the above copyright notice,\r\n" + 
-			"//    this list of conditions and the following disclaimer in the documentation\r\n" + 
-			"//    and/or other materials provided with the distribution.\r\n" + 
-			"\r\n" + 
-			"// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\r\n" + 
-			"// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\r\n" + 
-			"// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\r\n" + 
-			"// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE\r\n" + 
-			"// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR\r\n" + 
-			"// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\r\n" + 
-			"// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\r\n" + 
-			"// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\r\n" + 
-			"// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\r\n" + 
-			"// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\r\n" + 
-			"// POSSIBILITY OF SUCH DAMAGE.\r\n" + 
-			"//-----------------------------------------------------------------------------\r\n" + 
-			"// Copyright (c) 2014 著作权由深圳鹏瑞软件有限公司所有。著作权人保留一切权利。\r\n" + 
-			"//\r\n" + 
-			"// 这份授权条款，在使用者符合下列条件的情形下，授予使用者使用及再散播本\r\n" + 
-			"// 软件包装原始码及二进位可执行形式的权利，无论此包装是否经改作皆然：\r\n" + 
-			"//\r\n" + 
-			"// 1. 对于本软件源代码的再散播，必须保留上述的版权宣告、本条件列表，以\r\n" + 
-			"//    及下述的免责声明。\r\n" + 
-			"// 2. 对于本套件二进位可执行形式的再散播，必须连带以文件以及／或者其他附\r\n" + 
-			"//    于散播包装中的媒介方式，重制上述之版权宣告、本条件列表，以及下述\r\n" + 
-			"//    的免责声明。\r\n" + 
-			"\r\n" + 
-			"// 免责声明：本软件是本软件版权持有人以及贡献者以现状（\"as is\"）提供，\r\n" + 
-			"// 本软件包装不负任何明示或默示之担保责任，包括但不限于就适售性以及特定目\r\n" + 
-			"// 的的适用性为默示性担保。版权持有人及本软件之贡献者，无论任何条件、\r\n" + 
-			"// 无论成因或任何责任主义、无论此责任为因合约关系、无过失责任主义或因非违\r\n" + 
-			"// 约之侵权（包括过失或其他原因等）而起，对于任何因使用本软件包装所产生的\r\n" + 
-			"// 任何直接性、间接性、偶发性、特殊性、惩罚性或任何结果的损害（包括但不限\r\n" + 
-			"// 于替代商品或劳务之购用、使用损失、资料损失、利益损失、业务中断等等），\r\n" + 
-			"// 不负任何责任，即在该种使用已获事前告知可能会造成此类损害的情形下亦然。\r\n" + 
-			"//-----------------------------------------------------------------------------\r\n" + 
-			"#include \"stdint.h\"\r\n" + 
-			"#include \"stdio.h\"\r\n" + 
-			"#include \"board-config.h\"\r\n" + 
-			"#include \"driver.h\"\r\n" + 
-			"#include \"cpu_peri.h\"\r\n" + 
-			"#include \"cpu_peri_uart.h\"\r\n" + 
-			"#include \"uartctrl.h\"\r\n" + 
-			"#include \"gkernel.h\"\r\n" + 
-			"#include \"djyos.h\"\r\n" + 
-			"#include \"core_config.h\"\r\n" + 
-			"#include \"IO_config.h\"\r\n" + 
-			"#include \"timer.h\"\r\n" + 
-			"#include \"lowpower.h\"\r\n" + 
-			"#include \"list.h\"\r\n" + 
-			"#include \"..\\heap\\heap-in.h\"\r\n" + 
-			"#include \"ymodem.h\"\r\n" + 
-			"\r\n" + 
-			"static  const char *gdd_input_dev[]={\r\n" + 
-			"\r\n" + 
-			"    TOUCH_DEV_NAME,\r\n" + 
-			"    KBD_DEV_NAME,\r\n" + 
-			"    NULL, //必须要以NULL作为结束标记\r\n" + 
-			"\r\n" + 
-			"};\r\n" + 
-			"\r\n" + 
-			"//----操作系统内核组件配置-----------------------------------------------------\r\n" + 
-			"//功能：配置和初始化可选功能组件，在用户工程目录中必须实现本函数，在内核初始化\r\n" + 
-			"//      阶段调用。\r\n" + 
-			"//      本函数实现内核裁剪功能，例如只要注释掉\r\n" + 
-			"//          ModuleInstall_Multiplex(0);\r\n" + 
-			"//      这一行，多路复用组件就被裁剪掉了。\r\n" + 
-			"//      用户可从example中copy本文件，把不要的组件注释掉，强烈建议，不要删除,也\r\n" + 
-			"//      不要修改调用顺序。可以把用户模块的初始化代码也加入到本函数中,建议跟在\r\n" + 
-			"//      系统模块初始化后面.\r\n" + 
-			"//      有些组件有依赖关系,裁剪时,注意阅读注释.\r\n" + 
-			"//参数：无\r\n" + 
-			"//返回：无\r\n" + 
-			"//---------------------------------------------------------------------------\r\n\n"
-			+ "align_type InitStack[CFG_INITSTACK_SIZE/sizeof(align_type)] = {'d'};\r\n" + 
-			"";
-
+	String initHead = null;
 }

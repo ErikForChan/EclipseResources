@@ -546,16 +546,16 @@ public class MemoryMapWizard extends WizardPage {
 		System.out.println("getNextPage MM");
 		String modulePageTip = "本版本为测试版，暂无添加依赖关系，以后版本将会陆续添加.";
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
-		if(! nmWizard.addedInit) {
-			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage",null);
-			nmWizard.initPage.setTitle("Init Project");
-			nmWizard.initPage.setDescription("Init the project you are creating");
-			nmWizard.addPage(nmWizard.initPage);
-			nmWizard.addedInit = true;
-//			nmWizard.handleCProject();
-		}else{
-//			nmWizard.initPage.moduleCompleted = true;
-		}		
+//		if(! nmWizard.addedInit) {
+//			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage",null);
+//			nmWizard.initPage.setTitle("Init Project");
+//			nmWizard.initPage.setDescription("Init the project you are creating");
+//			nmWizard.addPage(nmWizard.initPage);
+//			nmWizard.addedInit = true;
+////			nmWizard.handleCProject();
+//		}else{
+////			nmWizard.initPage.moduleCompleted = true;
+//		}		
 		
 		return super.getNextPage();
 	}

@@ -14,8 +14,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import org.eclipse.cdt.ui.wizards.parsexml.Board;
-
 import org.eclipse.cdt.internal.ui.djyproperties.MemoryMap;
 
 public class CreateMemoryMapXml {

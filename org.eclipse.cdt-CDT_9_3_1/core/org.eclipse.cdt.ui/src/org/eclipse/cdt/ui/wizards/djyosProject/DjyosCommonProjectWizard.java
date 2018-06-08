@@ -391,7 +391,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		File[] files = sourceFile.listFiles();
 		String path = null;
 		for(File file:files){//cpudrv下的所有文件 Atmel stm32
-			if(file.isDirectory()) {
+			if(file.isDirectory() && !file.isFile()) {
 				getDeapPath(file,cpuName);
 				if(deapPath!=null) {
 					path = deapPath+"/../src";
@@ -406,6 +406,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private String deapPath = null;
 	
 	public String getDeapPath(File sourceFile,String cpuName) {
+		System.out.println("sourceFile.getName():  "+sourceFile.getName());
 		File[] files = sourceFile.listFiles();
 		String path = null;
 		for (File file : files) {
@@ -541,16 +542,21 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					links.add("${DJYOS_SRC_LOCATION}/djyos/"+componentName);
 				}else if(component.getLinkFolder().equals("chipdrv")) {
 					links.add("${DJYOS_SRC_LOCATION}/bsp/chipdrv/"+componentName);
+				}else if(component.getLinkFolder().equals("boarddrv")) {
+					if(isDemoBoard) {
+						links.add("${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/"+_boardName+"/drv/"+componentName);
+					}	
 				}else if(component.getLinkFolder().equals("cpudrv")) {
 					for(int k=0;k<cpudrvFiles.length;k++) {
 						deapPath = null;
-						getDeapPath(cpudrvFiles[k],_cpuName);
-						if(deapPath != null) {
-							deapPath = deapPath.replace("\\", "/");
-							String linkString = deapPath.replace(eclipsePath+"djysrc", "${DJYOS_SRC_LOCATION}").replace("/"+_cpuName, "")+"/src/"+componentName;
-							links.add(linkString);
+						if(cpudrvFiles[k].isDirectory()) {
+							getDeapPath(cpudrvFiles[k],_cpuName);
+							if(deapPath != null) {
+								deapPath = deapPath.replace("\\", "/");	
+								String linkString = deapPath.replace(eclipsePath+"djysrc", "${DJYOS_SRC_LOCATION}").replace(_cpuName, "")+"src/"+componentName;
+								links.add(linkString);
+							}
 						}
-						
 					}
 
 				}
@@ -657,12 +663,15 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				lpf.addLink(project.getFile(".project"), componentName,componentPath, "third");				
 			}else if(component.getLinkFolder().equals("component")) {
 				lpf.addLink(project.getFile(".project"), componentName,componentPath, "component");
+			}else if(component.getLinkFolder().equals("djyos")) {
+				lpf.addLink(project.getFile(".project"), componentName,componentPath, "djyos");
 			}else if(component.getLinkFolder().equals("chipdrv")) {
 				lpf.addLink(project.getFile(".project"),componentName, componentPath, "chipdrv");
 			}else if(component.getLinkFolder().equals("cpudrv")) {
 				String filePath = component.getFileName();
 				String cptName = filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length());
-				lpf.addLink(project.getFile(".project"),componentName, cpuLinkString.replace("/"+_cpuName, "")+"/src/"+cptName, "cpudrv");
+				System.out.println("cpuLinkString:  "+cpuLinkString);
+				lpf.addLink(project.getFile(".project"),componentName, "bsp/cpudrv/"+cpuLinkString.replace(_cpuName, "")+"src/"+cptName, "cpudrv");
 				//DJYOS_SRC_LOCATION\bsp\cpudrv\ stm32\f7
 			}
 		}
@@ -901,12 +910,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					monitor.worked(20);
 					//生成initPrj.c,initPrj.h,memory.lds文件
 					if(index == 0 || index == 1){
-			    		initPage.initProject(initCPathIboot);
+			    		initPage.initProject(initCPathIboot,true);
 			    		init_projectConfig(initCPathIboot+"/OS_prjcfg/cfg/project_config.h",core);
 			    	}
 					monitor.worked(5);
 			    	if(index == 0 || index == 2 || index == 3){
-			    		initPage.initProject(initCPath);
+			    		initPage.initProject(initCPath,false);
 			    		init_projectConfig(initCPath+"/OS_prjcfg/cfg/project_config.h",core);
 			    	}
 					monitor.worked(5);
@@ -929,7 +938,14 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 //		}
 //    	
 //    	createBuild(curProject);
-		
+		try {
+			final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+			IProject project = workspace.getRoot().getProject(projectName);
+			project.refreshLocal(IResource.DEPTH_INFINITE, null);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return true;
 	}
 	

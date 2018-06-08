@@ -11,10 +11,12 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.internal.resources.Folder;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -33,6 +35,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
@@ -46,10 +49,6 @@ import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
-import org.eclipse.cdt.ui.wizards.parsexml.CreateBoardXml;
-import org.eclipse.cdt.ui.wizards.parsexml.ReadBoardByDom;
-import org.eclipse.cdt.ui.wizards.parsexml.ReadCpuByDom;
-import org.eclipse.cdt.ui.wizards.parsexml.ReviseLinkToXML;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.ui.ICHelpContextIds;
@@ -164,10 +163,10 @@ public class GetBoardDialog extends StatusDialog {
 					CoreMemory memory = coreSelected.getMemorys().get(k);
 					if (memory.getType().equals("ROM")) {
 						memoryString += "\n\t\tFlashStart: " + memory.getStartAddr() + "\n\t\tFlashSize: "
-								+ memory.getSize() + "k";
+								+ memory.getSize();
 					} else if (memory.getType().equals("RAM")) {
 						memoryString += "\n\t\tRamStart: " + memory.getStartAddr() + "\n\t\tRamSize: "
-								+ memory.getSize() + "k";
+								+ memory.getSize();
 					}
 				}
 				coreDesc += "\tArch: " + arch + "\n\tFamily: " + family + "\n\tFputype: " + fpuType
@@ -206,9 +205,21 @@ public class GetBoardDialog extends StatusDialog {
 	};
 	
 	private Listener clkModifyListener = e -> {
-		if (fDialogFields[1].getTextControl(content).getText().trim() != null) {
-			coreSelected.setCoreClk(Integer.parseInt(fDialogFields[1].getTextControl(content).getText()));
-		}
+			String coreClk = fDialogFields[1].getTextControl(content).getText().trim();
+			Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+	        boolean isInt =  pattern.matcher(coreClk).matches();
+	        if(!isInt) {
+	        	IWorkbenchWindow window = PlatformUI.getWorkbench()
+	    				.getActiveWorkbenchWindow();
+	        	MessageDialog.openError(window.getShell(), "提示",
+						"请输入正整数");
+	        }else {
+	        	if(! coreClk.equals("")) {
+					coreSelected.setCoreClk(Integer.parseInt(coreClk));
+				}	
+	        }
+			
+			
 	};
 
 //	private Listener boardModifyListener = e -> {
@@ -230,16 +241,35 @@ public class GetBoardDialog extends StatusDialog {
 	@Override
 	protected void okPressed() {
 		// TODO Auto-generated method stub
-		String cpuName = MCUNameField.getText();
+		String cpuName = MCUNameField.getText().trim();
+		String coreName = coreSelectFiled.getText().trim();
+		String coreClk = fDialogFields[1].getTextControl(content).getText().trim();
 		boardName = boardSelectField.getText().trim();
-		for (int i = 0; i < boardCpusList.size(); i++) {
-			if (boardCpusList.get(i).getCpuName().equals(cpuName)) {
-				defaultCpu = boardCpusList.get(i);
-				break;
+		IWorkbenchWindow window = PlatformUI.getWorkbench()
+				.getActiveWorkbenchWindow();
+		if(boardName.equals("")) {
+			MessageDialog.openError(window.getShell(), "提示",
+					"请选择板件");
+		}else if(cpuName.equals("")){
+			MessageDialog.openError(window.getShell(), "提示",
+					"请选择Cpu");
+		}else if(coreName.equals("")){
+			MessageDialog.openError(window.getShell(), "提示",
+					"请选择内核");
+		}else if(coreClk.equals("")){
+			MessageDialog.openError(window.getShell(), "提示",
+					"请选择内核时钟");
+		}else {
+			for (int i = 0; i < boardCpusList.size(); i++) {
+				if (boardCpusList.get(i).getCpuName().equals(cpuName)) {
+					defaultCpu = boardCpusList.get(i);
+					break;
+				}
 			}
-		}
-		selectCpu = defaultCpu;
-		super.okPressed();
+			selectCpu = defaultCpu;
+			super.okPressed();
+		}		
+		
 	}
 
 	private void copyFolder(File src, File dest) throws IOException {

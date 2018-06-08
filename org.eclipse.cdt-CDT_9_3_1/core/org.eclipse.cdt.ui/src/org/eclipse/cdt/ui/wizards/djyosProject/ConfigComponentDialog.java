@@ -9,16 +9,19 @@ import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.PlatformUI;
 
 import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.InitInfo;
@@ -38,7 +41,7 @@ public class ConfigComponentDialog extends StatusDialog {
 		// TODO Auto-generated constructor stub
 		component = componentSelect;
 		configure = component.getConfigure();
-		System.out.println("configure:  "+configure+"  "+component.getName()+"  "+component.getCode());
+//		System.out.println("configure:  "+configure+"  "+component.getName()+"  "+component.getCode());
 		parametersDefined = configure.split("\n");
 		setTitle("配置组件");
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
@@ -91,8 +94,9 @@ public class ConfigComponentDialog extends StatusDialog {
         for (int i = 0; i < tableHeader.length; i++)  
         {  
             TableColumn tableColumn = new TableColumn(table, SWT.NONE);  
-            tableColumn.setAlignment(SWT.CENTER);
+            tableColumn.setAlignment(SWT.LEFT);
             tableColumn.setText(tableHeader[i]);  
+
             // 设置表头可移动，默认为false  
             tableColumn.setMoveable(true);         
             if(i==tableHeader.length-1) {
@@ -106,24 +110,18 @@ public class ConfigComponentDialog extends StatusDialog {
         	System.out.println("parametersDefined:  "+parametersDefined[i]);
         	if(parametersDefined[i].contains("#define")) {
         		TableItem item = new TableItem(table, SWT.NONE);
+        		Image image = new Image(PlatformUI.getWorkbench().getDisplay(), 1, 30);
+        		item.setImage(image);
         		String[] defines = parametersDefined[i].trim().split("//");
             	String[] members = defines[0].trim().split("\\s+");
-            	for(int j=0;j<members.length;j++) {
-            		System.out.println(members[j]);
-            	}
+//            	for(int j=0;j<members.length;j++) {
+//            		System.out.println(members[j]);
+//            	}
 //            	item.setText(new String[]{"参数"+(i+1), parameters.get(i).getType(), "", parameters.get(i).getAnnotation()}); 
             	item.setText(new String[]{members[1], members[2].equals("default")?"":members[2], defines.length>1?defines[1]:""}); 
         	}	
         }
         	
-        	
-//        InitInfo initInfo = component.getInit();
-//        parameters = initInfo.getParameters();
-//        for(int i=0;i<parameters.size();i++) {
-//        	 TableItem item = new TableItem(table, SWT.NONE);
-//             item.setText(new String[]{"参数"+(i+1), parameters.get(i).getType(), "", parameters.get(i).getAnnotation()}); 
-//        }
-	
         TableItem[] items = table.getItems(); 
 		for (int i = 0; i < items.length; i++) {
 			TableEditor editor = new TableEditor(table);
@@ -131,13 +129,13 @@ public class ConfigComponentDialog extends StatusDialog {
 			editor.grabHorizontal = true;
 			// 创建一个文本框，用于输入文字
 			Text text = new Text(table, SWT.BORDER);
+			text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 			// 将文本框当前值，设置为表格中的值
 			text.setText(items[i].getText(1));
 			// 关键方法，将编辑单元格与文本框绑定到表格的第一列
 			editor.setEditor(text, items[i], 1);
-
-			// 当文本框改变值时，注册文本框改变事件，该事件改变表格中的数据。
-			// 否则即使改变的文本框的值，对表格中的数据也不会影响
+			
+			// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
 			text.addModifyListener(new ModifyListener() {
 				public void modifyText(ModifyEvent e) {
 					editor.getItem().setText(1, text.getText());

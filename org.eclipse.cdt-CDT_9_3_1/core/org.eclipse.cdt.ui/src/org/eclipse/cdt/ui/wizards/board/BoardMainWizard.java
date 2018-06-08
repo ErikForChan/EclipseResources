@@ -1,5 +1,6 @@
 package org.eclipse.cdt.ui.wizards.board;
 
+import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -94,19 +95,18 @@ public class BoardMainWizard extends WizardPage{
 	private Text addrField;
 	private Text sizeField;
 	
-	List<Cpu> cpusList = null;
-	List<Cpu> cpusOn = null;
-	List<Component> peripheralsList = null;//外设列表
-	List<Component> peripheralsOn = new ArrayList<Component>();//用到的外设
-	List<Component> allPeripherals = new ArrayList<Component>();//所有外设
-	List<Chip> chipsList = null;
-	List<Chip> chipsOn = null;
-	List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
-	List<Component> thePeripherals;
-	ReadComponentXml rcx = new ReadComponentXml();
-	
-	Composite boardAttributesCpt;
-	Group ConfigurationGroup;
+	private List<Cpu> cpusList = null;
+	private List<Cpu> cpusOn = null;
+	private List<Component> peripheralsList = null;//外设列表
+	private List<Component> peripheralsOn = new ArrayList<Component>();//用到的外设
+	private List<Component> allPeripherals = new ArrayList<Component>();//所有外设
+	private List<Chip> chipsList = null;
+	private List<Chip> chipsOn = null;
+	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
+	private List<Component> thePeripherals;
+	private ReadComponentXml rcx = new ReadComponentXml();	
+	private Composite boardAttributesCpt;
+	private Group ConfigurationGroup;
 	private String eclipsePath = getEclipsePath();
 	
 	public Board getBoard() {
@@ -122,9 +122,6 @@ public class BoardMainWizard extends WizardPage{
 		return newBoard;
 	}
 	
-	/*
-	 * 获取当前Eclipse的路径
-	 */
 	public String getEclipsePath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
@@ -303,6 +300,8 @@ public class BoardMainWizard extends WizardPage{
 		createTreeForNeedCpus(boardAttributesCpt);
 		Button newCpuBtn = new Button(boardAttributesCpt,SWT.PUSH);
 		newCpuBtn.setText("New Cpu");
+		newCpuBtn.setBackground(boardAttributesCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+		newCpuBtn.setForeground(boardAttributesCpt.getDisplay().getSystemColor(SWT.COLOR_WHITE));
 		newCpuBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		newCpuBtn.addSelectionListener(new SelectionAdapter() {
 
@@ -331,21 +330,6 @@ public class BoardMainWizard extends WizardPage{
 		scrolledComposite.setMinHeight(point.y);
 		scrolledComposite.setExpandHorizontal(true);
 	    scrolledComposite.setExpandVertical(true);
-	    
-//	    parent.addFocusListener(new FocusListener() {
-//			
-//			@Override
-//			public void focusLost(FocusEvent e) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//			
-//			@Override
-//			public void focusGained(FocusEvent e) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//		});
 
 		setErrorMessage(null);
 		setMessage(null);
@@ -903,49 +887,11 @@ public class BoardMainWizard extends WizardPage{
 		cpudrvTree = new Tree(compositeTree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		cpudrvTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		cpudrvTree.setHeaderVisible(true);
-		cpudrvTree.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] items = cpudrvTree.getSelection();
-			}
-		});
 		final TreeColumn columnCpudrvs = new TreeColumn(cpudrvTree, SWT.NONE);
 		columnCpudrvs.setText("外设列表");
 		columnCpudrvs.setWidth(120);
 		columnCpudrvs.setResizable(false);
 		columnCpudrvs.setToolTipText("Cpu Drivers");
-		
-//		ReadComponentXml rcx = new ReadComponentXml();
-//		peripheralsList = rcx.getComponents();
-//		for(int i=0;i<peripheralsList.size();i++) {
-//			Component component = new Component();
-////			component.setName(peripheralsList.get(i).getName());
-////			component.setAnnotation(peripheralsList.get(i).getAnnotation());
-////			component.setAttribute(peripheralsList.get(i).getAttribute());
-////			component.setGrade(peripheralsList.get(i).getGrade());
-////			component.setCode(peripheralsList.get(i).getCode());
-////			component.setConfigure(peripheralsList.get(i).getConfigure());
-////			component.setIncludeFile(peripheralsList.get(i).getIncludeFile());
-//			component.setName(peripheralsList.get(i).getName());
-//			component.setAnnotation(peripheralsList.get(i).getAnnotation());
-//			component.setAttribute(peripheralsList.get(i).getAttribute());
-//			component.setGrade(peripheralsList.get(i).getGrade());
-//			component.setCode(peripheralsList.get(i).getCode());
-//			component.setConfigure(peripheralsList.get(i).getConfigure());
-//			component.setLinkFolder(peripheralsList.get(i).getLinkFolder());
-//			component.setDependents(peripheralsList.get(i).getDependents());
-//			component.setMutexs(peripheralsList.get(i).getMutexs());
-//			component.setFileName(peripheralsList.get(i).getFileName());
-//			component.setSelectable(peripheralsList.get(i).getSelectable());
-//			component.setParent(peripheralsList.get(i).getParent());
-//			component.setWeakDependents(peripheralsList.get(i).getWeakDependents());
-//			allPeripherals.add(component);
-////			thePeripherals.add(component);
-//		}
-//		for(int i=0;i<peripheralsList.size();i++) {
-//			TreeItem t = new TreeItem(cpudrvTree, SWT.NONE);
-//			t.setText(peripheralsList.get(i).getName());
-//		}
 		cpudrvTree.setSize(160, 155);
 		
 		Composite btnCpt = new Composite(composite, SWT.NULL);
@@ -1013,11 +959,6 @@ public class BoardMainWizard extends WizardPage{
 					changePeripheralsOn(selectCpudrvName,false);
 
 					updatePeripheralsList();
-//					interfaceCombo.removeAll();
-//					TreeItem[] itemsOn = cpudrvOnTree.getItems();
-//					for(int i=0;i<itemsOn.length;i++) {
-//						interfaceCombo.add(itemsOn[i].getText());
-//					}
 					
 					TreeItem[] cpuItems = cpuArhivesNeed.getSelection();
 					OnBoardCpu onBoardCpu = new OnBoardCpu();
@@ -1047,7 +988,8 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				
+				goto1Btn.setEnabled(true);
+				back1Btn.setEnabled(false);
 			}
 			
 			@Override
@@ -1056,6 +998,7 @@ public class BoardMainWizard extends WizardPage{
 				
 			}
 		});
+		
 		Composite compositeTreeOn = new Composite(composite, SWT.NULL);
 		cpudrvOnTree = new Tree(compositeTreeOn, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		cpudrvOnTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
@@ -1064,6 +1007,8 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				TreeItem[] items = cpudrvOnTree.getSelection();
+				goto1Btn.setEnabled(false);
+				back1Btn.setEnabled(true);
 			}
 		});
 		peripheralsOn = new ArrayList<Component>();
@@ -1204,33 +1149,10 @@ public class BoardMainWizard extends WizardPage{
 					peripheralsList = rcx.getPeripherals(new File(cpuSrcPath));
 					for(int i=0;i<peripheralsList.size();i++) {
 						Component component = new Component();
-//						component.setName(peripheralsList.get(i).getName());
-//						component.setAnnotation(peripheralsList.get(i).getAnnotation());
-//						component.setAttribute(peripheralsList.get(i).getAttribute());
-//						component.setGrade(peripheralsList.get(i).getGrade());
-//						component.setCode(peripheralsList.get(i).getCode());
-//						component.setConfigure(peripheralsList.get(i).getConfigure());
-//						component.setIncludeFile(peripheralsList.get(i).getIncludeFile());
 						component.setName(peripheralsList.get(i).getName());
-//						component.setAnnotation(peripheralsList.get(i).getAnnotation());
-//						component.setAttribute(peripheralsList.get(i).getAttribute());
-//						component.setGrade(peripheralsList.get(i).getGrade());
-//						component.setCode(peripheralsList.get(i).getCode());
-//						component.setConfigure(peripheralsList.get(i).getConfigure());
-//						component.setLinkFolder(peripheralsList.get(i).getLinkFolder());
-//						component.setDependents(peripheralsList.get(i).getDependents());
-//						component.setMutexs(peripheralsList.get(i).getMutexs());
-//						component.setFileName(peripheralsList.get(i).getFileName());
-//						component.setSelectable(peripheralsList.get(i).getSelectable());
-//						component.setParent(peripheralsList.get(i).getParent());
-//						component.setWeakDependents(peripheralsList.get(i).getWeakDependents());
 						allPeripherals.add(component);
 //						thePeripherals.add(component);
 					}
-//					for(int i=0;i<peripheralsList.size();i++) {
-//						TreeItem t = new TreeItem(cpudrvTree, SWT.NONE);
-//						t.setText(peripheralsList.get(i).getName());
-//					}
 					
 					cpudrvTree.removeAll();
 					cpudrvOnTree.removeAll();
@@ -1240,33 +1162,11 @@ public class BoardMainWizard extends WizardPage{
 					for(int i=0;i<allPeripherals.size();i++) {
 						Component component = new Component();
 						component.setName(allPeripherals.get(i).getName());
-//						component.setAnnotation(allPeripherals.get(i).getAnnotation());
-//						component.setAttribute(allPeripherals.get(i).getAttribute());
-//						component.setGrade(allPeripherals.get(i).getGrade());
-//						component.setCode(allPeripherals.get(i).getCode());
-//						component.setConfigure(allPeripherals.get(i).getConfigure());
-//						component.setLinkFolder(allPeripherals.get(i).getLinkFolder());
-//						component.setDependents(allPeripherals.get(i).getDependents());
-//						component.setMutexs(allPeripherals.get(i).getMutexs());
-//						component.setFileName(allPeripherals.get(i).getFileName());
-//						component.setSelectable(allPeripherals.get(i).getSelectable());
-//						component.setParent(allPeripherals.get(i).getParent());
-//						component.setWeakDependents(allPeripherals.get(i).getWeakDependents());
 						thePeripherals.add(component);
 					}
 					int perSize = allPeripherals.size();
 					//板载外设为空
 					if(boardPeripherals == null) {
-//						peripheralsList =  new ArrayList<Component>();
-//						for(int i=0;i<allPeripherals.size();i++) {
-//							Component component = new Component();
-//							component.setName(allPeripherals.get(i).getName());
-//							component.setAnnotation(allPeripherals.get(i).getAnnotation());
-//							component.setAttribute(allPeripherals.get(i).getAttribute());
-//							component.setInit(allPeripherals.get(i).getInit());
-//							component.setIncludeFile(allPeripherals.get(i).getIncludeFile());
-//							peripheralsList.add(component);
-//						}
 						peripheralsOn = new ArrayList<Component>();
 						for(int i=0;i<allPeripherals.size();i++) {
 							TreeItem t = new TreeItem(cpudrvTree, SWT.NONE);
@@ -1493,6 +1393,7 @@ public class BoardMainWizard extends WizardPage{
 //		interfaceCombo.add(newComponent.getName());
 	}
 	
+	private String deapPath = null;
 	private String getCpuSrcPath(String cpuName) {
 		String sourcePath = eclipsePath+"djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
@@ -1509,8 +1410,7 @@ public class BoardMainWizard extends WizardPage{
 		}
 		return path;
 	}
-	
-	private String deapPath = null;
+
 	public String getDeapPath(File sourceFile,String cpuName) {
 		File[] files = sourceFile.listFiles();
 		String path = null;

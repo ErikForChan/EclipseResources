@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
@@ -23,6 +24,7 @@ import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.util.BidiUtils;
 import org.eclipse.jface.viewers.ComboViewer;
@@ -32,6 +34,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
@@ -532,7 +536,22 @@ public class DjyosMainWizardPage extends WizardPage{
 		fIbootSize.setValidRange(1, 10000);
 		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
 		ControlFactory.createLabel(group1, "K");
-		
+		fIbootSize.getTextControl(ibootComposite).addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				// TODO Auto-generated method stub
+				String bootSize = fIbootSize.getTextControl(ibootComposite).getText();
+				Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+		        boolean isInt =  pattern.matcher(bootSize).matches();
+		        if(!isInt) {
+		        	IWorkbenchWindow window = PlatformUI.getWorkbench()
+		    				.getActiveWorkbenchWindow();
+		        	MessageDialog.openError(window.getShell(), "提示",
+							"请输入正整数");
+		        }
+			}
+		});
 //		fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify, ibootSizeModifyListener);
 
 	}
@@ -558,7 +577,7 @@ public class DjyosMainWizardPage extends WizardPage{
 					break;
 				}
 			}
-			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage",onBoardCpu);
+			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
 			nmWizard.initPage.setTitle("Project Tailoring");
 			nmWizard.initPage.setDescription("Tailoring and Configurating the Component");
 			nmWizard.addPage(nmWizard.initPage);

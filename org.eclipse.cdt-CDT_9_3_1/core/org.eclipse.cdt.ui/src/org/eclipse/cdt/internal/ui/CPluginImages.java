@@ -365,7 +365,7 @@ public class CPluginImages {
 	public static final ImageDescriptor DESC_OVR_WARNING= createUnManaged(T_OVR, "warning_co.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor DESC_OVR_ERROR= createUnManaged(T_OVR, "error_co.gif"); //$NON-NLS-1$
 	//新建Cpu和新建板件的图标
-	public static final ImageDescriptor DESC_CPU_VIEW= createUnManaged(T_OVR, "cpu_view.gif"); //$NON-NLS-1$
+	public static final ImageDescriptor DESC_CPU_VIEW= createUnManaged(T_OVR, "cpu_icon.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor DESC_GROUP_VIEW= createUnManaged(T_OVR, "group_view.gif"); //$NON-NLS-1$ 
 	public static final ImageDescriptor TREE_FLODER_VIEW= createUnManaged(T_OVR, "fldr_obj.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor CFG_DONE_VIEW= createUnManaged(T_OVR, "cfg_done.png"); //$NON-NLS-1$
