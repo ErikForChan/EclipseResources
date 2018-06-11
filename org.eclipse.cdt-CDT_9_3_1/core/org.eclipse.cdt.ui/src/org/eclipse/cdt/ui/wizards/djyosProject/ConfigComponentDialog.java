@@ -1,17 +1,22 @@
 package org.eclipse.cdt.ui.wizards.djyosProject;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -21,6 +26,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
 import org.eclipse.cdt.ui.wizards.component.Component;
@@ -106,43 +112,142 @@ public class ConfigComponentDialog extends StatusDialog {
             }
         }  
         
+        String tag = null;
+        String[] infos = null;
+        List<String> ranges = null;
+        
         for(int i=0;i<parametersDefined.length;i++) {
-        	System.out.println("parametersDefined:  "+parametersDefined[i]);
-        	if(parametersDefined[i].contains("#define")) {
+        	
+        	String parameter = parametersDefined[i];
+        	if(parameter.contains("//%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum")) {
+        		if(parameter.contains("//%$#@num")) {
+            		tag = "int";
+            	}else if(parameter.contains("%$#@string")) {
+            		tag = "string";
+            	}else if(parameter.contains("%$#@enum")) {
+            		tag = "enum";
+            	}else if(parameter.contains("%$#@select")) {
+            		tag = "select";
+            	}else if(parameter.contains("%$#@free")) {
+            		tag = "free";
+            	}
+        		
+				infos = parameter.split(",");
+				ranges = new ArrayList<String>();
+				if (!tag.equals("select") || !tag.equals("free")) {
+					for (int j = 2; j < infos.length; j++) {
+						ranges.add(infos[j]);
+					}
+				}
+
+        	}
+	
+//        	System.out.println("parametersDefined:  "+parametersDefined[i]);
+        	if(parameter.contains("#define")) {
         		TableItem item = new TableItem(table, SWT.NONE);
-        		Image image = new Image(PlatformUI.getWorkbench().getDisplay(), 1, 30);
+        		Image image = new Image(PlatformUI.getWorkbench().getDisplay(), 1, 25);
         		item.setImage(image);
-        		String[] defines = parametersDefined[i].trim().split("//");
+        		String[] defines = parameter.trim().split("//");
             	String[] members = defines[0].trim().split("\\s+");
-//            	for(int j=0;j<members.length;j++) {
-//            		System.out.println(members[j]);
-//            	}
-//            	item.setText(new String[]{"参数"+(i+1), parameters.get(i).getType(), "", parameters.get(i).getAnnotation()}); 
             	item.setText(new String[]{members[1], members[2].equals("default")?"":members[2], defines.length>1?defines[1]:""}); 
+            	
+            	TableEditor editor = new TableEditor(table);
+    			// 设置编辑单元格水平填充
+    			editor.grabHorizontal = true;
+    			
+    			if(tag.equals("enum")) {
+    				Combo combo = new Combo(table, SWT.READ_ONLY);
+    				combo.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+    				if(ranges!=null) {
+    					combo.setItems(ranges.toArray(new String[ranges.size()]));
+    				}
+    				for(int j=0;j<ranges.size();j++) {
+    					if(ranges.get(j).equals(item.getText(1))) {
+    						combo.select(j);
+    						break;
+    					}
+    				}
+    				editor.setEditor(combo, item, 1);
+    				combo.addSelectionListener(new SelectionListener() {
+						
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							// TODO Auto-generated method stub
+							editor.getItem().setText(1, combo.getText());
+						}
+						
+						@Override
+						public void widgetDefaultSelected(SelectionEvent e) {
+							// TODO Auto-generated method stub
+							
+						}
+					});
+    			}else if(tag.equals("select")) {
+        			Text text = new Text(table, SWT.BORDER);
+        			text.setEnabled(false);
+        			editor.setEditor(text, item, 1);
+    			}else{
+    				// 创建一个文本框，用于输入文字
+        			Text text = new Text(table, SWT.BORDER);
+        			text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+        			// 将文本框当前值，设置为表格中的值
+        			text.setText(item.getText(1));
+        			// 关键方法，将编辑单元格与文本框绑定到表格的第一列
+        			editor.setEditor(text, item, 1);
+        			String flag = tag;
+        			List<String> rangesCopy = ranges;      			
+        			// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
+        			text.addModifyListener(new ModifyListener() {
+        				public void modifyText(ModifyEvent e) {
+        					String tempString = text.getText();
+        					IWorkbenchWindow window = PlatformUI.getWorkbench()
+        							.getActiveWorkbenchWindow();
+        					if(flag.equals("int")) {
+        						int min = Integer.parseInt(rangesCopy.get(0));
+        	    				int max = Integer.parseInt(rangesCopy.get(1));
+                				int curNum = Integer.parseInt(tempString);                				
+                				if(curNum<min || curNum>max) {
+                					MessageDialog.openError(window.getShell(), "提示",
+                							"请填写在之"+min+"与"+max+"之间的整数");
+                				}
+                			}else if(flag.equals("string")) {
+                				int min = Integer.parseInt(rangesCopy.get(0));
+                				int max = Integer.parseInt(rangesCopy.get(1));
+                				if(tempString.length()<min || tempString.length()>max) {
+                					MessageDialog.openError(window.getShell(), "提示",
+                							"字符串长度不得小于"+min+"或者大于"+max);
+                				}
+                			} 
+        					editor.getItem().setText(1, text.getText());
+        				}
+
+        			});
+    			}
+    			
         	}	
         }
         	
-        TableItem[] items = table.getItems(); 
-		for (int i = 0; i < items.length; i++) {
-			TableEditor editor = new TableEditor(table);
-			// 设置编辑单元格水平填充
-			editor.grabHorizontal = true;
-			// 创建一个文本框，用于输入文字
-			Text text = new Text(table, SWT.BORDER);
-			text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
-			// 将文本框当前值，设置为表格中的值
-			text.setText(items[i].getText(1));
-			// 关键方法，将编辑单元格与文本框绑定到表格的第一列
-			editor.setEditor(text, items[i], 1);
-			
-			// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
-			text.addModifyListener(new ModifyListener() {
-				public void modifyText(ModifyEvent e) {
-					editor.getItem().setText(1, text.getText());
-				}
-
-			});
-		}
+//        TableItem[] items = table.getItems(); 
+//		for (int i = 0; i < items.length; i++) {
+//			TableEditor editor = new TableEditor(table);
+//			// 设置编辑单元格水平填充
+//			editor.grabHorizontal = true;
+//			// 创建一个文本框，用于输入文字
+//			Text text = new Text(table, SWT.BORDER);
+//			text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+//			// 将文本框当前值，设置为表格中的值
+//			text.setText(items[i].getText(1));
+//			// 关键方法，将编辑单元格与文本框绑定到表格的第一列
+//			editor.setEditor(text, items[i], 1);
+//			
+//			// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
+//			text.addModifyListener(new ModifyListener() {
+//				public void modifyText(ModifyEvent e) {
+//					editor.getItem().setText(1, text.getText());
+//				}
+//
+//			});
+//		}
         
 		return super.createDialogArea(parent);
 	}

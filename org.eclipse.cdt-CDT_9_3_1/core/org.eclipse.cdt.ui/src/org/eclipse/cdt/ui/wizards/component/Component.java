@@ -17,6 +17,7 @@ public class Component {
 	private List<String> dependents = new ArrayList<String>();
 	private List<String> weakDependents = new ArrayList<String>();
 	private List<String> mutexs = new ArrayList<String>();
+	private List<String> excludes = new ArrayList<String>();
 	private InitInfo init;
 
 	public String getParent() {
@@ -25,6 +26,14 @@ public class Component {
 
 	public void setParent(String parent) {
 		this.parent = parent;
+	}
+
+	public List<String> getExcludes() {
+		return excludes;
+	}
+
+	public void setExcludes(List<String> excludes) {
+		this.excludes = excludes;
 	}
 
 	public List<String> getWeakDependents() {

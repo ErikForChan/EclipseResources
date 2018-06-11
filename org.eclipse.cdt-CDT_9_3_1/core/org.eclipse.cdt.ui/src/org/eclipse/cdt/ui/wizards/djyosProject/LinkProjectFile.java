@@ -41,24 +41,16 @@ public class LinkProjectFile {
 			typeNode.setTextContent("2");
 			Node locationURINode = document.createElement("locationURI");
 			String DJYOS_SRC_LOCARION = eclipsePath+"djysrc";
-			if(tag.equals("third")) {
+			if(tag.equals("third") || tag.equals("component") || tag.equals("djyos")) {
 				componentPath = componentPath.substring(DJYOS_SRC_LOCARION.length()+1, componentPath.length());
-				nameNode.setTextContent("src/libos/third/"+componentName);
-				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
-			}else if(tag.equals("component")) {
-				componentPath = componentPath.substring(DJYOS_SRC_LOCARION.length()+1, componentPath.length());
-				nameNode.setTextContent("src/libos/component/"+componentName);
-				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
-			}else if(tag.equals("djyos")) {
-				componentPath = componentPath.substring(DJYOS_SRC_LOCARION.length()+1, componentPath.length());
-				nameNode.setTextContent("src/libos/djyos/"+componentName);
+				nameNode.setTextContent("src/libos/"+tag+"/"+componentName);
 				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
 			}else if(tag.equals("chipdrv")) {
 				componentPath = componentPath.substring(DJYOS_SRC_LOCARION.length()+1, componentPath.length());
-				nameNode.setTextContent("src/libos/bsp/chipdrv/"+componentName);
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+componentName);
 				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
 			}else if(tag.equals("cpudrv")) {
-				nameNode.setTextContent("src/libos/bsp/cpudrv/"+componentName);
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+componentName);
 				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
 			}
 			

@@ -294,7 +294,7 @@ public class ReadComponentXml {
 							newComponent.setGrade(dNode.getTextContent());
 							break;
 						case "dependence":
-							if (!dNode.getTextContent().equals("none")) {
+							if (!dNode.getTextContent().equals("none")) { 
 								newComponent.getDependents().add(dNode.getTextContent());
 							}
 							break;

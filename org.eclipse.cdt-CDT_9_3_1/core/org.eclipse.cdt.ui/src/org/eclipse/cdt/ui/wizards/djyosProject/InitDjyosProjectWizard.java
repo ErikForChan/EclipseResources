@@ -38,6 +38,7 @@ import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.CreateCheckXml;
 import org.eclipse.cdt.ui.wizards.component.InitInfo;
 import org.eclipse.cdt.ui.wizards.component.Parameter;
+import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
@@ -92,14 +93,21 @@ public class InitDjyosProjectWizard extends WizardPage{
 			e.printStackTrace();
 		}
 		defineInit = "";
+		defineInit += "/****************************************************\r\n" + 
+				" *  Automatically-generated file. Do not edit!	*\r\n" + 
+				" ****************************************************/\r\n\n";
 		defineInit += "#ifndef __"+componentName.toUpperCase()
 		+"_CONFIG_H__\r\n" + "#define __"+componentName.toUpperCase()+"_CONFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
 
-		if (component.getConfigure() != null)
-			defineInit += component.getConfigure();
+		String[] defines = component.getConfigure().split("\n");
+		for(int i=0;i<defines.length;i++) {
+			if(defines[i].contains("#define")) {
+				defineInit += defines[i]+"\n";
+			}
+		}
 
-		defineInit += "\n\n#endif";
+		defineInit += "\n#endif";
 		FileWriter writer;
 		try {
 			writer = new FileWriter(path);
@@ -108,18 +116,19 @@ public class InitDjyosProjectWizard extends WizardPage{
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		
+		}		
 	}
 	
 	public void initProject(String path,boolean isIboot) {
 		String content = "";
 		String firstInit = "";
 		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n" + 
-				"\tprintf(\"\\r\\n: info : os starts.\\r\\n\");";
+				"\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
 		String moduleInit = "";
 		String djyMain = "";
-		initHead = "";
+		initHead = "/****************************************************\r\n" + 
+				" *  Automatically-generated file. Do not edit!	*\r\n" + 
+				" ****************************************************/\r\n\n";
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -158,23 +167,22 @@ public class InitDjyosProjectWizard extends WizardPage{
 			}
 			
 			String componentName = compontentsCheckedSort.get(i).getName();
-			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
+			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
 				String filePath = compontentsCheckedSort.get(i).getFileName();
 				initDefineForComponent(path+"/OS_prjcfg/cfg/"+filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length())+"_config.h",compontentsCheckedSort.get(i),filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()));
 			}
 			
 			if(grade!=null && code!=null) {
 				if (grade.equals("main")) {//初始化时机为main
-					djyMain += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings + "\n";
+					djyMain += "\t"+ codeStrings + "\n";
+//					djyMain += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings + "\n";
 				} else if (grade.equals("init")){//初始化时机为init
 					if (componentName.equals("Stdio_KnlInOut")) {
-						firstInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings
-								+ "\n";
+						firstInit += "\t" + codeStrings + "\n";
 					} else if (componentName.equals("Heap_Dynamic")) {
-						lastInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings + "\n";
+						lastInit += "\t" + codeStrings + "\n";
 					} else {
-						moduleInit += "\t//" + compontentsCheckedSort.get(i).getAnnotation() + "\n" + codeStrings
-								+ "\n";
+						moduleInit += "\t" + codeStrings + "\n";
 					}
 				}
 			}
@@ -262,8 +270,10 @@ public class InitDjyosProjectWizard extends WizardPage{
 		mutexText.setText(mutexs);
 		mutexText.setEditable(false);
 		
-		ReadComponentXml rcx = new ReadComponentXml();
-		compontentsList = rcx.getComponents(onBoardCpu,sBoard);//获取cpudrv/src下的组件
+		ReadComponent rc = new ReadComponent();
+//		ReadComponentXml rcx = new ReadComponentXml();
+//		compontentsList = rcx.getComponents(onBoardCpu,sBoard);//获取cpudrv/src下的组件
+		compontentsList = rc.getComponents(onBoardCpu, sBoard);
 		for(int i=0;i<compontentsList.size();i++) {
 			Component component = new Component();
 			component.setName(compontentsList.get(i).getName());
@@ -279,7 +289,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 			component.setSelectable(compontentsList.get(i).getSelectable());
 			component.setParent(compontentsList.get(i).getParent());
 			component.setWeakDependents(compontentsList.get(i).getWeakDependents());
-			
+			component.setExcludes(compontentsList.get(i).getExcludes());
 			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable()+"             getConfigure:  "+component.getConfigure());
 			//当组件为必选且不需要配置时，不显示在界面上
 			if(component.getSelectable().equals("必选") && (component.getConfigure() == null || component.getConfigure().equals(""))) {
@@ -296,7 +306,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 		
 		for(int i=0;i<allCompontents.size();i++) {
 			if(allCompontents.get(i).getAttribute().equals("核心组件")) {
-				System.out.println("核心组件:  "+allCompontents.get(i).getName());
+//				System.out.println("核心组件:  "+allCompontents.get(i).getName());
 				coreComponents.add(allCompontents.get(i));
 			}else if(allCompontents.get(i).getAttribute().equals("bsp组件")) {
 				bspComponents.add(allCompontents.get(i));
@@ -417,15 +427,34 @@ public class InitDjyosProjectWizard extends WizardPage{
 						cmpnts.get(cur).setChecked("true");
 						
 					} else {
-						configBtns[cur].setEnabled(false);
+						
+						List<String> backDepedents = new ArrayList<String>(); 
 						for (int i = 0; i < compontentsChecked.size(); i++) {
-							if (compontentsChecked.get(i).getName().equals(curComponent.getName())) {
-								compontentsChecked.remove(i);
-								break;
+							if(compontentsChecked.get(i).getDependents().contains(curComponent.getName())) {
+								backDepedents.add(compontentsChecked.get(i).getName());
+							}						
+						}
+						if (backDepedents.size() == 0) {
+							for (int i = 0; i < compontentsChecked.size(); i++) {
+								if (compontentsChecked.get(i).getName().equals(curComponent.getName())) {
+									compontentsChecked.remove(i);
+									break;
+								}
 							}
+							configBtns[cur].setEnabled(false);
+							cmpnts.get(cur).setChecked("false");
+						}else {
+							String infos = "";
+							for(String back:backDepedents) {
+								infos+=" "+back;
+							}
+							compontentBtns[cur].setSelection(true);
+							IWorkbenchWindow window = PlatformUI.getWorkbench()
+        							.getActiveWorkbenchWindow();
+							MessageDialog.openError(window.getShell(), "提示",
+        							"该组件被"+infos+" 等已勾选的组件依赖，不可取消勾选");
 						}
 						
-						cmpnts.get(cur).setChecked("false");
 					}
 
 				}
@@ -482,7 +511,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[i].setVisible(false);
 			}
 			cmpnts.add(cmpntCheck);
@@ -525,7 +554,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[preSize+i].setVisible(false);
 			}
 			cmpnts.add(cmpntCheck);
@@ -562,7 +591,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[preSize+i].setVisible(false);
 			}
 			cmpnts.add(cmpntCheck);
@@ -599,7 +628,7 @@ public class InitDjyosProjectWizard extends WizardPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[preSize+i].setVisible(false);
 			}
 			cmpnts.add(cmpntCheck);

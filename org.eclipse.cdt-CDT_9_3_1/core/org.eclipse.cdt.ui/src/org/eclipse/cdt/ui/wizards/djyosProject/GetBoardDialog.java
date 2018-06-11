@@ -213,13 +213,7 @@ public class GetBoardDialog extends StatusDialog {
 	    				.getActiveWorkbenchWindow();
 	        	MessageDialog.openError(window.getShell(), "提示",
 						"请输入正整数");
-	        }else {
-	        	if(! coreClk.equals("")) {
-					coreSelected.setCoreClk(Integer.parseInt(coreClk));
-				}	
-	        }
-			
-			
+	        }			
 	};
 
 //	private Listener boardModifyListener = e -> {
@@ -260,6 +254,7 @@ public class GetBoardDialog extends StatusDialog {
 			MessageDialog.openError(window.getShell(), "提示",
 					"请选择内核时钟");
 		}else {
+			coreSelected.setCoreClk(Integer.parseInt(coreClk));
 			for (int i = 0; i < boardCpusList.size(); i++) {
 				if (boardCpusList.get(i).getCpuName().equals(cpuName)) {
 					defaultCpu = boardCpusList.get(i);

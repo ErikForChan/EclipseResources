@@ -109,7 +109,7 @@ public class ReadCpuXml {
 	public Cpu unitCpu(Cpu cpu,File file) throws Exception {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
 		document = db.parse(file);
-		System.out.println("file.getName():  "+file.getName());
+//		System.out.println("file.getName():  "+file.getName());
 		NodeList nameList = document.getElementsByTagName("cpuName");
 //		org.w3c.dom.Node nameNode = document.getElementsByTagName("name").item(0);
 		for(int i=0;i<nameList.getLength();i++) {
