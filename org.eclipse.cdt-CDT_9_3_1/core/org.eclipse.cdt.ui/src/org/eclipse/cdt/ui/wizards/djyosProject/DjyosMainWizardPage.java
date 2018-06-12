@@ -568,7 +568,7 @@ public class DjyosMainWizardPage extends WizardPage{
 	public IWizardPage getNextPage() {
 		System.out.println("getNextPage DW");
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
-		if(! nmWizard.addedInit) {
+		if(! nmWizard.addedAppCfg && ! nmWizard.addedIbootCfg) {
 			OnBoardCpu onBoardCpu = null;
 			List<OnBoardCpu> onBoardCpus = selectedBoard.getOnBoardCpus();
 			for(int i=0;i<onBoardCpus.size();i++) {
@@ -577,46 +577,24 @@ public class DjyosMainWizardPage extends WizardPage{
 					break;
 				}
 			}
-			nmWizard.initPage = new InitDjyosProjectWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-			nmWizard.initPage.setTitle("Project Tailoring");
-			nmWizard.initPage.setDescription("Tailoring and Configurating the Component");
-			nmWizard.addPage(nmWizard.initPage);
-			nmWizard.addedInit = true;
+			if(haveApp()) {
+				nmWizard.appCfgPage = new AppCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
+				nmWizard.appCfgPage.setTitle("App Tailoring");
+				nmWizard.appCfgPage.setDescription("Tailoring and Configurating the App Component");
+				nmWizard.addPage(nmWizard.appCfgPage);
+				nmWizard.addedAppCfg = true;
+			}else if(haveIboot()) {
+				nmWizard.ibootCfgPage = new IbootCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
+				nmWizard.ibootCfgPage.setTitle("Iboot Tailoring");
+				nmWizard.ibootCfgPage.setDescription("Tailoring and Configurating the Iboot Component");
+				nmWizard.addPage(nmWizard.ibootCfgPage);
+				nmWizard.addedIbootCfg = true;
+			}
+			
 		}else{
 			if(clickedNext) {
 				nmWizard.importTemplate(projectPath);
-//			nmWizard.initPage.moduleCompleted = true;
-		}		
-//		if(! nmWizard.addedMemory) {
-//			System.out.println("nmWizard.addedMemory...");
-//			nmWizard.memoryPage = new MemoryMapWizard("basicMemoryMapPage");
-//			nmWizard.memoryPage.setTitle("Memory Map");
-//			nmWizard.memoryPage.setDescription("Define flash and RAM sizes");
-//			nmWizard.addPage(nmWizard.memoryPage);
-//			nmWizard.addedMemory = true;		
-//		}else {
-//			if(clickedNext) {
-//				nmWizard.importTemplate(projectPath);
-				
-//				final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-//				IProject project = workspace.getRoot().getProject(getProjectNameFieldValue());
-//				String eclipsePath = nmWizard.getEclipsePath();
-//				int index = getTemplateIndex();
-//				String projectPath = locationArea.locationPathField.getText();
-//				if(!projectPath.contains(getProjectName())) {
-//					projectPath = projectPath+"/"+getProjectName();
-//				}
-//				if(index==0) {
-//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
-//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
-//				}else if(index==1) {
-//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/iboot/module-trim.c");
-//				}else if(index==2){
-//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
-//				}else if(index==3){
-//					nmWizard.createModuleTrim(boardModuleTrimPath, projectPath+"/src/app/module-trim.c");
-//				}
-//			}		
+		}				
 		}
 		clickedNext = true;		
 		return super.getNextPage();
@@ -636,6 +614,22 @@ public class DjyosMainWizardPage extends WizardPage{
 		}
 
 		return getProjectNameFieldValue();
+	}
+	
+	public boolean haveIboot() {
+		int index = getTemplateIndex();
+		if (index == 0 || index == 1) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean haveApp() {
+		int index = getTemplateIndex();
+		if(index == 0 || index == 2 || index == 3) {
+			return true;
+		}
+		return false;
 	}
 		
 	public int getTemplateIndex() {

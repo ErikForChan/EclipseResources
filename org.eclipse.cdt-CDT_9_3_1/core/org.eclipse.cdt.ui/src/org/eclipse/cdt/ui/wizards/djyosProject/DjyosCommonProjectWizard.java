@@ -4,23 +4,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileInfo;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -28,13 +19,10 @@ import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
 import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
@@ -44,12 +32,8 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
-import org.eclipse.core.runtime.SubProgressMonitor;
-import org.eclipse.core.runtime.content.IContentType;
-import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.deferred.ChangeQueue.Change;
@@ -60,7 +44,6 @@ import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.WorkspaceModifyDelegatingOperation;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
-import org.eclipse.ui.dialogs.WorkingSetGroup;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.filesystem.FileSystemConfiguration;
@@ -124,38 +107,19 @@ import org.eclipse.cdt.internal.ui.wizards.ICDTCommonProjectWizard;
 public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 {
 	private static final String PREFIX= "CProjectWizard"; //$NON-NLS-1$
-	private static final String OP_ERROR= "CProjectWizard.op_error"; //$NON-5NLS-1$
-	private static final String title= CUIPlugin.getResourceString(OP_ERROR + ".title"); //$NON-NLS-1$
-	private static final String message= CUIPlugin.getResourceString(OP_ERROR + ".message"); //$NON-NLS-1$
-	private static final String[] EMPTY_ARR = new String[0];
 
-	boolean addedMemory = false;
-	boolean addedInit = false;
-	boolean createdProject = false;
-	boolean projectExist = false;
-	protected IConfigurationElement fConfigElement;
+	boolean addedMemory = false,addedAppCfg = false,addedIbootCfg = false,createdProject = false,
+			existingPath = false,projectExist = false;
 	protected DjyosMainWizardPage fMainPage;//主界面
 	protected MemoryMapWizard memoryPage;//Memory向导界面
 	protected ModuleConfigurationWizard modulePage;//Module向导界面
-	protected InitDjyosProjectWizard initPage;//组件配置界面
-	
-	protected IProject newProject;
-	private String wz_title;
-	private String wz_desc;
-
-	private boolean existingPath = false;
-	private String lastProjectName = null;
+	protected AppCompntConfigWizard appCfgPage = null;//app组件配置界面
+	protected IbootCompntConfigWizard ibootCfgPage = null;//iboot组件配置界面
+	private String deapPath,wz_title, wz_desc, lastProjectName,boardModuleTrimPath;
+	private String didePath = getDIDEPath();
 	private URI lastProjectLocation = null;
-	private CWizardHandler savedHandler = null;
-	private WorkingSetGroup workingSetGroup;
-	String boardModuleTrimPath;
-
-	String eclipsePath = getEclipsePath();
 	private IProject curProject;
-
-	public DjyosCommonProjectWizard() {
-		this(Messages.NewModelProjectWizard_0,Messages.NewModelProjectWizard_1);
-	}
+	protected IProject newProject;
 	
 	public Board getBoard() {
 		return fMainPage.getSelectBoard();
@@ -180,10 +144,15 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		fMainPage= new DjyosMainWizardPage(CUIPlugin.getResourceString(PREFIX));
 		fMainPage.setTitle(wz_title);
 		fMainPage.setDescription(wz_desc);
-//		initPage = new InitDjyosProjectWizard("basicModuleCfgPage");
-//		initPage.setTitle("Init Project");
-//		initPage.setDescription("Init the project you are creating");
 		addPage(fMainPage);
+	}
+	
+	public boolean haveIboot() {
+		int index = fMainPage.getTemplateIndex();
+		if (index == 0 || index == 1) {
+			return true;
+		}
+		return false;
 	}
 
 	/*
@@ -209,10 +178,10 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	/*
 	 * 获取当前Eclipse的路径
 	 */
-	public String getEclipsePath() {
+	public String getDIDEPath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
+		String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+		return didePath;
 	}
 	
 	/*
@@ -222,7 +191,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		
 		String projectName = fMainPage.getProjectName();
 		String templateName = getTemplateName();
-		String srcPath = eclipsePath + "demo/" + templateName;
+		String srcPath = didePath + "demo/" + templateName;
 		String destPath = fMainPage.locationArea.locationPathField.getText();
 		if(!destPath.contains(projectName)) {
 			destPath = destPath+"/"+projectName;
@@ -390,7 +359,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	}
 	
 	private String getCpuSrcPath(String cpuName) {
-		String sourcePath = eclipsePath+"djysrc/bsp/cpudrv";
+		String sourcePath = didePath+"djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
 		File[] files = sourceFile.listFiles();
 		String path = null;
@@ -406,8 +375,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		}
 		return path;
 	}
-	
-	private String deapPath = null;
 	
 	public String getDeapPath(File sourceFile,String cpuName) {
 //		System.out.println("sourceFile.getName():  "+sourceFile.getName());
@@ -433,8 +400,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		String _boardName = board.getBoardName();
 		String _cpuName = cpu.getCpuName();
 		String firmwareLib = cpu.getFirmwareLib();
-		String cpudrvPath = eclipsePath+"djysrc/bsp/cpudrv";
-		String boardPath = eclipsePath+"djysrc/bsp/boarddrv";
+		String cpudrvPath = didePath+DjyosMessages.Cpu_RelativePath;
+		String boardPath = didePath+DjyosMessages.Board_RelativePath;
 		File cpudrvFile = new File(cpudrvPath);
 		File[] cpudrvFiles = cpudrvFile.listFiles();
 		
@@ -461,12 +428,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		//修改编译选项的名称
     	for (ICConfigurationDescription cfgDesc : conds) {
 			String s = cfgDesc.getName();
-			if(s.equals("Debug") || s.equals("Release")) {
+			if(s.equals(DjyosMessages.Configuration_Debug) || s.equals(DjyosMessages.Configuration_Release)) {
 				cfgDesc.setName(projectName+"_"+s);
-			}else if(s.equals("libos_demo_o0")) {
-				cfgDesc.setName("libos_Debug");
-			}else if(s.equals("libos_demo_o2")) {
-				cfgDesc.setName("libos_Release");
 			}
 		}
     	
@@ -561,7 +524,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 							getDeapPath(cpudrvFiles[k],_cpuName);
 							if(deapPath != null) {
 								deapPath = deapPath.replace("\\", "/");	
-								String linkString = deapPath.replace(eclipsePath+"djysrc", "${DJYOS_SRC_LOCATION}").replace(_cpuName, "")+"src/"+componentName;
+								String linkString = deapPath.replace(didePath+"djysrc", "${DJYOS_SRC_LOCATION}").replace(_cpuName, "")+"src/"+componentName;
 								links.add(linkString);
 							}
 						}
@@ -597,19 +560,19 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					changeIt(entries,ents,lang);
 				}			
 			}
-			IOption option1 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.architecture");
-			IOption option2 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.family");        				
-			IOption option3 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.abi");
-			IOption option4 = toolchain.getOptionBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit");
+			IOption option1 = toolchain.getOptionBySuperClassId(DjyosMessages.Arch_SuperClassId);
+			IOption option2 = toolchain.getOptionBySuperClassId(DjyosMessages.Family_SuperClassId);        				
+			IOption option3 = toolchain.getOptionBySuperClassId(DjyosMessages.FpuABI_SuperClassId);
+			IOption option4 = toolchain.getOptionBySuperClassId(DjyosMessages.FpuType_SuperClassId);
 			try {
 				option1.setValue(
-						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.arch."+core.getArch());
+						DjyosMessages.Arch_Prefix+core.getArch());
 				option2.setValue(
-						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.mcpu."+core.getFamily());
+						DjyosMessages.Family_Prefix+core.getFamily());
 				option3.setValue(
-						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit."+core.getFloatABI());
+						DjyosMessages.FpuABI_Prefix+core.getFloatABI());
 				option4.setValue(
-						"ilg.gnuarmeclipse.managedbuild.cross.option.arm.target.fpu.unit."+core.getFpuType().replace("-", ""));
+						DjyosMessages.FpuType_Prefix+core.getFpuType().replace("-", ""));
 			} catch (BuildException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -617,7 +580,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		}
 		
 		ReviseVariableToXML rvtx = new ReviseVariableToXML();
-		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+eclipsePath+"djysrc", 
+		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+didePath+"djysrc", 
 				project.getFile(".project"),projectName);
 		ReviseLinkToXML rltx = new ReviseLinkToXML();
 		if(isDemoBoard) {
@@ -650,7 +613,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		getCpuSrcPath(_cpuName);
 		if (deapPath != null) {
 			deapPath = deapPath.replace("\\", "/");
-			cpuLinkString = deapPath.replace(eclipsePath + "djysrc/bsp/cpudrv/", "");
+			cpuLinkString = deapPath.replace(didePath + "djysrc/bsp/cpudrv/", "");
 			rltx.reviseXmlLink("src/libos/bsp/cpudrv", _cpuName, "DJYOS_SRC_LOCATION/bsp/cpudrv",
 					cpuLinkString.replace("/" + _cpuName, ""), project.getFile(".project"), "cpudrv");
 		}
@@ -704,7 +667,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private List<String> getCpuLinkStrings(File file, String _cpuName, List<String> cpuLinkStrings) {
 		// TODO Auto-generated method stub
 		File[] files = file.listFiles();
-		String DJYOS_SRC_LOCARION = eclipsePath+"djysrc";
+		String DJYOS_SRC_LOCARION = didePath+"djysrc";
 		for(int j=0;j<files.length;j++) {
 			String path = files[j].getPath();
 			String relativePath = path.substring(DJYOS_SRC_LOCARION.length(), path.length());
@@ -722,7 +685,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private String getCpuLinkString(File file, String _cpuName, String cpuLinkString) {
 		// TODO Auto-generated method stub
 		File[] files = file.listFiles();
-		String CPUDRV_LOCARION = eclipsePath+"djysrc/cpudrv/";
+		String CPUDRV_LOCARION = didePath+"djysrc/cpudrv/";
 		for(int j=0;j<files.length;j++) {
 			String path = files[j].getPath();
 			String relativePath = path.substring(CPUDRV_LOCARION.length()+4, path.length());
@@ -738,7 +701,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private List<String> getLinkStrings(File file,String _cpuName,String componentName,List<String> linkStrings) {
 		// TODO Auto-generated method stub
 		File[] files = file.listFiles();
-		String DJYOS_SRC_LOCARION = eclipsePath+"djysrc";
+		String DJYOS_SRC_LOCARION = didePath+"djysrc";
 		for(int j=0;j<files.length;j++) {
 			String path = files[j].getPath();
 			String relativePath = path.substring(DJYOS_SRC_LOCARION.length(), path.length());
@@ -753,9 +716,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		return linkStrings;
 	}
 
-	/*
-	 * 拷贝工程到另外一个目录
-	 */
 	private void copyFolder(File src, File dest) throws IOException {  
 	    if (src.isDirectory()) {  
 	        if (!dest.exists()) {  
@@ -784,9 +744,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	    }  
 	}  
 	
-	/*
-	 * 创建meomory.lds文件
-	 */
 	public boolean addMemoryToLds(String content, String path, String projectName) throws IOException {
 
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
@@ -811,21 +768,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		return true;
 	}
 
-	/*
-	 * 创建moduletrim.c文件
-	 */
-	public void createModuleTrim(String boardModuleTrimPath, String destModuleTrimPath) {
-		String fileName = boardModuleTrimPath.substring(boardModuleTrimPath.lastIndexOf("/") + 1,
-				boardModuleTrimPath.length());
-		String moduleTrimPath = destModuleTrimPath + "/" + fileName;
-		File moduleTrim = new File(moduleTrimPath);
-		try {
-			copyFolder(new File(boardModuleTrimPath), new File(destModuleTrimPath));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 	
 	/*
 	 * 获取用户配置的momory信息
@@ -916,12 +858,26 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		
 //		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
 		int index = fMainPage.getTemplateIndex();
-//    	String path = projectPath+"/src/app/OS_prjcfg/cfg/moduleinit.h";
-//    	String pathIboot = projectPath+"/src/iboot/OS_prjcfg/cfg/moduleinit.h";
 		boolean containsPrj = projectPath.contains(projectName);
     	String initCPath = containsPrj?initCPath = projectPath+"/src/app":projectPath+"/"+projectName+"/src/app";
     	String initCPathIboot = containsPrj?projectPath+"/src/iboot": projectPath+"/"+projectName+"/src/iboot";
-    	List<Component> compontentsChecked = initPage.getCompontentsChecked();
+    	List<Component> compontentsChecked = new ArrayList<Component>();
+    	List<Component> appCompontentsChecked = appCfgPage==null?null:appCfgPage.getCompontentsChecked();
+    	List<Component> ibootCompontentsChecked = ibootCfgPage==null?null:ibootCfgPage.getCompontentsChecked();
+    	if(appCompontentsChecked!=null) {
+    		for(Component component:appCompontentsChecked) {
+        		if(! compontentsChecked.contains(component)) {
+        			compontentsChecked.add(component);
+        		}
+        	}
+    	}
+    	if(ibootCompontentsChecked!=null) {
+    		for(Component component:ibootCompontentsChecked) {
+        		if(! compontentsChecked.contains(component)) {
+        			compontentsChecked.add(component);
+        		}
+        	}
+    	}
     	
     	try {
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {
@@ -937,12 +893,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					monitor.worked(20);
 					//生成initPrj.c,initPrj.h,memory.lds文件
 					if(index == 0 || index == 1){
-			    		initPage.initProject(initCPathIboot,true);
+						ibootCfgPage.initProject(initCPathIboot);
 			    		init_projectConfig(initCPathIboot+"/OS_prjcfg/cfg/project_config.h",core);
 			    	}
 					monitor.worked(5);
 			    	if(index == 0 || index == 2 || index == 3){
-			    		initPage.initProject(initCPath,false);
+			    		appCfgPage.initProject(initCPath);
 			    		init_projectConfig(initCPath+"/OS_prjcfg/cfg/project_config.h",core);
 			    	}
 					monitor.worked(5);
@@ -1086,14 +1042,25 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		fMainPage.dispose();
 	}
 
-    @Override
+	@Override
 	public boolean canFinish() {
-    	if(addedInit && !projectExist) {
-    			return true;
-    	}else {
-    		return false;
-    	}
-    }
+		int index = fMainPage.getTemplateIndex();
+		if (index == 1) {
+			if (addedIbootCfg && !projectExist) {
+				return true;
+			}
+		} else if (index == 2 || index == 3) {
+			if (addedAppCfg && !projectExist) {
+				return true;
+			}
+		} else {
+			if (addedAppCfg && addedIbootCfg && !projectExist) {
+				return true;
+			}
+		}
+
+		return false;
+	}
     
     /*
      * 获取当前工程的所有配置项
