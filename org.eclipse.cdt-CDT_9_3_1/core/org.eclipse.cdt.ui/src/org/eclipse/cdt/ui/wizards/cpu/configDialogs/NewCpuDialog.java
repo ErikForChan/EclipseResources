@@ -67,13 +67,17 @@ public class NewCpuDialog extends StatusDialog{
 	private Cpu parentCpu = new Cpu();
 	private Core newCore = new Core();
 	private String curPath = null;
+	private String cpuName;
 	private Text CpuNameField;
 	private String eclipsePath = getEclipsePath();	
 	private List<String> configsList = new ArrayList<String>();
 	private List<String> attributes = new ArrayList<String>();
 	private List<String> firewareLibs = new ArrayList<String>();
 
-
+	public String getCpuName() {
+		return cpuName;
+	}
+	
 	public String getEclipsePath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
@@ -1301,7 +1305,7 @@ public class NewCpuDialog extends StatusDialog{
 	protected void okPressed() {
 		// TODO Auto-generated method stub
 		List<String> cpuPieceNames = null;
-		String cpuName = CpuNameField.getText();
+		cpuName = CpuNameField.getText();
 		if(cpuName.trim().equals("")) {
 			IWorkbenchWindow window = PlatformUI.getWorkbench()
 					.getActiveWorkbenchWindow();

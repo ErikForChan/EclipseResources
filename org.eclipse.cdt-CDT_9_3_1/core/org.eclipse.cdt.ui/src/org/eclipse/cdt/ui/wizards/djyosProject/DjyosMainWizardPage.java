@@ -52,7 +52,6 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.WorkingSetGroup;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
@@ -97,34 +96,27 @@ public class DjyosMainWizardPage extends WizardPage{
 	private static final String ELEMENT_NAME = "wizard"; //$NON-NLS-1$
 	private static final String CLASS_NAME = "class"; //$NON-NLS-1$
 	public static final String DESC = "EntryDescriptor"; //$NON-NLS-1$
-	public String ldsHead = "";
-	public String ldsDesc = "";
+	public String ldsHead = "",ldsDesc = "",
+				  boardModuleTrimPath,projectPath,boardName,initialProjectFieldValue;
 	
 	// Widgets
 	private static IntegerFieldEditor fIbootSize;
 	private static Composite ibootComposite;
-	private Tree tree;
+
 	private Composite right;
+	private Tree tree;
 	private Button showSup;
-	private Label rightLabel;
-	Text fProjectNameField;
-	Text fBoardNameField;
+	private Label rightLabel,categorySelectedLabel;
+	private Text fProjectNameField,fBoardNameField;
+
+	private static Text projectTypeDesc;
 	public CWizardHandler h_selected;
-	private Label categorySelectedLabel;
-	private String initialProjectFieldValue;
-	private WorkingSetGroup workingSetGroup;
-	static Text projectTypeDesc;
 	private static Button[] radioBtns = new Button[4];
-	Combo boardCombo;
-	Board board;
-	String boardName;
-	Cpu selectedCpu;
-	Board selectedBoard;
-	Core selectedCore;
-	String boardModuleTrimPath;
+	private Combo boardCombo;
+	private Board board,selectedBoard;
+	private Cpu selectedCpu,defaultCpu;
+	private Core selectedCore;
 	boolean clickedNext = true;
-	String projectPath;
-	Cpu defaultCpu;
 	
 	public String getBoardName() {
 		return fBoardNameField.getText().trim();
@@ -364,10 +356,7 @@ public class DjyosMainWizardPage extends WizardPage{
 	}
 	
 	public String getLdsHead() {
-		ldsHead += "\n"
-				+ "/*由于MEMORY命令不能使用符号，这些常量的定义，必须与MEMORY命令处一致 */ \n\n"
-				+ "MEMORY\n"
-				+ "{";
+		ldsHead += Lds_Head_Promopt;
 
 		List<OnBoardMemory> onBoardMemorys_ROM = new ArrayList<OnBoardMemory>();
 		List<OnBoardMemory> onBoardMemorys_RAM = new ArrayList<OnBoardMemory>();
@@ -479,18 +468,11 @@ public class DjyosMainWizardPage extends WizardPage{
 		radioGl.verticalSpacing = 20;
 		RADIOCpt.setLayout(radioGl);
 		RADIOCpt.setLayoutData(new GridData(SWT.VERTICAL));
-		String[] templateLabels = { "Iboot And App Project", "Iboot Only Project", "App Project",
-				"Bare App Project" };
+		String[] templateLabels = { DjyosMessages.Iboot_App_Project, DjyosMessages.Iboot_Only_Project, 
+				DjyosMessages.App_Project,DjyosMessages.App_Only_Project };
 
-		String[] templateDescs = {
-				"用于开发iboot和App的工程，App由iboot\n启动，"
-				+ "用于App和iboot由一个团队维护的情况",
-				"用于开发iboot的工程，用于App和iboot由不同"
-				+ "团队维护的情况",
-				"用于开发App的工程，App工程需要输入iboot的尺"
-				+ "寸 用于App和iboot由不同团队维护的情况",
-				"用于开发无需iboot，自启动运行的App工程"
-		};
+		String[] templateDescs = {templateDesc0,templateDesc1,
+				templateDesc2,templateDesc3};
 		for (int i = 0; i < radioBtns.length; i++) {
 			radioBtns[i] = new Button(RADIOCpt, SWT.RADIO | SWT.LEFT);
 			radioBtns[i].setText(templateLabels[i]);
@@ -518,7 +500,7 @@ public class DjyosMainWizardPage extends WizardPage{
 		right.setLayout(layout);
 		right.setLayoutData(new GridData(GridData.FILL_BOTH | SWT.VERTICAL));
 		Label templateLabel = new Label(right, SWT.NONE);
-		templateLabel.setText("Project Tepmlate Description: ");
+		templateLabel.setText(DjyosMessages.Template_Label);
 		projectTypeDesc = new Text(right, SWT.MULTI | SWT.WRAP);
 		projectTypeDesc.setLayoutData(new GridData(GridData.FILL_BOTH));
 		projectTypeDesc.setText(templateDescs[0]);
@@ -532,7 +514,7 @@ public class DjyosMainWizardPage extends WizardPage{
 		gd.marginHeight = 20;
 		ibootComposite.setLayout(gd);
 		ibootComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		fIbootSize= new IntegerFieldEditor(CCorePreferenceConstants.MAX_INDEX_DB_CACHE_SIZE_MB, "Iboot Size: ", ibootComposite, 4);
+		fIbootSize= new IntegerFieldEditor(CCorePreferenceConstants.MAX_INDEX_DB_CACHE_SIZE_MB, DjyosMessages.Ibootsize_Label, ibootComposite, 4);
 		fIbootSize.setValidRange(1, 10000);
 		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
 		ControlFactory.createLabel(group1, "K");
@@ -547,8 +529,8 @@ public class DjyosMainWizardPage extends WizardPage{
 		        if(!isInt) {
 		        	IWorkbenchWindow window = PlatformUI.getWorkbench()
 		    				.getActiveWorkbenchWindow();
-		        	MessageDialog.openError(window.getShell(), "提示",
-							"请输入正整数");
+		        	MessageDialog.openError(window.getShell(), promoteTitle,
+		        			promoteDesc_Int_Data);
 		        }
 			}
 		});
@@ -579,14 +561,14 @@ public class DjyosMainWizardPage extends WizardPage{
 			}
 			if(haveApp()) {
 				nmWizard.appCfgPage = new AppCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-				nmWizard.appCfgPage.setTitle("App Tailoring");
-				nmWizard.appCfgPage.setDescription("Tailoring and Configurating the App Component");
+				nmWizard.appCfgPage.setTitle(DjyosMessages.App_Wizard_Title);
+				nmWizard.appCfgPage.setDescription(DjyosMessages.App_Wizard_Desc);
 				nmWizard.addPage(nmWizard.appCfgPage);
 				nmWizard.addedAppCfg = true;
 			}else if(haveIboot()) {
 				nmWizard.ibootCfgPage = new IbootCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-				nmWizard.ibootCfgPage.setTitle("Iboot Tailoring");
-				nmWizard.ibootCfgPage.setDescription("Tailoring and Configurating the Iboot Component");
+				nmWizard.ibootCfgPage.setTitle(DjyosMessages.Iboot_Wizard_Title);
+				nmWizard.ibootCfgPage.setDescription(DjyosMessages.Iboot_Wizard_Desc);
 				nmWizard.addPage(nmWizard.ibootCfgPage);
 				nmWizard.addedIbootCfg = true;
 			}
@@ -774,4 +756,13 @@ public class DjyosMainWizardPage extends WizardPage{
     public boolean useDefaults() {
 		return locationArea.isDefault();
 	}
+    
+    private String Lds_Head_Promopt = "\n/*由于MEMORY命令不能使用符号，这些常量的定义，必须与MEMORY命令处一致 */ \n\n" + "MEMORY\n"+ "{";
+    private static String templateDesc0 = "用于开发iboot和App的工程，App由iboot\n启动，" + "用于App和iboot由一个团队维护的情况";
+    private static String templateDesc1 = "用于开发iboot的工程，用于App和iboot由不同" + "团队维护的情况";
+    private static String templateDesc2 = "用于开发App的工程，App工程需要输入iboot的尺" + "寸 用于App和iboot由不同团队维护的情况";
+    private static String templateDesc3 = "用于开发无需iboot，自启动运行的App工程";
+    private static String promoteTitle = "提示";
+    private static String promoteDesc_Int_Data = "请输入正整数";
+
 }

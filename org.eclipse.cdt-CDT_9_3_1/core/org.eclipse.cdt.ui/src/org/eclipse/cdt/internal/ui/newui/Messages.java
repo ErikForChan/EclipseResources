@@ -305,13 +305,7 @@ public class Messages extends NLS {
 	public static String SymbolTab_2;
 	public static String SymbolTab_3;
 	public static String WorkingSetConfigAction_21;
-	public static String WorkingSetConfigAction_22;
-	
-	public static String Init_DjyStart;
-	public static String Init_DjyEnd;
-	public static String Init_InitStart;
-	public static String Init_InitEnd;
-	public static String Init_InitHead;
+	public static String WorkingSetConfigAction_22;	
 	
 	static {
 		// Initialize resource bundle.

@@ -119,7 +119,8 @@ public class ConfigComponentDialog extends StatusDialog {
         for(int i=0;i<parametersDefined.length;i++) {
         	
         	String parameter = parametersDefined[i];
-        	if(parameter.contains("//%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum")) {
+        	if(parameter.contains("//%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum")
+        			|| parameter.contains("%$#@select") || parameter.contains("%$#@free")) {
         		if(parameter.contains("//%$#@num")) {
             		tag = "int";
             	}else if(parameter.contains("%$#@string")) {
@@ -149,7 +150,12 @@ public class ConfigComponentDialog extends StatusDialog {
         		item.setImage(image);
         		String[] defines = parameter.trim().split("//");
             	String[] members = defines[0].trim().split("\\s+");
-            	item.setText(new String[]{members[1], members[2].equals("default")?"":members[2], defines.length>1?defines[1]:""}); 
+            	if(members.length>2) {
+            		item.setText(new String[]{members[1], members[2].equals("default")?"":members[2], defines.length>1?defines[1]:""}); 
+            	}else {
+            		item.setText(new String[]{members[1], "", defines.length>1?defines[1]:""}); 
+            	}
+            	
             	
             	TableEditor editor = new TableEditor(table);
     			// 设置编辑单元格水平填充
@@ -185,6 +191,7 @@ public class ConfigComponentDialog extends StatusDialog {
     			}else if(tag.equals("select")) {
         			Text text = new Text(table, SWT.BORDER);
         			text.setEnabled(false);
+        			text.setText("no edit");
         			editor.setEditor(text, item, 1);
     			}else{
     				// 创建一个文本框，用于输入文字

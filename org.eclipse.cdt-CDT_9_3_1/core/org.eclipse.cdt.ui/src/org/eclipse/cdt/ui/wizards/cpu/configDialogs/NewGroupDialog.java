@@ -66,6 +66,7 @@ public class NewGroupDialog extends StatusDialog{
 	private Core newCore = new Core();
 	private Text groupNameField;
 	private String curPath = null;
+	private String groupName;
 	private String eclipsePath = getEclipsePath();
 	
 	private List<String> configsList = new ArrayList<String>();
@@ -80,6 +81,10 @@ public class NewGroupDialog extends StatusDialog{
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		return eclipsePath;
+	}
+	
+	public String getGroupName() {
+		return groupName;
 	}
 	
 	private static class MyFileter implements FilenameFilter {
@@ -1350,7 +1355,7 @@ public class NewGroupDialog extends StatusDialog{
 		/*
 		 * 点击OK后生成新分组和xml文件
 		 */
-		String groupName = groupNameField.getText();
+		groupName = groupNameField.getText();
 		String completeName = "";
 		if(groupName.trim().equals("")) {
 			IWorkbenchWindow window = PlatformUI.getWorkbench()

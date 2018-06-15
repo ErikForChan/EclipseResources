@@ -393,9 +393,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		return deapPath;
 	}
 	
-	/*
-	 * 修改工程的配置信息，通过修改.cproject
-	 */
 	public void handleCProject(List<Component> compontentsChecked,Board board,Cpu cpu,Core core,String projectPath,String projectName) {
 		String _boardName = board.getBoardName();
 		String _cpuName = cpu.getCpuName();
@@ -767,7 +764,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 
 		return true;
 	}
-
 	
 	/*
 	 * 获取用户配置的momory信息

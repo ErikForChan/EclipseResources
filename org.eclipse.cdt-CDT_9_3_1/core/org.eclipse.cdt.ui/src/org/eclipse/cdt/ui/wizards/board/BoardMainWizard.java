@@ -71,43 +71,50 @@ import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
 
 public class BoardMainWizard extends WizardPage{
-	private Tree cpuArhives;
-	private Tree cpuArhivesNeed;
-	private Tree chipTree;
-	private Tree chipOnTree;
-	private Tree cpudrvTree;
-	private Tree cpudrvOnTree;
-	private Tree memoryTree;
-	private Button gotoBtn = null;
-	private Button backBtn = null;
+	
+	private Tree cpuArhives,cpuArhivesNeed, chipTree,chipOnTree,cpudrvTree,
+				cpudrvOnTree,memoryTree;
+	private Button gotoBtn = null,backBtn = null;
 	private Board newBoard = new Board();
 	private List<OnBoardCpu> onBoardCpus = new ArrayList<OnBoardCpu>();
 	private Cpu newCpu;
 	private Component newComponent;
 	private Chip newChip;
-	private Text boardNameField;
+	private Text boardNameField,mainClkField,rtcClkField,addrField,sizeField;
 	private TabFolder folder;
-	private Combo interfaceCombo;
-	private Text mainClkField;
+	private Combo interfaceCombo,memoryTypeCombo;
+	private Label mainClkLabel;
 	private Button rtcClkBtn;
-	private Text rtcClkField;
-	private Combo memoryTypeCombo;
-	private Text addrField;
-	private Text sizeField;
+	private Button addBtn;
+	private Button deleteBtn;
 	
-	private List<Cpu> cpusList = null;
-	private List<Cpu> cpusOn = null;
+	private List<Cpu> cpusList = null,cpusOn = null;
 	private List<Component> peripheralsList = null;//外设列表
 	private List<Component> peripheralsOn = new ArrayList<Component>();//用到的外设
 	private List<Component> allPeripherals = new ArrayList<Component>();//所有外设
-	private List<Chip> chipsList = null;
-	private List<Chip> chipsOn = null;
+	private List<Chip> chipsList = null,chipsOn = null;
 	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
 	private List<Component> thePeripherals;
 	private ReadComponentXml rcx = new ReadComponentXml();	
 	private Composite boardAttributesCpt;
 	private Group ConfigurationGroup;
 	private String eclipsePath = getEclipsePath();
+	
+	private void enableOperate(boolean enable) {
+			mainClkLabel.setEnabled(enable);
+			mainClkField.setEnabled(enable);
+			rtcClkBtn.setEnabled(enable);
+			chipTree.setEnabled(enable);
+			chipOnTree.setEnabled(enable);
+			cpudrvTree.setEnabled(enable);
+			cpudrvOnTree.setEnabled(enable);
+			memoryTree.setEnabled(enable);
+			addrField.setEnabled(enable);
+			sizeField.setEnabled(enable);
+			memoryTypeCombo.setEnabled(enable);
+			addBtn.setEnabled(enable);
+			deleteBtn.setEnabled(enable);
+	}
 	
 	public Board getBoard() {
 		String boardName = boardNameField.getText().trim();
@@ -343,13 +350,11 @@ public class BoardMainWizard extends WizardPage{
 		ConfigurationGroup = ControlFactory.createGroup(parent, "Configurations(Enable for no Cpu Selected)", 1);
 		ConfigurationGroup.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL));
 		ConfigurationGroup.setLayout(new GridLayout());
-		ConfigurationGroup.setEnabled(false);
 		
 		folder= new TabFolder(ConfigurationGroup, SWT.NONE | SWT.H_SCROLL | SWT.V_SCROLL);
 		folder.setLayout(new TabFolderLayout());
 		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
-		folder.setEnabled(false);
-		
+
 		TabItem item= new TabItem(folder, SWT.NONE);
 		item.setText("时钟"); //$NON-NLS-1$
 		item.setControl(createClkContent(folder));
@@ -365,6 +370,8 @@ public class BoardMainWizard extends WizardPage{
 		item= new TabItem(folder, SWT.NONE);
 		item.setText("存储"); //$NON-NLS-1$
 		item.setControl(createMemoryContent(folder));
+		
+		enableOperate(false);
 //		item.setControl(createNewCpuContent(folder));
 		
 //		Composite btnCpt = new Composite(ConfigurationGroup,SWT.NONE); 
@@ -493,9 +500,9 @@ public class BoardMainWizard extends WizardPage{
 		Composite btnCpt = new Composite(treeCpt, SWT.NONE);
 		btnCpt.setLayout(new GridLayout(2,true));
 		btnCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
-		Button addBtn = new Button(btnCpt,SWT.PUSH);
+		addBtn = new Button(btnCpt,SWT.PUSH);
 		addBtn.setText("添加");
-		Button deleteBtn = new Button(btnCpt,SWT.PUSH);
+		deleteBtn = new Button(btnCpt,SWT.PUSH);
 		deleteBtn.setText("删除");
 		
 		addBtn.addSelectionListener(new SelectionListener() {
@@ -708,6 +715,8 @@ public class BoardMainWizard extends WizardPage{
 		goto2Btn.setText("   》》  ");
 		back2Btn = new Button(btnCpt,SWT.PUSH);
 		back2Btn.setText(" 《《    ");
+		goto2Btn.setEnabled(false);
+		back2Btn.setEnabled(false);
 		
 		goto2Btn.addSelectionListener(new SelectionListener() {
 
@@ -899,9 +908,11 @@ public class BoardMainWizard extends WizardPage{
 		btnCpt.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_CENTER));
 		Button goto1Btn,back1Btn;
 		goto1Btn = new Button(btnCpt,SWT.PUSH);
-		goto1Btn.setText("   》》  ");
+		goto1Btn.setText("   》》  ");	
 		back1Btn = new Button(btnCpt,SWT.PUSH);
 		back1Btn.setText(" 《《    ");
+		goto1Btn.setEnabled(false);
+		back1Btn.setEnabled(false);
 		
 		goto1Btn.addSelectionListener(new SelectionListener() {
 			
@@ -1032,7 +1043,7 @@ public class BoardMainWizard extends WizardPage{
 		contentCpt.setLayout(layoutContent);
 		contentCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | SWT.BORDER));
 
-		Label mainClkLabel = new Label(contentCpt, SWT.NONE);
+		mainClkLabel = new Label(contentCpt, SWT.NONE);
 		mainClkLabel.setText("晶振频率: ");
 		mainClkField = new Text(contentCpt, SWT.BORDER);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
@@ -1123,8 +1134,7 @@ public class BoardMainWizard extends WizardPage{
 				if (items.length > 0) {
 					OnBoardCpu onBoardCpu = new OnBoardCpu();
 					String selectCpuName = items[0].getText();
-					ConfigurationGroup.setEnabled(true);
-					folder.setEnabled(true);
+					enableOperate(true);
 					ConfigurationGroup.setText("Configurations for "+selectCpuName);
 					for(int i=0;i<onBoardCpus.size();i++) {
 						if(onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
@@ -1349,8 +1359,7 @@ public class BoardMainWizard extends WizardPage{
 		}
 		if(cpuArhivesNeed.getItems().length == 0) {
 			ConfigurationGroup.setText("Configurations(Enable for no Cpu Selected)");
-			ConfigurationGroup.setEnabled(false);
-			folder.setEnabled(false);
+			enableOperate(false);
 			setErrorMessage("Must Select a Cpu at least");
 			return false;
 		}else {

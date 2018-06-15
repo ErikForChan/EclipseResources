@@ -311,6 +311,7 @@ public class ReadComponentXml {
 						}
 					}
 				}
+				
 				components.add(newComponent);
 			}
 		}	

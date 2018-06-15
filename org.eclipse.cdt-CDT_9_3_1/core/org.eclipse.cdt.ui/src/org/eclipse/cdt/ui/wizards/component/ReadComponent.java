@@ -112,51 +112,57 @@ public class ReadComponent {
 	public List<Component> getComponents(OnBoardCpu onBoardCpu,Board board) {
 		String componentPath = eclipsePath+"djysrc/component";
 		String djyosPath = eclipsePath+"djysrc/djyos";
-		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName()+"/drv";
-		String testPath = eclipsePath+"djysrc/bsp/cpudrv/Atmel/SamV7/src";
-//		componentPaths.add(componentPath);
-//		componentPaths.add(djyosPath);
-//		componentPaths.add(demoPath);
-		componentPaths.add(testPath);
+		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
+		componentPaths.add(componentPath);
+		componentPaths.add(djyosPath);
+		componentPaths.add(demoPath);
 		for(int i=0;i<componentPaths.size();i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			File[] files = sourceFile.listFiles();
 			System.out.println("fileName:   "+sourceFile.getName());
-			for(File file:files) {	
-				
+			for(File file:files) {				
 				if(file.isDirectory()) {
 					traverFiles(file);
+				}else {
+					if(file.getName().endsWith(".c")) {
+						try {
+							getComponent(file);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 		}
 		
-//		// 板载cpu的芯片、cpu的src目录
-//		List<Chip> chips = onBoardCpu.getChips();
-//		List<String> chipNames = new ArrayList<String>();
-//		String cpuSrcPath = getCpuSrcPath(onBoardCpu.getCpuName());
-//		for(int i=0;i<chips.size();i++) {
-//			chipNames.add(chips.get(i).getChipName());
-//		}
-//		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
-//		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
-//		if(chips.size()>0) {
-//			File chipFile = new File(chipPath);
-//			File[] chipfiles = chipFile.listFiles();
-//			for (File file : chipfiles) {
-//				if (file.isDirectory() && chipNames.contains(file.getName())) {
-//					traverFiles(file);
-//				}
-//			}
-//		}
-//		if(cpuSrcPath!= null) {
-//			File cpuFile = new File(cpuSrcPath);
-//			File[] cpufiles = cpuFile.listFiles();
-//			for (File file : cpufiles) {
-//				if (file.isDirectory()) {
-//					traverFiles(file);
-//				}
-//			}
-//		}
+		// 板载cpu的芯片、cpu的src目录
+		List<Chip> chips = onBoardCpu.getChips();
+		List<String> chipNames = new ArrayList<String>();
+		String cpuSrcPath = getCpuSrcPath(onBoardCpu.getCpuName());
+		for(int i=0;i<chips.size();i++) {
+			chipNames.add(chips.get(i).getChipName());
+		}
+		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
+		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
+		if(chips.size()>0) {
+			File chipFile = new File(chipPath);
+			File[] chipfiles = chipFile.listFiles();
+			for (File file : chipfiles) {
+				if (file.isDirectory() && chipNames.contains(file.getName())) {
+					traverFiles(file);
+				}
+			}
+		}
+		if(cpuSrcPath!= null) {
+			File cpuFile = new File(cpuSrcPath);
+			File[] cpufiles = cpuFile.listFiles();
+			for (File file : cpufiles) {
+				if (file.isDirectory()) {
+					traverFiles(file);
+				}
+			}
+		}
 	
 		return components;
 	}
@@ -204,84 +210,102 @@ public class ReadComponent {
 				break;
 			}
 		}
-		
-		for(int i=0;i<allStrings.size();i++) {
-			if(allStrings.get(i).contains("%$#@initcode")) {
-				iStart = i;
-			}else if(allStrings.get(i).contains("%$#@end initcode")){
-				iStop = i;
-			}else if(allStrings.get(i).contains("%$#@describe")){
-				dStart = i;
-			}else if(allStrings.get(i).contains("%$#@end describe")){
-				dStop = i;
-			}else if(allStrings.get(i).contains("%$#@configue")){
-				cStart = i;
-			}else if(allStrings.get(i).contains("%$#@end configue")){
-				cStop = i;
-			}else if(allStrings.get(i).contains("%$#@exclude")){
-				eStart = i;
-			}else if(allStrings.get(i).contains("%$#@end exclude")){
-				eStop = i;
-			}
-		}
-		
-		System.out.println("infos:  " + iStart+"  "+iStop+"  "+dStart+"  "+dStop+"  "+cStart+"  "+cStop+"  "+eStart+"  "+eStop);
-		
-		for(int i=iStart+1;i<iStop;i++) {
-			String initCode = allStrings.get(i).trim().replaceFirst("//", "");
-			if(!initCode.equals("")) {
-				initcodeStrings.add(initCode);
-			}			
-		}
-		for(int i=dStart+1;i<dStop;i++) {
-			describeStrings.add(allStrings.get(i));
-		}
-		for(int i=cStart+1;i<cStop;i++) {
-			String configue = allStrings.get(i).trim();
-			configueStrings.add(allStrings.get(i));	
-		}
-		for(int i=eStart+1;i<eStop;i++) {
-			excludeStrings.add(allStrings.get(i).replaceAll("//../", ""));
-		}
-		
-		newComponent.setCode(listToString(initcodeStrings));
-		newComponent.setConfigure(listToString(configueStrings));
-		 
-		for (String describe : describeStrings) {
-			String[] infos = describe.split("//");
-			if(infos.length>1 && infos[1].trim().contains(":")) {
-				String menbers[] = infos[1].trim().split(":");
-				if (menbers[0].trim().equals("component name")) {
-					newComponent.setName(menbers[1].trim().replace("\"", ""));
-				}else if (menbers[0].trim().equals("parent")) {
-					newComponent.setParent(menbers[1].trim().replace("\"", ""));
-				}else if (menbers[0].trim().equals("annotation")) {
-					newComponent.setAnnotation(menbers[1].trim());
-				}else if (menbers[0].trim().equals("attribute")) {
-					newComponent.setAttribute(menbers[1].trim());
-				}else if (menbers[0].trim().equals("select")) {
-					newComponent.setSelectable(menbers[1].trim());
-				}else if (menbers[0].trim().equals("grade")) {
-					newComponent.setGrade(menbers[1].trim());
-				}else if (menbers[0].trim().equals("dependence")) {
-					newComponent.getDependents().add(menbers[1].trim().replace("\"", ""));
-				}else if (menbers[0].trim().equals("weakdependence")) {
-					newComponent.getWeakDependents().add(menbers[1].trim().replace("\"", ""));
-				}else if (menbers[0].trim().equals("mutex")) {
-					newComponent.getMutexs().add(menbers[1].trim().replace("\"", ""));
-				}
-			}			
-		}
-		
-		for (String exclude : excludeStrings) {
-			System.out.println("exclude:  "+exclude);
-			newComponent.getExcludes().add(exclude);
-		}
-		
+
 		if(allStrings.size() != 0) {
+			for(int i=0;i<allStrings.size();i++) {
+				if(allStrings.get(i).contains("%$#@initcode")) {
+					iStart = i;
+				}else if(allStrings.get(i).contains("%$#@end initcode")){
+					iStop = i;
+				}else if(allStrings.get(i).contains("%$#@describe")){
+					dStart = i;
+				}else if(allStrings.get(i).contains("%$#@end describe")){
+					dStop = i;
+				}else if(allStrings.get(i).contains("%$#@configue")){
+					cStart = i;
+				}else if(allStrings.get(i).contains("%$#@end configue")){
+					cStop = i;
+				}else if(allStrings.get(i).contains("%$#@exclude")){
+					eStart = i;
+				}else if(allStrings.get(i).contains("%$#@end exclude")){
+					eStop = i;
+				}
+			}
+			
+			System.out.println("infos:  " + iStart+"  "+iStop+"  "+dStart+"  "+dStop+"  "+cStart+"  "+cStop+"  "+eStart+"  "+eStop);
+			
+			for(int i=iStart+1;i<iStop;i++) {
+				String initCode = allStrings.get(i).trim().replaceFirst("//", "");
+				if(!initCode.equals("")) {
+					initcodeStrings.add(initCode);
+				}
+			}
+			for(int i=dStart+1;i<dStop;i++) {
+				describeStrings.add(allStrings.get(i));
+			}
+			for(int i=cStart+1;i<cStop;i++) {
+				String configue = allStrings.get(i).trim();
+				configueStrings.add(allStrings.get(i));	
+			}
+			for(int i=eStart+1;i<eStop;i++) {
+				excludeStrings.add(allStrings.get(i).replaceAll("//../", ""));
+			}
+			
+			newComponent.setCode(listToString(initcodeStrings));
+			newComponent.setConfigure(listToString(configueStrings));
+			boolean reach = false;
+			for (String describe : describeStrings) {
+//				if(describe.contains("mutex")) {
+//					describe.replaceAll("依赖", "互斥");
+//					reach = true;
+//				}
+//				if(reach) {
+//					if(describe.contains("如果依赖多个组件")) {
+//						describe.replaceAll("如果依赖多个组件", "如果与多个组件互斥");
+//					}
+//				}
+				
+				String[] infos = describe.split("//");
+				if(infos.length>1 && infos[1].trim().contains(":")) {
+					String menbers[] = infos[1].trim().split(":");
+					if (menbers[0].trim().equals("component name")) {
+						newComponent.setName(menbers[1].trim().replace("\"", ""));
+					}else if (menbers[0].trim().equals("parent")) {
+						newComponent.setParent(menbers[1].trim().replace("\"", ""));
+					}else if (menbers[0].trim().equals("annotation")) {
+						newComponent.setAnnotation(menbers[1].trim());
+					}else if (menbers[0].trim().equals("attribute")) {
+						newComponent.setAttribute(menbers[1].trim());
+					}else if (menbers[0].trim().equals("select")) {
+						newComponent.setSelectable(menbers[1].trim());
+					}else if (menbers[0].trim().equals("grade")) {
+						newComponent.setGrade(menbers[1].trim());
+					}else if (menbers[0].trim().equals("dependence")) {
+						String name = menbers[1].trim().replace("\"", "");
+						if (!name.equals("none")) {
+							newComponent.getDependents().add(menbers[1].trim().replace("\"", ""));
+						}					
+					}else if (menbers[0].trim().equals("weakdependence")) {
+						String name = menbers[1].trim().replace("\"", "");
+						if (!name.equals("none")) {
+							newComponent.getWeakDependents().add(menbers[1].trim().replace("\"", ""));
+						}			
+					}else if (menbers[0].trim().equals("mutex")) {
+						String name = menbers[1].trim().replace("\"", "");
+						if (!name.equals("none")) {
+							newComponent.getMutexs().add(menbers[1].trim().replace("\"", ""));
+						}					
+					}
+				}			
+			}
+			
+			for (String exclude : excludeStrings) {
+				System.out.println("exclude:  "+exclude);
+				newComponent.getExcludes().add(exclude);
+			}
+
 			components.add(newComponent);
-		}
-		
+		}		
 		
 	}
 	

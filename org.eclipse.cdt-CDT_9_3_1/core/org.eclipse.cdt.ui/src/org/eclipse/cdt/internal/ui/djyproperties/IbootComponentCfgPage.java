@@ -51,10 +51,12 @@ import org.eclipse.cdt.ui.wizards.component.CmpntCheck;
 import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.CreateCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadCheckXml;
+import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.ui.wizards.djyosProject.ConfigComponentDialog;
+import org.eclipse.cdt.ui.wizards.djyosProject.DjyosMessages;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
 import org.eclipse.cdt.internal.ui.CPluginImages;
@@ -90,7 +92,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 		return eclipsePath;
 	}
 	
-	public void initDefineForComponent(String path,Component component,String componentName) { 
+	public void initDefineForComponent(String path,Component component) { 
 		File file = new File(path);
 		if (file.exists()) {
 			file.delete();
@@ -102,8 +104,8 @@ public class IbootComponentCfgPage extends PropertyPage{
 			e.printStackTrace();
 		}
 		defineInit = "";
-		defineInit += "#ifndef __"+componentName.toUpperCase()
-		+"_CONFIG_H__\r\n" + "#define __"+componentName.toUpperCase()+"_CONFIG_H__\r\n\n"
+		defineInit += "#ifndef __"+component.getName().toUpperCase()
+		+"_CONFIG_H__\r\n" + "#define __"+component.getName().toUpperCase()+"_CONFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
 
 		if (component.getConfigure() != null)
@@ -124,11 +126,10 @@ public class IbootComponentCfgPage extends PropertyPage{
 	public void initProject(String path) {
 		String content = "";
 		String firstInit = "";
-		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n" + 
-				"\tprintf(\"\\r\\n: info : os starts.\\r\\n\");";
+		String lastInit = DjyosMessages.Automatically_Generated;
 		String moduleInit = "";
 		String djyMain = "";
-		initHead = "";
+		initHead = DjyosMessages.Automatically_Generated;
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -169,7 +170,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 			String componentName = compontentsCheckedSort.get(i).getName();
 			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
 				String filePath = compontentsCheckedSort.get(i).getFileName();
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length())+"_config.h",compontentsCheckedSort.get(i),filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()));
+				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
 			}
 			
 			if(grade!=null && code!=null) {
@@ -457,8 +458,10 @@ public class IbootComponentCfgPage extends PropertyPage{
 			mutexText.setEditable(false);
 
 			getBoardAndCpu();
-			ReadComponentXml rcx = new ReadComponentXml();
-			compontentsList = rcx.getComponents(onBoardCpu,sboard);//获取组件
+//			ReadComponentXml rcx = new ReadComponentXml();
+//			compontentsList = rcx.getComponents(onBoardCpu,sboard);//获取组件
+			ReadComponent rc = new ReadComponent();
+			compontentsList = rc.getComponents(onBoardCpu, sboard);
 			for(int i=0;i<compontentsList.size();i++) {
 				Component component = new Component();
 				component.setName(compontentsList.get(i).getName());
@@ -475,9 +478,8 @@ public class IbootComponentCfgPage extends PropertyPage{
 				component.setParent(compontentsList.get(i).getParent());
 				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 				
-				System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable()+"             getConfigure:  "+component.getConfigure());
 				//当组件为必选且不需要配置时，不显示在界面上
-				if(component.getSelectable().equals("必选") && (component.getConfigure() == null || component.getConfigure().equals(""))) {
+				if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 					compontentsChecked.add(component);
 				}else {
 					allCompontents.add(component);
@@ -658,7 +660,8 @@ public class IbootComponentCfgPage extends PropertyPage{
 		for(int i=0;i<coreComponents.size();i++) {
 			Component component = coreComponents.get(i);
 			compontentBtns[i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[i].setText(component.getName());
+			compontentBtns[i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[i] = new Button(componentCpt,SWT.PUSH);
@@ -674,7 +677,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[i].setVisible(false);
 			}
 			
@@ -703,7 +706,8 @@ public class IbootComponentCfgPage extends PropertyPage{
 		for(int i=0;i<bspComponents.size();i++) {
 			Component component = bspComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -719,7 +723,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[preSize+i].setVisible(false);
 			}
 			
@@ -746,7 +750,8 @@ public class IbootComponentCfgPage extends PropertyPage{
 		for(int i=0;i<thirdComponents.size();i++) {
 			Component component = thirdComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -762,7 +767,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[preSize+i].setVisible(false);
 			}
 			if(cmpntChecks.get(preSize+i).isChecked().equals("true") && !compontentBtns[preSize+i].getSelection()) {
@@ -788,7 +793,8 @@ public class IbootComponentCfgPage extends PropertyPage{
 		for(int i=0;i<userComponents.size();i++) {
 			Component component = userComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -804,7 +810,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 				compontentsChecked.add(component);
 			}
 			String configure  = component.getConfigure();
-			if(configure==null || configure.equals("")) {
+			if(!configure.contains("#define")) {
 				configBtns[preSize+i].setVisible(false);
 			}
 			if(cmpntChecks.get(preSize+i).isChecked().equals("true") && !compontentBtns[preSize+i].getSelection()) {

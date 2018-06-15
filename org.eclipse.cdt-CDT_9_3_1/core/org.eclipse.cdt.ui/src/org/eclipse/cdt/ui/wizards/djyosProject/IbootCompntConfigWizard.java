@@ -41,22 +41,19 @@ import org.eclipse.cdt.internal.ui.CPluginImages;
 public class IbootCompntConfigWizard extends WizardPage{
 	private String depedents = "依赖组件: ";
 	private String mutexs = "互斥组件: ";
-	List<Component> compontentsList = null;
-	List<Component> allCompontents = new ArrayList<Component>();
-	List<Component> compontentsChecked = new ArrayList<Component>();
-	List<Component> compontentsCheckedSort = new ArrayList<Component>();
+	private List<Component> compontentsList = null;
+	private List<Component> allCompontents = new ArrayList<Component>();
+	private List<Component> compontentsChecked = new ArrayList<Component>();
+	private List<Component> compontentsCheckedSort = new ArrayList<Component>();
+	private List<Component> coreComponents = new ArrayList<Component>();
+	private List<Component> bspComponents = new ArrayList<Component>();
+	private List<Component> thirdComponents = new ArrayList<Component>();
+	private List<Component> userComponents = new ArrayList<Component>();
+	private List<CmpntCheck> cmpnts = new ArrayList<CmpntCheck>();
 	private ScrolledComposite scrolledComposite;
-	List<Component> coreComponents = new ArrayList<Component>();
-	List<Component> bspComponents = new ArrayList<Component>();
-	List<Component> thirdComponents = new ArrayList<Component>();
-	List<Component> userComponents = new ArrayList<Component>();
-	List<CmpntCheck> cmpnts = new ArrayList<CmpntCheck>();
-	private Button[] compontentBtns = null;
-	private Button[] configBtns = null;
-	public String moduleInit;
-	public String defineInit;
-	private Text dependentText;
-	private Text mutexText;
+	private Button[] compontentBtns = null,configBtns = null;
+	public String moduleInit, defineInit;
+	private Text dependentText, mutexText;
 	private OnBoardCpu onBoardCpu = null;
 	private Board sBoard = null;
 	
@@ -72,7 +69,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 		return compontentsChecked;
 	}
 	
-	public void initDefineForComponent(String path,Component component,String componentName) { 
+	public void initDefineForComponent(String path,Component component) { 
 		File file = new File(path);
 		if (file.exists()) {
 			file.delete();
@@ -83,12 +80,9 @@ public class IbootCompntConfigWizard extends WizardPage{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		defineInit = "";
-		defineInit += "/****************************************************\r\n" + 
-				" *  Automatically-generated file. Do not edit!	*\r\n" + 
-				" ****************************************************/\r\n\n";
-		defineInit += "#ifndef __"+componentName.toUpperCase()
-		+"_CONFIG_H__\r\n" + "#define __"+componentName.toUpperCase()+"_CONFIG_H__\r\n\n"
+		defineInit = DjyosMessages.Automatically_Generated;
+		defineInit += "#ifndef __"+component.getName().toUpperCase()
+		+"_CONFIG_H__\r\n" + "#define __"+component.getName().toUpperCase()+"_CONFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
 
 		String[] defines = component.getConfigure().split("\n");
@@ -98,7 +92,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			}
 		}
 
-		defineInit += "\n#endif";
+		defineInit += DjyosMessages.Define_Endif;
 		FileWriter writer;
 		try {
 			writer = new FileWriter(path);
@@ -113,13 +107,10 @@ public class IbootCompntConfigWizard extends WizardPage{
 	public void initProject(String path) {
 		String content = "";
 		String firstInit = "";
-		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n" + 
-				"\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
+		String lastInit = DjyosMessages.Init_End_Prompt;
 		String moduleInit = "";
 		String djyMain = "";
-		initHead = "/****************************************************\r\n" + 
-				" *  Automatically-generated file. Do not edit!	*\r\n" + 
-				" ****************************************************/\r\n\n";
+		initHead = DjyosMessages.Automatically_Generated;
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -160,7 +151,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			String componentName = compontentsCheckedSort.get(i).getName();
 			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
 				String filePath = compontentsCheckedSort.get(i).getFileName();
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length())+"_config.h",compontentsCheckedSort.get(i),filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()));
+				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
 			}
 			
 			if(grade!=null && code!=null) {
@@ -268,7 +259,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			component.setExcludes(compontentsList.get(i).getExcludes());
 			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable()+"             getConfigure:  "+component.getConfigure());
 			//当组件为必选且不需要配置时，不显示在界面上
-			if(component.getSelectable().equals("必选") && (component.getConfigure() == null || component.getConfigure().equals(""))) {
+			if(component.getSelectable().equals(SELECT_MUST) && (!component.getConfigure().contains("#define"))) {
 				compontentsChecked.add(component);
 			}else {
 				allCompontents.add(component);
@@ -373,7 +364,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 										compontentBtns[cur].setSelection(false);
 										IWorkbenchWindow window = PlatformUI.getWorkbench()
 												.getActiveWorkbenchWindow();
-										MessageDialog.openError(window.getShell(), "提示",
+										MessageDialog.openError(window.getShell(), promoteTitle,
 												mutex + "组件已勾选，与" + curComponent.getName() + "互斥 ！");
 									}
 									break;
@@ -427,7 +418,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 							compontentBtns[cur].setSelection(true);
 							IWorkbenchWindow window = PlatformUI.getWorkbench()
         							.getActiveWorkbenchWindow();
-							MessageDialog.openError(window.getShell(), "提示",
+							MessageDialog.openError(window.getShell(), promoteTitle,
         							"该组件被"+infos+" 等已勾选的组件依赖，不可取消勾选");
 						}
 						
@@ -471,7 +462,8 @@ public class IbootCompntConfigWizard extends WizardPage{
 		for(int i=0;i<coreComponents.size();i++) {
 			Component component = coreComponents.get(i);
 			compontentBtns[i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[i].setText(component.getName());
+			compontentBtns[i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[i] = new Button(componentCpt,SWT.PUSH);
@@ -479,7 +471,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			configBtns[i].setImage(CPluginImages.CFG_CMPT_VIEW.createImage());
 			configBtns[i].setEnabled(false);//配置按钮默认不可操作
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
-			if(component.getSelectable().equals("必选")) {
+			if(component.getSelectable().equals(SELECT_MUST)) {
 				compontentBtns[i].setSelection(true);
 				cmpntCheck.setChecked("true");
 				compontentBtns[i].setEnabled(false);
@@ -514,7 +506,8 @@ public class IbootCompntConfigWizard extends WizardPage{
 		for(int i=0;i<bspComponents.size();i++) {
 			Component component = bspComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -522,7 +515,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			configBtns[preSize+i].setImage(CPluginImages.CFG_CMPT_VIEW.createImage());
 			configBtns[preSize+i].setEnabled(false);//配置按钮默认不可操作
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
-			if(component.getSelectable().equals("必选")) {
+			if(component.getSelectable().equals(SELECT_MUST)) {
 				compontentBtns[preSize+i].setSelection(true);
 				cmpntCheck.setChecked("true");
 				compontentBtns[preSize+i].setEnabled(false);
@@ -551,7 +544,8 @@ public class IbootCompntConfigWizard extends WizardPage{
 		for(int i=0;i<thirdComponents.size();i++) {
 			Component component = thirdComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -559,7 +553,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			configBtns[preSize+i].setImage(CPluginImages.CFG_CMPT_VIEW.createImage());
 			configBtns[preSize+i].setEnabled(false);//配置按钮默认不可操作
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
-			if(component.getSelectable().equals("必选")) {
+			if(component.getSelectable().equals(SELECT_MUST)) {
 				compontentBtns[preSize+i].setSelection(true);
 				cmpntCheck.setChecked("true");
 				compontentBtns[preSize+i].setEnabled(false);
@@ -588,7 +582,8 @@ public class IbootCompntConfigWizard extends WizardPage{
 		for(int i=0;i<userComponents.size();i++) {
 			Component component = userComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -596,7 +591,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			configBtns[preSize+i].setImage(CPluginImages.CFG_CMPT_VIEW.createImage());
 			configBtns[preSize+i].setEnabled(false);//配置按钮默认不可操作
 			//当组件为必选且且需要配置时，默认尊重该组件，按钮可操作
-			if(component.getSelectable().equals("必选")) {
+			if(component.getSelectable().equals(SELECT_MUST)) {
 				compontentBtns[preSize+i].setSelection(true);
 				cmpntCheck.setChecked("true");
 				compontentBtns[preSize+i].setEnabled(false);
@@ -668,4 +663,6 @@ public class IbootCompntConfigWizard extends WizardPage{
 	String initEnd = "\treturn ;\r\n" + 
 			"}\n\n";
 	String initHead = null;
+	private String SELECT_MUST = "必选";
+	private static String promoteTitle = "提示";
 }

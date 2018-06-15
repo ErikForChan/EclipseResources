@@ -16,6 +16,19 @@ public class DjyosMessages extends NLS{
 	public static String Family_Prefix;
 	public static String FpuABI_Prefix;
 	public static String FpuType_Prefix;
+	public static String Iboot_App_Project;
+	public static String Iboot_Only_Project;
+	public static String App_Only_Project;
+	public static String App_Project;
+	public static String Template_Label;
+	public static String Ibootsize_Label;
+	public static String App_Wizard_Title;
+	public static String Iboot_Wizard_Title;
+	public static String App_Wizard_Desc;
+	public static String Iboot_Wizard_Desc;
+	public static String Automatically_Generated;//
+	public static String Init_End_Prompt;
+	public static String Define_Endif;
 	static {
 		// Initialize resource bundle.
 		NLS.initializeMessages(DjyosMessages.class.getName(), DjyosMessages.class);

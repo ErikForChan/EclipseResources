@@ -44,8 +44,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
@@ -62,6 +65,7 @@ import org.eclipse.cdt.ui.wizards.cpu.configDialogs.NewCpuDialog;
 import org.eclipse.cdt.ui.wizards.cpu.configDialogs.NewGroupDialog;
 import org.eclipse.cdt.ui.wizards.cpu.configDialogs.ResetConfigurationDialog;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
 import org.eclipse.cdt.internal.ui.CPluginImages;
@@ -81,13 +85,34 @@ public class CpuMainWiazrdPage extends WizardPage{
 	private ReadCpuXml rcx = new ReadCpuXml();
 	private Cpu cpu = new Cpu();
 	private Tree tree;
-	private Text configInfoText = null;
+//	private Text configInfoText = null;
+	private MenuItem newGroupItem,newCpuItem;
+	private Group contentGroup;
 	
 	protected CpuMainWiazrdPage(String pageName) {
 		super(pageName);
 		// TODO Auto-generated constructor stub
 		setPageComplete(true);
 	}	
+	
+	public void initPopup(){
+        Menu menu=new Menu(tree);
+        newGroupItem=new MenuItem(menu,SWT.PUSH);
+        newGroupItem.setText("新建分组");
+        newGroupItem.setImage(CPluginImages.DESC_GROUP_VIEW.createImage());
+        newCpuItem=new MenuItem(menu,SWT.PUSH);
+        newCpuItem.setText("新建CPU");
+        newCpuItem.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
+//        MenuItem newMemberItem=new MenuItem(menu, SWT.PUSH);
+//        
+//        newMemberItem.setText("新增员工");
+//        MenuItem editItem=new MenuItem(menu,SWT.PUSH);
+//        editItem.setText("编辑");
+//        MenuItem deleteItem=new MenuItem(menu, SWT.PUSH);
+//        
+//        deleteItem.setText("删除");
+        tree.setMenu(menu);
+    }
 	
 	@Override
 	public void createControl(Composite parent) {
@@ -126,7 +151,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 		
 		Composite contentCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout contentLayout = new GridLayout();
-		contentLayout.numColumns = 3;
+		contentLayout.numColumns = 2;
 		contentCpt.setLayout(contentLayout);
 		contentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
@@ -136,21 +161,28 @@ public class CpuMainWiazrdPage extends WizardPage{
 		tree = new Tree(sourceTreeCpt, SWT.BORDER);
 		tree.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-		Text configInfoText = new Text(contentCpt, SWT.MULTI | SWT.WRAP);
-		configInfoText.setText(descTitle);
-		configInfoText.setLayoutData(new GridData(GridData.FILL_BOTH));
+		initPopup();
 		
-		Composite btnCpt = new Composite(contentCpt, SWT.NULL);
-		GridLayout btnLayout = new GridLayout();
-		btnLayout.numColumns = 1;
-		btnLayout.verticalSpacing = 10;
-		btnCpt.setLayout(btnLayout);
+		contentGroup = ControlFactory.createGroup(contentCpt, descTitle, 1);
+		contentGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		contentGroup.setLayout(new GridLayout());
+		
+//		Text configInfoText = new Text(contentCpt, SWT.MULTI | SWT.WRAP);
+//		configInfoText.setText(descTitle);
+//		configInfoText.setLayoutData(new GridData(GridData.FILL_BOTH));
+//		configInfoText.setEditable(false);
+		
+//		Composite btnCpt = new Composite(contentCpt, SWT.NULL);
+//		GridLayout btnLayout = new GridLayout();
+//		btnLayout.numColumns = 1;
+//		btnLayout.verticalSpacing = 10;
+//		btnCpt.setLayout(btnLayout);
 
-		Button addGroupBtn = new Button(btnCpt,SWT.PUSH);
-		addGroupBtn.setText("添加分组");
-		addGroupBtn.setImage(CPluginImages.DESC_GROUP_VIEW.createImage());
+//		Button addGroupBtn = new Button(btnCpt,SWT.PUSH);
+//		addGroupBtn.setText("添加分组");
+//		addGroupBtn.setImage(CPluginImages.DESC_GROUP_VIEW.createImage());
 
-		addGroupBtn.addSelectionListener(new SelectionListener() {
+		newGroupItem.addSelectionListener(new SelectionListener() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -175,6 +207,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				}
 				NewGroupDialog dialog = new NewGroupDialog(getShell(),configs,cpu,curFilePath);
 				if (dialog.open() == Window.OK) {
+					String newFileName = dialog.getGroupName();
 					final TreeItem root = items[0];
 					root.removeAll();
 					File file = (File) root.getData();
@@ -191,6 +224,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 									// 叶子节点对应的数值为相应文件夹的File对象
 									item.setData(files[i]);
 									new TreeItem(item, 0);
+									if(files[i].getName().equals(newFileName)) {
+										tree.select(item);
+									}
+									
 								}
 						}
 					}
@@ -204,12 +241,12 @@ public class CpuMainWiazrdPage extends WizardPage{
 				
 			}
 		});
-		addGroupBtn.setEnabled(false);
+//		addGroupBtn.setEnabled(false);
 	
-		Button addCpuBtn = new Button(btnCpt,SWT.PUSH);
-		addCpuBtn.setText("添加CPU");
-		addCpuBtn.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
-		addCpuBtn.addSelectionListener(new SelectionListener() {
+//		Button addCpuBtn = new Button(btnCpt,SWT.PUSH);
+//		addCpuBtn.setText("添加CPU");
+//		addCpuBtn.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
+		newCpuItem.addSelectionListener(new SelectionListener() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -236,6 +273,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				
 				NewCpuDialog dialog = new NewCpuDialog(getShell(),configs,cpu,curFilePath);
 				if (dialog.open() == Window.OK) {
+					String newFileName = dialog.getCpuName();
 					final TreeItem root = items[0];
 					root.removeAll();
 					File file = (File) root.getData();
@@ -253,6 +291,9 @@ public class CpuMainWiazrdPage extends WizardPage{
 									// 叶子节点对应的数值为相应文件夹的File对象
 									item.setData(files[i]);
 									new TreeItem(item, 0);
+									if(files[i].getName().equals(newFileName)) {
+										tree.select(item);
+									}
 								}
 						}
 					}
@@ -265,55 +306,55 @@ public class CpuMainWiazrdPage extends WizardPage{
 				
 			}
 		});
-		addCpuBtn.setEnabled(false);
+//		addCpuBtn.setEnabled(false);
 		
-		Button configBtn = new Button(btnCpt,SWT.PUSH);
-		configBtn.setText("重设配置");
-		configBtn.setImage(CPluginImages.CFG_REVISE_VIEW.createImage());
-		configBtn.setVisible(false);
-		configBtn.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				List<String> configs = null;
-				cpu = new Cpu();
-				TreeItem[] items = tree.getSelection();
-				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
-				boolean isGroup = false;
-				
-				if(items.length>0) {
-					File curFile = new File(curFilePath);//当前选中文件
-					File xmlParentFile = getXmlFile(curFile);	
-					if(xmlParentFile!=null) {
-						if(xmlParentFile.getName().contains("group")) {
-							isGroup = true;
-						}
-						try {
-							rcx.unitCpu(cpu,xmlParentFile);
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}					
-					}
-					traverseParents(curFile);		
-					configs = getConfigs(cpu,false);
-				}
-				
-				ResetConfigurationDialog dialog = new ResetConfigurationDialog(getShell(),configs,cpu,curFilePath,isGroup);
-				if (dialog.open() == Window.OK) {
-					
-				}
-				
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-		configBtn.setEnabled(false);
+//		Button configBtn = new Button(btnCpt,SWT.PUSH);
+//		configBtn.setText("重设配置");
+//		configBtn.setImage(CPluginImages.CFG_REVISE_VIEW.createImage());
+//		configBtn.setVisible(false);
+//		configBtn.addSelectionListener(new SelectionListener() {
+//			
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				List<String> configs = null;
+//				cpu = new Cpu();
+//				TreeItem[] items = tree.getSelection();
+//				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+//				boolean isGroup = false;
+//				
+//				if(items.length>0) {
+//					File curFile = new File(curFilePath);//当前选中文件
+//					File xmlParentFile = getXmlFile(curFile);	
+//					if(xmlParentFile!=null) {
+//						if(xmlParentFile.getName().contains("group")) {
+//							isGroup = true;
+//						}
+//						try {
+//							rcx.unitCpu(cpu,xmlParentFile);
+//						} catch (Exception e1) {
+//							// TODO Auto-generated catch block
+//							e1.printStackTrace();
+//						}					
+//					}
+//					traverseParents(curFile);		
+//					configs = getConfigs(cpu,false);
+//				}
+//				
+//				ResetConfigurationDialog dialog = new ResetConfigurationDialog(getShell(),configs,cpu,curFilePath,isGroup);
+//				if (dialog.open() == Window.OK) {
+//					
+//				}
+//				
+//			}
+//			
+//			@Override
+//			public void widgetDefaultSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//		});
+//		configBtn.setEnabled(false);
 
 		File file = new File(eclipsePath + "djysrc\\bsp");
 		File[] roots = file.listFiles();
@@ -505,25 +546,29 @@ public class CpuMainWiazrdPage extends WizardPage{
 				if ((item != null) && (item.getData() != null)) {
 					File file = new File(item.getData().toString()); 
 					if(file.isDirectory()) {
-						addGroupBtn.setEnabled(true);
-						addCpuBtn.setEnabled(true);
+						newGroupItem.setEnabled(true);
+						newCpuItem.setEnabled(true);
+//						addGroupBtn.setEnabled(true);
+//						addCpuBtn.setEnabled(true);
 						File[] files = file.listFiles();
 						boolean configed = false;
 						for(int i=0;i<files.length;i++) {
 							if(files[i].getName().endsWith(".xml")) {
-								configBtn.setEnabled(true);
+//								configBtn.setEnabled(true);
 								configed = true;
 								descTitleChang="分组("+item.getText()+")描述：";
 								if(! files[i].getName().contains("group")) {
-									addGroupBtn.setEnabled(false);
-									addCpuBtn.setEnabled(false);
+//									addGroupBtn.setEnabled(false);
+									newGroupItem.setEnabled(false);
+									newCpuItem.setEnabled(false);
+//									addCpuBtn.setEnabled(false);
 									descTitleChang="Cpu("+item.getText()+")描述：";
 								}
 								break;
 							}
 						}
 						if(!configed) {
-							configBtn.setEnabled(false);
+//							configBtn.setEnabled(false);
 						}
 						
 						cpu = new Cpu();
@@ -565,12 +610,13 @@ public class CpuMainWiazrdPage extends WizardPage{
 						}
 						//显示当前选中分组/Cpu的配置信息
 						if(descTitleChang!=null) {
-							configInfoText.setText(descTitleChang
+							contentGroup.setText(descTitleChang
 									+ descContent);
 						}	
 
 					} else {
-						addCpuBtn.setEnabled(false);
+//						addCpuBtn.setEnabled(false);
+						newCpuItem.setEnabled(false);
 					}
 				}
 				

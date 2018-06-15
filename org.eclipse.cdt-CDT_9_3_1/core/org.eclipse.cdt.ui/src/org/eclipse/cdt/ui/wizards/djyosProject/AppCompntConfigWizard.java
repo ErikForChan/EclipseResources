@@ -14,6 +14,8 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
@@ -81,7 +83,7 @@ public class AppCompntConfigWizard extends WizardPage{
 		return compontentsChecked;
 	}
 	
-	public void initDefineForComponent(String path,Component component,String componentName) { 
+	public void initDefineForComponent(String path,Component component) { 
 		File file = new File(path);
 		if (file.exists()) {
 			file.delete();
@@ -92,12 +94,9 @@ public class AppCompntConfigWizard extends WizardPage{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		defineInit = "";
-		defineInit += "/****************************************************\r\n" + 
-				" *  Automatically-generated file. Do not edit!	*\r\n" + 
-				" ****************************************************/\r\n\n";
-		defineInit += "#ifndef __"+componentName.toUpperCase()
-		+"_CONFIG_H__\r\n" + "#define __"+componentName.toUpperCase()+"_CONFIG_H__\r\n\n"
+		defineInit = DjyosMessages.Automatically_Generated;
+		defineInit += "#ifndef __"+component.getName().toUpperCase()
+		+"_CONFIG_H__\r\n" + "#define __"+component.getName().toUpperCase()+"_CONFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
 
 		String[] defines = component.getConfigure().split("\n");
@@ -126,9 +125,7 @@ public class AppCompntConfigWizard extends WizardPage{
 				"\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
 		String moduleInit = "";
 		String djyMain = "";
-		initHead = "/****************************************************\r\n" + 
-				" *  Automatically-generated file. Do not edit!	*\r\n" + 
-				" ****************************************************/\r\n\n";
+		initHead = DjyosMessages.Automatically_Generated;
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -169,7 +166,8 @@ public class AppCompntConfigWizard extends WizardPage{
 			String componentName = compontentsCheckedSort.get(i).getName();
 			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
 				String filePath = compontentsCheckedSort.get(i).getFileName();
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length())+"_config.h",compontentsCheckedSort.get(i),filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()));
+				//filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()
+				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
 			}
 			
 			if(grade!=null && code!=null) {
@@ -253,11 +251,11 @@ public class AppCompntConfigWizard extends WizardPage{
 		mutexText = new Text(aboveCpt, SWT.MULTI | SWT.WRAP);
 		mutexText.setLayoutData(depedentData);
 		mutexText.setText(mutexs);
-		mutexText.setEditable(false);
+		mutexText.setEditable(false);	
 		
-		ReadComponent rc = new ReadComponent();
 //		ReadComponentXml rcx = new ReadComponentXml();
 //		compontentsList = rcx.getComponents(onBoardCpu,sBoard);//获取cpudrv/src下的组件
+		ReadComponent rc = new ReadComponent();
 		compontentsList = rc.getComponents(onBoardCpu, sBoard);
 		for(int i=0;i<compontentsList.size();i++) {
 			Component component = new Component();
@@ -275,9 +273,9 @@ public class AppCompntConfigWizard extends WizardPage{
 			component.setParent(compontentsList.get(i).getParent());
 			component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 			component.setExcludes(compontentsList.get(i).getExcludes());
-			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable()+"             getConfigure:  "+component.getConfigure());
+			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable());
 			//当组件为必选且不需要配置时，不显示在界面上
-			if(component.getSelectable().equals("必选") && (component.getConfigure() == null || component.getConfigure().equals(""))) {
+			if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 				compontentsChecked.add(component);
 			}else {
 				allCompontents.add(component);
@@ -480,7 +478,8 @@ public class AppCompntConfigWizard extends WizardPage{
 		for(int i=0;i<coreComponents.size();i++) {
 			Component component = coreComponents.get(i);
 			compontentBtns[i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[i].setText(component.getName());
+			compontentBtns[i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[i] = new Button(componentCpt,SWT.PUSH);
@@ -523,7 +522,8 @@ public class AppCompntConfigWizard extends WizardPage{
 		for(int i=0;i<bspComponents.size();i++) {
 			Component component = bspComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -560,7 +560,8 @@ public class AppCompntConfigWizard extends WizardPage{
 		for(int i=0;i<thirdComponents.size();i++) {
 			Component component = thirdComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -597,7 +598,8 @@ public class AppCompntConfigWizard extends WizardPage{
 		for(int i=0;i<userComponents.size();i++) {
 			Component component = userComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
-			compontentBtns[preSize+i].setText(component.getName());
+			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
 			configBtns[preSize+i] = new Button(componentCpt,SWT.PUSH);
@@ -645,9 +647,9 @@ public class AppCompntConfigWizard extends WizardPage{
 						curComponent = userComponents.get(k-preSize);
 					}
 					
-					if(curComponent.getDependents().size()!=0) {
-						getAllDependents(curComponent,allDeps);
-					}
+//					if(curComponent.getDependents().size()!=0) {
+//						getAllDependents(curComponent,allDeps);
+//					}
 					if(!compontentBtns[k].getSelection()) {
 						compontentBtns[k].setSelection(true);
 						cmpnts.get(k).setChecked("true");
