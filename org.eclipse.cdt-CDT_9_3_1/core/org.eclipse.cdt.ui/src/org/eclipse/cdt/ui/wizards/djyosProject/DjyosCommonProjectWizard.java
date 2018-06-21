@@ -802,42 +802,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		lastProjectName = null;
 		lastProjectLocation = null;
 	}
-	/*
-	 * 点击 finish后生成工程配置文件
-	 */
-	private void init_projectConfig(String path,Core core) {
-		String defineInit = "";
-		File file = new File(path);
-		if(file.exists()) {
-			file.delete();	
-		}
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
-		
-		defineInit += "/****************************************************\r\n" + 
-				" *  Automatically-generated file. Do not edit!	*\r\n" + 
-				" ****************************************************/\r\n\n";
-		
-		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
-				+ "#include \"stdint.h\"\n\n";
-		defineInit += String.format("%-9s", "#define")+String.format("%-32s","#define CFG_CORE_MCLK")+String.format("%-18s", "("+core.getCoreClk()+"*Mhz)")+"//主频，内核要用，必须定义";
-		defineInit += "\n\n#endif";
-		
-		FileWriter writer;
-		try {
-			writer = new FileWriter(path);
-			writer.write(defineInit);
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-	}
 
 	@Override
 	public boolean performFinish() {
@@ -890,12 +854,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					//生成initPrj.c,initPrj.h,memory.lds文件
 					if(index == 0 || index == 1){
 						ibootCfgPage.initProject(initCPathIboot);
-			    		init_projectConfig(initCPathIboot+"/OS_prjcfg/cfg/project_config.h",core);
+						ibootCfgPage.creatProjectConfiure(initCPathIboot+"/OS_prjcfg/project_config.h",core);
 			    	}
 					monitor.worked(5);
 			    	if(index == 0 || index == 2 || index == 3){
 			    		appCfgPage.initProject(initCPath);
-			    		init_projectConfig(initCPath+"/OS_prjcfg/cfg/project_config.h",core);
+			    		appCfgPage.creatProjectConfiure(initCPath+"/OS_prjcfg/project_config.h",core);
 			    	}
 					monitor.worked(5);
 					monitor.done();

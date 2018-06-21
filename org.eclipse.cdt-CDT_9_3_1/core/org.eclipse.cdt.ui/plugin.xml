@@ -464,7 +464,7 @@
             class="org.eclipse.cdt.ui.wizards.cpu.CpuWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
-            icon="icons/ovr16/cpu_icon.gif"
+            icon="icons/ovr16/cpu_img.gif"
             id="org.eclipse.cdt.ui.wizards.NewCWizard4"
             name="%Cpu.title"
             project="true">
@@ -479,7 +479,7 @@
             class="org.eclipse.cdt.ui.wizards.board.BoardWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
-            icon="icons/ovr16/board_icon.gif"
+            icon="icons/ovr16/board_img.gif"
             id="org.eclipse.cdt.ui.wizards.NewCWizard5"
             name = "%Board.title"
             project="true">

@@ -232,7 +232,7 @@ public class ReadComponent {
 				}
 			}
 			
-			System.out.println("infos:  " + iStart+"  "+iStop+"  "+dStart+"  "+dStop+"  "+cStart+"  "+cStop+"  "+eStart+"  "+eStop);
+//			System.out.println("infos:  " + iStart+"  "+iStop+"  "+dStart+"  "+dStop+"  "+cStart+"  "+cStop+"  "+eStart+"  "+eStop);
 			
 			for(int i=iStart+1;i<iStop;i++) {
 				String initCode = allStrings.get(i).trim().replaceFirst("//", "");

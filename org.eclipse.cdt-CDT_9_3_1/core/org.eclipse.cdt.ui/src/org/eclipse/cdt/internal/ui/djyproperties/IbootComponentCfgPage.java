@@ -55,6 +55,7 @@ import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.djyosProject.ConfigComponentDialog;
 import org.eclipse.cdt.ui.wizards.djyosProject.DjyosMessages;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
@@ -92,7 +93,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 		return eclipsePath;
 	}
 	
-	public void initDefineForComponent(String path,Component component) { 
+	public void creatProjectConfiure(String path,Core core){
 		File file = new File(path);
 		if (file.exists()) {
 			file.delete();
@@ -103,15 +104,26 @@ public class IbootComponentCfgPage extends PropertyPage{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		defineInit = "";
-		defineInit += "#ifndef __"+component.getName().toUpperCase()
-		+"_CONFIG_H__\r\n" + "#define __"+component.getName().toUpperCase()+"_CONFIG_H__\r\n\n"
+		defineInit = DjyosMessages.Automatically_Generated;
+		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
-
-		if (component.getConfigure() != null)
-			defineInit += component.getConfigure();
-
+		for(int i=0;i<compontentsCheckedSort.size();i++) {		
+			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
+				defineInit += "//******************************* Configure "+compontentsCheckedSort.get(i).getName()+
+												" ******************************************//\n";
+				String filePath = compontentsCheckedSort.get(i).getFileName();
+				String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
+				for(int j=0;j<configures.length;j++) {
+					if(configures[j].contains("#define")) {
+						defineInit += configures[j]+"\n";
+					}
+				}
+			}		
+		}
+		defineInit += "//******************************* Core Clock ******************************************//\n";
+		defineInit += String.format("%-9s", "#define")+String.format("%-32s","CFG_CORE_MCLK")+String.format("%-18s", "("+core.getCoreClk()+"*Mhz)")+"//主频，内核要用，必须定义";
 		defineInit += "\n\n#endif";
+		
 		FileWriter writer;
 		try {
 			writer = new FileWriter(path);
@@ -168,10 +180,10 @@ public class IbootComponentCfgPage extends PropertyPage{
 			}
 			
 			String componentName = compontentsCheckedSort.get(i).getName();
-			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
-				String filePath = compontentsCheckedSort.get(i).getFileName();
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
-			}
+//			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
+//				String filePath = compontentsCheckedSort.get(i).getFileName();
+//				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
+//			}
 			
 			if(grade!=null && code!=null) {
 				if (grade.equals("main")) {//初始化时机为main
@@ -226,7 +238,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 		compontentsChecked = new ArrayList<Component>();
 		for(int i=0;i<compontentsList.size();i++) {
 			//当组件为必选且不需要配置时，不显示在界面上
-			if(compontentsList.get(i).getSelectable().equals("必选") && (compontentsList.get(i).getConfigure() == null || compontentsList.get(i).getConfigure().equals(""))) {
+			if(compontentsList.get(i).getSelectable().equals("必选") && (!compontentsList.get(i).getConfigure().contains("#define"))) {
 				compontentsChecked.add(compontentsList.get(i));
 			}
 		}
@@ -847,9 +859,9 @@ public class IbootComponentCfgPage extends PropertyPage{
 						curComponent = userComponents.get(k-preSize);
 					}
 					
-					if(curComponent.getDependents().size()!=0) {
-						getAllDependents(curComponent,allDeps);
-					}
+//					if(curComponent.getDependents().size()!=0) {
+//						getAllDependents(curComponent,allDeps);
+//					}
 					if(!compontentBtns[k].getSelection()) {
 						compontentBtns[k].setSelection(true);
 						cmpnts.get(k).setChecked("true");

@@ -43,6 +43,7 @@ import org.eclipse.cdt.ui.wizards.component.InitInfo;
 import org.eclipse.cdt.ui.wizards.component.Parameter;
 import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
 import org.eclipse.cdt.internal.ui.CPluginImages;
@@ -83,7 +84,7 @@ public class AppCompntConfigWizard extends WizardPage{
 		return compontentsChecked;
 	}
 	
-	public void initDefineForComponent(String path,Component component) { 
+	public void creatProjectConfiure(String path,Core core){
 		File file = new File(path);
 		if (file.exists()) {
 			file.delete();
@@ -95,18 +96,28 @@ public class AppCompntConfigWizard extends WizardPage{
 			e.printStackTrace();
 		}
 		defineInit = DjyosMessages.Automatically_Generated;
-		defineInit += "#ifndef __"+component.getName().toUpperCase()
-		+"_CONFIG_H__\r\n" + "#define __"+component.getName().toUpperCase()+"_CONFIG_H__\r\n\n"
+		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
-
-		String[] defines = component.getConfigure().split("\n");
-		for(int i=0;i<defines.length;i++) {
-			if(defines[i].contains("#define")) {
-				defineInit += defines[i]+"\n";
-			}
+		for(int i=0;i<compontentsCheckedSort.size();i++) {		
+			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
+				defineInit += "//******************************* Configure "+compontentsCheckedSort.get(i).getName()+
+												" ******************************************//\n";
+				String filePath = compontentsCheckedSort.get(i).getFileName();
+				//filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()
+//				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
+				String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
+				for(int j=0;j<configures.length;j++) {
+					if(configures[j].contains("#define")) {
+						defineInit += configures[j]+"\n";
+					}
+				}
+//				defineInit += compontentsCheckedSort.get(i).getConfigure()+"\n";
+			}		
 		}
-
-		defineInit += "\n#endif";
+		defineInit += "//******************************* Core Clock ******************************************//\n";
+		defineInit += String.format("%-9s", "#define")+String.format("%-32s","CFG_CORE_MCLK")+String.format("%-18s", "("+core.getCoreClk()+"*Mhz)")+"//主频，内核要用，必须定义";
+		defineInit += "\n\n#endif";
+		
 		FileWriter writer;
 		try {
 			writer = new FileWriter(path);
@@ -115,7 +126,7 @@ public class AppCompntConfigWizard extends WizardPage{
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}		
+		}	
 	}
 	
 	public void initProject(String path) {
@@ -164,11 +175,6 @@ public class AppCompntConfigWizard extends WizardPage{
 			}
 			
 			String componentName = compontentsCheckedSort.get(i).getName();
-			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
-				String filePath = compontentsCheckedSort.get(i).getFileName();
-				//filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
-			}
 			
 			if(grade!=null && code!=null) {
 				if (grade.equals("main")) {//初始化时机为main
@@ -670,8 +676,8 @@ public class AppCompntConfigWizard extends WizardPage{
 		if(! nmWizard.addedIbootCfg) {
 			if(nmWizard.haveIboot()){
 				nmWizard.ibootCfgPage = new IbootCompntConfigWizard("basicModuleCfgPage",onBoardCpu,sBoard);
-				nmWizard.ibootCfgPage.setTitle("Iboot Tailoring");
-				nmWizard.ibootCfgPage.setDescription("Tailoring and Configurating the Iboot Component");
+				nmWizard.ibootCfgPage.setTitle("Iboot裁剪");
+				nmWizard.ibootCfgPage.setDescription("裁剪、配置Iboot的组件");
 				nmWizard.addPage(nmWizard.ibootCfgPage);
 				nmWizard.addedIbootCfg = true;
 			}

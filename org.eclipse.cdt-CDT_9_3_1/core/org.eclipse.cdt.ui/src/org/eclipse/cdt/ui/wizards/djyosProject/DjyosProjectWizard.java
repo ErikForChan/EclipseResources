@@ -22,7 +22,7 @@ import org.eclipse.cdt.internal.ui.newui.Messages;
 public class DjyosProjectWizard extends DjyosCommonProjectWizard {
 	
 	public DjyosProjectWizard() {
-		super(Messages.NewModelProjectWizard_6, Messages.NewModelProjectWizard_7);
+		super(Messages.NewModelProjectWizard_6, "创建Djyos工程");
 	}
 	
 }

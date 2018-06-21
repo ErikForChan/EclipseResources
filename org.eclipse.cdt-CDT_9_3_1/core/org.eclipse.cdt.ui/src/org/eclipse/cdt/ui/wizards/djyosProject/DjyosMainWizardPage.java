@@ -561,14 +561,18 @@ public class DjyosMainWizardPage extends WizardPage{
 			}
 			if(haveApp()) {
 				nmWizard.appCfgPage = new AppCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-				nmWizard.appCfgPage.setTitle(DjyosMessages.App_Wizard_Title);
-				nmWizard.appCfgPage.setDescription(DjyosMessages.App_Wizard_Desc);
+//				nmWizard.appCfgPage.setTitle(DjyosMessages.App_Wizard_Title);
+//				nmWizard.appCfgPage.setDescription(DjyosMessages.App_Wizard_Desc);
+				nmWizard.appCfgPage.setTitle("App²Ã¼ô");
+				nmWizard.appCfgPage.setDescription("²Ã¼ô¡¢ÅäÖÃAppµÄ×é¼þ");
 				nmWizard.addPage(nmWizard.appCfgPage);
 				nmWizard.addedAppCfg = true;
 			}else if(haveIboot()) {
 				nmWizard.ibootCfgPage = new IbootCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-				nmWizard.ibootCfgPage.setTitle(DjyosMessages.Iboot_Wizard_Title);
-				nmWizard.ibootCfgPage.setDescription(DjyosMessages.Iboot_Wizard_Desc);
+//				nmWizard.ibootCfgPage.setTitle(DjyosMessages.Iboot_Wizard_Title);
+//				nmWizard.ibootCfgPage.setDescription(DjyosMessages.Iboot_Wizard_Desc);
+				nmWizard.ibootCfgPage.setTitle("Iboot²Ã¼ô");
+				nmWizard.ibootCfgPage.setDescription("²Ã¼ô¡¢ÅäÖÃIbootµÄ×é¼þ");
 				nmWizard.addPage(nmWizard.ibootCfgPage);
 				nmWizard.addedIbootCfg = true;
 			}

@@ -1,6 +1,9 @@
 package org.eclipse.cdt.internal.ui.djyproperties;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -52,6 +55,7 @@ import org.eclipse.cdt.ui.wizards.component.CreateCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.djyosProject.ConfigComponentDialog;
 import org.eclipse.cdt.ui.wizards.djyosProject.DjyosMessages;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
@@ -90,8 +94,7 @@ public class AppComponentCfgPage extends PropertyPage{
 		return eclipsePath;
 	}
 	
-	public void initDefineForComponent(String path,Component component) { 
-		File file = new File(path);
+	public void creatProjectConfiure(File file,String coreConfigure){
 		if (file.exists()) {
 			file.delete();
 		}
@@ -102,17 +105,28 @@ public class AppComponentCfgPage extends PropertyPage{
 			e.printStackTrace();
 		}
 		defineInit = DjyosMessages.Automatically_Generated;
-		defineInit += "#ifndef __"+component.getName().toUpperCase()
-		+"_CONFIG_H__\r\n" + "#define __"+component.getName()+"_CONFIG_H__\r\n\n"
+		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
-
-		if (component.getConfigure() != null)
-			defineInit += component.getConfigure();
-
+		for(int i=0;i<compontentsCheckedSort.size();i++) {		
+			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
+				defineInit += "//******************************* Configure "+compontentsCheckedSort.get(i).getName()+
+												" ******************************************//\n";
+				String filePath = compontentsCheckedSort.get(i).getFileName();
+				String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
+				for(int j=0;j<configures.length;j++) {
+					if(configures[j].contains("#define")) {
+						defineInit += configures[j]+"\n";
+					}
+				}
+			}		
+		}
+		defineInit += "//******************************* Core Clock ******************************************//\n";
+		defineInit += coreConfigure;
 		defineInit += "\n\n#endif";
+		
 		FileWriter writer;
 		try {
-			writer = new FileWriter(path);
+			writer = new FileWriter(file);
 			writer.write(defineInit);
 			writer.flush();
 			writer.close();
@@ -167,10 +181,10 @@ public class AppComponentCfgPage extends PropertyPage{
 			}
 			
 			String componentName = compontentsCheckedSort.get(i).getName();
-			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
-				String filePath = compontentsCheckedSort.get(i).getFileName();
-				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
-			}
+//			if(compontentsCheckedSort.get(i).getConfigure()!=null && !compontentsCheckedSort.get(i).getConfigure().equals("")) {
+//				String filePath = compontentsCheckedSort.get(i).getFileName();
+//				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
+//			}
 			
 			if(grade!=null && code!=null) {
 				if (grade.equals("main")) {//初始化时机为main
@@ -225,7 +239,7 @@ public class AppComponentCfgPage extends PropertyPage{
 		compontentsChecked = new ArrayList<Component>();
 		for(int i=0;i<compontentsList.size();i++) {
 			//当组件为必选且不需要配置时，不显示在界面上
-			if(compontentsList.get(i).getSelectable().equals("必选") && (compontentsList.get(i).getConfigure() == null || compontentsList.get(i).getConfigure().equals(""))) {
+			if(compontentsList.get(i).getSelectable().equals("必选") && (!compontentsList.get(i).getConfigure().contains("#define"))) {
 				compontentsChecked.add(compontentsList.get(i));
 			}
 		}
@@ -280,22 +294,55 @@ public class AppComponentCfgPage extends PropertyPage{
 						throws InvocationTargetException, InterruptedException {
 					monitor.beginTask("Configuration Reset...", 100);
 					if(appFile.exists()) {
-						File cfgFile = new File(project.getLocation().toString()+"/src/app/OS_prjcfg/cfg");
-						File[] files = cfgFile.listFiles();
-//						appFile.delete();
-						for(File file:files) {
-							file.delete();
+						File cfgFile = new File(project.getLocation().toString()+"/src/iboot/OS_prjcfg/project_config.h");
+						String str = null;
+						String coreConfigure = null;
+						try {
+							FileReader reader = new FileReader(cfgFile.getPath());
+							BufferedReader br = new BufferedReader(reader);
+							reader = new FileReader(cfgFile.getPath());
+							while ((str = br.readLine()) != null) {
+								if(str.contains("CFG_CORE_MCLK")) {
+									coreConfigure = str;
+									break;
+								}
+							}
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						if(cfgFile.exists()) {
+							cfgFile.delete();
 						}
 						initProject(project.getLocation().toString()+"/src/app");
+						creatProjectConfiure(cfgFile,coreConfigure);
 					}
 					monitor.worked(50);
 					if(ibootFile.exists()) {
-						File cfgFile = new File(project.getLocation().toString()+"/src/iboot/OS_prjcfg/cfg");
-						File[] files = cfgFile.listFiles();
-						for(File file:files) {
-							file.delete();
-						}
+						File cfgFile = new File(project.getLocation().toString()+"/src/iboot/OS_prjcfg/project_config.h");
+					
+						String str = null;
+						String coreConfigure = null;
+						try {
+							FileReader reader = new FileReader(cfgFile.getPath());
+							BufferedReader br = new BufferedReader(reader);
+							reader = new FileReader(cfgFile.getPath());
+							while ((str = br.readLine()) != null) {
+								if(str.contains("CFG_CORE_MCLK")) {
+									coreConfigure = str;
+									break;
+								}
+							}
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}						
+						
 						initProject(project.getLocation().toString()+"/src/iboot");
+						if(cfgFile.exists()) {
+							cfgFile.delete();
+						}
+						creatProjectConfiure(cfgFile,coreConfigure);
 					}
 					monitor.worked(50);
 					monitor.done();
@@ -846,9 +893,9 @@ public class AppComponentCfgPage extends PropertyPage{
 						curComponent = userComponents.get(k-preSize);
 					}
 					
-					if(curComponent.getDependents().size()!=0) {
-						getAllDependents(curComponent,allDeps);
-					}
+//					if(curComponent.getDependents().size()!=0) {
+//						getAllDependents(curComponent,allDeps);
+//					}
 					if(!compontentBtns[k].getSelection()) {
 						compontentBtns[k].setSelection(true);
 						cmpnts.get(k).setChecked("true");

@@ -302,9 +302,37 @@ public class BoardMainWizard extends WizardPage{
 		layoutAttributes.numColumns = 3;
 //		layoutAttributes.marginLeft = 20;
 		boardAttributesCpt.setLayout(layoutAttributes);
+		
+		Composite searchCpuCpt = new Composite(boardAttributesCpt, SWT.NULL);
+		searchCpuCpt.setLayout(new GridLayout(2,true));
+		searchCpuCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		Label searchCpuLabel = new Label(searchCpuCpt, SWT.NONE);
+		searchCpuLabel.setText("Search Cpu: ");
+		Text searchCpuField = new Text(searchCpuCpt, SWT.BORDER);
+		searchCpuField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		searchCpuField.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				// TODO Auto-generated method stub
+				String cpuText = searchCpuField.getText();
+				cpuArhives.removeAll();
+				for(int i=0;i<cpusList.size();i++) {
+					if(cpusList.get(i).getCpuName().contains(cpuText)) {
+						TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
+						t.setText(cpusList.get(i).getCpuName());
+					}				
+				}
+			}
+		});
+		Label l1 = new Label(boardAttributesCpt, SWT.NULL);
+		l1.setVisible(false);
+		Label l2 = new Label(boardAttributesCpt, SWT.NULL);
+		l2.setVisible(false);
 		createTreeForCpus(boardAttributesCpt);
 		createTransferButtons(boardAttributesCpt);
 		createTreeForNeedCpus(boardAttributesCpt);
+		
 		Button newCpuBtn = new Button(boardAttributesCpt,SWT.PUSH);
 		newCpuBtn.setText("New Cpu");
 		newCpuBtn.setBackground(boardAttributesCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
@@ -1155,7 +1183,8 @@ public class BoardMainWizard extends WizardPage{
 					}
 					
 					ReadComponentXml rcx = new ReadComponentXml();
-					String cpuSrcPath = getCpuSrcPath(selectCpuName);
+					String cpuSrcPath = getCpuPath(selectCpuName);
+					File cpuFile = new File(cpuSrcPath);
 					peripheralsList = rcx.getPeripherals(new File(cpuSrcPath));
 					for(int i=0;i<peripheralsList.size();i++) {
 						Component component = new Component();
@@ -1315,7 +1344,10 @@ public class BoardMainWizard extends WizardPage{
 
 	private void createTreeForCpus(Composite parent) {
 		// TODO Auto-generated method stub
+		ReadCpuXml rcx = new ReadCpuXml();
+		cpusList =  rcx.getAllCpus();
 		Composite composite = new Composite(parent, SWT.NULL);
+		
 		cpuArhives = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		cpuArhives.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		cpuArhives.setHeaderVisible(true);
@@ -1324,8 +1356,7 @@ public class BoardMainWizard extends WizardPage{
 		columnArhives.setWidth(140);
 		columnArhives.setResizable(false);
 		columnArhives.setToolTipText("Cpu Arhives");
-		ReadCpuXml rcx = new ReadCpuXml();
-		cpusList =  rcx.getAllCpus();
+		
 		for(int i=0;i<cpusList.size();i++) {
 			TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
 			t.setText(cpusList.get(i).getCpuName());
@@ -1403,7 +1434,7 @@ public class BoardMainWizard extends WizardPage{
 	}
 	
 	private String deapPath = null;
-	private String getCpuSrcPath(String cpuName) {
+	private String getCpuPath(String cpuName) {
 		String sourcePath = eclipsePath+"djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
 		File[] files = sourceFile.listFiles();
@@ -1412,7 +1443,7 @@ public class BoardMainWizard extends WizardPage{
 			if(file.isDirectory()) {
 				getDeapPath(file,cpuName);
 				if(deapPath!=null) {
-					path = deapPath+"/../src";
+					path = deapPath;
 					break;
 				}	
 			}	

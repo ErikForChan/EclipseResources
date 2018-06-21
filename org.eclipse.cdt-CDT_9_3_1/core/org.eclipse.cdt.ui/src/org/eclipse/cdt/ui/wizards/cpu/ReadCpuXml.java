@@ -130,21 +130,24 @@ public class ReadCpuXml {
 					if(node.getNodeType() == Node.ELEMENT_NODE) {
 						String nodeName = node.getNodeName();
 						String content = node.getFirstChild().getTextContent();
-						switch(nodeName) {
+						switch (nodeName) {
 						case "type":
-								core.setType(content);
+							core.setType(content);
 							break;
 						case "resetAddr":
-								core.setResetAddr(content);
+							core.setResetAddr(content);
 							break;
-						case "family": 
-								core.setFamily(content); 
+						case "family":
+							core.setFamily(content);
 							break;
-						case "arch": 
-								core.setArch(content);
+						case "arch":
+							core.setArch(content);
 							break;
 						case "fpuType":
-								core.setFpuType(content);
+							core.setFpuType(content);
+							break;
+						case "floatABI":
+							core.setFloatABI(content);
 							break;
 						}
 					}	
@@ -192,6 +195,13 @@ public class ReadCpuXml {
 							for (int j = 0; j < cores.size(); j++) {
 								if (cores.get(j).getFpuType() == null) {
 									cores.get(j).setFpuType(content);
+								}
+							}
+							break;
+						case "floatABI":
+							for (int j = 0; j < cores.size(); j++) {
+								if (cores.get(j).getFloatABI() == null) {
+									cores.get(j).setFloatABI(content);
 								}
 							}
 							break;
@@ -256,6 +266,11 @@ public class ReadCpuXml {
 						case "fpuType":
 							if(core.getFpuType()==null) {
 								core.setFpuType(content);
+							}
+							break;
+						case "floatABI":
+							if(core.getFloatABI()==null) {
+								core.setFloatABI(content);
 							}
 							break;
 						case "memory":				

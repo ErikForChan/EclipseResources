@@ -143,13 +143,13 @@ public class ConfigComponentDialog extends StatusDialog {
 
         	}
 	
-//        	System.out.println("parametersDefined:  "+parametersDefined[i]);
         	if(parameter.contains("#define")) {
         		TableItem item = new TableItem(table, SWT.NONE);
         		Image image = new Image(PlatformUI.getWorkbench().getDisplay(), 1, 25);
         		item.setImage(image);
         		String[] defines = parameter.trim().split("//");
             	String[] members = defines[0].trim().split("\\s+");
+//            	String defineName = infos[1];
             	if(members.length>2) {
             		item.setText(new String[]{members[1], members[2].equals("default")?"":members[2], defines.length>1?defines[1]:""}); 
             	}else {
