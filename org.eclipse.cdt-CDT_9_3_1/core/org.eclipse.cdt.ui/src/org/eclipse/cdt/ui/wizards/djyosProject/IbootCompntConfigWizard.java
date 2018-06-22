@@ -375,7 +375,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					// TODO Auto-generated method stub
-					ConfigComponentDialog dialog = new ConfigComponentDialog(getShell(),curComponent);
+					ConfigComponentDialog dialog = new ConfigComponentDialog(getShell(),curComponent,null,false,null);
 					if (dialog.open() == Window.OK) {
 						Component _Component = dialog.getComponent();
 					}

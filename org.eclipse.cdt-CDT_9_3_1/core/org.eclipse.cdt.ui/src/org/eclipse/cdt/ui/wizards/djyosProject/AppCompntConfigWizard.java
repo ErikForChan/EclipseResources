@@ -108,10 +108,9 @@ public class AppCompntConfigWizard extends WizardPage{
 				String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
 				for(int j=0;j<configures.length;j++) {
 					if(configures[j].contains("#define")) {
-						defineInit += configures[j]+"\n";
+							defineInit += configures[j]+"\n";					
 					}
 				}
-//				defineInit += compontentsCheckedSort.get(i).getConfigure()+"\n";
 			}		
 		}
 		defineInit += "//******************************* Core Clock ******************************************//\n";
@@ -351,7 +350,7 @@ public class AppCompntConfigWizard extends WizardPage{
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					// TODO Auto-generated method stub
-					ConfigComponentDialog dialog = new ConfigComponentDialog(getShell(),curComponent);
+					ConfigComponentDialog dialog = new ConfigComponentDialog(getShell(),curComponent,null,false,null);
 					if (dialog.open() == Window.OK) {
 						Component _Component = dialog.getComponent();
 					}

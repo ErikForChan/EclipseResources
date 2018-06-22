@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -14,6 +15,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.WizardPage;
@@ -688,15 +690,34 @@ public class BoardMainWizard extends WizardPage{
 				if(items.length>0) {
 					String selectMemory = items[0].getText().trim();
 					String size = sizeField.getText().trim();
+					IWorkbenchWindow window = PlatformUI.getWorkbench()
+							.getActiveWorkbenchWindow();
 					if(! size.equals("")) {
-						for(int i=0;i<memorys.size();i++) {
-							OnBoardMemory memory = memorys.get(i);
-							if(memory.getName().equals(selectMemory)) {
-								
-								memory.setSize(size);
-								break;
-							}
-						}
+						int curNum = -1;            
+						Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+	    		        boolean isInt =  pattern.matcher(size).matches();
+	    				if(size.startsWith("0x")) {
+	    					curNum = Integer.parseInt(size.substring(2),16);
+	    				}else {
+	    					if(isInt) {
+	    						curNum = Integer.parseInt(size);
+	    					}else {
+	    						MessageDialog.openError(window.getShell(), "提示",
+	        							"请输入正整数");
+	    					}
+	    				}             					
+        				if(curNum<0) {
+        					MessageDialog.openError(window.getShell(), "提示",
+        							"请输入正整数");
+        				}else {
+        					for(int i=0;i<memorys.size();i++) {
+    							OnBoardMemory memory = memorys.get(i);
+    							if(memory.getName().equals(selectMemory)) {							
+    								memory.setSize(size);
+    								break;
+    							}
+    						}
+        				}					
 					}
 					
 				}
@@ -711,7 +732,7 @@ public class BoardMainWizard extends WizardPage{
 		Composite composite = new Composite(folder, SWT.NULL);
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 3;
-//		layoutAttributes.marginHeight = 10;
+		layout.marginLeft = 30;
 		composite.setLayout(layout);
 		
 		Composite compositeTree = new Composite(composite, SWT.NULL);
@@ -720,7 +741,7 @@ public class BoardMainWizard extends WizardPage{
 		chipTree.setHeaderVisible(true);
 		final TreeColumn columnCpudrvs = new TreeColumn(chipTree, SWT.NONE);
 		columnCpudrvs.setText("Chip列表");
-		columnCpudrvs.setWidth(90);
+		columnCpudrvs.setWidth(120);
 		columnCpudrvs.setResizable(false);
 		columnCpudrvs.setToolTipText("Cpu Drivers");
 		
@@ -1284,6 +1305,8 @@ public class BoardMainWizard extends WizardPage{
 		gotoBtn.setText("   》》  ");
 		backBtn = new Button(btnCpt,SWT.PUSH);
 		backBtn.setText(" 《《    ");
+		gotoBtn.setEnabled(false);
+		backBtn.setEnabled(false);
 		
 		gotoBtn.addSelectionListener(new SelectionListener() {
 			

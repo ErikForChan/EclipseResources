@@ -847,21 +847,21 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					monitor.beginTask("Project Creating...", 100);
 					//处理工程的链接
 					handleCProject(compontentsChecked,board,cpu,core,projectPath,projectName);
-					monitor.worked(70);
+					monitor.worked(30);
 					//根据MemoryMap配置的内容添加memory.lds文件
 					getMemoryToLds(ldsHead,ldsDesc,projectName,sourcePath);
-					monitor.worked(20);
+					monitor.worked(30);
 					//生成initPrj.c,initPrj.h,memory.lds文件
 					if(index == 0 || index == 1){
 						ibootCfgPage.initProject(initCPathIboot);
 						ibootCfgPage.creatProjectConfiure(initCPathIboot+"/OS_prjcfg/project_config.h",core);
 			    	}
-					monitor.worked(5);
+					monitor.worked(30);
 			    	if(index == 0 || index == 2 || index == 3){
 			    		appCfgPage.initProject(initCPath);
 			    		appCfgPage.creatProjectConfiure(initCPath+"/OS_prjcfg/project_config.h",core);
 			    	}
-					monitor.worked(5);
+					monitor.worked(10);
 					monitor.done();
 				}
 			};

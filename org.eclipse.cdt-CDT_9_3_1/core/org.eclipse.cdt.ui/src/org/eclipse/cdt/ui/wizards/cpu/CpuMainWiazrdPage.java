@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
@@ -55,6 +56,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.xml.sax.SAXException;
@@ -429,27 +431,36 @@ public class CpuMainWiazrdPage extends WizardPage{
 				if (TextTransfer.getInstance().isSupportedType(event.currentDataType)) {
 					// 获得数据源设置的字符串
 					String s = (String) event.data;
-					// 在tmss位置插入一个节点
-					if (eventItem.getParentItem() == null)
-						tmssItem = new TreeItem(eventItem, SWT.NONE);
-					else
-						tmssItem = new TreeItem(eventItem, SWT.NONE);
-
-					tmssItem.setText(s);
+					// 在tmss位置插入一个节点				
 					File srcFile = new File(fileItem.getData().toString());
 					File destFile = new File(eventItem.getData().toString()+"\\"+s);
-					try {
-						copyFolder(srcFile, destFile);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					boolean isDropable =  isFileDropable(srcFile,destFile);
+					if(isDropable) {
+						if (eventItem.getParentItem() == null)
+							tmssItem = new TreeItem(eventItem, SWT.NONE);
+						else
+							tmssItem = new TreeItem(eventItem, SWT.NONE);
+
+						tmssItem.setText(s);
+						try {
+							copyFolder(srcFile, destFile);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						
+						DeleteFolder(fileItem.getData().toString());
+						// 删除原来的节点
+						if (tree != null) {
+							fileItem.dispose();
+						}
+					}else {
+						IWorkbenchWindow window = PlatformUI.getWorkbench()
+    							.getActiveWorkbenchWindow();
+						MessageDialog.openError(window.getShell(), "提示",
+    							"父子目录不可互相拖拉");
 					}
 					
-					DeleteFolder(fileItem.getData().toString());
-					// 删除原来的节点
-					if (tree != null) {
-						fileItem.dispose();
-					}
 				}
 			}
 
@@ -633,6 +644,26 @@ public class CpuMainWiazrdPage extends WizardPage{
 		Dialog.applyDialogFont(composite);
 	}
 	
+	protected boolean isFileDropable(File srcFile, File destFile) {
+		// TODO Auto-generated method stub
+		while(!srcFile.getName().equals("cpudrv")) {
+			srcFile = srcFile.getParentFile();
+			if(srcFile.getName().equals(destFile.getName())) {
+				return false;
+			}
+		}
+		while(!destFile.getName().equals("cpudrv")) {
+			destFile = destFile.getParentFile();
+			if(destFile.getName().equals(srcFile.getName())) {
+				return false;
+			}
+		}
+		if(srcFile.getName().equals("cpudrv")){
+			return false;
+		}
+		return true;
+	}
+
 	private boolean containsXml(File file) {
 		File[] files = file.listFiles();
 		for(File f:files) {

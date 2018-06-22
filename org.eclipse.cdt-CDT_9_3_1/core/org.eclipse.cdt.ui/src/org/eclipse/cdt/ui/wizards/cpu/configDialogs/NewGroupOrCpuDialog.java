@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -868,18 +870,40 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					int index = 0;//
 					String size = sizeField.getText().trim();
 					if (items.length > 0) {
-						String selectMemory = items[0].getText().trim();				
+						String selectMemory = items[0].getText().trim();
+						IWorkbenchWindow window = PlatformUI.getWorkbench()
+    							.getActiveWorkbenchWindow();
 						if (!size.equals("")) {
-							for (int i = 0; i < memorys.size(); i++) {
-								CoreMemory memory = memorys.get(i);
-								if(memory.getName()!=null) {
-									if (memory.getName().equals(selectMemory)) {
-										memory.setSize(size);
-										index = i;
-										break;
-									}	
+							int curNum = -1;         
+							Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+    	    		        boolean isInt =  pattern.matcher(size).matches();
+		    				if(size.startsWith("0x")) {
+		    					curNum = Integer.parseInt(size.substring(2),16);
+		    				}else {
+		    					if(isInt) {
+		    						curNum = Integer.parseInt(size);
+		    					}else {
+		    						MessageDialog.openError(window.getShell(), "提示",
+		        							"请输入正整数");
+		    					}
+		    					
+		    				}             					
+	        				if(curNum<0) {
+	        					MessageDialog.openError(window.getShell(), "提示",
+	        							"请输入正整数");
+	        				}else {
+	        					for (int i = 0; i < memorys.size(); i++) {
+									CoreMemory memory = memorys.get(i);
+									if(memory.getName()!=null) {
+										if (memory.getName().equals(selectMemory)) {
+											memory.setSize(size);
+											index = i;
+											break;
+										}	
+									}
 								}
-							}
+	        				}
+							
 						}
 					}
 					if(index != 0) {
