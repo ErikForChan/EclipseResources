@@ -309,7 +309,7 @@ public class GetBoardDialog extends StatusDialog {
 			for (String file : files) {
 				File srcFile = new File(src, file);
 				File destFile = new File(dest, file);
-				System.out.println(destFile.getName());
+//				System.out.println(destFile.getName());
 				// µÝ¹é¸´ÖÆ
 				copyFileToFolder(srcFile, destFile, boardName);
 			}
@@ -332,7 +332,7 @@ public class GetBoardDialog extends StatusDialog {
 	public GetBoardDialog(Shell parent) {
 		super(parent);
 		setTitle("°å¼þÑ¡Ôñ");
-		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
+		setShellStyle(getShellStyle() | SWT.CLOSE | SWT.MAX);
 	}
 
 	@Override

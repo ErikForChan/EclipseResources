@@ -189,8 +189,8 @@ public class ConfigComponentDialog extends StatusDialog {
         		
 				infos = parameter.split(",");
 				ranges = new ArrayList<String>();
-				if (!tag.equals("select") || !tag.equals("free")) {
-					for (int j = 2; j < infos.length; j++) {
+				if (!tag.equals("select") && !tag.equals("free")) {
+					for (int j = 1; j < infos.length; j++) {//for (int j = 1; j < infos.length; j++)
 						ranges.add(infos[j]);
 					}
 				}
@@ -211,21 +211,35 @@ public class ConfigComponentDialog extends StatusDialog {
             		members = defines[0].trim().split("\\s+");
             		annoation = defines.length>1?defines[1]:"";
             	}
+            	String realComptName = null;
+        		String[] annos = annoation.split(",");
+        		if(annos[0].trim().startsWith("\"") && annos[0].trim().endsWith("\"")) {
+        			annoation = annoation.substring(annos[0].length()+1,annoation.length());
+        			if(!annos[0].contains("name")) {
+        				realComptName = annos[0].trim().replaceAll("\"", "");
+        			}else {
+        				realComptName = members[1];
+        			}
+        			
+        		}else {
+        			realComptName = members[1];
+        		}
             	if(members.length>2) {
-            		if(isProperty) {//如果是通过右键Properties打开的界面，则显示修改后的数值
+            		if(isProperty && pjCgfs.size()>0) {//如果是通过右键Properties打开的界面，则显示修改后的数值
             			for(String cfg:pjCgfs) {
             				if(cfg.contains(members[1])) {
             					String[] cfgs = cfg.trim().split("\\s+");
-            					item.setText(new String[]{members[1], cfgs[2].equals("default")?"":cfgs[2], defines.length>1?annoation:""});
+            					item.setText(new String[]{realComptName, cfgs[2].equals("default")?"":cfgs[2], defines.length>1?annoation:""});
+            					break;
             				}
             			}
             			
             		}else {
-            			item.setText(new String[]{members[1], members[2].equals("default")?"":members[2], defines.length>1?annoation:""}); 
+            			item.setText(new String[]{realComptName, members[2].equals("default")?"":members[2], defines.length>1?annoation:""}); 
             		}
             		
             	}else {
-            		item.setText(new String[]{members[1], "", defines.length>1?annoation:""}); 
+            		item.setText(new String[]{realComptName, "", defines.length>1?annoation:""}); 
             	}
             	
             	

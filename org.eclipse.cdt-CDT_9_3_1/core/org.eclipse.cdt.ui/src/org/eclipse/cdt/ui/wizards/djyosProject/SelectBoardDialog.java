@@ -311,7 +311,6 @@ public class SelectBoardDialog extends StatusDialog{
 							Board board = boards.get(i);
 							List<OnBoardCpu> cpus = board.getOnBoardCpus();
 							for(int j=0;j<cpus.size();j++) {
-								System.out.println(selectBoardName);
 								OnBoardCpu cpu = cpus.get(j);
 								String chipString = "";
 								if( cpu.getChips().size()>0) {
@@ -346,7 +345,7 @@ public class SelectBoardDialog extends StatusDialog{
 			}
 		});
 		final TreeColumn columnBoards = new TreeColumn(boardTree, SWT.NONE);
-		columnBoards.setText("板件名称");
+		columnBoards.setText("板件列表");
 		columnBoards.setWidth(140);
 		columnBoards.setResizable(false);
 		columnBoards.setToolTipText("Board");

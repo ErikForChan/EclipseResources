@@ -1,5 +1,6 @@
 package org.eclipse.cdt.ui.wizards.djyosProject;
 
+import java.awt.Color;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -563,6 +564,8 @@ public class DjyosMainWizardPage extends WizardPage{
 				nmWizard.appCfgPage = new AppCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
 //				nmWizard.appCfgPage.setTitle(DjyosMessages.App_Wizard_Title);
 //				nmWizard.appCfgPage.setDescription(DjyosMessages.App_Wizard_Desc);
+				IWorkbenchWindow window = PlatformUI.getWorkbench()
+	    				.getActiveWorkbenchWindow();
 				nmWizard.appCfgPage.setTitle("App²Ã¼ô");
 				nmWizard.appCfgPage.setDescription("²Ã¼ô¡¢ÅäÖÃAppµÄ×é¼þ");
 				nmWizard.addPage(nmWizard.appCfgPage);
@@ -577,10 +580,11 @@ public class DjyosMainWizardPage extends WizardPage{
 				nmWizard.addedIbootCfg = true;
 			}
 			
-		}else{
-			if(clickedNext) {
+		} else {
+			if (clickedNext) {
 				nmWizard.importTemplate(projectPath);
-		}				
+
+			}
 		}
 		clickedNext = true;		
 		return super.getNextPage();

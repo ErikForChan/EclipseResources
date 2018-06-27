@@ -469,7 +469,7 @@
             name="%Cpu.title"
             project="true">
         <description>
-            %Cpu.desc
+           %Cpu.desc
         </description>
      </wizard>
    
@@ -479,7 +479,7 @@
             class="org.eclipse.cdt.ui.wizards.board.BoardWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
-            icon="icons/ovr16/board_img.gif"
+            icon="icons/ovr16/board_img.png"
             id="org.eclipse.cdt.ui.wizards.NewCWizard5"
             name = "%Board.title"
             project="true">

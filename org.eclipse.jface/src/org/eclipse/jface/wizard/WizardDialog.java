@@ -402,22 +402,18 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 	protected void buttonPressed(int buttonId) {
 		switch (buttonId) {
 		case IDialogConstants.HELP_ID: {
-			System.out.println("helpPressed");
 			helpPressed();
 			break;
 		}
 		case IDialogConstants.BACK_ID: {
-			System.out.println("backPressed");
 			backPressed();
 			break;
 		}
 		case IDialogConstants.NEXT_ID: {
-			System.out.println("nextPressed");
 			nextPressed();
 			break;
 		}
 		case IDialogConstants.FINISH_ID: {
-			System.out.println("finishPressed");
 			finishPressed();
 			break;
 		}

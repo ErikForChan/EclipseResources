@@ -27,6 +27,8 @@ import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -67,8 +69,12 @@ import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
+import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
+
+import org.eclipse.cdt.internal.ui.CPluginImages;
+
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
 
@@ -91,7 +97,7 @@ public class BoardMainWizard extends WizardPage{
 	private Button deleteBtn;
 	
 	private List<Cpu> cpusList = null,cpusOn = null;
-	private List<Component> peripheralsList = null;//外设列表
+	private List<Component> peripheralsList = new ArrayList<Component>();;//外设列表
 	private List<Component> peripheralsOn = new ArrayList<Component>();//用到的外设
 	private List<Component> allPeripherals = new ArrayList<Component>();//所有外设
 	private List<Chip> chipsList = null,chipsOn = null;
@@ -103,19 +109,22 @@ public class BoardMainWizard extends WizardPage{
 	private String eclipsePath = getEclipsePath();
 	
 	private void enableOperate(boolean enable) {
-			mainClkLabel.setEnabled(enable);
-			mainClkField.setEnabled(enable);
-			rtcClkBtn.setEnabled(enable);
-			chipTree.setEnabled(enable);
-			chipOnTree.setEnabled(enable);
-			cpudrvTree.setEnabled(enable);
-			cpudrvOnTree.setEnabled(enable);
-			memoryTree.setEnabled(enable);
-			addrField.setEnabled(enable);
-			sizeField.setEnabled(enable);
-			memoryTypeCombo.setEnabled(enable);
-			addBtn.setEnabled(enable);
-			deleteBtn.setEnabled(enable);
+		mainClkLabel.setEnabled(enable);
+		mainClkField.setEnabled(enable);
+		rtcClkBtn.setEnabled(enable);
+		chipTree.setEnabled(enable);
+		chipOnTree.setEnabled(enable);
+		cpudrvTree.setEnabled(enable);
+		cpudrvOnTree.setEnabled(enable);
+		memoryTree.setEnabled(enable);
+		addBtn.setEnabled(enable);	
+	}
+
+	public void enableMemory(boolean enable) {
+		deleteBtn.setEnabled(enable);
+		addrField.setEnabled(enable);
+		sizeField.setEnabled(enable);
+		memoryTypeCombo.setEnabled(enable);
 	}
 	
 	public Board getBoard() {
@@ -485,6 +494,7 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
+				enableMemory(true);
 				TreeItem[] items = memoryTree.getSelection();
 				if(items.length>0) {
 					String selectMemory = items[0].getText().trim();
@@ -595,6 +605,9 @@ public class BoardMainWizard extends WizardPage{
 						}
 					}
 					items[0].dispose();
+				}
+				if(memoryTree.getItemCount()<1) {
+					enableMemory(false);
 				}
 			}
 
@@ -723,7 +736,7 @@ public class BoardMainWizard extends WizardPage{
 				}
 			}
 		});
-
+		enableMemory(false);
 		return contentCpt;
 	}
 
@@ -1184,7 +1197,7 @@ public class BoardMainWizard extends WizardPage{
 					OnBoardCpu onBoardCpu = new OnBoardCpu();
 					String selectCpuName = items[0].getText();
 					enableOperate(true);
-					ConfigurationGroup.setText("Configurations for "+selectCpuName);
+					ConfigurationGroup.setText("板载Cpu["+selectCpuName+"]配置");
 					for(int i=0;i<onBoardCpus.size();i++) {
 						if(onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
 							onBoardCpu = onBoardCpus.get(i);
@@ -1204,9 +1217,15 @@ public class BoardMainWizard extends WizardPage{
 					}
 					
 					ReadComponentXml rcx = new ReadComponentXml();
-					String cpuSrcPath = getCpuPath(selectCpuName);
-					File cpuFile = new File(cpuSrcPath);
-					peripheralsList = rcx.getPeripherals(new File(cpuSrcPath));
+					String cpuPath = getCpuPath(selectCpuName);
+					List<String> cpuSrcPaths = new ArrayList<String>();
+					getCpuSrcPaths(new File(cpuPath),cpuSrcPaths);
+					for(String path:cpuSrcPaths) {
+						File srcFile = new File(path);
+						List<Component> somePeripherals = rcx.getPeripherals(srcFile);
+						peripheralsList.addAll(somePeripherals);
+					}
+					
 					for(int i=0;i<peripheralsList.size();i++) {
 						Component component = new Component();
 						component.setName(peripheralsList.get(i).getName());
@@ -1295,6 +1314,21 @@ public class BoardMainWizard extends WizardPage{
 		columnLanguages.setToolTipText("Cpu On-board");
 	}
 
+	protected void getCpuSrcPaths(File cpuFile, List<String> cpuSrcPaths) {
+		// TODO Auto-generated method stub
+		File[] files = cpuFile.listFiles();
+		for(File file:files) {
+			String path = file.getPath();
+			if(file.getName().equals("src")) {
+				cpuSrcPaths.add(path);
+				break;
+			}
+		}
+		if(!cpuFile.getParentFile().getName().equals("cpudrv")) {
+			getCpuSrcPaths(cpuFile.getParentFile(),cpuSrcPaths);
+		}		
+	}
+
 	private void createTransferButtons(Composite parent) {
 		// TODO Auto-generated method stub
 		Composite btnCpt = new Composite(parent, SWT.NULL);
@@ -1381,9 +1415,58 @@ public class BoardMainWizard extends WizardPage{
 		columnArhives.setToolTipText("Cpu Arhives");
 		
 		for(int i=0;i<cpusList.size();i++) {
-			TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
-			t.setText(cpusList.get(i).getCpuName());
+			TreeItem t = new TreeItem(cpuArhives, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			t.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
+			t.setText(cpusList.get(i).getCpuName());		
 		}
+		cpuArhives.addMouseTrackListener(new MouseTrackListener() {
+			
+			@Override
+			public void mouseHover(MouseEvent e) {
+				// TODO Auto-generated method stub
+				Point point = new Point(e.x, e.y); 
+				TreeItem item = cpuArhives.getItem(point);
+				String descContent = "";
+				for(Cpu cpu:cpusList) {					
+					if(cpu.getCpuName().equals(item.getText())) {
+						if(cpu.getCores().size()!=0) {
+							for(int j=0;j<cpu.getCores().size();j++) {
+								Core core = cpu.getCores().get(j);
+								descContent+="内核"+(j+1)+": ";
+								if(core.getType()!=null) {
+									descContent+="\n类型: "+core.getType();
+								}
+								if(core.getArch()!=null) {
+									descContent+="\n架构: "+core.getArch();
+								}
+								if(core.getFamily()!=null) {
+									descContent+="\n家族: "+core.getFamily();
+								}
+								if(core.getFpuType()!=null) {
+									descContent+="\n浮点: "+core.getFpuType();
+								}					
+								if(core.getResetAddr()!=null) {
+									descContent+="\n复位地址: "+core.getResetAddr();
+								}
+								descContent+="\n";
+							}
+							cpuArhives.setToolTipText(descContent);
+						}
+						break;
+					}
+				}
+			}
+			
+			@Override
+			public void mouseExit(MouseEvent e) {
+				// TODO Auto-generated method stub
+			}
+			
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				// TODO Auto-generated method stub
+			}
+		});
 		cpuArhives.addSelectionListener(new SelectionListener() {
 
 			@Override
@@ -1412,7 +1495,7 @@ public class BoardMainWizard extends WizardPage{
 			setMessage(null);
 		}
 		if(cpuArhivesNeed.getItems().length == 0) {
-			ConfigurationGroup.setText("Configurations(Enable for no Cpu Selected)");
+			ConfigurationGroup.setText("板载Cpu配置(请先选中您要配置的Cpu)");
 			enableOperate(false);
 			setErrorMessage("Must Select a Cpu at least");
 			return false;

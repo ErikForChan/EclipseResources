@@ -1,10 +1,12 @@
 package org.eclipse.cdt.ui.wizards.cpu;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -35,6 +37,8 @@ import org.eclipse.swt.events.DragDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
@@ -86,7 +90,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 	private Cpu cpu = new Cpu();
 	private Tree tree;
 	private Text configInfoText = null;
-	private MenuItem newGroupItem,newCpuItem;
+	private MenuItem newGroupItem,newCpuItem,deleteItem;
 	private Group contentGroup;
 	
 	protected CpuMainWiazrdPage(String pageName) {
@@ -103,6 +107,9 @@ public class CpuMainWiazrdPage extends WizardPage{
         newCpuItem=new MenuItem(menu,SWT.PUSH);
         newCpuItem.setText("新建CPU");
         newCpuItem.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
+        deleteItem=new MenuItem(menu,SWT.PUSH);
+        deleteItem.setText("删除");
+        deleteItem.setImage(CPluginImages.CFG_DELETE_OBJ.createImage());
 
         tree.setMenu(menu);
     }
@@ -110,6 +117,22 @@ public class CpuMainWiazrdPage extends WizardPage{
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
+//		String command="arm-none-eabi-objdump.exe -h F:\\djyos\\atomic.o";  
+//	    String line = null;  
+//	    StringBuilder sb = new StringBuilder();  
+//	    Runtime runtime = Runtime.getRuntime();  
+//	    try {  
+//	    Process process = runtime.exec(command);  
+//	    BufferedReader  bufferedReader = new BufferedReader  
+//	            (new InputStreamReader(process.getInputStream()));  
+//	        while ((line = bufferedReader.readLine()) != null) {  
+//	            sb.append(line + "\n");  
+//	            System.out.println(line);  
+//	        }  
+//	    } catch (IOException e) {  
+//	        // TODO 自动生成的 catch 块  
+//	        e.printStackTrace();  
+//	    }  
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -129,14 +152,14 @@ public class CpuMainWiazrdPage extends WizardPage{
 
 		Point cPoint = composite.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		Text projectTypeDesc;
-		String QAQ = "\tIDE分级目录的形式管理操作系统支持的众多Cpu，本界面用于管理Cpu的分类,\n包括添加Cpu和分组,手动拖拽即可移动分组,右键可添加Cpu和子目录";
+		String extraString = "右键可添加Cpu和子目录 :";
+		String QAQ = "\tIDE分级目录的形式管理操作系统支持的众多Cpu，本界面用于管理Cpu的分类,\n包括添加Cpu和分组,手动拖拽即可移动分组";
 		String descTitle = "分组/Cpu描述";
-		projectTypeDesc = new Text(infoArea, SWT.MULTI | SWT.WRAP);
-		GridData textGridData = new GridData(GridData.FILL_HORIZONTAL);
-		projectTypeDesc.setLayoutData(textGridData);
-		projectTypeDesc.setText(QAQ);
-		projectTypeDesc.setEditable(false);
-		
+//		projectTypeDesc = new Text(infoArea, SWT.MULTI | SWT.WRAP);
+//		GridData textGridData = new GridData(GridData.FILL_HORIZONTAL);
+//		projectTypeDesc.setLayoutData(textGridData);
+//		projectTypeDesc.setText(QAQ);
+//		projectTypeDesc.setEditable(false);
 		Composite contentCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout contentLayout = new GridLayout();
 		contentLayout.numColumns = 2;
@@ -146,9 +169,16 @@ public class CpuMainWiazrdPage extends WizardPage{
 		Composite sourceTreeCpt = new Composite(contentCpt, SWT.NONE);
 		sourceTreeCpt.setLayout(new GridLayout());
 		sourceTreeCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-		tree = new Tree(sourceTreeCpt, SWT.BORDER);
+		Label extraLabel = new Label(sourceTreeCpt,SWT.NULL);
+		extraLabel.setText(extraString);
+		extraLabel.setForeground(sourceTreeCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
+		FontData newFontData = extraLabel.getFont().getFontData()[0];
+		newFontData.setStyle(SWT.ITALIC | SWT.BOLD);
+		newFontData.setHeight(8);
+		extraLabel.setFont(new Font(sourceTreeCpt.getDisplay(),newFontData));
+		tree = new Tree(sourceTreeCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		tree.setLayoutData(new GridData(GridData.FILL_BOTH));
-
+		tree.setSize(150, 200);
 		initPopup();
 		
 		contentGroup = ControlFactory.createGroup(contentCpt, descTitle, 1);
@@ -285,7 +315,31 @@ public class CpuMainWiazrdPage extends WizardPage{
 				
 			}
 		});
-//		addCpuBtn.setEnabled(false);
+
+		deleteItem.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				TreeItem[] items = tree.getSelection();
+				IWorkbenchWindow window = PlatformUI.getWorkbench()
+	    				.getActiveWorkbenchWindow();
+	        	boolean isSure = MessageDialog.openQuestion(window.getShell(), "提示",
+	        			"您确认要删除["+items[0].getText()+"]吗?");
+	        	if(isSure) {      		
+					String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+					DeleteFolder(curFilePath);
+					items[0].dispose();
+	        	}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		//		addCpuBtn.setEnabled(false);
 		
 //		Button configBtn = new Button(btnCpt,SWT.PUSH);
 //		configBtn.setText("重设配置");
@@ -552,6 +606,14 @@ public class CpuMainWiazrdPage extends WizardPage{
 				String descTitleChang = null;
 				Point point = new Point(event.x, event.y);
 				TreeItem item = tree.getItem(point);
+				if(item != null) {
+					if(item.getText().equals("Djyos")) {
+						deleteItem.setEnabled(false);
+					}else {
+						deleteItem.setEnabled(true);
+					}
+				}
+				
 				if ((item != null) && (item.getData() != null)) {
 					File file = new File(item.getData().toString()); 
 					if(item.getText().equals("Djyos")) {

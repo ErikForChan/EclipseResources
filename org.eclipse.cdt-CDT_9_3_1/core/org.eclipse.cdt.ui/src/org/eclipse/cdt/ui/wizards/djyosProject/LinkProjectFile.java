@@ -27,7 +27,7 @@ public class LinkProjectFile {
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		return eclipsePath;
 	}
-	public void addLink(IFile file,String componentName,String componentPath,String tag) {
+	public void addLink(IFile file,String objectName,String objectPath,String tag) {
 		 factory.setIgnoringElementContentWhitespace(false);
 		 DocumentBuilder builder;
 		try {
@@ -42,16 +42,28 @@ public class LinkProjectFile {
 			Node locationURINode = document.createElement("locationURI");
 			String DJYOS_SRC_LOCARION = eclipsePath+"djysrc";
 			if(tag.equals("third") || tag.equals("component") || tag.equals("djyos")) {
-				componentPath = componentPath.substring(DJYOS_SRC_LOCARION.length()+1, componentPath.length());
-				nameNode.setTextContent("src/libos/"+tag+"/"+componentName);
-				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
+				objectPath = objectPath.substring(DJYOS_SRC_LOCARION.length()+1, objectPath.length());
+				nameNode.setTextContent("src/libos/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
 			}else if(tag.equals("chipdrv")) {
-				componentPath = componentPath.substring(DJYOS_SRC_LOCARION.length()+1, componentPath.length());
-				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+componentName);
-				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
+				objectPath = objectPath.substring(DJYOS_SRC_LOCARION.length()+1, objectPath.length());
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
 			}else if(tag.equals("cpudrv")) {
-				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+componentName);
-				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+componentPath.replace("\\", "/"));
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
+			}else if(tag.equals("boarddrv")) {
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
+			}else if(tag.equals("startup")) {
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
+			}else if(tag.equals("arch")) {
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
+			}else if(tag.equals("firmware")) {
+				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
 			}
 			
 			linkNode.appendChild(nameNode);

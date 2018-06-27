@@ -60,53 +60,55 @@ public class ReadComponent {
 
 	// 遍历组件及其子组件
 	private void traverFiles(File file) {
-		File[] allFiles = file.listFiles();
-		boolean hExist = false;;
-		Arrays.sort(allFiles, new Comparator<File>() {
-			public int compare(File f1, File f2) {
-				boolean isDiectory = f1.isDirectory();
-				if (isDiectory)
-					return 1;
-				else
-					return -1;// 如果 if 中修改为 返回-1 同时此处修改为返回 1 排序就会是递减
-			}
+		if(!file.getName().equals("include")) {
+			File[] allFiles = file.listFiles();
+			boolean hExist = false;
+			Arrays.sort(allFiles, new Comparator<File>() {
+				public int compare(File f1, File f2) {
+					boolean isDiectory = f1.isDirectory();
+					if (isDiectory)
+						return 1;
+					else
+						return -1;// 如果 if 中修改为 返回-1 同时此处修改为返回 1 排序就会是递减
+				}
 
-			public boolean equals(Object obj) {
-				return true;
+				public boolean equals(Object obj) {
+					return true;
+				}
+			});
+			
+			for (File f : allFiles) {
+				if (f.getName().endsWith(".h") && f.getName().contains("component_config")) {
+					hExist = true;
+					break;
+				}
 			}
-		});
-		
-		for (File f : allFiles) {
-			if (f.getName().endsWith(".h") && f.getName().contains("component_config")) {
-				hExist = true;
-				break;
-			}
-		}
-		
-		for (File f : allFiles) {
-			if (f.isFile()) {
-				if (hExist) {
-					try {
-						getComponent(f);
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
-					if(f.getName().endsWith(".c")) {
+			
+			for (File f : allFiles) {
+				if (f.isFile()) {
+					if (hExist) {
 						try {
 							getComponent(f);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
+					} else {
+						if(f.getName().endsWith(".c")) {
+							try {
+								getComponent(f);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
 					}
-				}
 
-			} else if (f.isDirectory()) {
-				traverFiles(f);
+				} else if (f.isDirectory()) {
+					traverFiles(f);
+				}
 			}
-		}
+		}	
 	}
 
 	public List<Component> getComponents(OnBoardCpu onBoardCpu,Board board) {
@@ -119,7 +121,7 @@ public class ReadComponent {
 		for(int i=0;i<componentPaths.size();i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			File[] files = sourceFile.listFiles();
-			System.out.println("fileName:   "+sourceFile.getName());
+//			System.out.println("fileName:   "+sourceFile.getName());
 			for(File file:files) {				
 				if(file.isDirectory()) {
 					traverFiles(file);

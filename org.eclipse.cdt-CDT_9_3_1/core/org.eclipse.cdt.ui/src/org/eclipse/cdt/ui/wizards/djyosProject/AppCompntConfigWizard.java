@@ -26,6 +26,7 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
@@ -78,8 +79,9 @@ public class AppCompntConfigWizard extends WizardPage{
 		onBoardCpu = cpu;
 		sBoard = board;
 		setPageComplete(true);
+		
 	}
-	
+
 	public List<Component> getCompontentsChecked(){
 		return compontentsChecked;
 	}
@@ -108,7 +110,23 @@ public class AppCompntConfigWizard extends WizardPage{
 				String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
 				for(int j=0;j<configures.length;j++) {
 					if(configures[j].contains("#define")) {
-							defineInit += configures[j]+"\n";					
+							String pureDefine = null;
+							String annoName = null;
+							if(configures[j].trim().startsWith("//")) {
+								pureDefine = configures[j].replaceFirst("//", "");
+							}else {
+								pureDefine = configures[j];
+							}
+							String[] defines = pureDefine.split("//");
+							String[] infos = defines[1].split(",|£¬");
+							if(infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
+								annoName = infos[0];
+		            		}
+							if(annoName == null) {
+								defineInit += configures[j]+"\n";	
+							}else {
+								defineInit += configures[j].replace(annoName,"").replace(",", "").replace("£¬", "")+"\n";	
+							}						
 					}
 				}
 			}		
@@ -136,6 +154,7 @@ public class AppCompntConfigWizard extends WizardPage{
 		String moduleInit = "";
 		String djyMain = "";
 		initHead = DjyosMessages.Automatically_Generated;
+		initHead += "#include \"project_config.h\"\n";
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -461,7 +480,6 @@ public class AppCompntConfigWizard extends WizardPage{
 		scrolledComposite.setMinHeight(point.y);
 		scrolledComposite.setExpandHorizontal(true);
 	    scrolledComposite.setExpandVertical(true);
-	    
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
@@ -484,6 +502,7 @@ public class AppCompntConfigWizard extends WizardPage{
 			Component component = coreComponents.get(i);
 			compontentBtns[i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_BLUE));
 			compontentBtns[i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
@@ -528,6 +547,7 @@ public class AppCompntConfigWizard extends WizardPage{
 			Component component = bspComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_BLUE));
 			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
@@ -566,6 +586,7 @@ public class AppCompntConfigWizard extends WizardPage{
 			Component component = thirdComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_BLUE));
 			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
@@ -604,6 +625,7 @@ public class AppCompntConfigWizard extends WizardPage{
 			Component component = userComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_BLUE));
 			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			

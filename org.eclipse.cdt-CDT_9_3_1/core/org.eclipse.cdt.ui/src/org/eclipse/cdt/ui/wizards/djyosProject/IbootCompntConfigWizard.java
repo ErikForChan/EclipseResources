@@ -124,15 +124,28 @@ public class IbootCompntConfigWizard extends WizardPage{
 				defineInit += "//******************************* Configure "+compontentsCheckedSort.get(i).getName()+
 						" ******************************************//\n";
 				String filePath = compontentsCheckedSort.get(i).getFileName();
-				//filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()
-//				initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
 				String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
 				for(int j=0;j<configures.length;j++) {
 					if(configures[j].contains("#define")) {
-						defineInit += configures[j]+"\n";
-					}
+						String pureDefine = null;
+						String annoName = null;
+						if(configures[j].trim().startsWith("//")) {
+							pureDefine = configures[j].replaceFirst("//", "");
+						}else {
+							pureDefine = configures[j];
+						}
+						String[] defines = pureDefine.split("//");
+						String[] infos = defines[1].split(",|，");
+						if(infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
+							annoName = infos[0];
+	            		}
+						if(annoName == null) {
+							defineInit += configures[j]+"\n";	
+						}else {
+							defineInit += configures[j].replace(annoName,"").replace(",", "").replace("，", "")+"\n";
+						}						
 				}
-//				defineInit += compontentsCheckedSort.get(i).getConfigure();
+				}
 			}		
 		}
 		defineInit += "//******************************* Core Clock ******************************************//\n";
@@ -157,6 +170,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 		String moduleInit = "";
 		String djyMain = "";
 		initHead = DjyosMessages.Automatically_Generated;
+		initHead += "#include \"project_config.h\"\n";
 		File file = new File(path+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -303,7 +317,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			component.setParent(compontentsList.get(i).getParent());
 			component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 			component.setExcludes(compontentsList.get(i).getExcludes());
-			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable()+"             getConfigure:  "+component.getConfigure());
+//			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable()+"             getConfigure:  "+component.getConfigure());
 			//当组件为必选且不需要配置时，不显示在界面上
 			if(component.getSelectable().equals(SELECT_MUST) && (!component.getConfigure().contains("#define"))) {
 				compontentsChecked.add(component);
@@ -509,6 +523,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			Component component = coreComponents.get(i);
 			compontentBtns[i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
 			compontentBtns[i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
@@ -553,6 +568,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			Component component = bspComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
 			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
@@ -591,6 +607,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			Component component = thirdComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
 			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			
@@ -629,6 +646,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			Component component = userComponents.get(i);
 			compontentBtns[preSize+i] = new Button(componentCpt,SWT.CHECK);
 			compontentBtns[preSize+i].setText(component.getName().length()>12?component.getName().substring(0,12)+"...":component.getName());
+			compontentBtns[i].setForeground(componentCpt.getDisplay().getSystemColor(SWT.COLOR_DARK_GREEN));
 			compontentBtns[preSize+i].setToolTipText(component.getName());
 			CmpntCheck cmpntCheck = new CmpntCheck(component.getName(),"false");
 			

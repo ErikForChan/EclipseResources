@@ -66,7 +66,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	private String curPath = null,groupName,cpuName,eclipsePath = getEclipsePath(),cpuTag = null,newConfig = null;
 	private boolean haveCore = false;
 	private List<String> configsList = new ArrayList<String>(),configsOn = new ArrayList<String>(),attributes = new ArrayList<String>(),firewareLibs = new ArrayList<String>();
-	
+	Label memorySizeLabel,memoryAddrLabel,memoryTypeLabel;
 	/*
 	 * 获取当前Eclipse的路径
 	 */
@@ -74,6 +74,15 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		return eclipsePath;
+	}
+	
+	private void setMemoryCpt(boolean isEnable){	
+		memoryTypeLabel.setEnabled(isEnable);
+		memoryAddrLabel.setEnabled(isEnable);
+		memorySizeLabel.setEnabled(isEnable);
+		memoryTypeCombo.setEnabled(isEnable);
+		sizeField.setEnabled(isEnable);
+		addrField.setEnabled(isEnable);
 	}
 	
 	public String getGroupName() {
@@ -186,6 +195,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			configsList.add(cons.get(i));
 			TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
 			t.setText(cons.get(i));
+//			t.setBackground(color);
 			if(! attributes.contains(cons.get(i))) {
 				t.setImage(CPluginImages.CFG_DONE_VIEW.createImage());
 			}
@@ -739,6 +749,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		});
 		Button deleteBtn = new Button(btnCpt,SWT.PUSH);
 		deleteBtn.setText("删除");
+		deleteBtn.setEnabled(false);
 		deleteBtn.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -758,6 +769,11 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					}
 					items[0].dispose();
 				}
+				int memoryNum = memoryTree.getItemCount();
+				if(memoryNum<1) {
+					deleteBtn.setEnabled(false);
+					setMemoryCpt(false);
+				}
 			}
 			
 			@Override
@@ -773,8 +789,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		detailsLayout.numColumns = 2;
 		memoryContentCpt.setLayout(detailsLayout);
 		memoryContentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-		Label typeLabel = new Label(memoryContentCpt,SWT.NONE);
-		typeLabel.setText("类型: ");
+		memoryTypeLabel = new Label(memoryContentCpt,SWT.NONE);
+		memoryTypeLabel.setText("类型: ");		
 
 		memoryTypeCombo = new Combo(memoryContentCpt,SWT.READ_ONLY);
 		memoryTypeCombo.add("ROM");
@@ -818,8 +834,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			}
 		});
 		
-		Label addrLabel = new Label(memoryContentCpt,SWT.NONE);
-		addrLabel.setText("地址: ");
+		memoryAddrLabel = new Label(memoryContentCpt,SWT.NONE);
+		memoryAddrLabel.setText("地址: ");
 		addrField = new Text(memoryContentCpt,SWT.BORDER);
 		addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		addrField.addModifyListener(new ModifyListener() {
@@ -853,11 +869,12 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				}			
 			}
 		});
-		
-		Label sizeLabel = new Label(memoryContentCpt,SWT.NONE);
-		sizeLabel.setText("大小: ");
+
+		memorySizeLabel = new Label(memoryContentCpt,SWT.NONE);
+		memorySizeLabel.setText("大小: ");
 		sizeField = new Text(memoryContentCpt,SWT.BORDER);
 		sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		setMemoryCpt(false);
 		sizeField.addModifyListener(new ModifyListener() {
 
 			@Override
@@ -949,6 +966,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
+				deleteBtn.setEnabled(true);
+				setMemoryCpt(true);
 				TreeItem[] items = memoryTree.getSelection();
 				int selectIndex = numCombo.getSelectionIndex();
 				List<CoreMemory> memorys = curCpu.getCores().get(selectIndex).getMemorys();
@@ -1051,14 +1070,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		configContent = new Composite(scrolledComposite,SWT.NONE);
 		configContent.setLayout(new GridLayout());
 		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
-//		if(haveCore) {
-//			curCpu = parentCpu;
-//			if(newCpu.get) {
-//				
-//			}
-//		}else {
-//			curCpu = newCpu;
-//		}
 		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 2;
@@ -1443,11 +1454,11 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		
 	}
 
-//	@Override
-//	protected Point getInitialSize() {
-//		// TODO Auto-generated method stub
-//		return new Point(520,400);
-//	}
+	@Override
+	protected Point getInitialSize() {
+		// TODO Auto-generated method stub
+		return new Point(520,400);
+	}
 	
 	@Override
 	protected void okPressed() {

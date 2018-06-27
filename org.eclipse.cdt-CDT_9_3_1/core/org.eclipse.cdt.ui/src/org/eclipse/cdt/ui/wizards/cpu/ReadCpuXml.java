@@ -95,7 +95,6 @@ public class ReadCpuXml {
 						File parentFile = file.getParentFile();
 						traverseParents(cpu,parentFile);
 						Cpu newCpu = new Cpu(cpu.getCpuName(),cpu.getCores());
-						System.out.println("newCpu:  "+newCpu.getCpuName()+"  "+file.getName());
 						cpus.add(newCpu);
 					} 
 				} catch (Exception e) {
@@ -280,6 +279,7 @@ public class ReadCpuXml {
 								for (int k = 1; k < memoryList.getLength(); k += 2) {				
 									org.w3c.dom.Node mNode = memoryList.item(k);
 									String mName = mNode.getNodeName();
+									System.out.println("mName:  "+file.getName());
 									String mContent = mNode.getFirstChild().getTextContent();
 									if(mName.equals("type")) {
 										memory.setType(mContent);
