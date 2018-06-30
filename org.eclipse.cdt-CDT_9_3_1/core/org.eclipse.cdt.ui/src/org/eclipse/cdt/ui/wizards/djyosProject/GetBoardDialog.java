@@ -209,28 +209,13 @@ public class GetBoardDialog extends StatusDialog {
 			Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
 	        boolean isInt =  pattern.matcher(coreClk).matches();
 	        if(!isInt) {
+	        	fDialogFields[1].getTextControl(content).setText("");
 	        	IWorkbenchWindow window = PlatformUI.getWorkbench()
 	    				.getActiveWorkbenchWindow();
 	        	MessageDialog.openError(window.getShell(), "提示",
 						"请输入正整数");
 	        }			
 	};
-
-//	private Listener boardModifyListener = e -> {
-//		if (boardSelectField.getText().trim() != null) {
-//			importMCUBtn.setEnabled(true);
-//		}
-//	};
-	
-//	private Listener cpuModifyListener = e -> {
-//		if (selectCpu != null) {
-//			List<Core> cores = selectCpu.getCores();
-//			if(cores.size()<2) {
-//				coreSelectFiled.setText("Core1");
-//			}
-//		}
-//	};
-
 	
 	@Override
 	protected void okPressed() {

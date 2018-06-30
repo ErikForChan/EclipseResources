@@ -99,7 +99,7 @@ public class BoardMainWizard extends WizardPage{
 	private List<Cpu> cpusList = null,cpusOn = null;
 	private List<Component> peripheralsList = new ArrayList<Component>();;//外设列表
 	private List<Component> peripheralsOn = new ArrayList<Component>();//用到的外设
-	private List<Component> allPeripherals = new ArrayList<Component>();//所有外设
+	private List<Component> allPeripherals;//所有外设
 	private List<Chip> chipsList = null,chipsOn = null;
 	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
 	private List<Component> thePeripherals;
@@ -715,11 +715,13 @@ public class BoardMainWizard extends WizardPage{
 	    					if(isInt) {
 	    						curNum = Integer.parseInt(size);
 	    					}else {
+	    						sizeField.setText("");
 	    						MessageDialog.openError(window.getShell(), "提示",
 	        							"请输入正整数");
 	    					}
 	    				}             					
         				if(curNum<0) {
+        					sizeField.setText("");
         					MessageDialog.openError(window.getShell(), "提示",
         							"请输入正整数");
         				}else {
@@ -1187,9 +1189,11 @@ public class BoardMainWizard extends WizardPage{
 		cpuArhivesNeed = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		cpuArhivesNeed.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		cpuArhivesNeed.setHeaderVisible(true);
-		cpuArhivesNeed.addSelectionListener(new SelectionAdapter() {
+		cpuArhivesNeed.addSelectionListener(new SelectionListener() {
+			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
 				gotoBtn.setEnabled(false);
 				backBtn.setEnabled(true);
 				TreeItem[] items = cpuArhivesNeed.getSelection();
@@ -1216,6 +1220,7 @@ public class BoardMainWizard extends WizardPage{
 						rtcClkField.setText("");
 					}
 					
+					allPeripherals = new ArrayList<Component>();
 					ReadComponentXml rcx = new ReadComponentXml();
 					String cpuPath = getCpuPath(selectCpuName);
 					List<String> cpuSrcPaths = new ArrayList<String>();
@@ -1223,18 +1228,18 @@ public class BoardMainWizard extends WizardPage{
 					for(String path:cpuSrcPaths) {
 						File srcFile = new File(path);
 						List<Component> somePeripherals = rcx.getPeripherals(srcFile);
-						peripheralsList.addAll(somePeripherals);
+						allPeripherals.addAll(somePeripherals);
 					}
 					
-					for(int i=0;i<peripheralsList.size();i++) {
-						Component component = new Component();
-						component.setName(peripheralsList.get(i).getName());
-						allPeripherals.add(component);
-//						thePeripherals.add(component);
-					}
 					
-					cpudrvTree.removeAll();
-					cpudrvOnTree.removeAll();
+//					for(int i=0;i<peripheralsList.size();i++) {
+//						Component component = new Component();
+//						component.setName(peripheralsList.get(i).getName());
+//						allPeripherals.add(component);
+////						thePeripherals.add(component);
+//					}
+					
+					
 //					interfaceCombo.removeAll();
 					List<Component> boardPeripherals = onBoardCpu.getPeripherals();
 					thePeripherals = new ArrayList<Component>();
@@ -1244,18 +1249,21 @@ public class BoardMainWizard extends WizardPage{
 						thePeripherals.add(component);
 					}
 					int perSize = allPeripherals.size();
+					cpudrvTree.removeAll();
+					cpudrvOnTree.removeAll();
 					//板载外设为空
-					if(boardPeripherals == null) {
+					if(boardPeripherals.size() == 0) {
 						peripheralsOn = new ArrayList<Component>();
 						for(int i=0;i<allPeripherals.size();i++) {
+							System.out.println(allPeripherals.get(i).getName());
 							TreeItem t = new TreeItem(cpudrvTree, SWT.NONE);
 							t.setText(allPeripherals.get(i).getName());
 						}
 					}else {		//板载外设不为空	
+						System.out.println("size() != 0");
 						peripheralsOn = boardPeripherals;					
 						for(int j=0;j<boardPeripherals.size();j++) {//u1 u2
 							String peripheraOnlName = boardPeripherals.get(j).getName();
-							System.out.println("peripheraOnlName: "+peripheraOnlName);
 							for(int i=0;i<thePeripherals.size();i++) {// nand u1 u2
 								String peripheralName = thePeripherals.get(i).getName();
 								if(peripheralName.equals(peripheraOnlName)) {
@@ -1304,6 +1312,12 @@ public class BoardMainWizard extends WizardPage{
 				
 //					updateConfigurationIntereface();
 				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
 			}
 		});
 		cpusOn = new ArrayList<Cpu>();
@@ -1537,9 +1551,8 @@ public class BoardMainWizard extends WizardPage{
 		TreeItem t = new TreeItem(cpudrvOnTree, SWT.NONE);
 		t.setText(newComponent.getName());
 //		interfaceCombo.add(newComponent.getName());
-	}
+	}	
 	
-	private String deapPath = null;
 	private String getCpuPath(String cpuName) {
 		String sourcePath = eclipsePath+"djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
@@ -1547,31 +1560,31 @@ public class BoardMainWizard extends WizardPage{
 		String path = null;
 		for(File file:files){//cpudrv下的所有文件 Atmel stm32
 			if(file.isDirectory()) {
-				getDeapPath(file,cpuName);
-				if(deapPath!=null) {
-					path = deapPath;
+				String curPath = getDeapPath(file,cpuName,null);
+				if(curPath != null) {
+					path = curPath;
 					break;
-				}	
+				};
 			}	
 		}
 		return path;
 	}
 
-	public String getDeapPath(File sourceFile,String cpuName) {
+	public String getDeapPath(File sourceFile,String cpuName,String path) {
 		File[] files = sourceFile.listFiles();
-		String path = null;
-		for (File file : files) {
-			if (file.isDirectory()) {
-				if(file.getName().equals(cpuName)) {
-					System.out.println("cpuName:  "+cpuName);
-					deapPath = file.getPath();
-					break;
-				}else if(!file.getName().equals("include") && !file.getName().equals("src")){
-					getDeapPath(file,cpuName);//如果为目录，则继续扫描该目录
-				}			
+		if(path == null) {//path为空时，还未扫描到相应cpu，则继续扫描
+			for (File file : files) {
+				if (file.isDirectory()) {			
+					if(file.getName().equals(cpuName)) {
+						path = file.getPath();
+						break;
+					}else if(!file.getName().equals("include") && !file.getName().equals("src")){
+						path = getDeapPath(file,cpuName,path);//如果为目录，则继续扫描该目录
+					}			
+				}
 			}
 		}
-		return deapPath;
+		return path;
 	}
 	
 }

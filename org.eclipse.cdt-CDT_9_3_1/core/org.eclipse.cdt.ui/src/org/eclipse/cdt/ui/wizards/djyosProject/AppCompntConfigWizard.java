@@ -245,19 +245,25 @@ public class AppCompntConfigWizard extends WizardPage{
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 		composite.setLayout(new GridLayout(1,true));
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		createDynamicGroup(composite);
+		setErrorMessage(null);
+		setMessage(null);
+		setControl(composite);
+		Dialog.applyDialogFont(composite);
+	}
+
+	private void createDynamicGroup(Composite composite){
 		//给界面添加滚动
 		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL
                 | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-		
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));	
 		Composite infoArea = new Composite(scrolledComposite, SWT.NONE);
 		infoArea.setLayout(new GridLayout());
 		GridData data = new GridData(GridData.FILL_BOTH);
-		infoArea.setLayoutData(data);
+		infoArea.setLayoutData(data);	
+		Point point0 = composite.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		
-		Point point0 = parent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		Composite aboveCpt = new Composite(infoArea,SWT.BORDER);
-		
+		Composite aboveCpt = new Composite(infoArea,SWT.BORDER);	
 		aboveCpt.setLayout(new GridLayout(2,true));
 		GridData data1 = new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER);
 		data1.minimumHeight = 150;
@@ -297,15 +303,13 @@ public class AppCompntConfigWizard extends WizardPage{
 			component.setParent(compontentsList.get(i).getParent());
 			component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 			component.setExcludes(compontentsList.get(i).getExcludes());
-			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable());
+//			System.out.println(component.getName()+"_getSelectable:  "+component.getSelectable());
 			//当组件为必选且不需要配置时，不显示在界面上
 			if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 				compontentsChecked.add(component);
 			}else {
 				allCompontents.add(component);
 			}
-			
-//			thePeripherals.add(component);
 		}
 		
 		compontentBtns = new Button[allCompontents.size()];
@@ -313,7 +317,6 @@ public class AppCompntConfigWizard extends WizardPage{
 		
 		for(int i=0;i<allCompontents.size();i++) {
 			if(allCompontents.get(i).getAttribute().equals("核心组件")) {
-//				System.out.println("核心组件:  "+allCompontents.get(i).getName());
 				coreComponents.add(allCompontents.get(i));
 			}else if(allCompontents.get(i).getAttribute().equals("bsp组件")) {
 				bspComponents.add(allCompontents.get(i));
@@ -345,34 +348,44 @@ public class AppCompntConfigWizard extends WizardPage{
 		item.setText("用户组件"); //$NON-NLS-1$
 		item.setControl(createUserTabContent(folder));
 		
+		handleListeners();		
+		//设置滚动条属性
+		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(infoArea);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+	}
+	
+	private void handleListeners() {
+		// TODO Auto-generated method stub
 		// 处理组件选择的监听相应
 		for (int i = 0; i < configBtns.length; i++) {
 			Component component = null;
 			int preSize = 0;
-			if(i < coreComponents.size()) {
+			if (i < coreComponents.size()) {
 				component = coreComponents.get(i);
-			}else if(i < coreComponents.size()+bspComponents.size()) {
+			} else if (i < coreComponents.size() + bspComponents.size()) {
 				preSize = coreComponents.size();
-				component = bspComponents.get(i-preSize);
-			}else if(i < coreComponents.size()+bspComponents.size()+thirdComponents.size()) {
-				preSize = coreComponents.size()+bspComponents.size();
-				component = thirdComponents.get(i-preSize);
-			}else{
-				preSize = coreComponents.size()+bspComponents.size()+thirdComponents.size();
-				component = userComponents.get(i-preSize);
+				component = bspComponents.get(i - preSize);
+			} else if (i < coreComponents.size() + bspComponents.size() + thirdComponents.size()) {
+				preSize = coreComponents.size() + bspComponents.size();
+				component = thirdComponents.get(i - preSize);
+			} else {
+				preSize = coreComponents.size() + bspComponents.size() + thirdComponents.size();
+				component = userComponents.get(i - preSize);
 			}
-			
-			Component curComponent = component;		
+
+			Component curComponent = component;
 			int cur = i;
 			configBtns[i].addSelectionListener(new SelectionListener() {
 
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					// TODO Auto-generated method stub
-					ConfigComponentDialog dialog = new ConfigComponentDialog(getShell(),curComponent,null,false,null);
-					if (dialog.open() == Window.OK) {
-						Component _Component = dialog.getComponent();
-					}
+					ConfigComponentDialog dialog = new ConfigComponentDialog(getShell(), curComponent, null,
+							false, null);
+					dialog.open();
 				}
 
 				@Override
@@ -388,7 +401,6 @@ public class AppCompntConfigWizard extends WizardPage{
 					// TODO Auto-generated method stub
 					if (compontentBtns[cur].getSelection()) {
 						configBtns[cur].setEnabled(true);
-						// List<String> dependents = component.getDependents();
 						List<String> mutes = curComponent.getMutexs();
 						String allDeps = "";
 						String allMuts = "";
@@ -417,9 +429,9 @@ public class AppCompntConfigWizard extends WizardPage{
 							if (curComponent.getDependents().size() != 0) {
 								allDeps = getAllDependents(curComponent, allDeps);
 							}
-							compontentsChecked.add(curComponent);	
+							compontentsChecked.add(curComponent);
 						}
-						
+
 						if (allDeps.equals("")) {
 							dependentText.setText(depedents + " 无");
 						} else {
@@ -430,16 +442,16 @@ public class AppCompntConfigWizard extends WizardPage{
 						} else {
 							mutexText.setText(mutexs + allMuts);
 						}
-						
+
 						cmpnts.get(cur).setChecked("true");
-						
+
 					} else {
-						
-						List<String> backDepedents = new ArrayList<String>(); 
+
+						List<String> backDepedents = new ArrayList<String>();
 						for (int i = 0; i < compontentsChecked.size(); i++) {
-							if(compontentsChecked.get(i).getDependents().contains(curComponent.getName())) {
+							if (compontentsChecked.get(i).getDependents().contains(curComponent.getName())) {
 								backDepedents.add(compontentsChecked.get(i).getName());
-							}						
+							}
 						}
 						if (backDepedents.size() == 0) {
 							for (int i = 0; i < compontentsChecked.size(); i++) {
@@ -450,18 +462,17 @@ public class AppCompntConfigWizard extends WizardPage{
 							}
 							configBtns[cur].setEnabled(false);
 							cmpnts.get(cur).setChecked("false");
-						}else {
+						} else {
 							String infos = "";
-							for(String back:backDepedents) {
-								infos+=" "+back;
+							for (String back : backDepedents) {
+								infos += " " + back;
 							}
 							compontentBtns[cur].setSelection(true);
-							IWorkbenchWindow window = PlatformUI.getWorkbench()
-        							.getActiveWorkbenchWindow();
+							IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 							MessageDialog.openError(window.getShell(), "提示",
-        							"该组件被"+infos+" 等已勾选的组件依赖，不可取消勾选");
+									"该组件被" + infos + " 等已勾选的组件依赖，不可取消勾选");
 						}
-						
+
 					}
 
 				}
@@ -473,17 +484,6 @@ public class AppCompntConfigWizard extends WizardPage{
 				}
 			});
 		}
-
-		//设置滚动条属性
-		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(infoArea);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-	    scrolledComposite.setExpandVertical(true);
-		setErrorMessage(null);
-		setMessage(null);
-		setControl(composite);
-		Dialog.applyDialogFont(composite);
 	}
 
 	private Control createCoreTabContent(TabFolder folder,List<Component> coreComponents) {

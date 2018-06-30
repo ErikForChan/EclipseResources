@@ -90,7 +90,7 @@ import org.eclipse.cdt.internal.ui.newui.Messages;
 import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
 
 @SuppressWarnings("restriction")
-public class DjyosMainWizardPage extends WizardPage{
+public class DjyosMainWizardPage extends WizardPage {
 	public static final String PAGE_ID = "org.eclipse.cdt.managedbuilder.ui.wizard.NewModelProjectWizardPage"; //$NON-NLS-1$
 
 	private static final String EXTENSION_POINT_ID = "org.eclipse.cdt.ui.CDTWizard"; //$NON-NLS-1$
@@ -177,20 +177,30 @@ public class DjyosMainWizardPage extends WizardPage{
 	public DjyosMainWizardPage(String pageName) {
 		super(pageName);
 		setPageComplete(false);
+	
 	}
 
 	@SuppressWarnings("restriction")
 	@Override
 	public void createControl(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NULL);
-		initializeDialogUnits(parent);
+//		initializeDialogUnits(parent);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 25;
 		layout.verticalSpacing = 20;
 		composite.setLayout(layout);
-		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
-		
+		composite.setLayoutData(new GridData(GridData.FILL_BOTH));	
+		createDynamicGroup(composite);
+		// Show description on opening
+		setErrorMessage(null);
+		setMessage(null);
+		setControl(composite);
+//		Dialog.applyDialogFont(composite);
+	}
+
+	private void createDynamicGroup(Composite composite) {
+		// TODO Auto-generated method stub
 		creatTemplateUI(composite);
 		createProjectAndBoardGroup(composite);
 		//createBoardGroup(composite);
@@ -200,11 +210,6 @@ public class DjyosMainWizardPage extends WizardPage{
 		}
 		// Scale the button based on the rest of the dialog
 		setButtonLayoutData(locationArea.getBrowseButton());
-		// Show description on opening
-		setErrorMessage(null);
-		setMessage(null);
-		setControl(composite);
-		Dialog.applyDialogFont(composite);
 	}
 
 	private void createProjectAndBoardGroup(Composite parent) {
@@ -218,7 +223,6 @@ public class DjyosMainWizardPage extends WizardPage{
 		// 工程名
 		Label projectLabel = new Label(projectGroup, SWT.NONE);
 		projectLabel.setText(IDEWorkbenchMessages.WizardNewProjectCreationPage_nameLabel);
-		// new project name entry field
 		fProjectNameField = new Text(projectGroup, SWT.BORDER);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		fProjectNameField.setLayoutData(data);
@@ -528,6 +532,7 @@ public class DjyosMainWizardPage extends WizardPage{
 				Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
 		        boolean isInt =  pattern.matcher(bootSize).matches();
 		        if(!isInt) {
+		        	fIbootSize.getTextControl(ibootComposite).setText("");
 		        	IWorkbenchWindow window = PlatformUI.getWorkbench()
 		    				.getActiveWorkbenchWindow();
 		        	MessageDialog.openError(window.getShell(), promoteTitle,
@@ -535,7 +540,6 @@ public class DjyosMainWizardPage extends WizardPage{
 		        }
 			}
 		});
-//		fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify, ibootSizeModifyListener);
 
 	}
 
@@ -582,7 +586,7 @@ public class DjyosMainWizardPage extends WizardPage{
 			
 		} else {
 			if (clickedNext) {
-				nmWizard.importTemplate(projectPath);
+				nmWizard.importProject(projectPath);
 
 			}
 		}
@@ -663,14 +667,26 @@ public class DjyosMainWizardPage extends WizardPage{
 		String projectFieldContents = getProjectNameFieldValue();
 		if (projectFieldContents.equals("")) { //$NON-NLS-1$
 			setErrorMessage(null);
-			setMessage(IDEWorkbenchMessages.WizardNewProjectCreationPage_projectNameEmpty);
+			setMessage("请填写工程名 !");
 			return false;
+		}
+		
+		String prjPathSelect = locationArea.locationPathField.getText();
+		if(prjPathSelect.contains(projectFieldContents)) {
+			prjPathSelect = prjPathSelect.replace("\\"+projectFieldContents, "");
+		}
+		File prjParentFile = new File(prjPathSelect);
+		File[] files = prjParentFile.listFiles();
+		for(File file:files) {
+			if(file.getName().equals(projectFieldContents)) {
+				setErrorMessage("工作空间或者磁盘已经存在目标工程 !");
+				return false;
+			}
 		}
 		
 		String boardFieldContents = getBoardNameFieldValue();
 		if (boardFieldContents.equals("")) { //$NON-NLS-1$
-			setErrorMessage(null);
-			setMessage("Board must be selected !!!");
+			setMessage("请选择板件 !");
 			return false;
 		}
 
@@ -680,18 +696,12 @@ public class DjyosMainWizardPage extends WizardPage{
 			return false;
 		}
 
-//		IProject handle = getProjectHandle();
-//		if (handle.exists()) {
-//			setErrorMessage(IDEWorkbenchMessages.WizardNewProjectCreationPage_projectExistsMessage);
-//			return false;
-//		}
-
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(getProjectNameFieldValue());
 		locationArea.setExistingProject(project);
 
 		String validLocationMessage = locationArea.checkValidLocation();
 		if (validLocationMessage != null) { // there is no destination location given
-			setErrorMessage(validLocationMessage);
+			setErrorMessage("工作空间已经存在目标工程 !");
 			return false;
 		}
 

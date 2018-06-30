@@ -187,30 +187,30 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	/*
 	 * 创建工程
 	 */
-	public void importTemplate(String projectPath) {
+	public void importProject(String projectPath) {
 		
-		String projectName = fMainPage.getProjectName();
-		String templateName = getTemplateName();
-		String srcPath = didePath + "demo/" + templateName;
-		String destPath = fMainPage.locationArea.locationPathField.getText();
-		if(!destPath.contains(projectName)) {
-			destPath = destPath+"/"+projectName;
+		String projectName = fMainPage.getProjectName();//用户填写的工程名
+		String templateName = getTemplateName();//用户选择的模板
+		String srcPath = didePath + "demo/" + templateName;//模板的路径
+//		String destPath = fMainPage.locationArea.locationPathField.getText();//新工程的存放路径 locationArea.locationPathField.getText();
+		if(!projectPath.contains(projectName)) {
+			projectPath = projectPath+"/"+projectName;
 		}
+		String destPath = projectPath;
 		
-		File src = new File(srcPath);
-		File dest = new File(destPath);
-		File projectFile = new File(projectPath+"/"+projectName);
+		File srcFile = new File(srcPath);
+//		File dest = new File(destPath);
+		File destFile = new File(destPath);
 
-		if(!dest.exists() && !projectFile.exists()) {
-			dest.mkdir();
+		if(!destFile.exists()) {
+			destFile.mkdir();
 			try {
-				copyFolder(src,dest);
+				copyFolder(srcFile,destFile);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
-			final String importName = templateName;
 			WorkspaceModifyOperation op = new WorkspaceModifyOperation() {
 				@Override
 				protected void execute(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
@@ -219,7 +219,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					// report to the user
 					MultiStatus status = new MultiStatus(IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
 							DataTransferMessages.WizardProjectsImportPage_projectsInWorkspaceAndInvalid, null);
-					importExistingProject(subMonitor.split(1),projectName,projectPath);		
+					importExistingProject(subMonitor.split(1),projectName,destPath);		
 					
 					if (!status.isOK()) {
 						throw new InvocationTargetException(new CoreException(status));
@@ -260,7 +260,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		final IProgressMonitor monitor = new NullProgressMonitor();
 
 		if(! projectPath.contains(projectName)) {
-			IPath locationPath = new Path(projectPath+"/"+projectName);
+			IPath locationPath = new Path(projectPath);
 			IProjectDescription description = workspace.newProjectDescription(projectName);
 			description.setLocation(locationPath);
 			try {
@@ -701,24 +701,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		return false;
 	}
 
-//	private List<String> getCpuLinkStrings(File file, String _cpuName, List<String> cpuLinkStrings) {
-//		// TODO Auto-generated method stub
-//		File[] files = file.listFiles();
-//		String DJYOS_SRC_LOCARION = didePath+"djysrc";
-//		for(int j=0;j<files.length;j++) {
-//			String path = files[j].getPath();
-//			String relativePath = path.substring(DJYOS_SRC_LOCARION.length(), path.length());
-//			if(_cpuName.equals(files[j].getName())) {
-//				cpuLinkStrings.add("${DJYOS_SRC_LOCATION}"+relativePath+"/../include");
-//			}else if(files[j].getName().equals("include")) {
-//				cpuLinkStrings.add("${DJYOS_SRC_LOCATION}"+relativePath);
-//			}else if(!files[j].getName().equals("src")){
-//				getCpuLinkStrings(files[j],_cpuName,cpuLinkStrings);
-//			}
-//		}
-//		return cpuLinkStrings;
-//	}
-	
 	private String getCpuLinkString(File file, String _cpuName, String cpuLinkString) {
 		// TODO Auto-generated method stub
 		File[] files = file.listFiles();
@@ -856,7 +838,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
     	String projectName = fMainPage.getProjectName();
 		String sourcePath = fMainPage.projectPath;
 		
-//		String sourcePath = ResourcesPlugin.getWorkspace().getRoot().getLocationURI().toString().substring(6)+"/"+projectName;
 		int index = fMainPage.getTemplateIndex();
 		boolean containsPrj = projectPath.contains(projectName);
     	String initCPath = containsPrj?initCPath = projectPath+"/src/app":projectPath+"/"+projectName+"/src/app";
@@ -899,7 +880,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				monitor.worked(2);
 				//根据MemoryMap配置的内容添加memory.lds文件
 				getMemoryToLds(ldsHead,ldsDesc,projectName,sourcePath);
-				monitor.worked(1);
+				monitor.worked(10);
 				monitor.done();
 			}
 		};

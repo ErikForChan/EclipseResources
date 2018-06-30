@@ -121,7 +121,6 @@ public class ReadComponent {
 		for(int i=0;i<componentPaths.size();i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			File[] files = sourceFile.listFiles();
-//			System.out.println("fileName:   "+sourceFile.getName());
 			for(File file:files) {				
 				if(file.isDirectory()) {
 					traverFiles(file);

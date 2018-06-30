@@ -733,7 +733,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).getMemorys().add(memory);
-					curCpu.getCores().get(selectIndex).getMemorys().add(memory);
+//					curCpu.getCores().get(selectIndex).getMemorys().add(memory); //
 				}else {
 					newCore.getMemorys().add(memory);
 				}
@@ -801,13 +801,17 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
+				memoryAddrLabel.setEnabled(true);
+				memorySizeLabel.setEnabled(true);
+				sizeField.setEnabled(true);
+				addrField.setEnabled(true);
 				int selectIndex = numCombo.getSelectionIndex();
 				if(selectIndex!=-1) {
 					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
 					int comboIndex = memoryTypeCombo.getSelectionIndex();
 					TreeItem[] items = memoryTree.getSelection();
 					String type = memoryTypeCombo.getItem(comboIndex);//
-					int index = 0;//
+					int index = -1;//
 					if(items.length>0) {
 						String selectMemory = items[0].getText().trim();//选中的内存
 						for(int i=0;i<memorys.size();i++) {
@@ -821,7 +825,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 							}		
 						}
 					}
-					if(index != 0) {
+					if(index != -1) {
 						curCpu.getCores().get(selectIndex).getMemorys().get(index).setType(type);
 					}
 				}				
@@ -848,7 +852,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
 					TreeItem[] items = memoryTree.getSelection();
 					String addr = addrField.getText().trim();//
-					int index = 0;//
+					int index = -1;//
 					if (items.length > 0) {
 						String selectMemory = items[0].getText().trim();
 						for (int i = 0; i < memorys.size(); i++) {
@@ -863,7 +867,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 							
 						}
 					}
-					if(index != 0) {
+					if(index != -1) {
 						curCpu.getCores().get(selectIndex).getMemorys().get(index).setStartAddr(addr);
 					}
 				}			
@@ -884,7 +888,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				if(selectIndex!=-1) {
 					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
 					TreeItem[] items = memoryTree.getSelection();
-					int index = 0;//
+					int index = -1;//
 					String size = sizeField.getText().trim();
 					if (items.length > 0) {
 						String selectMemory = items[0].getText().trim();
@@ -900,12 +904,14 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		    					if(isInt) {
 		    						curNum = Integer.parseInt(size);
 		    					}else {
+		    						sizeField.setText("");
 		    						MessageDialog.openError(window.getShell(), "提示",
 		        							"请输入正整数");
 		    					}
 		    					
 		    				}             					
 	        				if(curNum<0) {
+	        					sizeField.setText("");
 	        					MessageDialog.openError(window.getShell(), "提示",
 	        							"请输入正整数");
 	        				}else {
@@ -923,8 +929,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 							
 						}
 					}
-					if(index != 0) {
-						curCpu.getCores().get(selectIndex).getMemorys().get(index).setStartAddr(size);
+					if(index != -1) {
+						curCpu.getCores().get(selectIndex).getMemorys().get(index).setSize(size);
 					}
 				}			
 			}
@@ -948,6 +954,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 						TreeItem t = new TreeItem(memoryTree, SWT.NONE);
 						t.setText(memoryName);
 					}		
+					memoryTypeLabel.setEnabled(true);
+					memoryTypeCombo.setEnabled(true);
+				}else {
+					setMemoryCpt(false);
 				}
 				memoryTypeCombo.deselectAll();
 				addrField.setText("");
@@ -967,7 +977,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				deleteBtn.setEnabled(true);
-				setMemoryCpt(true);
+				memoryTypeLabel.setEnabled(true);
+				memoryTypeCombo.setEnabled(true);
 				TreeItem[] items = memoryTree.getSelection();
 				int selectIndex = numCombo.getSelectionIndex();
 				List<CoreMemory> memorys = curCpu.getCores().get(selectIndex).getMemorys();
@@ -1006,7 +1017,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				
 			}
 		});
-		
+
 		if (curCpu.getCores().size() == 0) {
 			coreSelectCpt.setVisible(false);
 			List<CoreMemory> memorys = newCore.getMemorys();
@@ -1424,14 +1435,25 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
 				String coreNum = numText.getText();	
-				newCpu = new Cpu();
-				int cNum = Integer.parseInt(coreNum);
-				newCpu.setCoreNum(cNum);
-				curCpu.setCoreNum(cNum);
-				for(int i=0;i<cNum;i++) {
-					newCpu.getCores().add(new Core());
-				}
-				curCpu = newCpu;
+				Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+		        boolean isInt =  pattern.matcher(coreNum).matches();
+		        if(!isInt) {
+		        	numText.setText("");
+		        	IWorkbenchWindow window = PlatformUI.getWorkbench()
+		    				.getActiveWorkbenchWindow();
+		        	MessageDialog.openError(window.getShell(), "提示",
+							"请输入正整数");
+		        }else {
+		        	newCpu = new Cpu();
+					int cNum = Integer.parseInt(coreNum);
+					newCpu.setCoreNum(cNum);
+					curCpu.setCoreNum(cNum);
+					for(int i=0;i<cNum;i++) {
+						newCpu.getCores().add(new Core());
+					}
+					curCpu = newCpu;
+		        }		
+							
 			}
 		});
 		

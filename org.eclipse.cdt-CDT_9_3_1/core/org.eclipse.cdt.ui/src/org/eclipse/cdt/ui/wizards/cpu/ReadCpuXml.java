@@ -279,7 +279,6 @@ public class ReadCpuXml {
 								for (int k = 1; k < memoryList.getLength(); k += 2) {				
 									org.w3c.dom.Node mNode = memoryList.item(k);
 									String mName = mNode.getNodeName();
-									System.out.println("mName:  "+file.getName());
 									String mContent = mNode.getFirstChild().getTextContent();
 									if(mName.equals("type")) {
 										memory.setType(mContent);
