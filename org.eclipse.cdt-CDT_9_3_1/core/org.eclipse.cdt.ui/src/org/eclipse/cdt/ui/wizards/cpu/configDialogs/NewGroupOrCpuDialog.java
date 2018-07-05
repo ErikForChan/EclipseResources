@@ -370,8 +370,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		addrText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
 		if (curCpu.getCores().size() != 0) {
+			numCombo.select(0);
 			if (curCpu.getCores().get(0).getResetAddr() != null) {
-				numCombo.select(0);
 				addrText.setText(curCpu.getCores().get(0).getResetAddr());
 			}
 		} else {
@@ -518,9 +518,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			}
 		}else {//内核个数不为0时
 			List<Core> cores = curCpu.getCores();
+			
+			numCombo.select(0);
 			if(cores.get(0).getFloatABI()!=null) {
-				numCombo.select(0);
-
 				for(int i=0;i<abis.length;i++) {
 					if(abis[i].contains(cores.get(0).getFloatABI())) {
 						abiCombo.select(i);
@@ -1034,8 +1034,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			sizeField.setText("");
 		}else {
 			List<Core> cores = curCpu.getCores();
+			numCombo.select(0);
 			if(curCpu.getCores().get(0).getMemorys().size()!=0){
-				numCombo.select(0);
 				List<CoreMemory> memorys = curCpu.getCores().get(0).getMemorys();
 				memoryTree.removeAll();
 				for (int i = 0; i < memorys.size(); i++) {
@@ -1276,55 +1276,59 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			}
 		}else {
 			List<Core> cores = curCpu.getCores();
-			if(cores.get(0).getType()!=null) {
-				numCombo.select(0);
+			numCombo.select(0);
+			if(cores.get(0).getType()!=null) {				
 				for(int i=0;i<types.length;i++) {
 					if(cores.get(0).getType().equals(types[i])) {
 						typeCombo.select(i);
 						break;
 					}
 				}
+				archCombo.setEnabled(true);
 			}else {
 				typeCombo.setEnabled(false);
+				archCombo.setEnabled(false);
 			}
+			
+			String type = typeCombo.getText().trim();
+			String archPath = typePath+"/"+type;
+			File archFile = new File(archPath);
+			File[] archFiles =  archFile.listFiles(new MyFileter());
+			String[] archs = new String[archFiles.length];
+			for(int i=0;i<archFiles.length;i++) {
+				archs[i] = archFiles[i].getName();
+			}
+			archCombo.setItems(archs);
+			
 			if (cores.get(0).getArch() != null) {
-				String type = typeCombo.getText().trim();
-				String archPath = typePath+"/"+type;
-				File archFile = new File(archPath);
-				File[] archFiles =  archFile.listFiles(new MyFileter());
-				String[] archs = new String[archFiles.length];
-				for(int i=0;i<archFiles.length;i++) {
-					archs[i] = archFiles[i].getName();
-				}
-				archCombo.setItems(archs);
+				
 				for(int i=0;i<archs.length;i++) {
 					if(cores.get(0).getArch().equals(archs[i])) {
 						archCombo.select(i);
 						break;
 					}
 				}
+				familyCombo.setEnabled(true);
 			}else {
-				archCombo.setEnabled(false);
+				familyCombo.setEnabled(false);
 			}
-			if(cores.get(0).getFamily()!=null) {
-				String type = typeCombo.getText().trim();
-				String arch = archCombo.getText().trim();
-				String familyPath = typePath+"/"+type+"/"+arch;
-				File familyFile = new File(familyPath);
-				File[] familyFiles =  familyFile.listFiles(new MyFileter());
-				String[] familys = new String[familyFiles.length];
-				for(int i=0;i<familyFiles.length;i++) {
-					familys[i] = familyFiles[i].getName();
-				}
-				familyCombo.setItems(familys);
+			
+			String arch = archCombo.getText().trim();
+			String familyPath = typePath+"/"+type+"/"+arch;
+			File familyFile = new File(familyPath);
+			File[] familyFiles =  familyFile.listFiles(new MyFileter());
+			String[] familys = new String[familyFiles.length];
+			for(int i=0;i<familyFiles.length;i++) {
+				familys[i] = familyFiles[i].getName();
+			}
+			familyCombo.setItems(familys);
+			if(cores.get(0).getFamily()!=null) {			
 				for(int i=0;i<familys.length;i++) {
 					if(cores.get(0).getFamily().equals(familys[i])) {
 						familyCombo.select(i);
 						break;
 					}
 				}
-			}else {
-				familyCombo.setEnabled(false);
 			}
 			
 		}

@@ -253,7 +253,7 @@ public class IbootCompntConfigWizard extends WizardPage{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		ccx.createCheck(cmpnts, ibootcheckFile);
+//		ccx.createCheck(cmpnts, ibootcheckFile);
 
 	}
 	

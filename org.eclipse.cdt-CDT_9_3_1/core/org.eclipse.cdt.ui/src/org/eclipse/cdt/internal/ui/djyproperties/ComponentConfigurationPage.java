@@ -185,7 +185,7 @@ public class ComponentConfigurationPage extends PropertyPage{
 			e.printStackTrace();
 		}
 		CreateCheckXml ccx = new CreateCheckXml();
-		ccx.createCheck(cmpnts, checkFile);
+//		ccx.createCheck(cmpnts, checkFile);
 		
 	}
 

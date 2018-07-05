@@ -3512,25 +3512,12 @@
 		    </or>          
          </enabledWhen>
       </page> 
-
-      <page
-            name="Iboot_Component Cfg"
-            class="org.eclipse.cdt.internal.ui.djyproperties.IbootComponentCfgPage"
-            category="org.eclipse.ui.cdt.djyosGeneral.configurations"
-            id="org.eclipse.cdt.ui.iboot_ComponentConfiguration">
-         <enabledWhen>
-		     <adapt type="org.eclipse.core.resources.IProject">
-		          <test property="org.eclipse.core.resources.projectNature"
-		                value="org.eclipse.cdt.core.cnature"/>
-		     </adapt>         
-         </enabledWhen>
-      </page>
       
-      <page
-            name="App_Component Cfg"
-            class="org.eclipse.cdt.internal.ui.djyproperties.AppComponentCfgPage"
+       <page
+            name="Component Configure"
+            class="org.eclipse.cdt.internal.ui.djyproperties.ComponentCfgPage"
             category="org.eclipse.ui.cdt.djyosGeneral.configurations"
-            id="org.eclipse.cdt.ui.app_ComponentConfiguration">
+            id="org.eclipse.cdt.ui.peoject_ComponentConfiguration">
          <enabledWhen>
 		     <adapt type="org.eclipse.core.resources.IProject">
 		          <test property="org.eclipse.core.resources.projectNature"

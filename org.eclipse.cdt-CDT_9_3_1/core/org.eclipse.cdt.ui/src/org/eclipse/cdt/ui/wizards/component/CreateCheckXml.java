@@ -19,7 +19,7 @@ import org.w3c.dom.Element;
 public class CreateCheckXml {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-	public void createCheck(List<CmpntCheck> cmpnts, File file) {
+	public void createCheck(List<Component> cmpnts, File file) {
 		factory.setIgnoringElementContentWhitespace(false);
     	DocumentBuilder builder;
 		try {
@@ -28,8 +28,8 @@ public class CreateCheckXml {
 
 	    	Element componentElement = document.createElement("component");
 	    	for(int i=0;i<cmpnts.size();i++) {
-	    		Element elment = document.createElement(cmpnts.get(i).getCmpntName());
-	    		elment.setTextContent(cmpnts.get(i).isChecked());
+	    		Element elment = document.createElement(cmpnts.get(i).getName());
+	    		elment.setTextContent(cmpnts.get(i).isSelect()?"true":"false");
 	    		componentElement.appendChild(elment);
 	    	}
 	    	document.appendChild(componentElement);

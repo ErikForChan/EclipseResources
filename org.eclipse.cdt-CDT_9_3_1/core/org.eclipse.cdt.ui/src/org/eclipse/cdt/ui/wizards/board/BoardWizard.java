@@ -4,7 +4,7 @@ public class BoardWizard extends BoardCommonWizard{
 	
 	
 	public BoardWizard() {
-		super("New Board","创建板件");
+		super("Manage Board","管理板件");
 	}
 	
 }

@@ -555,7 +555,7 @@ public class DjyosMainWizardPage extends WizardPage {
 	public IWizardPage getNextPage() {
 		System.out.println("getNextPage DW");
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard)getWizard();
-		if(! nmWizard.addedAppCfg && ! nmWizard.addedIbootCfg) {
+		if(! nmWizard.addedComptCfg) {
 			OnBoardCpu onBoardCpu = null;
 			List<OnBoardCpu> onBoardCpus = selectedBoard.getOnBoardCpus();
 			for(int i=0;i<onBoardCpus.size();i++) {
@@ -564,25 +564,30 @@ public class DjyosMainWizardPage extends WizardPage {
 					break;
 				}
 			}
-			if(haveApp()) {
-				nmWizard.appCfgPage = new AppCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-//				nmWizard.appCfgPage.setTitle(DjyosMessages.App_Wizard_Title);
-//				nmWizard.appCfgPage.setDescription(DjyosMessages.App_Wizard_Desc);
-				IWorkbenchWindow window = PlatformUI.getWorkbench()
-	    				.getActiveWorkbenchWindow();
-				nmWizard.appCfgPage.setTitle("App²Ã¼ô");
-				nmWizard.appCfgPage.setDescription("²Ã¼ô¡¢ÅäÖÃAppµÄ×é¼þ");
-				nmWizard.addPage(nmWizard.appCfgPage);
-				nmWizard.addedAppCfg = true;
-			}else if(haveIboot()) {
-				nmWizard.ibootCfgPage = new IbootCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-//				nmWizard.ibootCfgPage.setTitle(DjyosMessages.Iboot_Wizard_Title);
-//				nmWizard.ibootCfgPage.setDescription(DjyosMessages.Iboot_Wizard_Desc);
-				nmWizard.ibootCfgPage.setTitle("Iboot²Ã¼ô");
-				nmWizard.ibootCfgPage.setDescription("²Ã¼ô¡¢ÅäÖÃIbootµÄ×é¼þ");
-				nmWizard.addPage(nmWizard.ibootCfgPage);
-				nmWizard.addedIbootCfg = true;
-			}
+			nmWizard.cpomtCfgPage = new ComponentConfigWizard("basicComponentCfgPage",onBoardCpu,selectedBoard,haveApp(),haveIboot());
+			nmWizard.cpomtCfgPage.setTitle("Component Configuration");
+			nmWizard.cpomtCfgPage.setDescription("¹¤³Ì²Ã¼ôÓëÅäÖÃ");
+			nmWizard.addPage(nmWizard.cpomtCfgPage);
+			nmWizard.addedComptCfg = true;
+//			if(haveApp()) {
+//				nmWizard.appCfgPage = new AppCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
+////				nmWizard.appCfgPage.setTitle(DjyosMessages.App_Wizard_Title);
+////				nmWizard.appCfgPage.setDescription(DjyosMessages.App_Wizard_Desc);
+//				IWorkbenchWindow window = PlatformUI.getWorkbench()
+//	    				.getActiveWorkbenchWindow();
+//				nmWizard.appCfgPage.setTitle("App²Ã¼ô");
+//				nmWizard.appCfgPage.setDescription("²Ã¼ô¡¢ÅäÖÃAppµÄ×é¼þ");
+//				nmWizard.addPage(nmWizard.appCfgPage);
+//				nmWizard.addedAppCfg = true;
+//			}else if(haveIboot()) {
+//				nmWizard.ibootCfgPage = new IbootCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
+////				nmWizard.ibootCfgPage.setTitle(DjyosMessages.Iboot_Wizard_Title);
+////				nmWizard.ibootCfgPage.setDescription(DjyosMessages.Iboot_Wizard_Desc);
+//				nmWizard.ibootCfgPage.setTitle("Iboot²Ã¼ô");
+//				nmWizard.ibootCfgPage.setDescription("²Ã¼ô¡¢ÅäÖÃIbootµÄ×é¼þ");
+//				nmWizard.addPage(nmWizard.ibootCfgPage);
+//				nmWizard.addedIbootCfg = true;
+//			}
 			
 		} else {
 			if (clickedNext) {

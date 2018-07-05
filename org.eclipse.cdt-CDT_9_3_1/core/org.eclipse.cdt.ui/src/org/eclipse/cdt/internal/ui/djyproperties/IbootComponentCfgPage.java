@@ -240,7 +240,7 @@ public class IbootComponentCfgPage extends PropertyPage{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		ccx.createCheck(cmpnts, appcheckFile);
+//		ccx.createCheck(cmpnts, appcheckFile);
 		
 	}
 

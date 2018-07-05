@@ -238,7 +238,7 @@ public class AppComponentCfgPage extends PropertyPage{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		ccx.createCheck(cmpnts, appcheckFile);
+//		ccx.createCheck(cmpnts, appcheckFile);
 		
 	}
 
@@ -294,7 +294,7 @@ public class AppComponentCfgPage extends PropertyPage{
 	public boolean performOk() {
 		// TODO Auto-generated method stub
 		IProject project = getProject();
-		File appFile = new File(project.getLocation().toString()+"/src/app/initPrj.c");
+//		File appFile = new File(project.getLocation().toString()+"/src/app/initPrj.c");
 		File cfgFile = new File(project.getLocation().toString()+"/src/app/OS_prjcfg/project_config.h");
 		
 		try {

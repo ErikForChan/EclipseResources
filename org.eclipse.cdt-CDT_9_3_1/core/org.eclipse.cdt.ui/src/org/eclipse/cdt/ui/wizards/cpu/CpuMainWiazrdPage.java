@@ -559,7 +559,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				if (files == null)
 					return;
 				for (int i = 0; i < files.length; i++) {
-					if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {// 判断当前路径是否为隐藏文件与文件夹
+					if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {
 						boolean toExpand = false;
 						if(files[i].isDirectory()) {
 							boolean isNeed =  containsXml(files[i]);
@@ -587,10 +587,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 									item.setExpanded(false);
 								}else {
 									item.setImage(CPluginImages.TREE_FLODER_VIEW.createImage());
+									new TreeItem(item, 0);
 								}
 								// 叶子节点对应的数值为相应文件夹的File对象
-								item.setData(files[i]);
-								new TreeItem(item, 0);
+								item.setData(files[i]);						
 							}
 						}
 						
@@ -708,15 +708,17 @@ public class CpuMainWiazrdPage extends WizardPage{
 	
 	protected boolean isFileDropable(File srcFile, File destFile) {
 		// TODO Auto-generated method stub
-		while(!srcFile.getName().equals("cpudrv")) {
-			srcFile = srcFile.getParentFile();
-			if(srcFile.getName().equals(destFile.getName())) {
+		File tempSrcFile = new File(srcFile.getPath());
+		File tempDestFile = new File(destFile.getPath());
+		while(!tempSrcFile.getName().equals("cpudrv")) {
+			tempSrcFile = tempSrcFile.getParentFile();
+			if(tempSrcFile.getName().equals(destFile.getName())) {
 				return false;
 			}
 		}
-		while(!destFile.getName().equals("cpudrv")) {
-			destFile = destFile.getParentFile();
-			if(destFile.getName().equals(srcFile.getName())) {
+		while(!tempDestFile.getName().equals("cpudrv")) {
+			tempDestFile = tempDestFile.getParentFile();
+			if(tempDestFile.getName().equals(srcFile.getName())) {
 				return false;
 			}
 		}

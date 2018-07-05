@@ -233,7 +233,7 @@ public class AppCompntConfigWizard extends WizardPage{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		ccx.createCheck(cmpnts, appcheckFile);
+//		ccx.createCheck(cmpnts, appcheckFile);
 
 	}
 	
@@ -618,7 +618,7 @@ public class AppCompntConfigWizard extends WizardPage{
 		GridLayout componentLayout = new GridLayout(4, true);
 		componentCpt.setLayout(componentLayout);
 		componentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-	
+		
 		int preSize = coreComponents.size()+bspComponents.size()+thirdComponents.size();
 		//添加扫描的组件到界面上
 		for(int i=0;i<userComponents.size();i++) {

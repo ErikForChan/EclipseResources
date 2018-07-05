@@ -282,26 +282,34 @@ public class ReadComponent {
 					}else if (menbers[0].trim().equals("grade")) {
 						newComponent.setGrade(menbers[1].trim());
 					}else if (menbers[0].trim().equals("dependence")) {
-						String name = menbers[1].trim().replace("\"", "");
-						if (!name.equals("none")) {
-							newComponent.getDependents().add(menbers[1].trim().replace("\"", ""));
+						String[] deps = menbers[1].split(",");
+						for(int i=0;i<deps.length;i++) {
+							String name = deps[i].trim().replace("\"", "");
+							if (!name.equals("none")) {
+								newComponent.getDependents().add(name);
+							}
 						}					
-					}else if (menbers[0].trim().equals("weakdependence")) {
-						String name = menbers[1].trim().replace("\"", "");
-						if (!name.equals("none")) {
-							newComponent.getWeakDependents().add(menbers[1].trim().replace("\"", ""));
-						}			
+					}else if (menbers[0].trim().equals("weakdependence")) {		
+						String[] deps = menbers[1].split(",");
+						for(int i=0;i<deps.length;i++) {
+							String name = deps[i].trim().replace("\"", "");
+							if (!name.equals("none")) {
+								newComponent.getWeakDependents().add(name);
+							}
+						}		
 					}else if (menbers[0].trim().equals("mutex")) {
-						String name = menbers[1].trim().replace("\"", "");
-						if (!name.equals("none")) {
-							newComponent.getMutexs().add(menbers[1].trim().replace("\"", ""));
-						}					
+						String[] deps = menbers[1].split(",");
+						for(int i=0;i<deps.length;i++) {
+							String name = deps[i].trim().replace("\"", "");
+							if (!name.equals("none")) {
+								newComponent.getMutexs().add(name);
+							}
+						}	
 					}
 				}			
 			}
 			
 			for (String exclude : excludeStrings) {
-				System.out.println("exclude:  "+exclude);
 				newComponent.getExcludes().add(exclude);
 			}
 

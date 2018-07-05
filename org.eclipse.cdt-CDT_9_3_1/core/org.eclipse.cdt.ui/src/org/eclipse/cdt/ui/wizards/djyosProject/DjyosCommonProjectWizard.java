@@ -109,8 +109,9 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private static final String PREFIX= "CProjectWizard"; //$NON-NLS-1$
 
 	boolean addedMemory = false,addedAppCfg = false,addedIbootCfg = false,createdProject = false,
-			existingPath = false,projectExist = false;
+			existingPath = false,projectExist = false,addedComptCfg = false;
 	protected DjyosMainWizardPage fMainPage;//主界面
+	protected ComponentConfigWizard cpomtCfgPage = null;//组件配置界面
 	protected MemoryMapWizard memoryPage;//Memory向导界面
 	protected ModuleConfigurationWizard modulePage;//Module向导界面
 	protected AppCompntConfigWizard appCfgPage = null;//app组件配置界面
@@ -840,8 +841,9 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		
 		int index = fMainPage.getTemplateIndex();
 		boolean containsPrj = projectPath.contains(projectName);
-    	String initCPath = containsPrj?initCPath = projectPath+"/src/app":projectPath+"/"+projectName+"/src/app";
-    	String initCPathIboot = containsPrj?projectPath+"/src/iboot": projectPath+"/"+projectName+"/src/iboot";
+		String srcPath = containsPrj?projectPath+"/src":projectPath+"/"+projectName+"/src";
+//    	String initCPath = containsPrj?projectPath+"/src/app":projectPath+"/"+projectName+"/src/app";
+//    	String initCPathIboot = containsPrj?projectPath+"/src/iboot": projectPath+"/"+projectName+"/src/iboot";
     	List<Component> compontentsChecked = new ArrayList<Component>();
     	List<Component> appCompontentsChecked = appCfgPage==null?null:appCfgPage.getCompontentsChecked();
     	List<Component> ibootCompontentsChecked = ibootCfgPage==null?null:ibootCfgPage.getCompontentsChecked();
@@ -866,13 +868,18 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					throws InvocationTargetException, InterruptedException {
 				monitor.beginTask("Project Creating...", 10);			
 				//生成initPrj.c,initPrj.h,memory.lds文件
+				
 				if(index == 0 || index == 1){
-					ibootCfgPage.initProject(initCPathIboot);
-					ibootCfgPage.creatProjectConfiure(initCPathIboot+"/OS_prjcfg/project_config.h",core);
+					cpomtCfgPage.initProject(srcPath,false);
+					cpomtCfgPage.creatProjectConfiure(srcPath, core, false);
+//					ibootCfgPage.initProject(initCPathIboot);
+//					ibootCfgPage.creatProjectConfiure(initCPathIboot+"/OS_prjcfg/project_config.h",core);
 		    	}
 		    	if(index == 0 || index == 2 || index == 3){
-		    		appCfgPage.initProject(initCPath);
-		    		appCfgPage.creatProjectConfiure(initCPath+"/OS_prjcfg/project_config.h",core);
+		    		cpomtCfgPage.initProject(srcPath,true);
+		    		cpomtCfgPage.creatProjectConfiure(srcPath, core, true);
+//		    		appCfgPage.initProject(initCPath);
+//		    		appCfgPage.creatProjectConfiure(initCPath+"/OS_prjcfg/project_config.h",core);
 		    	}
 				monitor.worked(7);
 				//处理工程的链接
@@ -1026,21 +1033,23 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 
 	@Override
 	public boolean canFinish() {
-		int index = fMainPage.getTemplateIndex();
-		if (index == 1) {
-			if (addedIbootCfg) {
-				return true;
-			}
-		} else if (index == 2 || index == 3) {
-			if (addedAppCfg) {
-				return true;
-			}
-		} else {
-			if (addedAppCfg && addedIbootCfg) {
-				return true;
-			}
+//		int index = fMainPage.getTemplateIndex();
+//		if (index == 1) {
+//			if (addedIbootCfg) {
+//				return true;
+//			}
+//		} else if (index == 2 || index == 3) {
+//			if (addedAppCfg) {
+//				return true;
+//			}
+//		} else {
+//			if (addedAppCfg && addedIbootCfg) {
+//				return true;
+//			}
+//		}
+		if (addedComptCfg) {
+			return true;
 		}
-
 		return false;
 	}
     

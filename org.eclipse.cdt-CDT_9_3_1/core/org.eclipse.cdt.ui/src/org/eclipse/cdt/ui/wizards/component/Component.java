@@ -14,11 +14,20 @@ public class Component {
 	private String fileName;
 	private String selectable;
 	private String parent;
+	private boolean isSelect = false;
 	private List<String> dependents = new ArrayList<String>();
 	private List<String> weakDependents = new ArrayList<String>();
 	private List<String> mutexs = new ArrayList<String>();
 	private List<String> excludes = new ArrayList<String>();
 	private InitInfo init;
+
+	public boolean isSelect() {
+		return isSelect;
+	}
+
+	public void setSelect(boolean isSelect) {
+		this.isSelect = isSelect;
+	}
 
 	public String getParent() {
 		return parent;
