@@ -66,6 +66,7 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
 
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
 import org.eclipse.cdt.ui.wizards.component.Component;
+import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
@@ -102,7 +103,7 @@ public class BoardMainWizard extends WizardPage{
 	private List<Component> allPeripherals;//所有外设
 	private List<Chip> chipsList = null,chipsOn = null;
 	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
-	private List<Component> thePeripherals;
+	private List<Component> thePeripherals;//点击板载cpu时用到的临时所有外设
 	private ReadComponentXml rcx = new ReadComponentXml();	
 	private Composite boardAttributesCpt;
 	private Group ConfigurationGroup;
@@ -250,8 +251,13 @@ public class BoardMainWizard extends WizardPage{
 	}
 	
 	private  Listener nameModifyListener = e -> {
-		boolean valid = validatePage();
-		setPageComplete(valid);
+		if(boardNameField.getText().trim().equals("")) {
+			setErrorMessage("板件名不能为空");
+			setPageComplete(false);
+		}else {
+			setErrorMessage(null);
+			setPageComplete(true);
+		}
 	};
 	
 	/*
@@ -302,52 +308,21 @@ public class BoardMainWizard extends WizardPage{
 		boardNameCpt.setLayout(layoutBoardName);
 		boardNameCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		Label nameLabel = new Label(boardNameCpt, SWT.NONE);
-		nameLabel.setText("Board Name: ");
+		nameLabel.setText("板件名称: ");
 		boardNameField = new Text(boardNameCpt, SWT.BORDER);
 		GridData boardNameData = new GridData(GridData.FILL_HORIZONTAL);
 		boardNameField.setLayoutData(boardNameData);
 		boardNameField.addListener(SWT.Modify, nameModifyListener);
 		
-		boardAttributesCpt = new Composite(infoArea, SWT.NULL);
-		GridLayout layoutAttributes = new GridLayout();
-		layoutAttributes.numColumns = 3;
-//		layoutAttributes.marginLeft = 20;
-		boardAttributesCpt.setLayout(layoutAttributes);
-		
-		Composite searchCpuCpt = new Composite(boardAttributesCpt, SWT.NULL);
-		searchCpuCpt.setLayout(new GridLayout(2,true));
-		searchCpuCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		Label searchCpuLabel = new Label(searchCpuCpt, SWT.NONE);
-		searchCpuLabel.setText("Search Cpu: ");
-		Text searchCpuField = new Text(searchCpuCpt, SWT.BORDER);
-		searchCpuField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		searchCpuField.addModifyListener(new ModifyListener() {
-			
-			@Override
-			public void modifyText(ModifyEvent e) {
-				// TODO Auto-generated method stub
-				String cpuText = searchCpuField.getText();
-				cpuArhives.removeAll();
-				for(int i=0;i<cpusList.size();i++) {
-					if(cpusList.get(i).getCpuName().contains(cpuText)) {
-						TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
-						t.setText(cpusList.get(i).getCpuName());
-					}				
-				}
-			}
-		});
-		Label l1 = new Label(boardAttributesCpt, SWT.NULL);
-		l1.setVisible(false);
-		Label l2 = new Label(boardAttributesCpt, SWT.NULL);
-		l2.setVisible(false);
-		createTreeForCpus(boardAttributesCpt);
-		createTransferButtons(boardAttributesCpt);
-		createTreeForNeedCpus(boardAttributesCpt);
-		
-		Button newCpuBtn = new Button(boardAttributesCpt,SWT.PUSH);
-		newCpuBtn.setText("New Cpu");
-		newCpuBtn.setBackground(boardAttributesCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
-		newCpuBtn.setForeground(boardAttributesCpt.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+		Composite newSearchCpt = new Composite(infoArea, SWT.NULL);
+		GridLayout layoutnewSearchCpt = new GridLayout();
+		layoutnewSearchCpt.numColumns = 2;
+		newSearchCpt.setLayout(layoutnewSearchCpt);
+		newSearchCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		Button newCpuBtn = new Button(newSearchCpt,SWT.PUSH);
+		newCpuBtn.setText("新建Cpu");
+		newCpuBtn.setBackground(newSearchCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+		newCpuBtn.setForeground(newSearchCpt.getDisplay().getSystemColor(SWT.COLOR_WHITE));
 		newCpuBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		newCpuBtn.addSelectionListener(new SelectionAdapter() {
 
@@ -367,8 +342,46 @@ public class BoardMainWizard extends WizardPage{
 			}
 			
 		});
-		cpuArhives.setSize(170, 180);
-		cpuArhivesNeed.setSize(170, 180);
+		
+		Composite searchCpuCpt = new Composite(newSearchCpt, SWT.NULL);
+		GridLayout layoutSearchCpuCpt = new GridLayout();
+		layoutSearchCpuCpt.numColumns = 2;
+		searchCpuCpt.setLayout(layoutSearchCpuCpt);
+		searchCpuCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		Label searchCpuLabel = new Label(searchCpuCpt, SWT.NONE);
+		searchCpuLabel.setText("检索Cpu: ");
+		Text searchCpuField = new Text(searchCpuCpt, SWT.BORDER);
+		searchCpuField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		searchCpuField.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				// TODO Auto-generated method stub
+				String cpuText = searchCpuField.getText();
+				cpuArhives.removeAll();
+				for(int i=0;i<cpusList.size();i++) {
+					if(cpusList.get(i).getCpuName().contains(cpuText)) {
+						TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
+						t.setText(cpusList.get(i).getCpuName());
+						t.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
+					}				
+				}
+			}
+		});
+
+		boardAttributesCpt = new Composite(infoArea, SWT.NULL);
+		GridLayout layoutAttributes = new GridLayout();
+		layoutAttributes.numColumns = 3;
+//		layoutAttributes.marginLeft = 20;
+		boardAttributesCpt.setLayout(layoutAttributes);
+		
+		createTreeForCpus(boardAttributesCpt);
+		createTransferButtons(boardAttributesCpt);
+		createTreeForNeedCpus(boardAttributesCpt);
+		
+		cpuArhives.setSize(180, 180);
+		cpuArhivesNeed.setSize(180, 180);
 		createContentForAttribute(infoArea);		
 		
 		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
@@ -386,7 +399,7 @@ public class BoardMainWizard extends WizardPage{
 	private void createContentForAttribute(Composite parent) {
 		// TODO Auto-generated method stub
 		
-		ConfigurationGroup = ControlFactory.createGroup(parent, "Configurations(Enable for no Cpu Selected)", 1);
+		ConfigurationGroup = ControlFactory.createGroup(parent, "请选中您要配置的板载cpu", 1);
 		ConfigurationGroup.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_CENTER | GridData.VERTICAL_ALIGN_FILL | GridData.FILL_HORIZONTAL));
 		ConfigurationGroup.setLayout(new GridLayout());
 		
@@ -1221,13 +1234,15 @@ public class BoardMainWizard extends WizardPage{
 					}
 					
 					allPeripherals = new ArrayList<Component>();
-					ReadComponentXml rcx = new ReadComponentXml();
+					ReadComponent rcx = new ReadComponent();
 					String cpuPath = getCpuPath(selectCpuName);
 					List<String> cpuSrcPaths = new ArrayList<String>();
 					getCpuSrcPaths(new File(cpuPath),cpuSrcPaths);
 					for(String path:cpuSrcPaths) {
 						File srcFile = new File(path);
-						List<Component> somePeripherals = rcx.getPeripherals(srcFile);
+						System.out.println("srcFile.getName():   "+srcFile.getPath());
+						List<Component> somePeripherals = rcx.getSrcPeripherals(srcFile);
+						System.out.println("somePeripherals.size():   "+somePeripherals.size());
 						allPeripherals.addAll(somePeripherals);
 					}
 					
@@ -1245,14 +1260,18 @@ public class BoardMainWizard extends WizardPage{
 					thePeripherals = new ArrayList<Component>();
 					for(int i=0;i<allPeripherals.size();i++) {
 						Component component = new Component();
+						Component component1 = new Component();
 						component.setName(allPeripherals.get(i).getName());
+						component1.setName(allPeripherals.get(i).getName());
 						thePeripherals.add(component);
+						peripheralsList.add(component);
 					}
 					int perSize = allPeripherals.size();
 					cpudrvTree.removeAll();
 					cpudrvOnTree.removeAll();
 					//板载外设为空
 					if(boardPeripherals.size() == 0) {
+						System.out.println("allPeripherals.size():   "+allPeripherals.size());
 						peripheralsOn = new ArrayList<Component>();
 						for(int i=0;i<allPeripherals.size();i++) {
 							System.out.println(allPeripherals.get(i).getName());
@@ -1260,7 +1279,6 @@ public class BoardMainWizard extends WizardPage{
 							t.setText(allPeripherals.get(i).getName());
 						}
 					}else {		//板载外设不为空	
-						System.out.println("size() != 0");
 						peripheralsOn = boardPeripherals;					
 						for(int j=0;j<boardPeripherals.size();j++) {//u1 u2
 							String peripheraOnlName = boardPeripherals.get(j).getName();
@@ -1502,7 +1520,7 @@ public class BoardMainWizard extends WizardPage{
 
 	private boolean validatePage() {
 		if(boardNameField.getText().trim().equals("")) {
-			setErrorMessage("Board name must be specified");
+			setErrorMessage("请填写板件名");
 			return false;
 		}else {
 			setErrorMessage(null);
@@ -1511,7 +1529,7 @@ public class BoardMainWizard extends WizardPage{
 		if(cpuArhivesNeed.getItems().length == 0) {
 			ConfigurationGroup.setText("板载Cpu配置(请先选中您要配置的Cpu)");
 			enableOperate(false);
-			setErrorMessage("Must Select a Cpu at least");
+			setErrorMessage("请至少选择一个Cpu");
 			return false;
 		}else {
 			setErrorMessage(null);

@@ -59,7 +59,9 @@ public class ReadCpuXml {
 		if(!parentFile.getName().contains("cpudrv")) {		
 				File xmlFile = getXmlFile(parentFile);
 				try {
-					unitCpu(cpu,xmlFile);
+					if(xmlFile!=null) {
+						unitCpu(cpu,xmlFile);
+					}
 				}catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -105,12 +107,92 @@ public class ReadCpuXml {
 		}
 	}
 	
+	public Cpu getCpuInfos(File file) throws Exception {
+		Cpu cpu = new Cpu();
+		document = db.parse(file);
+		NodeList nameList = document.getElementsByTagName("cpuName");
+		for(int i=0;i<nameList.getLength();i++) {
+			String cpuName = nameList.item(i).getFirstChild().getTextContent();
+			cpu.setCpuName(cpuName);
+		}
+		
+		NodeList coreList = document.getElementsByTagName("core");
+		if(coreList.getLength() == 0) {
+			
+		}else {
+			cpu.setCoreNum(coreList.getLength());
+			List<Core> cores = new ArrayList<Core>();
+
+			for(int i=0;i<coreList.getLength();i++) {
+				Core core;				
+				core = new Core();
+				
+				Node node = coreList.item(i);  
+		        NamedNodeMap namedNodeMap = node.getAttributes();  
+		        String id = namedNodeMap.getNamedItem("id").getTextContent();
+		        core.setId(Integer.parseInt(id));
+		        
+		        NodeList cList = node.getChildNodes();
+		        for (int j = 0; j < cList.getLength(); j ++) {
+					Node cNode = cList.item(j);
+					if(cNode.getNodeType() == Node.ELEMENT_NODE) {
+						String nodeName = cNode.getNodeName();
+						String content = cNode.getFirstChild().getTextContent();
+						switch(nodeName) {
+						case "type":
+							core.setType(content);
+							break;
+						case "resetAddr":
+							if(core.getResetAddr()==null) {
+								core.setResetAddr(content);
+							}
+							break;
+						case "family": 
+							core.setFamily(content); 
+							break;
+						case "arch": 
+							core.setArch(content);
+							 break;
+						case "fpuType":
+							core.setFpuType(content);
+							break;
+						case "floatABI":
+							core.setFloatABI(content);
+							break;
+						case "memory":				
+							NodeList memoryList = cNode.getChildNodes();
+							CoreMemory memory = new CoreMemory();
+							for (int k = 1; k < memoryList.getLength(); k += 2) {
+								org.w3c.dom.Node mNode = memoryList.item(k);
+								String mName = mNode.getNodeName();
+								String mContent = mNode.getFirstChild().getTextContent();
+								if (mName.equals("type")) {
+									memory.setType(mContent);
+								} else if (mName.equals("startAddr")) {
+									memory.setStartAddr(mContent);
+								} else if (mName.equals("size")) {
+									memory.setSize(mContent.substring(0, mContent.length()));
+								}
+							}	
+							core.getMemorys().add(memory);
+							break;			
+						}
+					}					
+//					contents.add(content);
+				}
+		        cores.add(core);
+				
+			}
+			cpu.setCores(cores);
+		}
+		
+		return cpu;
+	}
+	
 	public Cpu unitCpu(Cpu cpu,File file) throws Exception {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
 		document = db.parse(file);
-//		System.out.println("file.getName():  "+file.getName());
 		NodeList nameList = document.getElementsByTagName("cpuName");
-//		org.w3c.dom.Node nameNode = document.getElementsByTagName("name").item(0);
 		for(int i=0;i<nameList.getLength();i++) {
 			String cpuName = nameList.item(i).getFirstChild().getTextContent();
 			cpu.setCpuName(cpuName);
@@ -223,11 +305,15 @@ public class ReadCpuXml {
 				cores = cpu.getCores();
 			}
 			for(int i=0;i<coreList.getLength();i++) {
-				Core core;				
+				Core core;
+				boolean memoryConfiged = false;
 				if(cpu.getCores().size() == 0) {
 					core = new Core();
 				}else {				
 					core = cpu.getCores().get(i);
+				}
+				if(core.getMemorys().size()!=0) {
+					memoryConfiged = true;
 				}
 				
 				Node node = coreList.item(i);  
@@ -274,7 +360,7 @@ public class ReadCpuXml {
 							break;
 						case "memory":				
 							NodeList memoryList = cNode.getChildNodes();
-							if(core.getMemorys().size()==0) {
+							if(!memoryConfiged) {
 								CoreMemory memory = new CoreMemory();
 								for (int k = 1; k < memoryList.getLength(); k += 2) {				
 									org.w3c.dom.Node mNode = memoryList.item(k);

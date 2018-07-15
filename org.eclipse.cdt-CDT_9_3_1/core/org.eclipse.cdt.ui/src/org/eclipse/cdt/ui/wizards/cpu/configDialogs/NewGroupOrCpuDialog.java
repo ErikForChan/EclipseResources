@@ -46,6 +46,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
+import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
@@ -60,13 +61,14 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	private Text addrField,sizeField;
 	private Group contentGroup;
 	private ScrolledComposite scrolledComposite;
-	private Cpu newCpu = new Cpu(),parentCpu = new Cpu(),curCpu = new Cpu();
+	private Cpu newCpu = new Cpu(),parentCpu = new Cpu(),curCpu = new Cpu(),revisingCpu = new Cpu();
 	private Core newCore = new Core();
 	private Text groupNameField;
 	private String curPath = null,groupName,cpuName,eclipsePath = getEclipsePath(),cpuTag = null,newConfig = null;
 	private boolean haveCore = false;
 	private List<String> configsList = new ArrayList<String>(),configsOn = new ArrayList<String>(),attributes = new ArrayList<String>(),firewareLibs = new ArrayList<String>();
-	Label memorySizeLabel,memoryAddrLabel,memoryTypeLabel;
+	private Label memorySizeLabel,memoryAddrLabel,memoryTypeLabel;
+	private String tempName = null;
 	/*
 	 * 获取当前Eclipse的路径
 	 */
@@ -104,12 +106,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		
 	public NewGroupOrCpuDialog(Shell parent,List<String> configs,Cpu cpu,String curFilePath,String tag) {
 		super(parent);
-		if(tag.equals("group")) {
-			setTitle("新建分组");
-		}else if(tag.equals("cpu")) {
-			setTitle("新建Cpu");
-		}
-		
 		attributes = configs;
 		cpuTag = tag;
 		if(cpu.getCoreNum()!=0) {
@@ -130,9 +126,43 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 //			}
 		}
 		curPath = curFilePath;
+	  
+		if(tag.equals("group")) {
+			setTitle("新建分组");
+		}else if(tag.equals("cpu")) {
+			setTitle("新建Cpu");
+		}else if(tag.startsWith("revise")) {
+			if(tag.endsWith("group")) {
+				setTitle("修改子目录配置");
+			}else if(tag.endsWith("cpu")) {
+				setTitle("修改Cpu配置");
+			}
+			ReadCpuXml rcx = new ReadCpuXml();
+			File curFile = new File(curPath);
+			File configFile = getXmlFile(curFile);
+			try {
+				revisingCpu = rcx.unitCpu(revisingCpu, configFile);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			tempName = curPath.substring(curPath.lastIndexOf("\\") + 1, curPath.length());
+		}
+		
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
 	}
 
+	private File getXmlFile(File parentFile) {
+		File file =null;
+		File[] files = parentFile.listFiles();
+		for(int i=0;i<files.length;i++){
+			if(files[i].getName().endsWith(".xml")) {
+				file = files[i];
+			}
+		}
+		return file;
+	}
+	
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
@@ -148,15 +178,22 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		groupNameCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		Label nameLabel = new Label(groupNameCpt,SWT.NONE);
-		if(cpuTag.equals("group")) {
-			nameLabel.setText("分组名称: ");
-		}else if(cpuTag.equals("cpu")) {
-			nameLabel.setText("Cpu名称: ");
-		}
-		
 		groupNameField = new Text(groupNameCpt,SWT.BORDER);
 		groupNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
+		if(cpuTag.equals("group")) {
+			nameLabel.setText("子目录名称: ");
+		}else if(cpuTag.equals("cpu")) {
+			nameLabel.setText("Cpu名称: ");
+		}else if(cpuTag.startsWith("revise")) {
+			if(cpuTag.endsWith("cpu")) {
+				nameLabel.setText("Cpu名称: ");
+			}else if(cpuTag.endsWith("group")) {
+				nameLabel.setText("子目录名称: ");
+			}
+			groupNameField.setText(tempName);
+		}
+
 		Composite cpuGroupCpt = new Composite(composite, SWT.NULL);
 		GridLayout layoutAttributes = new GridLayout();
 		layoutAttributes.numColumns = 4;
@@ -305,6 +342,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				// TODO Auto-generated method stub
 				String firmware = firmwareCombo.getText();
 				newCpu.setFirmwareLib(firmware);
+				if(tempName!=null) {
+					revisingCpu.setFirmwareLib(firmware);
+				}
+				
 			}
 			
 			@Override
@@ -423,6 +464,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setResetAddr(resetAddr);
+					if(tempName!=null) {
+						revisingCpu.getCores().get(selectIndex).setResetAddr(resetAddr);
+					}			
 					curCpu.getCores().get(selectIndex).setResetAddr(resetAddr);
 				}else {
 					newCore.setResetAddr(resetAddr);
@@ -589,15 +633,31 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					int selectIndex = numCombo.getSelectionIndex();
 					if(floatABI.contains("hard")) {
 						newCpu.getCores().get(selectIndex).setFloatABI("hard");
+						if(tempName!=null) {
+							revisingCpu.getCores().get(selectIndex).setFloatABI("hard");
+						}
+						
 						curCpu.getCores().get(selectIndex).setFloatABI("hard");
 					}else if(floatABI.contains("softfp")) {
 						newCpu.getCores().get(selectIndex).setFloatABI("softfp");
+						if(tempName!=null) {
+							revisingCpu.getCores().get(selectIndex).setFloatABI("softfp");
+						}
+						
 						curCpu.getCores().get(selectIndex).setFloatABI("softfp");
 					}else if(floatABI.contains("soft")) {
 						newCpu.getCores().get(selectIndex).setFloatABI("soft");
+						if(tempName!=null) {
+							revisingCpu.getCores().get(selectIndex).setFloatABI("soft");
+						}
+						
 						curCpu.getCores().get(selectIndex).setFloatABI("soft");
 					}else{
 						newCpu.getCores().get(selectIndex).setFloatABI("default");
+						if(tempName!=null) {
+							revisingCpu.getCores().get(selectIndex).setFloatABI("default");
+						}
+						
 						curCpu.getCores().get(selectIndex).setFloatABI("default");
 					}
 				}else {
@@ -636,9 +696,17 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					int selectIndex = numCombo.getSelectionIndex();
 					if(fpuType.contains("default")) {
 						newCpu.getCores().get(selectIndex).setFpuType("default");
+						if(tempName!=null) {
+							revisingCpu.getCores().get(selectIndex).setFpuType("default");
+						}
+						
 						curCpu.getCores().get(selectIndex).setFpuType("default");
 					}else{
 						newCpu.getCores().get(selectIndex).setFpuType(fpuType);
+						if(tempName!=null) {
+							revisingCpu.getCores().get(selectIndex).setFpuType(fpuType);
+						}
+						
 						curCpu.getCores().get(selectIndex).setFpuType(fpuType);
 					}
 				}else {
@@ -733,7 +801,11 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).getMemorys().add(memory);
-//					curCpu.getCores().get(selectIndex).getMemorys().add(memory); //
+					if(tempName!=null) {
+						revisingCpu.getCores().get(selectIndex).getMemorys().add(memory);
+					}
+					
+					curCpu.getCores().get(selectIndex).getMemorys().add(memory);
 				}else {
 					newCore.getMemorys().add(memory);
 				}
@@ -763,6 +835,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 						if(memoryName!=null) {
 							if(memoryName.equals(items[0].getText().trim())) {
 								newCpu.getCores().get(selectIndex).getMemorys().remove(i);
+								if(tempName!=null) {
+									revisingCpu.getCores().get(selectIndex).getMemorys().remove(i);
+								}
+								
 								curCpu.getCores().get(selectIndex).getMemorys().remove(i);
 							}
 						}						
@@ -793,7 +869,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		memoryTypeLabel.setText("类型: ");		
 
 		memoryTypeCombo = new Combo(memoryContentCpt,SWT.READ_ONLY);
-		memoryTypeCombo.add("ROM");
+		memoryTypeCombo.add("FLASH");
 		memoryTypeCombo.add("RAM");
 		memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		memoryTypeCombo.addSelectionListener(new SelectionListener() {
@@ -808,6 +884,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				int selectIndex = numCombo.getSelectionIndex();
 				if(selectIndex!=-1) {
 					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+					
 					int comboIndex = memoryTypeCombo.getSelectionIndex();
 					TreeItem[] items = memoryTree.getSelection();
 					String type = memoryTypeCombo.getItem(comboIndex);//
@@ -823,6 +900,18 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 									break;
 								}
 							}		
+						}
+						if(tempName != null) {
+							List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+							for(int i=0;i<_memorys.size();i++) {
+								CoreMemory memory = _memorys.get(i);
+								if(memory.getName()!=null) {
+									if(memory.getName().equals(selectMemory)) {							
+										memory.setType(type);
+										break;
+									}
+								}		
+							}
 						}
 					}
 					if(index != -1) {
@@ -850,6 +939,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				int selectIndex = numCombo.getSelectionIndex();
 				if(selectIndex!=-1) {
 					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+					
 					TreeItem[] items = memoryTree.getSelection();
 					String addr = addrField.getText().trim();//
 					int index = -1;//
@@ -866,6 +956,22 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 							}
 							
 						}
+						if(tempName != null) {
+							List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+							System.out.println("_memorys.size()：  "+_memorys.size());
+							for (int i = 0; i < _memorys.size(); i++) {
+								CoreMemory memory = _memorys.get(i);
+								System.out.println("memory.getName()：  "+memory.getName());
+								if(memory.getName()!=null) {
+									if (memory.getName().equals(selectMemory)) {							
+										memory.setStartAddr(addr);
+										break;
+									}
+								}
+								
+							}
+						}
+					
 					}
 					if(index != -1) {
 						curCpu.getCores().get(selectIndex).getMemorys().get(index).setStartAddr(addr);
@@ -887,9 +993,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				int selectIndex = numCombo.getSelectionIndex();
 				if(selectIndex!=-1) {
 					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+
 					TreeItem[] items = memoryTree.getSelection();
 					int index = -1;//
-					String size = sizeField.getText().trim();
+					String size = sizeField.getText().trim().replace("k", "");
 					if (items.length > 0) {
 						String selectMemory = items[0].getText().trim();
 						IWorkbenchWindow window = PlatformUI.getWorkbench()
@@ -925,6 +1032,21 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 										}	
 									}
 								}
+	        					
+	        					if(tempName != null) {
+	        						List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+	        						for (int i = 0; i < _memorys.size(); i++) {
+										CoreMemory memory = _memorys.get(i);
+										if(memory.getName()!=null) {
+											if (memory.getName().equals(selectMemory)) {
+												memory.setSize(size);
+												index = i;
+												break;
+											}	
+										}
+									}
+	        					}
+	        				
 	        				}
 							
 						}
@@ -977,8 +1099,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				deleteBtn.setEnabled(true);
-				memoryTypeLabel.setEnabled(true);
-				memoryTypeCombo.setEnabled(true);
+//				memoryTypeLabel.setEnabled(true);
+//				memoryTypeCombo.setEnabled(true);
+				setMemoryCpt(true);
 				TreeItem[] items = memoryTree.getSelection();
 				int selectIndex = numCombo.getSelectionIndex();
 				List<CoreMemory> memorys = curCpu.getCores().get(selectIndex).getMemorys();
@@ -988,7 +1111,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 						String memoryName = memorys.get(i).getName();
 						if(memoryName.equals(selectMemoryName)) {
 							if(memorys.get(i).getType()!=null) {
-								if(memorys.get(i).getType().equals("ROM")) {
+								if(memorys.get(i).getType().equals("FLASH")) {
 									memoryTypeCombo.select(0);
 								}else if(memorys.get(i).getType().equals("RAM")) {
 									memoryTypeCombo.select(1);
@@ -1021,6 +1144,13 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		if (curCpu.getCores().size() == 0) {
 			coreSelectCpt.setVisible(false);
 			List<CoreMemory> memorys = newCore.getMemorys();
+			int count = 0;
+			for(CoreMemory memory:memorys) {
+				if(memory.getName() == null) {
+					memory.setName("memory"+(count+1));
+				}
+				count++;
+			}
 			memoryTree.removeAll();
 			if(memorys.size()!=0) {
 				for(int i=0;i<memorys.size();i++) {
@@ -1035,8 +1165,30 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		}else {
 			List<Core> cores = curCpu.getCores();
 			numCombo.select(0);
+			for(Core core:curCpu.getCores()) {
+				List<CoreMemory> memorys = core.getMemorys();
+				int i = 0;
+				for(CoreMemory memory:memorys) {
+					if(memory.getName() == null) {
+						memory.setName("memory"+(i+1));
+					}
+					i++;
+				}
+			}
+			for(Core core:revisingCpu.getCores()) {
+				List<CoreMemory> memorys = core.getMemorys();
+				int i = 0;
+				for(CoreMemory memory:memorys) {
+					if(memory.getName() == null) {
+						memory.setName("memory"+(i+1));
+					}
+					i++;
+				}
+			}
+			memoryTree.removeAll();
 			if(curCpu.getCores().get(0).getMemorys().size()!=0){
 				List<CoreMemory> memorys = curCpu.getCores().get(0).getMemorys();
+				
 				memoryTree.removeAll();
 				for (int i = 0; i < memorys.size(); i++) {
 					String memoryName = memorys.get(i).getName();
@@ -1152,6 +1304,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setType(type);
+					if(tempName!=null) {
+						revisingCpu.getCores().get(selectIndex).setType(type);
+					}
+					
 					curCpu.getCores().get(selectIndex).setType(type);
 				}else {
 					newCore.setType(type);
@@ -1189,6 +1345,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setArch(arch);
+					if(tempName!=null) {
+						revisingCpu.getCores().get(selectIndex).setArch(arch);
+					}
+					
 					curCpu.getCores().get(selectIndex).setArch(arch);
 				}else {
 					newCore.setArch(arch);
@@ -1211,6 +1371,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				if(newCpu.getCores().size()!=0) {
 					int selectIndex = numCombo.getSelectionIndex();
 					newCpu.getCores().get(selectIndex).setFamily(family);
+					if(tempName!=null) {
+						revisingCpu.getCores().get(selectIndex).setFamily(family);
+					}
+					
 					curCpu.getCores().get(selectIndex).setFamily(family);
 				}else {
 					newCore.setFamily(family);
@@ -1486,70 +1650,167 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		return new Point(520,400);
 	}
 	
-	@Override
-	protected void okPressed() {
-		// TODO Auto-generated method stub
-		if(cpuTag.equals("group")) {
-			groupName = groupNameField.getText();
-			String completeName = "";
-			if(groupName.trim().equals("")) {
-				IWorkbenchWindow window = PlatformUI.getWorkbench()
-						.getActiveWorkbenchWindow();
-				MessageDialog.openError(window.getShell(), "提示",
-						"请填写分组名称");
-			}else {
+	private boolean handleGroupOK() {
+		groupName = groupNameField.getText();
+		String completeName = "";
+		if(groupName.trim().equals("")) {
+			IWorkbenchWindow window = PlatformUI.getWorkbench()
+					.getActiveWorkbenchWindow();
+			MessageDialog.openError(window.getShell(), "提示",
+					"请填写子目录名称");
+			return false;
+		}else {
+			
+			File newGroupFile = null,oldGroupFile = null;
+			File xmlFile = null;
+			List<String> names = new ArrayList<String>();
+			if(tempName == null) {//新建子目录或者cpu
 				curPath = curPath+"/"+groupName;
-				File newGroupFile = new File(curPath); 
-				newGroupFile.mkdir();
-				List<String> names = new ArrayList<String>();
+				newGroupFile = new File(curPath); 
+				if(!newGroupFile.exists()) {
+					newGroupFile.mkdir();
+				}
 				getGroupNames(newGroupFile,names);
 				for(int i=names.size()-1;i>=0;i--) {
 					completeName+=names.get(i);
 				}
-				File xmlFile = new File(curPath+"/cpu_group_"+completeName+".xml");
-				if(! xmlFile.exists()) {
-					try {
-						xmlFile.createNewFile();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+				xmlFile = new File(newGroupFile.getPath()+"/cpu_group_"+completeName+".xml");
+				if(xmlFile.exists()) {
+					xmlFile.delete();
 				}
-				if(newCpu.getCores().size()!=0) {
-					createNewGroupXml(newCpu,xmlFile);
-				}else {
-					createPublicXml(newCore,xmlFile);
+				try {
+					xmlFile.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-				super.okPressed();
-			}		
-		}else if(cpuTag.equals("cpu")) {
-			List<String> cpuPieceNames = null;
-			cpuName = groupNameField.getText();
-			if(cpuName.trim().equals("")) {
-				IWorkbenchWindow window = PlatformUI.getWorkbench()
-						.getActiveWorkbenchWindow();
-				MessageDialog.openError(window.getShell(), "提示",
-						"请填写Cpu名称");
-			}else {
-				curPath = curPath+"/"+cpuName;
-				File newCpuFile = new File(curPath);
-				newCpuFile.mkdir();
+				if (newCpu.getCores().size() != 0) {
+					createNewGroupXml(newCpu, xmlFile);
+				} else {
+					createPublicXml(newCore, xmlFile);
+				}
+			}else {//修改配置信息
+				oldGroupFile = new File(curPath);
+				newGroupFile = new File(
+						curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + groupName);
+				//改名前
+				getGroupNames(oldGroupFile,names);
+//				DeleteFolder(oldGroupFile.getPath());
+//				if(!newGroupFile.exists()) {
+//					newGroupFile.mkdir();
+//				}
+				for(int i=names.size()-1;i>=0;i--) {
+					completeName+=names.get(i);
+				}
+				xmlFile = new File(oldGroupFile.getPath()+"/cpu_group_"+completeName+".xml");
+				if(xmlFile.exists()) {
+					xmlFile.delete();
+				}
 				
-				File xmlFile = new File(curPath+"/cpu_"+cpuName+".xml");
-				if(! xmlFile.exists()) {
-					try {
-						xmlFile.createNewFile();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+				oldGroupFile.renameTo(newGroupFile);
+				names = new ArrayList<String>();
+				completeName = "";
+				getGroupNames(newGroupFile,names);
+				for(int i=names.size()-1;i>=0;i--) {
+					completeName+=names.get(i);
+				}
+				xmlFile = new File(newGroupFile.getPath()+"/cpu_group_"+completeName+".xml");
+				if(xmlFile.exists()) {
+					xmlFile.delete();
+				}
+				try {
+					xmlFile.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if (revisingCpu.getCores().size() != 0) {
+					createNewGroupXml(revisingCpu, xmlFile);
+				} else {
+					createPublicXml(newCore, xmlFile);
+				}
+			}
+
+			return true;
+		}		
+	}
+	
+	private boolean handleCpuOK() {
+		List<String> cpuPieceNames = null;
+		cpuName = groupNameField.getText();
+		if(cpuName.trim().equals("")) {
+			IWorkbenchWindow window = PlatformUI.getWorkbench()
+					.getActiveWorkbenchWindow();
+			MessageDialog.openError(window.getShell(), "提示",
+					"请填写Cpu名称");
+			return false;
+		}else {
+			File newCpuFile,oldCpuFile;
+			File xmlFile;
+			if(tempName == null) {//新建子目录或者cpu
+				curPath = curPath+"/"+cpuName;
+				newCpuFile = new File(curPath); 
+				if(! newCpuFile.exists()) {
+					newCpuFile.mkdir();
+				}
+
+				xmlFile = new File(newCpuFile.getPath()+"/cpu_"+cpuName+".xml");
+				if(xmlFile.exists()) {
+					xmlFile.delete();
+				}
+				try {
+					xmlFile.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 				createNewCpuXml(newCpu,xmlFile,cpuName);
+			}else {//修改配置信息
+				oldCpuFile = new File(curPath);
+				newCpuFile = new File(
+						curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + cpuName);
+				xmlFile = new File(oldCpuFile.getPath()+"/cpu_"+tempName+".xml");
+				if(xmlFile.exists()) {
+					xmlFile.delete();
+				}
+				
+				oldCpuFile.renameTo(newCpuFile);
+				xmlFile = new File(newCpuFile.getPath()+"/cpu_"+cpuName+".xml");
+				try {
+					xmlFile.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				createNewCpuXml(revisingCpu,xmlFile,cpuName);
+			}
+
+			return true;
+		}
+	}
+	
+	@Override
+	protected void okPressed() {
+		// TODO Auto-generated method stub
+		if(cpuTag.equals("group")) {
+			if(handleGroupOK()) {
 				super.okPressed();
 			}
-		} 
-		
-		
+		}else if(cpuTag.equals("cpu")) {
+			if(handleCpuOK()) {
+				super.okPressed();
+			}
+		} else if(cpuTag.startsWith("revise")) {
+			if(cpuTag.endsWith("cpu")) {
+				if(handleCpuOK()) {
+					super.okPressed();
+				}
+			}else if(cpuTag.endsWith("group")) {
+				if(handleGroupOK()) {
+					super.okPressed();
+				}
+			}
+		}
 	}
 	
 	private void createNewGroupXml(Cpu cpu,File file) {
@@ -1793,5 +2054,80 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		}
 		
 	}
+	
+	/** 
+	 *  根据路径删除指定的目录，无论存在与否 
+	 *@param sPath  要删除的目录path 
+	 *@return 删除成功返回 true，否则返回 false。 
+	 */  
+	public boolean DeleteFolder(String sPath) {  
+	    boolean flag = false;  
+	    File file = new File(sPath);  
+	    // 判断目录或文件是否存在  
+	    if (!file.exists()) {  // 不存在返回 false  
+	        return flag;  
+	    } else {  
+	        // 判断是否为文件  
+	        if (file.isFile()) {  // 为文件时调用删除文件方法  
+	            return deleteFile(sPath);  
+	        } else {  // 为目录时调用删除目录方法  
+	            return deleteDirectory(sPath);  
+	        }  
+	    }  
+	}  
+	
+	/** 
+	 * 删除单个文件 
+	 * @param   sPath 被删除文件path 
+	 * @return 删除成功返回true，否则返回false 
+	 */  
+	public boolean deleteFile(String sPath) {  
+	    boolean flag = false;  
+	    File file = new File(sPath);  
+	    // 路径为文件且不为空则进行删除  
+	    if (file.isFile() && file.exists()) {  
+	        file.delete();  
+	        flag = true;  
+	    }  
+	    return flag;  
+	}  
+	
+	/** 
+	 * 删除目录以及目录下的文件 
+	 * @param   sPath 被删除目录的路径 
+	 * @return  目录删除成功返回true，否则返回false 
+	 */  
+	public boolean deleteDirectory(String sPath) {  
+	    //如果sPath不以文件分隔符结尾，自动添加文件分隔符  
+	    if (!sPath.endsWith(File.separator)) {  
+	        sPath = sPath + File.separator;  
+	    }  
+	    File dirFile = new File(sPath);  
+	    //如果dir对应的文件不存在，或者不是一个目录，则退出  
+	    if (!dirFile.exists() || !dirFile.isDirectory()) {  
+	        return false;  
+	    }  
+	    boolean flag = true;  
+	    //删除文件夹下的所有文件(包括子目录)  
+	    File[] files = dirFile.listFiles();  
+	    for (int i = 0; i < files.length; i++) {  
+	        //删除子文件  
+	        if (files[i].isFile()) {  
+	            flag = deleteFile(files[i].getAbsolutePath());  
+	            if (!flag) break;  
+	        } //删除子目录  
+	        else {  
+	            flag = deleteDirectory(files[i].getAbsolutePath());  
+	            if (!flag) break;  
+	        }  
+	    }  
+	    if (!flag) return false;  
+	    //删除当前目录  
+	    if (dirFile.delete()) {  
+	        return true;  
+	    } else {  
+	        return false;  
+	    }  
+	}  
 
 }

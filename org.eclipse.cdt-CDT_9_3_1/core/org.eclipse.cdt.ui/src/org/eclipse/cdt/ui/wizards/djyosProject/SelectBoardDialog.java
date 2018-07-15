@@ -150,12 +150,12 @@ public class SelectBoardDialog extends StatusDialog{
 		boardSearchCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		//板件查询
 		boardSearchLabel = new Label(boardSearchCpt, SWT.None);
-		boardSearchLabel.setText("Board Search :");
+		boardSearchLabel.setText("检索板件 :");
 		boardEditText = new Text(boardSearchCpt, SWT.BORDER);
 		boardEditText.addListener(SWT.Modify, searchModifyListener);
 		//通过选择cpu获取相应的板件
 		cpuSelectLabel = new Label(boardSearchCpt, SWT.None);
-		cpuSelectLabel.setText("Search By Cpu :");
+		cpuSelectLabel.setText("检索板载Cpu :");
 		cpuEditText = new Text(boardSearchCpt, SWT.BORDER);
 		cpuEditText.addListener(SWT.Modify, cpuModifyListener);
 
@@ -167,10 +167,11 @@ public class SelectBoardDialog extends StatusDialog{
 		
 		Composite boardTreeCpt = new Composite(boardCpt, SWT.NULL);
 		boardTreeCpt.setLayout(new GridLayout());
+		
 		createTreeForBoards(boardTreeCpt);
 		boardTree.setSize(150, 200);
 		Button newBoradBtn = new Button(boardTreeCpt,SWT.PUSH);
-		newBoradBtn.setText("Create New Board");
+		newBoradBtn.setText("新建板件");
 		newBoradBtn.setBackground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 		newBoradBtn.setForeground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_WHITE));
 		newBoradBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -179,7 +180,6 @@ public class SelectBoardDialog extends StatusDialog{
 		detailsField.setLayoutData(new GridData(GridData.FILL_BOTH));
 		detailsField.setEditable(false);
 
-//		newBoradBtn.setVisible(false);
 		//点击新建板件后弹出新建板件的向导
 		newBoradBtn.addSelectionListener(new SelectionAdapter() {
 
@@ -315,13 +315,13 @@ public class SelectBoardDialog extends StatusDialog{
 								String chipString = "";
 								if( cpu.getChips().size()>0) {
 									for(int k=0;k<cpu.getChips().size();k++) {
-										chipString+= (" "+cpu.getChips().get(k).getChipName());
+										chipString+= ((k!=0?"，":"")+cpu.getChips().get(k).getChipName());
 									}
 								}
 								
 								String peripheralString = "";
 								for(int k=0;k<cpu.getPeripherals().size();k++) {
-									peripheralString+= (" "+cpu.getPeripherals().get(k).getName());
+									peripheralString+= ((k!=0?"，":"")+cpu.getPeripherals().get(k).getName());
 								}
 								detailsDesc+="Cpu"+(j+1)+": "+cpu.getCpuName()
 								+"\n主时钟频率: "+cpu.getMianClk()

@@ -20,6 +20,15 @@ public class Component {
 	private List<String> mutexs = new ArrayList<String>();
 	private List<String> excludes = new ArrayList<String>();
 	private InitInfo init;
+	private String parentPath;
+
+	public String getParentPath() {
+		return parentPath;
+	}
+
+	public void setParentPath(String parentPath) {
+		this.parentPath = parentPath;
+	}
 
 	public boolean isSelect() {
 		return isSelect;

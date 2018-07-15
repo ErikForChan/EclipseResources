@@ -38,6 +38,12 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 		wz_title = title;
 		wz_desc = desc;
 	}
+	
+	@Override
+	public boolean needsPreviousAndNextButtons() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 	@Override
 	public void addPages() {

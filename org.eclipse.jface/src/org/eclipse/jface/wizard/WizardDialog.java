@@ -500,8 +500,10 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 			createPreviousAndNextButtons(parent);
 		}
 		finishButton = createButton(parent, IDialogConstants.FINISH_ID, IDialogConstants.FINISH_LABEL, true);
-		cancelButton = createCancelButton(parent);
-
+		if(wizard.isCancelAvailable()) {
+			cancelButton = createCancelButton(parent);
+		}
+		
 		if (parent.getDisplay().getDismissalAlignment() == SWT.RIGHT) {
             // Make the default button the right-most button.
             // See also special code in org.eclipse.jface.dialogs.Dialog#initializeBounds()
@@ -543,6 +545,10 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 		button.setData(Integer.valueOf(IDialogConstants.CANCEL_ID));
 		button.addSelectionListener(cancelListener);
 		return button;
+	}
+	
+	public void renameCancelButton(String text) {
+		cancelButton.setText(text);
 	}
 
 	/**

@@ -240,4 +240,6 @@ public interface IWizard {
      * @param wizardContainer the wizard container, or <code>null</code>
      */
     public void setContainer(IWizardContainer wizardContainer);
+
+	boolean isCancelAvailable();
 }

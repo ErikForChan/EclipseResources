@@ -3497,7 +3497,7 @@
       </page>   
       
         <page
-            class="org.eclipse.cdt.internal.ui.workingsets.WorkingSetConfigurationsPage"
+            class="org.eclipse.cdt.internal.ui.djyproperties.DjyosGeneralPage"
             id="org.eclipse.ui.cdt.djyosGeneral.configurations"
             name="%page.djyos.general">
           <enabledWhen>

@@ -48,7 +48,7 @@ public class ComponentConfigurationPage extends PropertyPage{
 
 	private String depedents = "依赖组件: ";
 	private String mutexs = "互斥组件: ";
-	private String chipPath = getEclipsePath()+"djysrc\\bsp\\chipdrv";
+	private String chipPath = getDIDEPath()+"djysrc\\bsp\\chipdrv";
 	List<Component> compontentsList = null;
 	List<Component> allCompontents = new ArrayList<Component>();
 	List<Component> compontentsChecked = new ArrayList<Component>();
@@ -66,9 +66,9 @@ public class ComponentConfigurationPage extends PropertyPage{
 	private Text mutexText;
 	private List<CmpntCheck> cmpntChecks = null;
 	List<CmpntCheck> cmpnts = new ArrayList<CmpntCheck>();
-	private String eclipsePath = getEclipsePath();
+	private String eclipsePath = getDIDEPath();
 
-	private String getEclipsePath() {
+	private String getDIDEPath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		return eclipsePath;

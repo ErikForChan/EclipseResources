@@ -9,7 +9,6 @@ public class CpuCommonWizard extends BasicNewResourceWizard{
 	protected CpuMainWiazrdPage fMianPage = new CpuMainWiazrdPage("New Cpu");
 	private String wz_title;
 	private String wz_desc;
-	
 	public CpuCommonWizard(String title, String desc) {
 		// TODO Auto-generated constructor stub
 		super();
@@ -21,6 +20,18 @@ public class CpuCommonWizard extends BasicNewResourceWizard{
 		wz_desc = desc;
 	}
 
+	@Override
+	public boolean isCancelAvailable() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	@Override
+	public boolean needsPreviousAndNextButtons() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
 	@Override
 	public void addPages() {
 		// TODO Auto-generated method stub

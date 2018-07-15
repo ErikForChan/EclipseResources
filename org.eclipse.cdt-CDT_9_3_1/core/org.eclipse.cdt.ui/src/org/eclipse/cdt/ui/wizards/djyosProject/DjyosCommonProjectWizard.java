@@ -34,11 +34,13 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.deferred.ChangeQueue.Change;
 import org.eclipse.ltk.internal.core.refactoring.resource.RenameResourceProcessor;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
@@ -70,6 +72,7 @@ import org.eclipse.cdt.core.settings.model.ICMultiFolderDescription;
 import org.eclipse.cdt.core.settings.model.ICMultiResourceDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionPreferences;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.core.settings.model.ICSettingBase;
 import org.eclipse.cdt.core.settings.model.ICSourceEntry;
@@ -121,6 +124,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private URI lastProjectLocation = null;
 	private IProject curProject;
 	protected IProject newProject;
+	private IWorkbenchWindow window = PlatformUI.getWorkbench()
+			.getActiveWorkbenchWindow();
 	
 	public Board getBoard() {
 		return fMainPage.getSelectBoard();
@@ -232,9 +237,13 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				getContainer().run(true, true, op);
 			} catch (InvocationTargetException e) {
 				// TODO Auto-generated catch block
+				MessageDialog.openError(window.getShell(), "提示",
+						"工程创建失败"+e.getMessage());
 				e.printStackTrace();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
+				MessageDialog.openError(window.getShell(), "提示",
+						"工程创建失败"+e.getMessage());
 				e.printStackTrace();
 			}
 				
@@ -393,7 +402,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		return deapPath;
 	}
 	
-	public void handleCProject(List<Component> compontentsChecked,Board board,Cpu cpu,Core core,String projectPath,String projectName) {
+	public void handleCProject(List<Component> compontentsChecked,Board board,Cpu cpu,Core core,String projectPath,String projectName,int selectIndex) {
 		String _boardName = board.getBoardName();
 		String _cpuName = cpu.getCpuName();
 		String firmwareLib = cpu.getFirmwareLib();
@@ -421,7 +430,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		List<String> excludes = new ArrayList<String>();		
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration		
-		
+		local_prjd.setConfigurationRelations(ICProjectDescriptionPreferences.CONFIGS_LINK_SETTINGS_AND_ACTIVE);
 		//修改编译选项的名称
     	for (ICConfigurationDescription cfgDesc : conds) {
 			String s = cfgDesc.getName();
@@ -502,7 +511,13 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			links.add("${DJYOS_SRC_LOCATION}/bsp/arch/"+core.getType()+"/"+core.getArch()+"/"+core.getFamily()+"/include");
 			assemblyLinks.add("${DJYOS_SRC_LOCATION}/bsp/arch/"+core.getType()+"/"+core.getArch()+"/"+core.getFamily()+"/include");
 			//添加project_config.h的链接
-			links.add("${ProjDirPath}/src/app/OS_prjcfg/project_config.h");
+			if(selectIndex == 0 || selectIndex == 1){
+				links.add("${ProjDirPath}/src/iboot/OS_prjcfg/project_config.h");
+	    	}
+	    	if(selectIndex == 0 || selectIndex == 2 || selectIndex == 3){
+	    		links.add("${ProjDirPath}/src/app/OS_prjcfg/project_config.h");
+	    	}
+			
 			//根据所选组件链接
 			for(int j=0;j<compontentsChecked.size();j++) {
 				Component component = compontentsChecked.get(j);
@@ -626,7 +641,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		for(int j=0;j<compontentsChecked.size();j++){
 			Component component = compontentsChecked.get(j);
 			String componentName = compontentsChecked.get(j).getName();
-			String componentPath = compontentsChecked.get(j).getFileName();
+			String componentPath = compontentsChecked.get(j).getParentPath();
 			String linkFolder = component.getLinkFolder();
 			List<String> excludeFiles = component.getExcludes();
 			if(linkFolder.equals("third") || linkFolder.equals("component") || linkFolder.equals("djyos")) {
@@ -641,7 +656,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				for(String exclude:excludeFiles) {
 					excludes.add("/src/libos/bsp/"+linkFolder+"/"+componentName+"/"+exclude);
 				}	
-				String filePath = component.getFileName();
+				String filePath = component.getParentPath();
 				String cptName = filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length());
 				componentPath = cpuLinkString.replace(_cpuName, "")+"src/"+cptName;
 			}
@@ -845,8 +860,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 //    	String initCPath = containsPrj?projectPath+"/src/app":projectPath+"/"+projectName+"/src/app";
 //    	String initCPathIboot = containsPrj?projectPath+"/src/iboot": projectPath+"/"+projectName+"/src/iboot";
     	List<Component> compontentsChecked = new ArrayList<Component>();
-    	List<Component> appCompontentsChecked = appCfgPage==null?null:appCfgPage.getCompontentsChecked();
-    	List<Component> ibootCompontentsChecked = ibootCfgPage==null?null:ibootCfgPage.getCompontentsChecked();
+    	List<Component> appCompontentsChecked = cpomtCfgPage.getAppCompontentsChecked();
+    	List<Component> ibootCompontentsChecked = cpomtCfgPage.getIbootCompontentsChecked();
     	if(appCompontentsChecked!=null) {
     		for(Component component:appCompontentsChecked) {
         		if(! compontentsChecked.contains(component)) {
@@ -883,7 +898,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		    	}
 				monitor.worked(7);
 				//处理工程的链接
-				handleCProject(compontentsChecked,board,cpu,core,projectPath,projectName);
+				handleCProject(compontentsChecked,board,cpu,core,projectPath,projectName,index);
 				monitor.worked(2);
 				//根据MemoryMap配置的内容添加memory.lds文件
 				getMemoryToLds(ldsHead,ldsDesc,projectName,sourcePath);

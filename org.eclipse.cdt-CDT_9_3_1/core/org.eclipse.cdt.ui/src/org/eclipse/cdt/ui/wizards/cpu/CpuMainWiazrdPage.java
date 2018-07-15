@@ -41,8 +41,11 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -70,6 +73,7 @@ import org.eclipse.cdt.ui.wizards.IWizardItemsListListener;
 import org.eclipse.cdt.ui.wizards.cpu.configDialogs.NewGroupOrCpuDialog;
 import org.eclipse.cdt.ui.wizards.cpu.configDialogs.ResetConfigurationDialog;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
@@ -90,8 +94,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 	private Cpu cpu = new Cpu();
 	private Tree tree;
 	private Text configInfoText = null;
-	private MenuItem newGroupItem,newCpuItem,deleteItem;
-	private Group contentGroup;
+	private MenuItem newGroupItem,newCpuItem,deleteItem,reviseItem;
 	
 	protected CpuMainWiazrdPage(String pageName) {
 		super(pageName);
@@ -104,9 +107,15 @@ public class CpuMainWiazrdPage extends WizardPage{
         newGroupItem=new MenuItem(menu,SWT.PUSH);
         newGroupItem.setText("新建子目录");
         newGroupItem.setImage(CPluginImages.DESC_GROUP_VIEW.createImage());
+        
         newCpuItem=new MenuItem(menu,SWT.PUSH);
         newCpuItem.setText("新建CPU");
         newCpuItem.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
+        
+        reviseItem=new MenuItem(menu,SWT.PUSH);
+        reviseItem.setText("修改配置");
+        reviseItem.setImage(CPluginImages.CPU_REVISE_VIEW.createImage());
+        
         deleteItem=new MenuItem(menu,SWT.PUSH);
         deleteItem.setText("删除");
         deleteItem.setImage(CPluginImages.CFG_DELETE_OBJ.createImage());
@@ -114,6 +123,12 @@ public class CpuMainWiazrdPage extends WizardPage{
         tree.setMenu(menu);
     }
 	
+	long toUnsigned(long s) {
+
+		return s & 0xFFFFFFFF;
+
+	}
+
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
@@ -133,6 +148,21 @@ public class CpuMainWiazrdPage extends WizardPage{
 //	        // TODO 自动生成的 catch 块  
 //	        e.printStackTrace();  
 //	    }  
+
+		long a = Integer.parseInt("1");
+		long b = Long.parseLong("0xFFFFFFFF".substring(2), 16);
+		long c = Integer.parseInt("-1");; //0xFFFFFFFF
+		if(a>b) {
+			System.out.println("a= "+toUnsigned(a));
+			System.out.println("b= "+toUnsigned(b));
+			System.out.println("c= "+toUnsigned(c));
+			System.out.println("a>b");
+		}else {
+			System.out.println("a= "+toUnsigned(a));
+			System.out.println("b= "+toUnsigned(b));
+			System.out.println("c= "+toUnsigned(c));
+			System.out.println("b>a");
+		}
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -155,40 +185,32 @@ public class CpuMainWiazrdPage extends WizardPage{
 		String extraString = "右键可添加Cpu和子目录 :";
 		String QAQ = "\tIDE分级目录的形式管理操作系统支持的众多Cpu，本界面用于管理Cpu的分类,\n包括添加Cpu和分组,手动拖拽即可移动分组";
 		String descTitle = "分组/Cpu描述";
-//		projectTypeDesc = new Text(infoArea, SWT.MULTI | SWT.WRAP);
-//		GridData textGridData = new GridData(GridData.FILL_HORIZONTAL);
-//		projectTypeDesc.setLayoutData(textGridData);
-//		projectTypeDesc.setText(QAQ);
-//		projectTypeDesc.setEditable(false);
+
+		Label extraLabel = new Label(infoArea,SWT.NULL);
+		extraLabel.setText(extraString);
+		extraLabel.setForeground(infoArea.getDisplay().getSystemColor(SWT.COLOR_RED));
+		FontData newFontData = extraLabel.getFont().getFontData()[0];
+		newFontData.setStyle(SWT.ITALIC | SWT.BOLD);
+		newFontData.setHeight(8);
+		extraLabel.setFont(new Font(infoArea.getDisplay(),newFontData));
+		
 		Composite contentCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout contentLayout = new GridLayout();
 		contentLayout.numColumns = 2;
 		contentCpt.setLayout(contentLayout);
 		contentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-		Composite sourceTreeCpt = new Composite(contentCpt, SWT.NONE);
-		sourceTreeCpt.setLayout(new GridLayout());
-		sourceTreeCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-		Label extraLabel = new Label(sourceTreeCpt,SWT.NULL);
-		extraLabel.setText(extraString);
-		extraLabel.setForeground(sourceTreeCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
-		FontData newFontData = extraLabel.getFont().getFontData()[0];
-		newFontData.setStyle(SWT.ITALIC | SWT.BOLD);
-		newFontData.setHeight(8);
-		extraLabel.setFont(new Font(sourceTreeCpt.getDisplay(),newFontData));
+		Composite sourceTreeCpt = new Composite(contentCpt, SWT.NULL);
 		tree = new Tree(sourceTreeCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		tree.setLayoutData(new GridData(GridData.FILL_BOTH));
-		tree.setSize(150, 200);
+		tree.setSize(200, 260);
 		initPopup();
 		
-		contentGroup = ControlFactory.createGroup(contentCpt, descTitle, 1);
-		contentGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
-		contentGroup.setLayout(new GridLayout());
-		
-		configInfoText = new Text(contentGroup, SWT.MULTI | SWT.WRAP);
-		configInfoText.setText("");
-		configInfoText.setLayoutData(new GridData(GridData.FILL_BOTH));
+		Composite sashForm = new Composite(contentCpt, SWT.NULL);
+		sashForm.setLayout(new RowLayout());
+		configInfoText = new Text(sashForm, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
 		configInfoText.setEditable(false);
+		configInfoText.setLayoutData(new RowData(350,250));
 
 		newGroupItem.addSelectionListener(new SelectionListener() {
 			
@@ -315,6 +337,52 @@ public class CpuMainWiazrdPage extends WizardPage{
 				
 			}
 		});
+		
+		reviseItem.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				List<String> configs = null;
+				cpu = new Cpu();
+				TreeItem[] items = tree.getSelection();
+				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+				String tag = "cpu";
+				
+				if(items.length>0) {
+					File curFile = new File(curFilePath);//当前选中文件
+					File xmlParentFile = getXmlFile(curFile);	
+					if(xmlParentFile!=null) {
+						if(xmlParentFile.getName().contains("group")) {
+							tag = "group";
+						}
+						try {
+							rcx.unitCpu(cpu,xmlParentFile);
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}					
+					}
+					traverseParents(curFile);		
+					configs = getConfigs(cpu,false);
+				}
+				
+				NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"revise_"+tag);
+//				ResetConfigurationDialog dialog = new ResetConfigurationDialog(getShell(),configs,cpu,curFilePath,isGroup);
+				if (dialog.open() == Window.OK) {
+					TreeItem parentItem = items[0].getParentItem();
+					parentItem.removeAll();
+					new TreeItem(parentItem, 0);
+					parentItem.setExpanded(false);
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
 
 		deleteItem.addSelectionListener(new SelectionListener() {
 			
@@ -339,55 +407,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 				
 			}
 		});
-		//		addCpuBtn.setEnabled(false);
-		
-//		Button configBtn = new Button(btnCpt,SWT.PUSH);
-//		configBtn.setText("重设配置");
-//		configBtn.setImage(CPluginImages.CFG_REVISE_VIEW.createImage());
-//		configBtn.setVisible(false);
-//		configBtn.addSelectionListener(new SelectionListener() {
-//			
-//			@Override
-//			public void widgetSelected(SelectionEvent e) {
-//				// TODO Auto-generated method stub
-//				List<String> configs = null;
-//				cpu = new Cpu();
-//				TreeItem[] items = tree.getSelection();
-//				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
-//				boolean isGroup = false;
-//				
-//				if(items.length>0) {
-//					File curFile = new File(curFilePath);//当前选中文件
-//					File xmlParentFile = getXmlFile(curFile);	
-//					if(xmlParentFile!=null) {
-//						if(xmlParentFile.getName().contains("group")) {
-//							isGroup = true;
-//						}
-//						try {
-//							rcx.unitCpu(cpu,xmlParentFile);
-//						} catch (Exception e1) {
-//							// TODO Auto-generated catch block
-//							e1.printStackTrace();
-//						}					
-//					}
-//					traverseParents(curFile);		
-//					configs = getConfigs(cpu,false);
-//				}
-//				
-//				ResetConfigurationDialog dialog = new ResetConfigurationDialog(getShell(),configs,cpu,curFilePath,isGroup);
-//				if (dialog.open() == Window.OK) {
-//					
-//				}
-//				
-//			}
-//			
-//			@Override
-//			public void widgetDefaultSelected(SelectionEvent e) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//		});
-//		configBtn.setEnabled(false);
 
 		File file = new File(eclipsePath + "djysrc\\bsp");
 		File[] roots = file.listFiles();
@@ -488,8 +507,8 @@ public class CpuMainWiazrdPage extends WizardPage{
 					// 在tmss位置插入一个节点				
 					File srcFile = new File(fileItem.getData().toString());
 					File destFile = new File(eventItem.getData().toString()+"\\"+s);
-					boolean isDropable =  isFileDropable(srcFile,destFile);
-					if(isDropable) {
+					String isDropable =  isFileDropable(srcFile,new File(eventItem.getData().toString()));
+					if(isDropable == null) {
 						if (eventItem.getParentItem() == null)
 							tmssItem = new TreeItem(eventItem, SWT.NONE);
 						else
@@ -512,7 +531,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 						IWorkbenchWindow window = PlatformUI.getWorkbench()
     							.getActiveWorkbenchWindow();
 						MessageDialog.openError(window.getShell(), "提示",
-    							"父子目录不可互相拖拉");
+								isDropable);
 					}
 					
 				}
@@ -609,8 +628,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 				if(item != null) {
 					if(item.getText().equals("Djyos")) {
 						deleteItem.setEnabled(false);
+						reviseItem.setEnabled(false);
 					}else {
 						deleteItem.setEnabled(true);
+						reviseItem.setEnabled(true);
 					}
 				}
 				
@@ -641,46 +662,13 @@ public class CpuMainWiazrdPage extends WizardPage{
 //							configBtn.setEnabled(false);
 						}
 						
-						cpu = new Cpu();
+						String descContent = "";
 						String curFilePath = item.getData().toString();// 获取当前选中文件的路径
 						File curFile = new File(curFilePath);// 当前选中文件
-						File xmlParentFile = getXmlFile(curFile);
-						if (xmlParentFile != null) {
-							try {
-								rcx.unitCpu(cpu, xmlParentFile);
-							} catch (Exception e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
-							}
-						}
-						traverseParents(curFile);
+						descContent = traverseParents(curFile,descContent);
 						
-						String descContent = "";
-						if(cpu.getCoreNum()!=0) {
-							for(int i=0;i<cpu.getCoreNum();i++) {
-								Core core = cpu.getCores().get(i);
-								descContent+="内核"+(i+1)+": ";
-								if(core.getType()!=null) {
-									descContent+="\n类型: "+core.getType();
-								}
-								if(core.getArch()!=null) {
-									descContent+="\n架构: "+core.getArch();
-								}
-								if(core.getFamily()!=null) {
-									descContent+="\n家族: "+core.getFamily();
-								}
-								if(core.getFpuType()!=null) {
-									descContent+="\n浮点: "+core.getFpuType();
-								}					
-								if(core.getResetAddr()!=null) {
-									descContent+="\n复位地址: "+core.getResetAddr();
-								}
-								descContent+="\n";
-							}
-						}
 						//显示当前选中分组/Cpu的配置信息
 						if(descTitleChang!=null) {
-							contentGroup.setText(descTitleChang);
 							configInfoText.setText(descContent);
 						}	
 
@@ -691,6 +679,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				}
 				
 			}
+
 		});
 		
 		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
@@ -706,26 +695,34 @@ public class CpuMainWiazrdPage extends WizardPage{
 		Dialog.applyDialogFont(composite);
 	}
 	
-	protected boolean isFileDropable(File srcFile, File destFile) {
+	protected String isFileDropable(File srcFile, File destFile) {
 		// TODO Auto-generated method stub
 		File tempSrcFile = new File(srcFile.getPath());
 		File tempDestFile = new File(destFile.getPath());
-		while(!tempSrcFile.getName().equals("cpudrv")) {
+		while(!tempSrcFile.getName().equals("cpudrv")) {		
 			tempSrcFile = tempSrcFile.getParentFile();
 			if(tempSrcFile.getName().equals(destFile.getName())) {
-				return false;
+				return "子目录不可托拉到父目录！";
 			}
 		}
+		
+		tempSrcFile = new File(srcFile.getPath());
+		tempDestFile = new File(destFile.getPath());
 		while(!tempDestFile.getName().equals("cpudrv")) {
 			tempDestFile = tempDestFile.getParentFile();
 			if(tempDestFile.getName().equals(srcFile.getName())) {
-				return false;
+				return "父目录不可托拉到子目录！";
 			}
 		}
-		if(srcFile.getName().equals("cpudrv")){
-			return false;
+		
+		tempDestFile = new File(destFile.getPath());
+		File[] destFiles = tempDestFile.listFiles();
+		for(File file : destFiles) {
+			if(file.getName().endsWith(".xml") && file.getName().contains("cpu_") && !file.getName().contains("group") ) {
+				return "不可托拉到Cpu目录下！";
+			}
 		}
-		return true;
+		return null;
 	}
 
 	private boolean containsXml(File file) {
@@ -790,6 +787,66 @@ public class CpuMainWiazrdPage extends WizardPage{
 				traverseParents(parentFile);
 			}
 		}
+	}
+	
+	private String traverseParents(File curFile,String descContent) {
+		if (!curFile.getName().contains("cpudrv")) {
+			File xmlFile = getXmlFile(curFile);
+			try {
+				Cpu cpu = rcx.getCpuInfos(xmlFile);
+
+				if (cpu.getCoreNum() != 0) {
+					if(xmlFile.getName().contains("group")) {
+						descContent += "子目录["+curFile.getName()+"]配置：";
+					}else {
+						descContent += "Cpu  ["+curFile.getName()+"]配置：";
+					}
+					
+					for (int i = 0; i < cpu.getCoreNum(); i++) {
+						Core core = cpu.getCores().get(i);
+						descContent += "\n内核" + (i + 1) + "：";
+						if (core.getType() != null) {
+							descContent += core.getType();
+						}
+						if (core.getArch() != null) {
+							descContent += "，架构：" + core.getArch();
+						}
+						if (core.getFamily() != null) {
+							descContent += "，家族：" + core.getFamily();
+						}
+						if (core.getFpuType() != null) {
+							descContent += "\n\t浮点：" + core.getFpuType();
+						}
+						if (core.getResetAddr() != null) {
+							descContent += "\n\t复位地址：" + core.getResetAddr();
+						}
+						if(core.getMemorys().size()!=0) {
+							List<CoreMemory> memorys = core.getMemorys();
+							for(int j = 0; j < memorys.size(); j++) {
+								descContent += "\n\t内存" + (j + 1) + "：";
+								if (memorys.get(j).getType() != null) {
+									descContent +=  memorys.get(j).getType();
+								}
+								if (memorys.get(j).getStartAddr() != null) {
+									descContent += "，起始地址：" + memorys.get(j).getStartAddr();
+								}
+								if (memorys.get(j).getSize() != null) {
+									descContent += "，大小：" + memorys.get(j).getSize();
+								}		
+							}
+						}
+						descContent += "\n----------------------------------------------------------\n";
+					}
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			File parentFile = curFile.getParentFile();
+			descContent = traverseParents(parentFile, descContent);
+			
+		}
+		return descContent;
 	}
 	
 	/*

@@ -92,6 +92,8 @@ public abstract class Wizard implements IWizard, IShellProvider {
      * Indicates whether this wizard supports help.
      */
     private boolean isHelpAvailable = false;
+    
+    private boolean isCancelAvailable = true;
 
     /**
      * The default page image for pages without one of their one;
@@ -305,6 +307,11 @@ public abstract class Wizard implements IWizard, IShellProvider {
         return isHelpAvailable;
     }
 
+	@Override
+	public boolean isCancelAvailable() {
+		return isCancelAvailable;
+	}
+    
     @Override
 	public boolean needsPreviousAndNextButtons() {
         return forcePreviousAndNextButtons || pages.size() > 1;
@@ -407,6 +414,10 @@ public abstract class Wizard implements IWizard, IShellProvider {
 	 */
     public void setHelpAvailable(boolean b) {
         isHelpAvailable = b;
+    }
+    
+    public void setCancelAvailable(boolean b) {
+        isCancelAvailable = b;
     }
 
     /**

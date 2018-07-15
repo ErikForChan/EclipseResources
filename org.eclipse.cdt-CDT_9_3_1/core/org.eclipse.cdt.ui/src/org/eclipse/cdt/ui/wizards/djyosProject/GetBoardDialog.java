@@ -119,7 +119,7 @@ public class GetBoardDialog extends StatusDialog {
 
 	private String[] BoardDetailsComboLabels = { "Architecture", "Family" };
 
-	private String[] BoardDetailsTextLabels = { "Select Cpu", "Core Clock" };
+	private String[] BoardDetailsTextLabels = { "CPU", "内核时钟" };
 
 	private String[] Architectures = { "armv4", "armv5", "armv6", "armv7", "armv7-m", "armv7e-m" };
 
@@ -349,7 +349,7 @@ public class GetBoardDialog extends StatusDialog {
 		content.setLayout(layout);
 		content.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		Label boardSelectLabel = new Label(content, SWT.NONE);
-		boardSelectLabel.setText("Select Board: ");
+		boardSelectLabel.setText("板件: ");
 		boardSelectField = new Text(content, SWT.BORDER);
 		boardSelectField.setSize(50, 10);
 		boardSelectField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -384,7 +384,7 @@ public class GetBoardDialog extends StatusDialog {
 		
 		Label CoreLabel = new Label(content, SWT.NONE);
 		CoreLabel.setLayoutData(new GridData(GridData.BEGINNING));
-		CoreLabel.setText("Select Core" + ":    ");
+		CoreLabel.setText("内核" + ":    ");
 		coreSelectFiled = new Text(content, SWT.BORDER);
 		coreSelectFiled.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		coreSelectFiled.setEnabled(false);
@@ -414,18 +414,18 @@ public class GetBoardDialog extends StatusDialog {
 		gl.marginHeight = 10;
 		gl.marginLeft = 10;
 		baordDescCpt.setLayout(gl);
-		baordDescCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		baordDescCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		Label baordDescLabel = new Label(baordDescCpt, SWT.NONE);
-		baordDescLabel.setText("Board Description:");
-		boardDetailsDesc = new Text(baordDescCpt, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
-		boardDetailsDesc.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		baordDescLabel.setText("板件描述:");
+		boardDetailsDesc = new Text(baordDescCpt, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
+		boardDetailsDesc.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		boardDetailsDesc.setText("Cpu: \n" 
-		+ "\tArch: \n"
-		+ "\tFamily: \n"
-		+ "\tFputype: \n"
-		+ "\tResetAddr: \n"
-		+ "\tMemory: \n"
+		+ "\t架构: \n"
+		+ "\t家族: \n"
+		+ "\t浮点: \n"
+		+ "\t复位地址: \n"
+		+ "\t内存: \n"
 		+ "主晶振频率: \n" 
 		+ "Rtc钟频率: \n"
 		+ "板载设备: \n" 

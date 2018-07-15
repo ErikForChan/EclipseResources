@@ -61,15 +61,16 @@ public class ReadComponent {
 	// 遍历组件及其子组件
 	private void traverFiles(File file) {
 		if(!file.getName().equals("include")) {
+//			System.out.println("file.getName():    "+file.getName());
 			File[] allFiles = file.listFiles();
 			boolean hExist = false;
 			Arrays.sort(allFiles, new Comparator<File>() {
 				public int compare(File f1, File f2) {
 					boolean isDiectory = f1.isDirectory();
 					if (isDiectory)
-						return 1;
+						return 1;//文件夹放后面
 					else
-						return -1;// 如果 if 中修改为 返回-1 同时此处修改为返回 1 排序就会是递减
+						return -1;//文件优先放前面
 				}
 
 				public boolean equals(Object obj) {
@@ -86,7 +87,7 @@ public class ReadComponent {
 			
 			for (File f : allFiles) {
 				if (f.isFile()) {
-					if (hExist) {
+					if (hExist && f.getName().endsWith(".h") && f.getName().contains("component_config")) {
 						try {
 							getComponent(f);
 						} catch (Exception e) {
@@ -168,8 +169,17 @@ public class ReadComponent {
 		return components;
 	}
 	
+	public List<Component> getSrcPeripherals(File srcFile){
+		File[] srcfiles = srcFile.listFiles();
+		for (File file : srcfiles) {
+			if (file.isDirectory()) {
+				traverFiles(file);
+			}
+		}
+		return components;
+	}
+	
 	public void getComponent(File file) throws IOException {
-		
 		Component newComponent = new Component();
 		
 		//给新组建的LinkFolder和FileName赋值
@@ -186,8 +196,8 @@ public class ReadComponent {
 		}else if(file.getPath().contains("boarddrv")){
 			newComponent.setLinkFolder("boarddrv");
 		}
-		newComponent.setFileName(file.getParentFile().getPath());
-		
+		newComponent.setFileName(file.getName());
+		newComponent.setParentPath(file.getParentFile().getPath());
 		FileReader reader = null;
 		List<String> allStrings = new ArrayList<String>();
 		List<String> initcodeStrings = new ArrayList<String>();

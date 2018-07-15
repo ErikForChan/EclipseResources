@@ -5,19 +5,27 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardPage;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
@@ -31,6 +39,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Table;
@@ -39,8 +49,13 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.IDE;
+import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
+import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 
 import org.eclipse.cdt.ui.wizards.board.Board;
@@ -50,6 +65,7 @@ import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.CreateCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.ui.wizards.djyosProject.tools.Calculator;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
@@ -58,7 +74,6 @@ import org.eclipse.cdt.internal.ui.CPluginImages;
 public class ComponentConfigWizard extends WizardPage {
 	private OnBoardCpu onBoardCpu = null;
 	private Board sBoard = null;
-
 	private Text dependentText, mutexText;
 	private Table table;
 	private TabFolder folder;
@@ -66,10 +81,12 @@ public class ComponentConfigWizard extends WizardPage {
 	private String depedentLabel = "依赖组件: ", mutexLabel = "互斥组件: ";
 	private Group configGroup = null;
 	private ArrayList<Control> tabelControls = new ArrayList<Control>();
-	private TableEditor editor;
+	private TableEditor editor,editor1;
 	private String defineInit;
 	private boolean appExist,ibootExist;
 	List<Component> compontentsList = null;
+	private IWorkbenchWindow window = PlatformUI.getWorkbench()
+			.getActiveWorkbenchWindow();
 	List<Component> appCompontents = new ArrayList<Component>();
 	List<Component> ibootCompontents = new ArrayList<Component>();
 	List<Component> appCompontentsChecked = new ArrayList<Component>();
@@ -88,11 +105,28 @@ public class ComponentConfigWizard extends WizardPage {
 	List<Component> appCheckedSort = new ArrayList<Component>();
 	List<Component> ibootCheckedSort = new ArrayList<Component>();
 	
+	public List<Component> getAppCompontentsChecked(){
+		return appCompontentsChecked;
+	}
+	
+	public List<Component> getIbootCompontentsChecked(){
+		return ibootCompontentsChecked;
+	}
+	
 	private String getDIDEPath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
 		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 		return eclipsePath;
 	}
+	
+//	public void initPopup(){
+//        Menu menu=new Menu(componentTree);
+//        openFileItem=new MenuItem(menu,SWT.PUSH);
+//        openFileItem.setText("打开文件");
+//        openFileItem.setImage(CPluginImages.CFG_OPENFILE_VIEW.createImage());
+//
+//        componentTree.setMenu(menu);
+//    }
 	
 	public void creatProjectConfiure(String srcPath,Core core,boolean isApp){
 		List<Component> compontentsCheckedSort = null;
@@ -547,11 +581,11 @@ public class ComponentConfigWizard extends WizardPage {
 		mutexText.setText(mutexLabel);
 		mutexText.setEditable(false);
 		
-		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL
-                | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));	
+//		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL
+//                | SWT.H_SCROLL);
+//		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));	
 
-		Composite infoArea = new Composite(scrolledComposite, SWT.NULL);
+		Composite infoArea = new Composite(composite, SWT.NULL);
 		infoArea.setLayout(new GridLayout(1, true));
 		infoArea.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
@@ -575,6 +609,7 @@ public class ComponentConfigWizard extends WizardPage {
 				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 				component.setExcludes(compontentsList.get(i).getExcludes());
 				component.setSelect(compontentsList.get(i).isSelect());
+				component.setParentPath(compontentsList.get(i).getParentPath());
 				//当组件为必选且不需要配置时，不显示在界面上
 				if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 					appCompontentsChecked.add(component);
@@ -614,6 +649,7 @@ public class ComponentConfigWizard extends WizardPage {
 				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 				component.setExcludes(compontentsList.get(i).getExcludes());
 				component.setSelect(compontentsList.get(i).isSelect());
+				component.setParentPath(compontentsList.get(i).getParentPath());
 				//当组件为必选且不需要配置时，不显示在界面上
 				if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 					ibootCompontentsChecked.add(component);
@@ -664,20 +700,128 @@ public class ComponentConfigWizard extends WizardPage {
 		configGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		creatConfigTable(configGroup);
 		table.setEnabled(false);
-		
-		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(infoArea);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-	    scrolledComposite.setExpandVertical(true);
+//		
+//		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+//		scrolledComposite.setContent(infoArea);
+//		scrolledComposite.setMinHeight(point.y);
+//		scrolledComposite.setExpandHorizontal(true);
+//	    scrolledComposite.setExpandVertical(true);
 	}
 
+	private boolean checkParameter(Component component) {
+		String configure = component.getConfigure();
+		String[] parametersDefined = configure.split("\n");
+		String tag = null;
+		String[] infos = null;
+		List<String> ranges = null;
+		for (int i = 0; i < parametersDefined.length; i++) {
+			String parameter = parametersDefined[i];
+			
+			if (parameter.contains("%$#@num") || parameter.contains("%$#@string")
+					|| parameter.contains("%$#@enum") || parameter.contains("%$#@select")
+					|| parameter.contains("%$#@free")) {
+				if (parameter.contains("%$#@num")) {
+					tag = "int";
+				} else if (parameter.contains("%$#@string")) {
+					tag = "string";
+				} else if (parameter.contains("%$#@enum")) {
+					tag = "enum";
+				} else if (parameter.contains("%$#@select")) {
+					tag = "select";
+				} else if (parameter.contains("%$#@free")) {
+					tag = "free";
+				}
+
+				infos = parameter.split(",");
+				ranges = new ArrayList<String>();
+				if (!tag.equals("select") && !tag.equals("free")) {
+					for (int j = 1; j < infos.length; j++) {
+						ranges.add(infos[j]);
+					}
+				}
+			}else if (parameter.contains("#define")) {
+				String[] defines = parameter.trim().split("//");
+				String[] members = null;
+				String annoation = null;
+				if (parameter.startsWith("//")) {
+					members = defines[1].trim().split("\\s+");
+				} else {
+					members = defines[0].trim().split("\\s+");
+				}
+				if (tag.equals("enum")) {
+					
+				} else if (tag.equals("select")) {
+
+					
+				} else {
+					List<String> rangesCopy = ranges;
+					
+					if(tag.equals("int")) {
+						if(rangesCopy.size() != 0) {
+							String minString = rangesCopy.get(0);
+							String maxString = rangesCopy.get(1);
+							int min;
+							long max;
+							try {
+								if(minString.startsWith("0x")) {
+									min = Integer.parseInt(minString.substring(2), 16);
+								}else {
+									min = Integer.parseInt(minString);
+								}
+//								System.out.println("component:  "+component.getName());
+								if(maxString.startsWith("0x")) {
+									max = Long.parseLong(maxString.substring(2), 16);
+								}else {
+									max = Long.parseLong(maxString);
+								}
+								
+								long curData;
+								if (members[2].startsWith("0x")) {
+									curData = Long.parseLong(members[2].substring(2), 16);
+								}else if(members[2].contains("+") || members[2].contains("-") || members[2].contains("*") || members[2].contains("/")) {
+									String pureCal = members[2].replaceAll("\\(|\\)", "");
+									if(pureCal.startsWith("-")) {
+										curData = toUnsigned(Long.parseLong(pureCal));
+									}else {
+										double result = Calculator.conversion(pureCal);
+										BigDecimal bd = new BigDecimal(String.valueOf(result));
+										curData = Long.valueOf(bd.toPlainString());	
+									}
+								}else {
+									curData = Integer.parseInt(members[2]);
+								}
+								if(curData<min || curData>max) {
+									return false;
+								}
+							} catch (Exception e) {
+								// TODO: handle exception
+								MessageDialog.openError(window.getShell(), "提示",
+										"组件"+component.getName()+"配置信息有误，"+e.getMessage());
+
+							}
+							
+						}
+					}
+				}
+
+			}
+		}
+		return true;		
+	}
+	
 	private Control createTabContent(TabFolder folder,List<Component> appTypeComponents,List<Component> ibootTypeComponents) {
 		// TODO Auto-generated method stub
 		//configGroup
 		Tree componentTree = new Tree(folder, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL | SWT.CHECK);
 		componentTree.setLayoutData(new GridData(GridData.FILL_BOTH));
-		componentTree.setSize(SWT.FILL,300);
+		componentTree.setSize(SWT.FILL, 300);
+		
+		Menu menu = new Menu(componentTree);
+		MenuItem openFileItem = new MenuItem(menu, SWT.PUSH);
+		openFileItem.setText("打开文件");
+		openFileItem.setImage(CPluginImages.CFG_OPENFILE_VIEW.createImage());
+		componentTree.setMenu(menu);
+		
 		if(appExist) {
 			List<Component> aFirstList = new ArrayList<Component>();
 			for(int i=0;i<appTypeComponents.size();i++) {
@@ -700,8 +844,14 @@ public class ComponentConfigWizard extends WizardPage {
 				}else {
 					item = new TreeItem(rootApp, 0);
 				}
+				item.setData(component.getParentPath());
 				item.setText(component.getName());
-				item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+				boolean pass = checkParameter(component);
+				if(pass) {
+					item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+				}else {
+					item.setImage(CPluginImages.CFG_COMPTERROR_VIEW.createImage());
+				}			
 				
 				if(haveChildren(component,appTypeComponents)) {
 					fillItem(item,appTypeComponents,rootApp,true);
@@ -730,14 +880,100 @@ public class ComponentConfigWizard extends WizardPage {
 				}else {
 					item = new TreeItem(rootIboot, 0);
 				}
+				item.setData(component.getParentPath());
 				item.setText(component.getName());
-				item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+				boolean pass = checkParameter(component);
+				if(pass) {
+					item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+				}else {
+					item.setImage(CPluginImages.CFG_COMPTERROR_VIEW.createImage());
+				}
 				// 叶子节点对应的数值为相应文件夹的File对象
 				if(haveChildren(component,ibootTypeComponents)) {
 					fillItem(item,ibootTypeComponents,rootIboot,false);
 				}		
 			}
 		}
+		
+		openFileItem.addSelectionListener(new SelectionListener() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+				TreeItem[] items = componentTree.getSelection();
+				if(items.length>0) {
+					Component itemCompt = null;
+					String type = getAIType(items[0]);
+					if(type.equals("App")) {
+						itemCompt = getAppComponent(items[0].getData().toString());
+					}else {
+						itemCompt = getIbootComponent(items[0].getData().toString());
+					}
+					IFileStore fileStore =  EFS.getLocalFileSystem().getStore(new Path(itemCompt.getParentPath()));
+					fileStore =  fileStore.getChild(itemCompt.getFileName());
+					IFileInfo fetchInfo = fileStore.fetchInfo();
+					if (!fetchInfo.isDirectory() && fetchInfo.exists()) {
+						IWorkbenchPage page =  window.getActivePage();
+						try {
+							IDE.openEditorOnFileStore(page, fileStore);
+						} catch (PartInitException e1) {
+							String msg =  NLS.bind(IDEWorkbenchMessages.OpenLocalFileAction_message_errorOnOpen, fileStore.getName());
+							IDEWorkbenchPlugin.log(msg,e1.getStatus());
+							MessageDialog.open(MessageDialog.ERROR,window.getShell(), IDEWorkbenchMessages.OpenLocalFileAction_title, msg, SWT.SHEET);
+						}
+					} 
+					
+				}			
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		componentTree.addMouseTrackListener(new MouseTrackListener() {
+
+			@Override
+			public void mouseHover(MouseEvent e) {
+				// TODO Auto-generated method stub
+				Point point = new Point(e.x, e.y);
+				TreeItem item = componentTree.getItem(point);
+				String descContent = null;
+				if (item != null) {
+					if (!item.getText().equals("App") && !item.getText().equals("Iboot")) {
+						String itemText = item.getText();
+						String type = getAIType(item);
+						boolean isApp;
+						Component itemCompt;
+						if (type.equals("App")) {
+							isApp = true;
+							itemCompt = getAppComponent(item.getData().toString());
+						} else {
+							isApp = false;
+							itemCompt = getIbootComponent(item.getData().toString());
+						}
+						descContent = itemCompt.getAnnotation();
+						componentTree.setToolTipText(descContent);
+					}
+				}
+
+			}
+
+			@Override
+			public void mouseExit(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 
 		//组件树的选择事件
 		componentTree.addListener(SWT.Selection, new Listener() {
@@ -759,10 +995,10 @@ public class ComponentConfigWizard extends WizardPage {
 							boolean isApp ;
 							if(type.equals("App")) {
 								isApp = true;
-								itemCompt = getAppComponent(item.getText());
+								itemCompt = getAppComponent(item.getData().toString());
 							}else{
 								isApp = false;
-								itemCompt = getIbootComponent(item.getText());
+								itemCompt = getIbootComponent(item.getData().toString());
 							}
 							for(Control c:controls) {
 								Tree tempTree = (Tree)c;
@@ -790,29 +1026,36 @@ public class ComponentConfigWizard extends WizardPage {
 							boolean isApp ;
 							if(type.equals("App")) {
 								isApp = true;
-								itemCompt = getAppComponent(item.getText());
+								itemCompt = getAppComponent(item.getData().toString());
 							}else{
 								isApp = false;
-								itemCompt = getIbootComponent(item.getText());
+								itemCompt = getIbootComponent(item.getData().toString());
 							}
-							for(Control c:controls) {
-								Tree tempTree = (Tree)c;
-								TreeItem[] fChilds = tempTree.getItems();
-								for(TreeItem treeItem : fChilds) {
-									if(treeItem.getText().equals(type)) {
-										boolean isDepedent = isDepedent(treeItem,item,type);
-										if(isDepedent) {
-											itemCompt.setSelect(false);
-											if(isApp) {
-												appCompontentsChecked.remove(itemCompt);
-											}else {
-												ibootCompontentsChecked.remove(itemCompt);
+							if(itemCompt.getSelectable().equals("必选")) {
+								item.setChecked(true);
+								MessageDialog.openError(window.getShell(), "提示",
+		    							"该组件为必选组件，不可取消！");
+							}else {
+								for(Control c:controls) {
+									Tree tempTree = (Tree)c;
+									TreeItem[] fChilds = tempTree.getItems();
+									for(TreeItem treeItem : fChilds) {
+										if(treeItem.getText().equals(type)) {
+											boolean isDepedent = isDepedent(treeItem,item,type);
+											if(isDepedent) {
+												itemCompt.setSelect(false);
+												if(isApp) {
+													appCompontentsChecked.remove(itemCompt);
+												}else {
+													ibootCompontentsChecked.remove(itemCompt);
+												}
 											}
+											break;
 										}
-										break;
 									}
 								}
 							}
+						
 						}
 					}
 				}	
@@ -824,16 +1067,24 @@ public class ComponentConfigWizard extends WizardPage {
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
-				
-				//dependentText mutexText
+
 				Point point = new Point(event.x, event.y);
 				TreeItem item = componentTree.getItem(point);
+			
 				if(item != null) {
-					for(Control control:tabelControls){
+					if(item.getText().equals("App") || item.getText().equals("Iboot")) {
+						openFileItem.setEnabled(false);
+					}else {
+						openFileItem.setEnabled(true);
+					}
+					for (Control control : tabelControls) {
 						control.dispose();
-						}
-					if(editor!=null) {
+					}
+					if (editor != null) {
 						editor.dispose();
+					}
+					if (editor1 != null) {
+						editor1.dispose();
 					}
 					
 					table.removeAll();
@@ -843,20 +1094,20 @@ public class ComponentConfigWizard extends WizardPage {
 						
 						Component itemCompt ;
 						if(type.equals("App")) {
-							itemCompt = getAppComponent(item.getText());
+							itemCompt = getAppComponent(item.getData().toString());
 						}else{
-							itemCompt = getIbootComponent(item.getText());
+							itemCompt = getIbootComponent(item.getData().toString());
 						}
 						List<String> depedents = itemCompt.getDependents();
 						List<String> mutexs = itemCompt.getMutexs();
 						String allDeps = "";
 						String allMuts = "";
 						// 互斥组件
-						for(String mutex : mutexs) {
-							allMuts += " " + mutex;					
+						for(int k=0;k<mutexs.size();k++) {
+							allMuts += (k!=0?"，":"") + mutexs.get(k);					
 						}
-						for(String dep : depedents) {
-							allDeps += " "+dep;
+						for(int k=0;k<depedents.size();k++) {
+							allDeps += (k!=0?"，":"") +depedents.get(k);
 						}
 
 						if (allDeps.equals("")) {
@@ -874,7 +1125,6 @@ public class ComponentConfigWizard extends WizardPage {
 						if(!configure.contains("#define")) {
 							configGroup.setText("组件 ["+itemText+"] 无需配置");
 							table.setEnabled(false);
-//							item.setForeground(folder.getDisplay().getSystemColor(SWT.COLOR_GRAY));
 						}else {
 							configGroup.setText(type+"组件 ["+itemText+"] 配置");
 							table.setEnabled(true);
@@ -888,22 +1138,6 @@ public class ComponentConfigWizard extends WizardPage {
 			}
 		});
 		
-		componentTree.addListener(SWT.NO_FOCUS, new Listener() {
-			
-			@Override
-			public void handleEvent(Event event) {
-				// TODO Auto-generated method stub
-				Point point = new Point(event.x, event.y);
-				TreeItem item = componentTree.getItem(point);
-				if(item != null) {
-					System.out.println("NO_FOCUS:  "+item.getText());
-					TableItem[] tItems = table.getItems();
-					for(TableItem t : tItems) {
-						System.out.println(t.getText(0)+"   "+t.getText(1)+"   "+t.getText(2));
-					}
-				}
-			}
-		});
 		return componentTree;
 	}
 
@@ -914,9 +1148,9 @@ public class ComponentConfigWizard extends WizardPage {
 		for(TreeItem item : items) {
 			Component tempCompt ;
 			if(type.equals("App")) {
-				tempCompt = getAppComponent(item.getText());
+				tempCompt = getAppComponent(item.getData().toString());
 			}else{
-				tempCompt = getIbootComponent(item.getText());
+				tempCompt = getIbootComponent(item.getData().toString());
 			}
 			if(item.getChecked()) {
 				if(tempCompt.getDependents().contains(eventTreeItem.getText())) {
@@ -968,11 +1202,11 @@ public class ComponentConfigWizard extends WizardPage {
 			if(depedents.contains(item.getText())) {
 				item.setChecked(true);
 				if(isApp) {
-					Component curComponent = getAppComponent(item.getText());
+					Component curComponent = getAppComponent(item.getData().toString());
 					curComponent.setSelect(true);
 					appCompontentsChecked.add(curComponent);
 				}else {
-					Component curComponent = getIbootComponent(item.getText());
+					Component curComponent = getIbootComponent(item.getData().toString());
 					curComponent.setSelect(true);
 					ibootCompontentsChecked.add(curComponent);
 				}
@@ -1021,8 +1255,14 @@ public class ComponentConfigWizard extends WizardPage {
 			}else {
 				item = new TreeItem(parentItem, 0);
 			}
+			item.setData(child.getParentPath());
 			item.setText(child.getName());
-			item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+			boolean pass = checkParameter(child);
+			if(pass) {
+				item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+			}else {
+				item.setImage(CPluginImages.CFG_COMPTERROR_VIEW.createImage());
+			}
 			
 			if(haveChildren(child,compontentsList)) {
 				fillItem(item,compontentsList,rootItem,isApp);
@@ -1088,9 +1328,7 @@ public class ComponentConfigWizard extends WizardPage {
 					}
 				}
 
-			}
-
-			if (parameter.contains("#define")) {
+			}else if (parameter.contains("#define")) {
 				TableItem item = new TableItem(table, SWT.NONE);
 				Image image = new Image(PlatformUI.getWorkbench().getDisplay(), 1, 25);
 				item.setImage(image);
@@ -1105,9 +1343,10 @@ public class ComponentConfigWizard extends WizardPage {
 					annoation = defines.length > 1 ? defines[1] : "";
 				}
 				String realComptName = null;
-				String[] annos = annoation.split(",");
+				
+				String[] annos = annoation.split(",|，");
 				if (annos[0].trim().startsWith("\"") && annos[0].trim().endsWith("\"")) {
-					annoation = annoation.substring(annos[0].length() + 1, annoation.length());
+					annoation = annoation.substring(annos[0].length(), annoation.length()).replaceFirst(",|，", "");
 					if (!annos[0].contains("name")) {
 						realComptName = annos[0].trim().replaceAll("\"", "");
 					} else {
@@ -1116,6 +1355,11 @@ public class ComponentConfigWizard extends WizardPage {
 
 				} else {
 					realComptName = members[1];
+				}
+				if (tag.equals("int") && ranges.size()>0){
+					String min = ranges.get(0);
+					String max = ranges.get(1);
+					realComptName = realComptName+"( "+min+"~"+max+" )";
 				}
 				if (members.length > 2) {
 					item.setText(new String[] { realComptName, members[2].equals("default") ? "" : members[2],
@@ -1128,6 +1372,10 @@ public class ComponentConfigWizard extends WizardPage {
 				editor = new TableEditor(table);
 				// 设置编辑单元格水平填充
 				editor.grabHorizontal = true;
+				
+				editor1 = new TableEditor(table);
+				// 设置编辑单元格水平填充
+				editor1.grabHorizontal = true;
 
 				if (tag.equals("enum")) {
 					isSelect[i] = true;
@@ -1184,67 +1432,157 @@ public class ComponentConfigWizard extends WizardPage {
 							resetConfigure(componentSelect);
 						}
 					});
-
-					tabelControls.add(checkBtn);
-					
+					tabelControls.add(checkBtn);				
 				} else {
 					isSelect[i] = true;
 					// 创建一个文本框，用于输入文字
 					Text text = new Text(table, SWT.BORDER);
 					text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 					// 将文本框当前值，设置为表格中的值
-					text.setText(item.getText(1));
+					text.setText(item.getText(1).replaceAll("\\(|\\)", ""));
 					// 关键方法，将编辑单元格与文本框绑定到表格的第一列
 					editor.setEditor(text, item, 1);
 					tabelControls.add(text);
 					String flag = tag;
 					List<String> rangesCopy = ranges;
+					
+					if(tag.equals("int")) {
+						if(rangesCopy.size()>0) {
+							String minString = rangesCopy.get(0);
+							String maxString = rangesCopy.get(1);
+							int min ;
+							long max ;
+							if(minString.startsWith("0x")) {
+								min = Integer.parseInt(minString.substring(2), 16);
+							}else {
+								min = Integer.parseInt(minString);
+							}
+							if(maxString.startsWith("0x")) {
+								max = Long.parseLong(maxString.substring(2), 16);
+							}else {
+								max = Long.parseLong(maxString);
+							}
+							long curData;
+							System.out.println("members[2]:   "+members[2]);
+							if (members[2].startsWith("0x")) {
+								curData = Long.parseLong(members[2].substring(2), 16);
+							}else if(members[2].contains("+") || members[2].contains("-") || members[2].contains("*") || members[2].contains("/")) {
+								String pureCal = members[2].replaceAll("\\(|\\)", "");
+								System.out.println("pureCal:   "+pureCal);
+								if(pureCal.startsWith("-")) {
+									curData = toUnsigned(Long.parseLong(pureCal));
+								}else {
+									double result = Calculator.conversion(pureCal);
+									BigDecimal bd = new BigDecimal(String.valueOf(result));
+									curData = Long.valueOf(bd.toPlainString());	
+								}
+							}else {
+								curData = Long.parseLong(members[2]);
+							}
+							System.out.println("curData:   "+curData);
+							if(curData<min || curData>max) {
+								text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
+							}
+						}
+					}
 					// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
 					text.addModifyListener(new ModifyListener() {
 						public void modifyText(ModifyEvent e) {
 							String tempString = text.getText();
+							boolean toCalculate = false;
 							IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 							if (rangesCopy.size() > 0) {
 								if (flag.equals("int")) {
-									int min = Integer.parseInt(rangesCopy.get(0));
-									int max = Integer.parseInt(rangesCopy.get(1));
-									int curNum = -1;
+									String minString = rangesCopy.get(0);
+									String maxString = rangesCopy.get(1);
+									double min ;
+									long max ;
+									if(minString.startsWith("0x")) {
+										min = Integer.parseInt(minString.substring(2), 16);
+									}else {
+										min = Integer.parseInt(minString);
+									}
+									if(maxString.startsWith("0x")) {
+										max = Long.parseLong(maxString.substring(2), 16);
+									}else {
+										max = Long.parseLong(maxString);
+									}
+									
+									long curNum = -1;
 									Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
 									boolean isInt = pattern.matcher(tempString).matches();
 									if (tempString.startsWith("0x")) {
-										curNum = Integer.parseInt(tempString.substring(2), 16);
+										curNum = Long.parseLong(tempString.substring(2), 16);
+									}else if(tempString.contains("+") || tempString.contains("-") || tempString.contains("*") || tempString.contains("/")) {
+										toCalculate = true;
+										String pureCal = tempString.replaceAll("\\(|\\)", "");
+										double result = Calculator.conversion(pureCal);
+										BigDecimal bd = new BigDecimal(String.valueOf(result));
+										curNum = Long.valueOf(bd.toPlainString());	
+//										System.out.println(result);
+//										BigDecimal bd = new BigDecimal(String.valueOf(result));
+//										System.out.println(bd.toPlainString());
+//										curNum = Integer.valueOf(bd.toPlainString());
 									} else {
 										if (isInt) {
 											curNum = Integer.parseInt(tempString);
-										} else {
-											MessageDialog.openError(window.getShell(), "提示",
-													"请填写在之" + min + "与" + max + "之间的整数");
-										}
-
+										} 
 									}
 									if (curNum < min || curNum > max) {
+										text.setText("");
 										MessageDialog.openError(window.getShell(), "提示",
 												"请填写在之" + min + "与" + max + "之间的整数");
 									}
 								} else if (flag.equals("string")) {
-									int min = Integer.parseInt(rangesCopy.get(0));
-									int max = Integer.parseInt(rangesCopy.get(1));
-									if (tempString.length() < min || tempString.length() > max) {
-										MessageDialog.openError(window.getShell(), "提示",
-												"字符串长度不得小于" + min + "或者大于" + max);
+									if(rangesCopy.size()>0) {
+										int min = Integer.parseInt(rangesCopy.get(0));
+										int max = Integer.parseInt(rangesCopy.get(1));
+										if (tempString.length() < min || tempString.length() > max) {
+											text.setText("");
+											MessageDialog.openError(window.getShell(), "提示",
+													"字符串长度不得小于" + min + "或者大于" + max);
+										}
 									}
+								
 								}
 							}
-
-							item.setText(1, text.getText());
+							if(text.getForeground().equals(table.getDisplay().getSystemColor(SWT.COLOR_RED))) {
+								text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+							}
+							if(toCalculate) {
+								item.setText(1, "("+text.getText()+")");
+							}else {
+								item.setText(1, text.getText());
+							}
+							
 							resetConfigure(componentSelect);
 						}
 
 					});
 				}
+				// 创建一个文本框，用于输入文字
+				Text annoText = new Text(table, SWT.BORDER);
+				annoText.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
+				// 将文本框当前值，设置为表格中的值
+				annoText.setText(item.getText(2));
+				annoText.addModifyListener(new ModifyListener() {
 
+					@Override
+					public void modifyText(ModifyEvent e) {
+						// TODO Auto-generated method stub
+						String anno = annoText.getText();
+						item.setText(2, anno);
+						resetConfigure(componentSelect);
+					}
+				});
+				editor1.setEditor(annoText, item, 2);
+				tabelControls.add(annoText);
 			}
 		}
+	}
+	
+	long toUnsigned(long s) {
+		return s & 0xFFFFFFFFL;
 	}
 	
 	protected void resetConfigure(Component componentSelect) {
@@ -1269,9 +1607,9 @@ public class ComponentConfigWizard extends WizardPage {
             	}
 	        	//define格式化
             	if(isSelect[i]) {
-        			parametersDefined[i] = String.format("%-11s",members[0])+" "+String.format("%-32s", members[1])+" "+String.format("%-18s", items[itemCount].getText(1))+"//"+annoation;
+        			parametersDefined[i] = String.format("%-11s",members[0])+" "+String.format("%-32s", members[1])+" "+String.format("%-18s", items[itemCount].getText(1))+"//"+items[itemCount].getText(2);
         		}else {
-        			parametersDefined[i] = String.format("%-11s","//"+members[0])+" "+String.format("%-32s", members[1])+" "+String.format("%-18s", items[itemCount].getText(1))+"//"+annoation;
+        			parametersDefined[i] = String.format("%-11s","//"+members[0])+" "+String.format("%-32s", members[1])+" "+String.format("%-18s", items[itemCount].getText(1))+"//"+items[itemCount].getText(2);
         		}
 							
 				itemCount++;
@@ -1283,7 +1621,7 @@ public class ComponentConfigWizard extends WizardPage {
 
 	private Component getAppComponent(String itemName) {
 		for(Component component:appCompontents) {
-			if(component.getName().equals(itemName)) {
+			if(component.getParentPath().equals(itemName)) {
 				return component;
 			}
 		}	
@@ -1292,7 +1630,7 @@ public class ComponentConfigWizard extends WizardPage {
 	
 	private Component getIbootComponent(String itemName) {
 		for(Component component:ibootCompontents) {
-			if(component.getName().equals(itemName)) {
+			if(component.getParentPath().equals(itemName)) {
 				return component;
 			}
 		}	

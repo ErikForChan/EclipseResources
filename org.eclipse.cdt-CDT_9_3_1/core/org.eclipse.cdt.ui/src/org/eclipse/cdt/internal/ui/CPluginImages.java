@@ -374,6 +374,9 @@ public class CPluginImages {
 	public static final ImageDescriptor CFG_DELETE_OBJ= createUnManaged(T_OVR, "delete_obj.png"); //$NON-NLS-1$ 
 	public static final ImageDescriptor CFG_COMPONENT_OBJ= createUnManaged(T_OVR, "component.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor CFG_CPMT_OBJ= createUnManaged(T_OVR, "cpmt.gif"); //$NON-NLS-1$
+	public static final ImageDescriptor CFG_OPENFILE_VIEW= createUnManaged(T_OVR, "open_file.gif"); //$NON-NLS-1$ 
+	public static final ImageDescriptor CFG_COMPTERROR_VIEW= createUnManaged(T_OVR, "component_warning.png"); //$NON-NLS-1$
+	public static final ImageDescriptor CPU_REVISE_VIEW= createUnManaged(T_OVR, "cpu_revise.gif"); //$NON-NLS-1$
 
 	public static final ImageDescriptor DESC_WIZABAN_NEW_PROJ= createUnManaged(T_WIZBAN, "newcprj_wiz.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor DESC_WIZBAN_NEWCLASS= createUnManaged(T_WIZBAN, "newclass_wiz.gif");	 //$NON-NLS-1$
