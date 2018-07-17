@@ -47,4 +47,10 @@ public class CpuCommonWizard extends BasicNewResourceWizard{
 		return true;
 	}
 
+	@Override
+	public boolean isPageDragable() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

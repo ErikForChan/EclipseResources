@@ -1261,6 +1261,16 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 		if (oldPage != null) {
 			oldPage.setVisible(false);
 		}
+		System.out.println("currentPage: ");
+		if(currentPage.isPageDragable()) {
+			System.out.println("isPageDragable: ");
+			setShellStyle(SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL | SWT.MAX | SWT.RESIZE
+					| getDefaultOrientation());
+			}else {
+				System.out.println("isNotPageDragable: ");
+				setShellStyle(SWT.MAX | SWT.CLOSE | SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL
+						| getDefaultOrientation());
+			}
 		// update the dialog controls
 		update();
 		return true;
@@ -1481,4 +1491,5 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 	protected boolean isResizable() {
     	return true;
     }
+
 }

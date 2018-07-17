@@ -108,8 +108,29 @@ public class BoardMainWizard extends WizardPage{
 	private Composite boardAttributesCpt;
 	private Group ConfigurationGroup;
 	private String eclipsePath = getEclipsePath();
+	private IWorkbenchWindow window = PlatformUI.getWorkbench()
+			.getActiveWorkbenchWindow();
 	
-	private void enableOperate(boolean enable) {
+	public String vaildPage() {
+		for(OnBoardCpu onBoardCpu:onBoardCpus) {
+			String cpuName = onBoardCpu.getCpuName();
+			List<OnBoardMemory>  memorys = onBoardCpu.getMemorys();
+			for(OnBoardMemory memeory:memorys) {
+				if(memeory.getStartAddr()==null || memeory.getSize()==null || memeory.getType() == null) {
+					return "请完整填写["+cpuName+"]的存储信息";
+				}
+			}
+			if(onBoardCpu.getMianClk()==0) {
+				return "请完整填写["+cpuName+"]的晶振频率";
+			}
+			if(onBoardCpu.getRtcClk()==-1) {
+				return "请完整填写["+cpuName+"]的Rtc频率";
+			}
+		}
+		return null;
+	}
+	
+ 	private void enableOperate(boolean enable) {
 		mainClkLabel.setEnabled(enable);
 		mainClkField.setEnabled(enable);
 		rtcClkBtn.setEnabled(enable);
@@ -132,12 +153,12 @@ public class BoardMainWizard extends WizardPage{
 		String boardName = boardNameField.getText().trim();
 		newBoard.setBoardName(boardName);
 		newBoard.setOnBoardCpus(onBoardCpus);
-		for(int i=0;i<onBoardCpus.size();i++) {
-			List<Component> peripherals = onBoardCpus.get(i).getPeripherals();
-			for(int j=0;j<peripherals.size();j++) {
-				System.out.println("peripherals.get(j).getName():  "+peripherals.get(j).getName());
-			}
-		}
+//		for(int i=0;i<onBoardCpus.size();i++) {
+//			List<Component> peripherals = onBoardCpus.get(i).getPeripherals();
+//			for(int j=0;j<peripherals.size();j++) {
+//				System.out.println("peripherals.get(j).getName():  "+peripherals.get(j).getName());
+//			}
+//		}
 		return newBoard;
 	}
 	
@@ -150,7 +171,7 @@ public class BoardMainWizard extends WizardPage{
 	protected BoardMainWizard(String pageName) {
 		super(pageName);
 		// TODO Auto-generated constructor stub
-		setPageComplete(false);
+		setPageComplete(true);
 	}
 
 	public void changeCpusOn(String cpuName,boolean toAdd) {
@@ -260,9 +281,6 @@ public class BoardMainWizard extends WizardPage{
 		}
 	};
 	
-	/*
-	 * Returns the action for the given wizard id, or null if not found.
-	 */
 	private IAction getAction(String id) {
 		// Keep a cache, rather than creating a new action each time,
 		// so that image caching in ActionContributionItem works.
@@ -424,62 +442,7 @@ public class BoardMainWizard extends WizardPage{
 		item.setControl(createMemoryContent(folder));
 		
 		enableOperate(false);
-//		item.setControl(createNewCpuContent(folder));
-		
-//		Composite btnCpt = new Composite(ConfigurationGroup,SWT.NONE); 
-//		GridLayout btnLayout = new GridLayout();
-//		btnCpt.setLayout(btnLayout);
-//		btnCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		Button applyBtn = new Button(btnCpt,SWT.PUSH);
-//		applyBtn.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END | GridData.FILL_HORIZONTAL));
-//		applyBtn.setText("   Apply   ");
-//		applyBtn.addSelectionListener(new SelectionListener() {
-//			
-//			@Override
-//			public void widgetSelected(SelectionEvent e) {
-//				// TODO Auto-generated method stub
-//				TreeItem[] items = cpuArhivesNeed.getSelection();
-//				String cpuName = items[0].getText();
-//				String mianClk = mainClkField.getText().trim();
-//				String rtcClk = rtcClkField.getText().trim();
-//				boolean rtcEnable = rtcClkBtn.getSelection();
-//				List<Component> peripherals = peripheralsOn;
-//				List<Chip> chips = chipsOn;
-//				OnBoardCpu onBoardCpu = new OnBoardCpu();
-//				onBoardCpu.setCpuName(cpuName);
-//				onBoardCpu.setMianClk(Integer.parseInt(mianClk));
-//				onBoardCpu.setRtcClk(Integer.parseInt(rtcClk));
-//				onBoardCpu.setPeripherals(peripherals);
-//				onBoardCpu.setMemorys(memorys);
-//				onBoardCpu.setChips(chips);
-//				try {
-//					IRunnableWithProgress runnable = new IRunnableWithProgress() {
-//						@Override
-//						public void run(IProgressMonitor monitor)
-//								throws InvocationTargetException, InterruptedException {
-//							monitor.beginTask("添加板载Cpu……", 100);
-//							onBoardCpus.add(onBoardCpu);
-//							monitor.worked(10);
-//							monitor.done();
-//						}
-//					};
-//					ProgressMonitorDialog dialog = new ProgressMonitorDialog(
-//							PlatformUI.getWorkbench().getDisplay().getActiveShell());
-//					dialog.setCancelable(false);
-//					dialog.run(true, true, runnable);
-//				} catch (InvocationTargetException | InterruptedException e1) {
-//					e1.printStackTrace();
-//				}
-//				
-//			}
-//			
-//			@Override
-//			public void widgetDefaultSelected(SelectionEvent e) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//		});
-//		
+//		item.setControl(createNewCpuContent(folder));	
 	}
 	
 	private Control createMemoryContent(TabFolder folder) {
@@ -526,8 +489,6 @@ public class BoardMainWizard extends WizardPage{
 								break;
 							}
 						}
-					}else{
-						memoryTypeCombo.setText("");
 					}
 
 					if(selectedMemory.getStartAddr() != null) {
@@ -644,8 +605,6 @@ public class BoardMainWizard extends WizardPage{
 		memoryTypeCombo.add("ROM");
 		memoryTypeCombo.add("RAM");
 		memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		Label newLabel = new Label(detailsCpt,SWT.NONE);
-//		newLabel.setVisible(false);
 		memoryTypeCombo.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -664,8 +623,6 @@ public class BoardMainWizard extends WizardPage{
 						}
 					}
 				}
-			
-				
 			}
 			
 			@Override
@@ -674,29 +631,49 @@ public class BoardMainWizard extends WizardPage{
 				
 			}
 		});
-		
+	
 		Label addrLabel = new Label(detailsCpt,SWT.NONE);
 		addrLabel.setText("地址: ");
 		addrField = new Text(detailsCpt,SWT.BORDER);
 		addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		newLabel = new Label(detailsCpt,SWT.NONE);
-//		newLabel.setVisible(false);
+
 		addrField.addModifyListener(new ModifyListener() {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
 				TreeItem[] items = memoryTree.getSelection();
+				String addr = addrField.getText().trim();
 				if(items.length>0) {
-					String selectMemory = items[0].getText().trim();
-					for(int i=0;i<memorys.size();i++) {
-						OnBoardMemory memory = memorys.get(i);
-						if(memory.getName().equals(selectMemory)) {
-							String addr = addrField.getText().trim();
-							memory.setStartAddr(addr);
-							break;
-						}
+					if(!addr.equals("")) {
+						String selectMemory = items[0].getText().trim();
+						int curNum = -1;
+						Pattern pattern = Pattern.compile("^([1-9]\\d*|[0]{1,1})$");  //含0正整数
+	    		        boolean isInt =  pattern.matcher(addr).matches();
+	    				if(addr.startsWith("0x")) {
+	    					curNum = Integer.parseInt(addr.substring(2),16);
+	    				}else {
+	    					if(isInt) {
+	    						curNum = Integer.parseInt(addr);
+	    					}
+	    				}             					
+        				if(curNum<0) {
+        					addrField.setText("");
+        					MessageDialog.openInformation(window.getShell(), "提示",
+        							"请输入正整数(包含0)");
+        				}else {
+        					for(int i=0;i<memorys.size();i++) {
+    							OnBoardMemory memory = memorys.get(i);
+    							if(memory.getName().equals(selectMemory)) {
+    								memory.setStartAddr(addr);
+    								break;
+    							}
+    						}
+        				}
+					}else {
+//						setPageComplete(false);
 					}
+					
 				}
 		
 			}
@@ -713,30 +690,26 @@ public class BoardMainWizard extends WizardPage{
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
 				TreeItem[] items = memoryTree.getSelection();
+				String size = sizeField.getText().trim().replace("k", "");
 				if(items.length>0) {
 					String selectMemory = items[0].getText().trim();
-					String size = sizeField.getText().trim();
 					IWorkbenchWindow window = PlatformUI.getWorkbench()
 							.getActiveWorkbenchWindow();
 					if(! size.equals("")) {
-						int curNum = -1;            
-						Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+						int curNum = -1;         
+						Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$");  //^[-\\+]?[\\d]*$
 	    		        boolean isInt =  pattern.matcher(size).matches();
 	    				if(size.startsWith("0x")) {
 	    					curNum = Integer.parseInt(size.substring(2),16);
 	    				}else {
 	    					if(isInt) {
 	    						curNum = Integer.parseInt(size);
-	    					}else {
-	    						sizeField.setText("");
-	    						MessageDialog.openError(window.getShell(), "提示",
-	        							"请输入正整数");
 	    					}
 	    				}             					
-        				if(curNum<0) {
+        				if(curNum<=0) {
         					sizeField.setText("");
-        					MessageDialog.openError(window.getShell(), "提示",
-        							"请输入正整数");
+        					MessageDialog.openInformation(window.getShell(), "提示",
+        							"请输入正整数(不包含0)");
         				}else {
         					for(int i=0;i<memorys.size();i++) {
     							OnBoardMemory memory = memorys.get(i);
@@ -746,6 +719,8 @@ public class BoardMainWizard extends WizardPage{
     							}
     						}
         				}					
+					}else {
+//						setPageComplete(false);
 					}
 					
 				}
@@ -1131,21 +1106,32 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
-				if(! mainClkField.getText().trim().equals("")) {
-					TreeItem[] items = cpuArhivesNeed.getSelection();
-					if(items.length>0) {
-						OnBoardCpu onBoardCpu = new OnBoardCpu();
-						if (items.length > 0) {
-							String selectCpuName = items[0].getText();
-							for(int i=0;i<onBoardCpus.size();i++) {
-								if(onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
-									onBoardCpus.get(i).setMianClk(Integer.parseInt(mainClkField.getText().trim()));
+				Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$|^[+]{0,1}(\\d+\\.\\d+)$");  
+		       
+				String mainClkString = mainClkField.getText().trim();
+				
+				if(! mainClkString.equals("")) {
+					boolean isMainClkInt =  pattern.matcher(mainClkString).matches();
+					if(isMainClkInt) {
+						float mianClk = Float.parseFloat(mainClkString);
+						TreeItem[] items = cpuArhivesNeed.getSelection();
+						if(items.length>0) {
+							OnBoardCpu onBoardCpu = new OnBoardCpu();
+							if (items.length > 0) {
+								String selectCpuName = items[0].getText();
+								for(int i=0;i<onBoardCpus.size();i++) {
+									if(onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
+										onBoardCpus.get(i).setMianClk(mianClk);
+									}
 								}
 							}
 						}
+					}else {
+						MessageDialog.openInformation(window.getShell(), "提示",
+								"请输入正数");
 					}
 					
-				}			
+				}		
 			}
 		});
 		
@@ -1160,9 +1146,29 @@ public class BoardMainWizard extends WizardPage{
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				if(rtcClkBtn.getSelection()) {
-					rtcClkField.setEnabled(true);;
+					rtcClkField.setEnabled(true);
+					TreeItem[] items = cpuArhivesNeed.getSelection();
+					OnBoardCpu onBoardCpu = new OnBoardCpu();
+					if (items.length > 0) {
+						String selectCpuName = items[0].getText();
+						for (int i = 0; i < onBoardCpus.size(); i++) {
+							if (onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
+								onBoardCpus.get(i).setRtcClk(-1);
+							}
+						}
+					}
 				}else {
 					rtcClkField.setEnabled(false);
+					TreeItem[] items = cpuArhivesNeed.getSelection();
+					OnBoardCpu onBoardCpu = new OnBoardCpu();
+					if (items.length > 0) {
+						String selectCpuName = items[0].getText();
+						for (int i = 0; i < onBoardCpus.size(); i++) {
+							if (onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
+								onBoardCpus.get(i).setRtcClk(0);
+							}
+						}
+					}
 				}
 			}
 			
@@ -1178,16 +1184,24 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void modifyText(ModifyEvent e) {
 				// TODO Auto-generated method stub
-				if(! rtcClkField.getText().trim().equals("")) {
-					TreeItem[] items = cpuArhivesNeed.getSelection();
-					OnBoardCpu onBoardCpu = new OnBoardCpu();
-					if (items.length > 0) {
-						String selectCpuName = items[0].getText();
-						for (int i = 0; i < onBoardCpus.size(); i++) {
-							if (onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
-								onBoardCpus.get(i).setRtcClk(Integer.parseInt(rtcClkField.getText().trim()));
+				Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$|^[+]{0,1}(\\d+\\.\\d+)$");  
+				String rtcClkString = rtcClkField.getText().trim();
+				if(! rtcClkString.equals("")) {
+					boolean isRtcClkInt =  pattern.matcher(rtcClkString).matches();
+					if(isRtcClkInt) {
+						TreeItem[] items = cpuArhivesNeed.getSelection();
+						OnBoardCpu onBoardCpu = new OnBoardCpu();
+						if (items.length > 0) {
+							String selectCpuName = items[0].getText();
+							for (int i = 0; i < onBoardCpus.size(); i++) {
+								if (onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
+									onBoardCpus.get(i).setRtcClk(Float.parseFloat(rtcClkString));
+								}
 							}
 						}
+					}else {
+						MessageDialog.openInformation(window.getShell(), "提示",
+								"请输入正数");
 					}
 				}
 			}
@@ -1240,9 +1254,7 @@ public class BoardMainWizard extends WizardPage{
 					getCpuSrcPaths(new File(cpuPath),cpuSrcPaths);
 					for(String path:cpuSrcPaths) {
 						File srcFile = new File(path);
-						System.out.println("srcFile.getName():   "+srcFile.getPath());
 						List<Component> somePeripherals = rcx.getSrcPeripherals(srcFile);
-						System.out.println("somePeripherals.size():   "+somePeripherals.size());
 						allPeripherals.addAll(somePeripherals);
 					}
 					
@@ -1321,10 +1333,20 @@ public class BoardMainWizard extends WizardPage{
 						sizeField.setText("");
 					}else {
 						memorys = memorysOn;
-						for(int i=0;i<memorysOn.size();i++) {
-							String memoryOnName = memorysOn.get(i).getName();
-							TreeItem t = new TreeItem(memoryTree, SWT.NONE);
-							t.setText(memoryOnName);
+						if(memorys.size()>0) {
+							for(int i=0;i<memorys.size();i++) {
+								String memoryOnName = memorys.get(i).getName();
+								TreeItem t = new TreeItem(memoryTree, SWT.NONE);
+								t.setText(memoryOnName);
+							}
+							if(memorys.get(0).getType().equals("RAM")) {
+								memoryTypeCombo.select(1);
+							}else {
+								memoryTypeCombo.select(0);
+							}
+							addrField.setText(memorys.get(0).getStartAddr());
+							sizeField.setText(memorys.get(0).getSize());
+							memoryTree.setSelection(memoryTree.getItems()[0]);
 						}
 					}
 				
@@ -1383,7 +1405,6 @@ public class BoardMainWizard extends WizardPage{
 				if(items.length>0) {
 					String selectCpuName = items[0].getText();
 					changeCpusOn(selectCpuName,true);
-//					items[0].dispose();
 					
 					OnBoardCpu onBoardCpu = new OnBoardCpu();
 					onBoardCpu.setCpuName(selectCpuName);
@@ -1459,34 +1480,36 @@ public class BoardMainWizard extends WizardPage{
 				Point point = new Point(e.x, e.y); 
 				TreeItem item = cpuArhives.getItem(point);
 				String descContent = "";
-				for(Cpu cpu:cpusList) {					
-					if(cpu.getCpuName().equals(item.getText())) {
-						if(cpu.getCores().size()!=0) {
-							for(int j=0;j<cpu.getCores().size();j++) {
-								Core core = cpu.getCores().get(j);
-								descContent+="内核"+(j+1)+": ";
-								if(core.getType()!=null) {
-									descContent+="\n类型: "+core.getType();
+				if(item!=null) {
+					for(Cpu cpu:cpusList) {					
+						if(cpu.getCpuName().equals(item.getText())) {
+							if(cpu.getCores().size()!=0) {
+								for(int j=0;j<cpu.getCores().size();j++) {
+									Core core = cpu.getCores().get(j);
+									descContent+="内核"+(j+1)+": ";
+									if(core.getType()!=null) {
+										descContent+="\n类型: "+core.getType();
+									}
+									if(core.getArch()!=null) {
+										descContent+="\n架构: "+core.getArch();
+									}
+									if(core.getFamily()!=null) {
+										descContent+="\n家族: "+core.getFamily();
+									}
+									if(core.getFpuType()!=null) {
+										descContent+="\n浮点: "+core.getFpuType();
+									}					
+									if(core.getResetAddr()!=null) {
+										descContent+="\n复位地址: "+core.getResetAddr();
+									}
+									descContent+="\n";
 								}
-								if(core.getArch()!=null) {
-									descContent+="\n架构: "+core.getArch();
-								}
-								if(core.getFamily()!=null) {
-									descContent+="\n家族: "+core.getFamily();
-								}
-								if(core.getFpuType()!=null) {
-									descContent+="\n浮点: "+core.getFpuType();
-								}					
-								if(core.getResetAddr()!=null) {
-									descContent+="\n复位地址: "+core.getResetAddr();
-								}
-								descContent+="\n";
+								cpuArhives.setToolTipText(descContent);
 							}
-							cpuArhives.setToolTipText(descContent);
+							break;
 						}
-						break;
 					}
-				}
+				}			
 			}
 			
 			@Override
@@ -1519,6 +1542,12 @@ public class BoardMainWizard extends WizardPage{
 	}
 
 	private boolean validatePage() {
+		for(int i=0;i<onBoardCpus.size();i++) {
+//			List<OnBoardMemory> onBoardMemorys =onBoardCpus.get(i).getMemorys();
+//			if(onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
+//				onBoardCpus.remove(i);
+//			}
+		}
 		if(boardNameField.getText().trim().equals("")) {
 			setErrorMessage("请填写板件名");
 			return false;

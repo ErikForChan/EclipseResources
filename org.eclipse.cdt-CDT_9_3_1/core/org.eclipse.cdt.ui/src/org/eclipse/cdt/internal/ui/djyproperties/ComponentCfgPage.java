@@ -181,10 +181,6 @@ public class ComponentCfgPage extends PropertyPage{
 		mutexText.setLayoutData(depedentData);
 		mutexText.setText(mutexLabel);
 		mutexText.setEditable(false);
-
-		Composite infoArea = new Composite(composite, SWT.NULL);
-		infoArea.setLayout(new GridLayout(1, true));
-		infoArea.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		getBoardAndCpu();
 		ReadComponent rc = new ReadComponent();
@@ -214,6 +210,7 @@ public class ComponentCfgPage extends PropertyPage{
 				component.setParent(compontentsList.get(i).getParent());
 				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 				component.setExcludes(compontentsList.get(i).getExcludes());
+				component.setIncludes(compontentsList.get(i).getIncludes());
 				component.setSelect(compontentsList.get(i).isSelect());
 				component.setParentPath(compontentsList.get(i).getParentPath());
 				//当组件为必选且不需要配置时，不显示在界面上
@@ -260,6 +257,7 @@ public class ComponentCfgPage extends PropertyPage{
 				component.setParent(compontentsList.get(i).getParent());
 				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 				component.setExcludes(compontentsList.get(i).getExcludes());
+				component.setIncludes(compontentsList.get(i).getIncludes());
 				component.setSelect(compontentsList.get(i).isSelect());
 				component.setParentPath(compontentsList.get(i).getParentPath());
 				//当组件为必选且不需要配置时，不显示在界面上
@@ -284,7 +282,7 @@ public class ComponentCfgPage extends PropertyPage{
 		}
 		
 		// 组件显示界面
-		folder = new TabFolder(infoArea, SWT.NONE);
+		folder = new TabFolder(composite, SWT.NONE);
 		folder.setLayout(new TabFolderLayout());
 		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -307,7 +305,7 @@ public class ComponentCfgPage extends PropertyPage{
 		Control[] controls = folder.getChildren();
 		Tree coreTree = (Tree)controls[0];
 		TreeItem[] coreItems = coreTree.getItems();
-		configGroup = ControlFactory.createGroup(infoArea, "组件配置[请选中要配置的组件]", 1);
+		configGroup = ControlFactory.createGroup(composite, "组件配置[请选中要配置的组件]", 1);
 		configGroup.setLayout(new GridLayout(1, false));
 		configGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		creatConfigTable(configGroup);
@@ -390,7 +388,7 @@ public class ComponentCfgPage extends PropertyPage{
 					tag = "free";
 				}
 
-				infos = parameter.split(",");
+				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("select") && !tag.equals("free")) {
 					for (int j = 1; j < infos.length; j++) {// for (int j = 1; j < infos.length; j++)
@@ -417,10 +415,11 @@ public class ComponentCfgPage extends PropertyPage{
 					
 					if(tag.equals("int")) {
 						if(rangesCopy.size() != 0) {
-							String minString = rangesCopy.get(0), maxString = rangesCopy.get(1);
-							int min;
-							long max;
+							
 							try {
+								String minString = rangesCopy.get(0), maxString = rangesCopy.get(1);
+								int min;
+								long max;
 								if(minString.startsWith("0x")) {
 									min = Integer.parseInt(minString.substring(2), 16);
 								}else {
@@ -1321,7 +1320,7 @@ public class ComponentCfgPage extends PropertyPage{
 					tag = "free";
 				}
 
-				infos = parameter.split(",");
+				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("select") && !tag.equals("free")) {
 					for (int j = 1; j < infos.length; j++) {// for (int j = 1; j < infos.length; j++)
@@ -1818,7 +1817,13 @@ public class ComponentCfgPage extends PropertyPage{
 		}
 		ccx.createCheck(curCompontents, checkFile);
 	}
-	
+
+	@Override
+	public boolean isPageDragable() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	String djyStart = "ptu32_t __djy_main(void)\r\n" + 
 			"{\n";
 	String djyEnd = "\tdjy_main();\r\n" + 

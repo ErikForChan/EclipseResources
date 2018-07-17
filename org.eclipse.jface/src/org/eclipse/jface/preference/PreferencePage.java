@@ -674,4 +674,15 @@ public abstract class PreferencePage extends DialogPage implements
 		}
 	}
 
+	@Override
+	public boolean isPageDragable() {
+		// TODO Auto-generated method stub
+		return isPageDragable;
+	}
+	
+    public void setPageDragable(boolean b) {
+    	isPageDragable = b;
+    }
+    
+	private boolean isPageDragable = true;
 }

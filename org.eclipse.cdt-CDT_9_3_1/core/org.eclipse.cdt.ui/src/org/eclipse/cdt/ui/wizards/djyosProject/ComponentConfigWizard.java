@@ -119,15 +119,6 @@ public class ComponentConfigWizard extends WizardPage {
 		return eclipsePath;
 	}
 	
-//	public void initPopup(){
-//        Menu menu=new Menu(componentTree);
-//        openFileItem=new MenuItem(menu,SWT.PUSH);
-//        openFileItem.setText("打开文件");
-//        openFileItem.setImage(CPluginImages.CFG_OPENFILE_VIEW.createImage());
-//
-//        componentTree.setMenu(menu);
-//    }
-	
 	public void creatProjectConfiure(String srcPath,Core core,boolean isApp){
 		List<Component> compontentsCheckedSort = null;
 		String cfgPath = null;
@@ -581,14 +572,6 @@ public class ComponentConfigWizard extends WizardPage {
 		mutexText.setText(mutexLabel);
 		mutexText.setEditable(false);
 		
-//		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL
-//                | SWT.H_SCROLL);
-//		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));	
-
-		Composite infoArea = new Composite(composite, SWT.NULL);
-		infoArea.setLayout(new GridLayout(1, true));
-		infoArea.setLayoutData(new GridData(GridData.FILL_BOTH));
-		
 		ReadComponent rc = new ReadComponent();
 		compontentsList = rc.getComponents(onBoardCpu, sBoard);
 		if(appExist){
@@ -608,6 +591,7 @@ public class ComponentConfigWizard extends WizardPage {
 				component.setParent(compontentsList.get(i).getParent());
 				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 				component.setExcludes(compontentsList.get(i).getExcludes());
+				component.setIncludes(compontentsList.get(i).getIncludes());
 				component.setSelect(compontentsList.get(i).isSelect());
 				component.setParentPath(compontentsList.get(i).getParentPath());
 				//当组件为必选且不需要配置时，不显示在界面上
@@ -648,6 +632,7 @@ public class ComponentConfigWizard extends WizardPage {
 				component.setParent(compontentsList.get(i).getParent());
 				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
 				component.setExcludes(compontentsList.get(i).getExcludes());
+				component.setIncludes(compontentsList.get(i).getIncludes());
 				component.setSelect(compontentsList.get(i).isSelect());
 				component.setParentPath(compontentsList.get(i).getParentPath());
 				//当组件为必选且不需要配置时，不显示在界面上
@@ -671,8 +656,11 @@ public class ComponentConfigWizard extends WizardPage {
 			}
 		}
 
+//		Group folderGroup = ControlFactory.createGroup(composite, "组件分类", 1);
+//		folderGroup.setLayout(new GridLayout(1, false));
+//		folderGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		// 组件显示界面
-		folder = new TabFolder(infoArea, SWT.NONE);
+		folder = new TabFolder(composite, SWT.NONE);
 		folder.setLayout(new TabFolderLayout());
 		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -692,20 +680,12 @@ public class ComponentConfigWizard extends WizardPage {
 		item.setText("用户组件"); //$NON-NLS-1$
 		item.setControl(createTabContent(folder,appUserComponents,ibootUserComponents));
 
-		Control[] controls = folder.getChildren();
-		Tree coreTree = (Tree)controls[0];
-		TreeItem[] coreItems = coreTree.getItems();
-		configGroup = ControlFactory.createGroup(infoArea, "组件配置[请选中要配置的组件]", 1);
+		configGroup = ControlFactory.createGroup(composite, "组件配置[请选中要配置的组件]", 1);
 		configGroup.setLayout(new GridLayout(1, false));
 		configGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		creatConfigTable(configGroup);
 		table.setEnabled(false);
-//		
-//		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-//		scrolledComposite.setContent(infoArea);
-//		scrolledComposite.setMinHeight(point.y);
-//		scrolledComposite.setExpandHorizontal(true);
-//	    scrolledComposite.setExpandVertical(true);
+
 	}
 
 	private boolean checkParameter(Component component) {
@@ -732,7 +712,7 @@ public class ComponentConfigWizard extends WizardPage {
 					tag = "free";
 				}
 
-				infos = parameter.split(",");
+				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("select") && !tag.equals("free")) {
 					for (int j = 1; j < infos.length; j++) {
@@ -757,18 +737,19 @@ public class ComponentConfigWizard extends WizardPage {
 					List<String> rangesCopy = ranges;
 					
 					if(tag.equals("int")) {
+//						System.out.println("component:  "+component.getName());
 						if(rangesCopy.size() != 0) {
-							String minString = rangesCopy.get(0);
-							String maxString = rangesCopy.get(1);
-							int min;
-							long max;
 							try {
+								String minString = rangesCopy.get(0);
+								String maxString = rangesCopy.get(1);
+								int min;
+								long max;
 								if(minString.startsWith("0x")) {
 									min = Integer.parseInt(minString.substring(2), 16);
 								}else {
 									min = Integer.parseInt(minString);
 								}
-//								System.out.println("component:  "+component.getName());
+
 								if(maxString.startsWith("0x")) {
 									max = Long.parseLong(maxString.substring(2), 16);
 								}else {
@@ -812,6 +793,9 @@ public class ComponentConfigWizard extends WizardPage {
 	private Control createTabContent(TabFolder folder,List<Component> appTypeComponents,List<Component> ibootTypeComponents) {
 		// TODO Auto-generated method stub
 		//configGroup
+//		Composite sourceTreeCpt = new Composite(folder, SWT.NULL);
+//		sourceTreeCpt.setLayout(new GridLayout());
+//		sourceTreeCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		Tree componentTree = new Tree(folder, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL | SWT.CHECK);
 		componentTree.setLayoutData(new GridData(GridData.FILL_BOTH));
 		componentTree.setSize(SWT.FILL, 300);
@@ -1320,7 +1304,7 @@ public class ComponentConfigWizard extends WizardPage {
 					tag = "free";
 				}
 
-				infos = parameter.split(",");
+				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("select") && !tag.equals("free")) {
 					for (int j = 1; j < infos.length; j++) {// for (int j = 1; j < infos.length; j++)
@@ -1636,6 +1620,7 @@ public class ComponentConfigWizard extends WizardPage {
 		}	
 		return null;
 	}
+	
 	
 	String djyStart = "ptu32_t __djy_main(void)\r\n" + 
 			"{\n";

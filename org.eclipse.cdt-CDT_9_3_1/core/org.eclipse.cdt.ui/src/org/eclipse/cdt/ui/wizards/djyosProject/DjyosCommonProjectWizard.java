@@ -75,6 +75,7 @@ import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionPreferences;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.core.settings.model.ICSettingBase;
+import org.eclipse.cdt.core.settings.model.ICSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICSourceEntry;
 import org.eclipse.cdt.core.settings.model.MultiLanguageSetting;
 import org.eclipse.cdt.core.settings.model.util.CDataUtil;
@@ -101,6 +102,7 @@ import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.ui.wizards.djyosProject.tools.DideHelper;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseLinkToXML;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseVariableToXML;
 
@@ -111,16 +113,14 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 {
 	private static final String PREFIX= "CProjectWizard"; //$NON-NLS-1$
 
-	boolean addedMemory = false,addedAppCfg = false,addedIbootCfg = false,createdProject = false,
+	boolean addedMemory = false,createdProject = false,clickedMianNext = false,
 			existingPath = false,projectExist = false,addedComptCfg = false;
 	protected DjyosMainWizardPage fMainPage;//主界面
 	protected ComponentConfigWizard cpomtCfgPage = null;//组件配置界面
 	protected MemoryMapWizard memoryPage;//Memory向导界面
 	protected ModuleConfigurationWizard modulePage;//Module向导界面
-	protected AppCompntConfigWizard appCfgPage = null;//app组件配置界面
-	protected IbootCompntConfigWizard ibootCfgPage = null;//iboot组件配置界面
 	private String deapPath = null,wz_title, wz_desc, lastProjectName,boardModuleTrimPath;
-	private String didePath = getDIDEPath();
+	private String didePath = new DideHelper().getDIDEPath();
 	private URI lastProjectLocation = null;
 	private IProject curProject;
 	protected IProject newProject;
@@ -179,15 +179,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		}
 		
 		return templateName;
-	}
-	
-	/*
-	 * 获取当前Eclipse的路径
-	 */
-	public String getDIDEPath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return didePath;
 	}
 	
 	/*
@@ -351,7 +342,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		return null;
 	}
 	
-	private void changeIt(List<ICLanguageSettingEntry>  entries, ICLanguageSettingEntry[] ents, ICLanguageSetting lang) {
+	private void changeIt(int kind,List<ICLanguageSettingEntry>  entries, ICLanguageSettingEntry[] ents, ICLanguageSetting lang) {
 		List<ICLanguageSettingEntry> lsEntries = new ArrayList<ICLanguageSettingEntry>();
 		for(int i=0;i<ents.length;i++) {
 			lsEntries.add(ents[i]);
@@ -361,10 +352,10 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				lsEntries.add(entries.get(i));
 			}
 		}
-		setSettingEntries(1, lsEntries, false, lang);
+		setSettingEntries(kind, lsEntries, lang);
 	}
 	
-	private void setSettingEntries(int kind, List<ICLanguageSettingEntry> incs, boolean toAll, ICLanguageSetting lang) {
+	private void setSettingEntries(int kind, List<ICLanguageSettingEntry> incs,ICLanguageSetting lang) {
 			lang.setSettingEntries(kind, incs);//ICLanguageSetting
 	}
 	
@@ -408,6 +399,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		String firmwareLib = cpu.getFirmwareLib();
 		String cpudrvPath = didePath+DjyosMessages.Cpu_RelativePath;
 		String boardPath = didePath+DjyosMessages.Board_RelativePath;
+		String srcLocation = didePath+"djysrc";
 		File cpudrvFile = new File(cpudrvPath);
 		File[] cpudrvFiles = cpudrvFile.listFiles();
 		
@@ -427,6 +419,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			project = curProject;
 		}	
 		
+		List<String> includes = new ArrayList<String>();		
 		List<String> excludes = new ArrayList<String>();		
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration		
@@ -512,19 +505,28 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			assemblyLinks.add("${DJYOS_SRC_LOCATION}/bsp/arch/"+core.getType()+"/"+core.getArch()+"/"+core.getFamily()+"/include");
 			//添加project_config.h的链接
 			if(selectIndex == 0 || selectIndex == 1){
-				links.add("${ProjDirPath}/src/iboot/OS_prjcfg/project_config.h");
+				links.add("${ProjDirPath}/src/iboot/OS_prjcfg");
 	    	}
 	    	if(selectIndex == 0 || selectIndex == 2 || selectIndex == 3){
-	    		links.add("${ProjDirPath}/src/app/OS_prjcfg/project_config.h");
+	    		links.add("${ProjDirPath}/src/app/OS_prjcfg");
 	    	}
 			
 			//根据所选组件链接
 			for(int j=0;j<compontentsChecked.size();j++) {
 				Component component = compontentsChecked.get(j);
 				String componentName = compontentsChecked.get(j).getName();
-				if(component.getLinkFolder().equals("third")) {
-					links.add("${DJYOS_SRC_LOCATION}/third/"+componentName);
-				}else if(component.getLinkFolder().equals("component")) {
+				String linkFolder = component.getLinkFolder();
+				List<String> includeFiles = component.getIncludes();//includes
+				String componentPath = component.getParentPath().replace("\\", "/");
+				String relativePath = componentPath.replace(srcLocation, "");	// /third/.../componentName
+				for(String include:includeFiles) {//	../Inc 
+					includes.add(relativePath+include);
+				}
+				
+//				if(linkFolder.equals("third")) {
+//					links.add("${DJYOS_SRC_LOCATION}/third/"+componentName);
+//				}else 
+				if(component.getLinkFolder().equals("component")) {
 					links.add("${DJYOS_SRC_LOCATION}/component/"+componentName);
 				}else if(component.getLinkFolder().equals("djyos")) {
 					links.add("${DJYOS_SRC_LOCATION}/djyos/"+componentName);
@@ -552,19 +554,27 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				}
 			}
 			
+			for(String include:includes) {
+				links.add("${DJYOS_SRC_LOCATION}"+include);
+			}
+			
 			ICLanguageSetting[] languageSettings = getLangSetting(rds);
 			for (int j=0; j<languageSettings.length; j++) {
 				//Assembly添加链接
 				if(j==0) {
 					ICLanguageSetting lang = languageSettings[j];//获取语言类型
-					ICLanguageSettingEntry[] ents = null;
+//					ICLanguageSettingEntry[] ents = null;
 					List<ICLanguageSettingEntry>  entries = new ArrayList<ICLanguageSettingEntry>();
+					List<ICLanguageSettingEntry>  _entries = new ArrayList<ICLanguageSettingEntry>();
 					for(int k=0;k<assemblyLinks.size();k++) {
 						ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(assemblyLinks.get(k), 0);
 						entries.add(entry);
+						ICLanguageSettingEntry  e = CDataUtil.createCMacroEntry(assemblyLinks.get(k), "text", 0);
+						_entries.add(e);
 					}
-					ents = lang.getSettingEntries(1);
-					changeIt(entries,ents,lang);
+
+					changeIt(ICSettingEntry.INCLUDE_PATH,entries,lang.getSettingEntries(ICSettingEntry.INCLUDE_PATH),lang);
+//					changeIt(ICSettingEntry.MACRO,_entries,lang.getSettingEntries(ICSettingEntry.MACRO),lang);
 				}
 				//GNU C/C++ 添加链接
 				else {
@@ -576,7 +586,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 						entries.add(entry);
 					}
 					ents = lang.getSettingEntries(1);
-					changeIt(entries,ents,lang);
+					changeIt(ICSettingEntry.INCLUDE_PATH,entries,ents,lang);
 				}			
 			}
 			IOption option1 = toolchain.getOptionBySuperClassId(DjyosMessages.Arch_SuperClassId);
@@ -636,25 +646,26 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			lpf.addLink(project.getFile(".project"), _cpuName, cpuLinkString,
 					"cpudrv");
 		}
-				
+		
 		//為組建添加link項
 		for(int j=0;j<compontentsChecked.size();j++){
 			Component component = compontentsChecked.get(j);
-			String componentName = compontentsChecked.get(j).getName();
-			String componentPath = compontentsChecked.get(j).getParentPath();
+			String componentName = component.getName();
+			String componentPath = component.getParentPath();
 			String linkFolder = component.getLinkFolder();
+			String relativePath = componentPath.replace(srcLocation, "").replace("\\", "/");	// /third/.../componentName
 			List<String> excludeFiles = component.getExcludes();
 			if(linkFolder.equals("third") || linkFolder.equals("component") || linkFolder.equals("djyos")) {
 				for(String exclude:excludeFiles) {
-					excludes.add("/src/libos/"+linkFolder+"/"+componentName+"/"+exclude);
+					excludes.add("/src/libos"+relativePath+exclude);
 				}	
 			}else if(linkFolder.equals("chipdrv")) {
 				for(String exclude:excludeFiles) {
-					excludes.add("/src/libos/bsp/"+linkFolder+"/"+componentName+"/"+exclude);
+					excludes.add("/src/libos"+relativePath+exclude);
 				}	
 			}else if(linkFolder.equals("cpudrv")) {
 				for(String exclude:excludeFiles) {
-					excludes.add("/src/libos/bsp/"+linkFolder+"/"+componentName+"/"+exclude);
+					excludes.add("/src/libos"+relativePath+exclude);
 				}	
 				String filePath = component.getParentPath();
 				String cptName = filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length());
@@ -1049,20 +1060,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	@Override
 	public boolean canFinish() {
 //		int index = fMainPage.getTemplateIndex();
-//		if (index == 1) {
-//			if (addedIbootCfg) {
-//				return true;
-//			}
-//		} else if (index == 2 || index == 3) {
-//			if (addedAppCfg) {
-//				return true;
-//			}
-//		} else {
-//			if (addedAppCfg && addedIbootCfg) {
-//				return true;
-//			}
-//		}
-		if (addedComptCfg) {
+		if (clickedMianNext) {
 			return true;
 		}
 		return false;
@@ -1091,5 +1089,11 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			CUIPlugin.log(e);
 		}
 	}
-   
+
+	@Override
+	public boolean isPageDragable() {
+		// TODO Auto-generated method stub
+		return false;
+	} 
+	
 }

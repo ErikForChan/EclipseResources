@@ -149,20 +149,20 @@ public class CpuMainWiazrdPage extends WizardPage{
 //	        e.printStackTrace();  
 //	    }  
 
-		long a = Integer.parseInt("1");
-		long b = Long.parseLong("0xFFFFFFFF".substring(2), 16);
-		long c = Integer.parseInt("-1");; //0xFFFFFFFF
-		if(a>b) {
-			System.out.println("a= "+toUnsigned(a));
-			System.out.println("b= "+toUnsigned(b));
-			System.out.println("c= "+toUnsigned(c));
-			System.out.println("a>b");
-		}else {
-			System.out.println("a= "+toUnsigned(a));
-			System.out.println("b= "+toUnsigned(b));
-			System.out.println("c= "+toUnsigned(c));
-			System.out.println("b>a");
-		}
+//		long a = Integer.parseInt("1");
+//		long b = Long.parseLong("0xFFFFFFFF".substring(2), 16);
+//		long c = Integer.parseInt("-1");; //0xFFFFFFFF
+//		if(a>b) {
+//			System.out.println("a= "+toUnsigned(a));
+//			System.out.println("b= "+toUnsigned(b));
+//			System.out.println("c= "+toUnsigned(c));
+//			System.out.println("a>b");
+//		}else {
+//			System.out.println("a= "+toUnsigned(a));
+//			System.out.println("b= "+toUnsigned(b));
+//			System.out.println("c= "+toUnsigned(c));
+//			System.out.println("b>a");
+//		}
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));

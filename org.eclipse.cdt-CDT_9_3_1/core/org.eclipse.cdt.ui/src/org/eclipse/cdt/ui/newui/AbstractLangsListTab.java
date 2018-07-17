@@ -479,11 +479,14 @@ public abstract class AbstractLangsListTab extends AbstractCPropertyTab {
 		if (entry != null) {
 			fHadSomeModification= true;
 			if ((toAllCfgs || toAllLang) && ! (getResDesc() instanceof ICMultiResourceDescription)) {
+				System.out.println("ICMultiResourceDescription::");
 				addToAll(entry);
 			} else {
 				if (isWModifyMode() && (lang instanceof MultiLanguageSetting)) {
+					System.out.println("performMulti::");
 					performMulti(entry, null);
 				} else {
+					System.out.println("changeIt::");
 					changeIt(entry, null);
 				}
 			}
@@ -713,7 +716,6 @@ public abstract class AbstractLangsListTab extends AbstractCPropertyTab {
 				}
 			}
 		} else {
-			System.out.println("else");
 			ICLanguageSetting [] sr = getLangSetting(src);
 			ICLanguageSetting [] ds = getLangSetting(dst);
 			if (sr == null || ds == null || sr.length != ds.length) return;

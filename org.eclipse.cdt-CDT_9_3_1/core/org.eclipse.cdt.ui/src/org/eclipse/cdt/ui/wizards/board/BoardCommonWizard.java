@@ -6,8 +6,10 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.wizards.newresource.BasicNewResourceWizard;
 import org.eclipse.cdt.ui.CUIPlugin;
@@ -18,6 +20,8 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 	private String wz_title;
 	private String wz_desc;
 	private String eclipsePath = getEclipsePath();
+	private IWorkbenchWindow window = PlatformUI.getWorkbench()
+			.getActiveWorkbenchWindow();
 	
 	/*
 	 * 获取当前Eclipse的路径
@@ -57,45 +61,54 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 	@Override
 	public boolean performFinish() {
 		// TODO Auto-generated method stub
-		Board board = fMainPage.getBoard();
-		String dirPath = eclipsePath+"djysrc\\bsp\\boarddrv\\user\\"+board.getBoardName();
-		try {
-			IRunnableWithProgress runnable = new IRunnableWithProgress() {
-				@Override
-				public void run(IProgressMonitor monitor)
-						throws InvocationTargetException, InterruptedException {
+		String vaildString = fMainPage.vaildPage();
+		if(vaildString == null) {
+			Board board = fMainPage.getBoard();
+			String dirPath = eclipsePath+"djysrc\\bsp\\boarddrv\\user\\"+board.getBoardName();
+			try {
+				IRunnableWithProgress runnable = new IRunnableWithProgress() {
+					@Override
+					public void run(IProgressMonitor monitor)
+							throws InvocationTargetException, InterruptedException {
 
-					monitor.beginTask("创建板件……", 100);
+						monitor.beginTask("创建板件……", 100);
 
-					/*
-					 * 处理事务，worked方法表示工作了多少的进度
-					 */
-					File boardDir = new File(dirPath);
-					boardDir.mkdirs();
-					String xmlPath = dirPath+"\\Board_"+board.getBoardName()+".xml";
-					File file = new File(xmlPath);
-					CreatBoardXml ctbx = new CreatBoardXml();
-					if(!file.exists()) {
-						try {
-							file.createNewFile();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+						/*
+						 * 处理事务，worked方法表示工作了多少的进度
+						 */
+						File boardDir = new File(dirPath);
+						boardDir.mkdirs();
+						String xmlPath = dirPath+"\\Board_"+board.getBoardName()+".xml";
+						File file = new File(xmlPath);
+						CreatBoardXml ctbx = new CreatBoardXml();
+						if(!file.exists()) {
+							try {
+								file.createNewFile();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
+						ctbx.creatBoardXml(board, file);
+						monitor.worked(10);
+						monitor.done();
 					}
-					ctbx.creatBoardXml(board, file);
-					monitor.worked(10);
-					monitor.done();
-				}
-			};
-			ProgressMonitorDialog dialog = new ProgressMonitorDialog(
-					PlatformUI.getWorkbench().getDisplay().getActiveShell());
-			dialog.setCancelable(false);
-			dialog.run(true, true, runnable);
-		} catch (InvocationTargetException | InterruptedException e) {
-			e.printStackTrace();
+				};
+				ProgressMonitorDialog dialog = new ProgressMonitorDialog(
+						PlatformUI.getWorkbench().getDisplay().getActiveShell());
+				dialog.setCancelable(false);
+				dialog.run(true, true, runnable);
+			} catch (InvocationTargetException | InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			return true;
+		}else {
+			MessageDialog.openInformation(window.getShell(), "提示",
+					vaildString);
 		}
-		return true;
+		
+		return false;
 	}
 
 }

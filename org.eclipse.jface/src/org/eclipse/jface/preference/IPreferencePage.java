@@ -75,4 +75,6 @@ public interface IPreferencePage extends IDialogPage {
      *   <code>new Point(width,height)</code>
      */
     public void setSize(Point size);
+    
+    public boolean isPageDragable();
 }

@@ -69,6 +69,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	private List<String> configsList = new ArrayList<String>(),configsOn = new ArrayList<String>(),attributes = new ArrayList<String>(),firewareLibs = new ArrayList<String>();
 	private Label memorySizeLabel,memoryAddrLabel,memoryTypeLabel;
 	private String tempName = null;
+	private IWorkbenchWindow window = PlatformUI.getWorkbench()
+			.getActiveWorkbenchWindow();
+	
 	/*
 	 * 获取当前Eclipse的路径
 	 */
@@ -205,15 +208,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		cpuGroupTree = new Tree(cpuGroupListCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		cpuGroupTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		cpuGroupTree.setHeaderVisible(true);
-		cpuGroupTree.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] items = cpuGroupTree.getSelection();
-				if (items.length > 0) {
-
-				}
-			}
-		});
 		final TreeColumn columnGroupList = new TreeColumn(cpuGroupTree, SWT.NONE);
 		columnGroupList.setText("Cpu配置项");
 		columnGroupList.setWidth(90);
@@ -804,8 +798,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					if(tempName!=null) {
 						revisingCpu.getCores().get(selectIndex).getMemorys().add(memory);
 					}
-					
-					curCpu.getCores().get(selectIndex).getMemorys().add(memory);
+					if(curCpu.getCores().get(selectIndex).getMemorys().size() != newCpu.getCores().get(selectIndex).getMemorys().size()) {
+						curCpu.getCores().get(selectIndex).getMemorys().add(memory);
+					}
 				}else {
 					newCore.getMemorys().add(memory);
 				}
@@ -926,7 +921,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				
 			}
 		});
-		
+
 		memoryAddrLabel = new Label(memoryContentCpt,SWT.NONE);
 		memoryAddrLabel.setText("地址: ");
 		addrField = new Text(memoryContentCpt,SWT.BORDER);
@@ -941,41 +936,65 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
 					
 					TreeItem[] items = memoryTree.getSelection();
-					String addr = addrField.getText().trim();//
-					int index = -1;//
-					if (items.length > 0) {
+					if(items.length>0) {
 						String selectMemory = items[0].getText().trim();
-						for (int i = 0; i < memorys.size(); i++) {
-							CoreMemory memory = memorys.get(i);
-							if(memory.getName()!=null) {
-								if (memory.getName().equals(selectMemory)) {							
-									memory.setStartAddr(addr);
-									index = i;
-									break;
-								}
-							}
-							
-						}
-						if(tempName != null) {
-							List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
-							System.out.println("_memorys.size()：  "+_memorys.size());
-							for (int i = 0; i < _memorys.size(); i++) {
-								CoreMemory memory = _memorys.get(i);
-								System.out.println("memory.getName()：  "+memory.getName());
-								if(memory.getName()!=null) {
-									if (memory.getName().equals(selectMemory)) {							
-										memory.setStartAddr(addr);
-										break;
+						String addr = addrField.getText().trim();
+						int index = -1;//
+						if (items.length > 0) {
+							if(!addr.equals("")) {
+								int curNum = -1;
+								Pattern pattern = Pattern.compile("^([1-9]\\d*|[0]{1,1})$");  //含0正整数
+	    	    		        boolean isInt =  pattern.matcher(addr).matches();
+			    				if(addr.startsWith("0x")) {
+			    					curNum = Integer.parseInt(addr.substring(2),16);
+			    				}else {
+			    					if(isInt) {
+			    						curNum = Integer.parseInt(addr);
+			    					}
+			    				}             					
+		        				if(curNum<0) {
+		        					addrField.setText("");
+		        					MessageDialog.openInformation(window.getShell(), "提示",
+		        							"请输入正整数(包含0)");
+		        				}else {
+		        					for (int i = 0; i < memorys.size(); i++) {
+										CoreMemory memory = memorys.get(i);
+										if(memory.getName()!=null) {
+											if (memory.getName().equals(selectMemory)) {							
+												memory.setStartAddr(addr);
+												index = i;
+												break;
+											}
+										}
+										
 									}
-								}
-								
+									if(tempName != null) {
+										List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();//获取当前内核所有内存
+										System.out.println("_memorys.size()：  "+_memorys.size());
+										for (int i = 0; i < _memorys.size(); i++) {
+											CoreMemory memory = _memorys.get(i);
+											System.out.println("memory.getName()：  "+memory.getName());
+											if(memory.getName()!=null) {
+												if (memory.getName().equals(selectMemory)) {							
+													memory.setStartAddr(addr);
+													break;
+												}
+											}
+											
+										}
+									}
+		        				}
+
+							}else {
+//								MessageDialog.openInformation(window.getShell(), "提示",
+//										"地址不能为空");
 							}
 						}
-					
+						if(index != -1) {
+							curCpu.getCores().get(selectIndex).getMemorys().get(index).setStartAddr(addr);
+						}
 					}
-					if(index != -1) {
-						curCpu.getCores().get(selectIndex).getMemorys().get(index).setStartAddr(addr);
-					}
+				
 				}			
 			}
 		});
@@ -984,7 +1003,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		memorySizeLabel.setText("大小: ");
 		sizeField = new Text(memoryContentCpt,SWT.BORDER);
 		sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		setMemoryCpt(false);
+		setMemoryCpt(true);
 		sizeField.addModifyListener(new ModifyListener() {
 
 			@Override
@@ -999,28 +1018,21 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					String size = sizeField.getText().trim().replace("k", "");
 					if (items.length > 0) {
 						String selectMemory = items[0].getText().trim();
-						IWorkbenchWindow window = PlatformUI.getWorkbench()
-    							.getActiveWorkbenchWindow();
 						if (!size.equals("")) {
 							int curNum = -1;         
-							Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+							Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$");  //^[-\\+]?[\\d]*$
     	    		        boolean isInt =  pattern.matcher(size).matches();
 		    				if(size.startsWith("0x")) {
 		    					curNum = Integer.parseInt(size.substring(2),16);
 		    				}else {
 		    					if(isInt) {
 		    						curNum = Integer.parseInt(size);
-		    					}else {
-		    						sizeField.setText("");
-		    						MessageDialog.openError(window.getShell(), "提示",
-		        							"请输入正整数");
 		    					}
-		    					
 		    				}             					
-	        				if(curNum<0) {
+	        				if(curNum<=0) {
 	        					sizeField.setText("");
-	        					MessageDialog.openError(window.getShell(), "提示",
-	        							"请输入正整数");
+	        					MessageDialog.openInformation(window.getShell(), "提示",
+	        							"请输入正整数(不包含0)");
 	        				}else {
 	        					for (int i = 0; i < memorys.size(); i++) {
 									CoreMemory memory = memorys.get(i);
@@ -1049,6 +1061,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	        				
 	        				}
 							
+						}else {
+//							MessageDialog.openInformation(window.getShell(), "提示",
+//									"大小不能为空");
 						}
 					}
 					if(index != -1) {
@@ -1099,8 +1114,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				deleteBtn.setEnabled(true);
-//				memoryTypeLabel.setEnabled(true);
-//				memoryTypeCombo.setEnabled(true);
 				setMemoryCpt(true);
 				TreeItem[] items = memoryTree.getSelection();
 				int selectIndex = numCombo.getSelectionIndex();
@@ -1194,10 +1207,25 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					String memoryName = memorys.get(i).getName();
 					TreeItem t = new TreeItem(memoryTree, SWT.NONE);
 					t.setText(memoryName);
+					if(i==0) {
+						memoryTree.setSelection(t);
+					}
 				}
-				memoryTypeCombo.deselectAll();
-				addrField.setText("");
-				sizeField.setText("");
+				
+				if(memorys.get(0).getType() != null) {
+					if(memorys.get(0).getType().equals("RAM")) {
+						memoryTypeCombo.select(1);
+					}else {
+						memoryTypeCombo.select(0);
+					}
+				}
+				if (memorys.get(0).getStartAddr() != null) {
+					addrField.setText(memorys.get(0).getStartAddr());
+				}
+				if (memorys.get(0).getSize() != null) {
+					sizeField.setText(memorys.get(0).getSize());
+				}
+
 			}		
 		}
 		
@@ -1450,7 +1478,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				}
 				archCombo.setEnabled(true);
 			}else {
-				typeCombo.setEnabled(false);
 				archCombo.setEnabled(false);
 			}
 			
@@ -1653,69 +1680,81 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	private boolean handleGroupOK() {
 		groupName = groupNameField.getText();
 		String completeName = "";
-		if(groupName.trim().equals("")) {
-			IWorkbenchWindow window = PlatformUI.getWorkbench()
-					.getActiveWorkbenchWindow();
-			MessageDialog.openError(window.getShell(), "提示",
-					"请填写子目录名称");
+		if (groupName.trim().equals("")) {
+			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+			MessageDialog.openError(window.getShell(), "提示", "请填写子目录名称");
 			return false;
-		}else {
-			
-			File newGroupFile = null,oldGroupFile = null;
+		} else {
+			boolean isOk = true;
+			File curFile = new File(curPath);
+			if (curFile != null) {
+				File[] files = curFile.listFiles();
+				for (File f : files) {
+					if (f.getName().equals(groupName)) {
+						isOk = false;
+						break;
+					}
+				}
+			}
+			File newGroupFile = null, oldGroupFile = null;
 			File xmlFile = null;
 			List<String> names = new ArrayList<String>();
-			if(tempName == null) {//新建子目录或者cpu
-				curPath = curPath+"/"+groupName;
-				newGroupFile = new File(curPath); 
-				if(!newGroupFile.exists()) {
-					newGroupFile.mkdir();
-				}
-				getGroupNames(newGroupFile,names);
-				for(int i=names.size()-1;i>=0;i--) {
-					completeName+=names.get(i);
-				}
-				xmlFile = new File(newGroupFile.getPath()+"/cpu_group_"+completeName+".xml");
-				if(xmlFile.exists()) {
-					xmlFile.delete();
-				}
-				try {
-					xmlFile.createNewFile();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (newCpu.getCores().size() != 0) {
-					createNewGroupXml(newCpu, xmlFile);
+			if (tempName == null) {// 新建子目录或者cpu
+				if (isOk) {
+					curPath = curPath + "/" + groupName;
+					newGroupFile = new File(curPath);
+					if (!newGroupFile.exists()) {
+						newGroupFile.mkdir();
+					}
+					getGroupNames(newGroupFile, names);
+					for (int i = names.size() - 1; i >= 0; i--) {
+						completeName += names.get(i);
+					}
+					xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + completeName + ".xml");
+					if (xmlFile.exists()) {
+						xmlFile.delete();
+					}
+					try {
+						xmlFile.createNewFile();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					if (newCpu.getCores().size() != 0) {
+						createNewGroupXml(newCpu, xmlFile);
+					} else {
+						createPublicXml(newCore, xmlFile);
+					}
 				} else {
-					createPublicXml(newCore, xmlFile);
+					MessageDialog.openInformation(window.getShell(), "提示", "该子目录名称已存在！");
 				}
-			}else {//修改配置信息
+
+			} else {// 修改配置信息
 				oldGroupFile = new File(curPath);
-				newGroupFile = new File(
-						curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + groupName);
-				//改名前
-				getGroupNames(oldGroupFile,names);
-//				DeleteFolder(oldGroupFile.getPath());
-//				if(!newGroupFile.exists()) {
-//					newGroupFile.mkdir();
-//				}
-				for(int i=names.size()-1;i>=0;i--) {
-					completeName+=names.get(i);
+				newGroupFile = new File(curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + groupName);
+				// 改名前
+				getGroupNames(oldGroupFile, names);
+				// DeleteFolder(oldGroupFile.getPath());
+				// if(!newGroupFile.exists()) {
+				// newGroupFile.mkdir();
+				// }
+				for (int i = names.size() - 1; i >= 0; i--) {
+					completeName += names.get(i);
 				}
-				xmlFile = new File(oldGroupFile.getPath()+"/cpu_group_"+completeName+".xml");
-				if(xmlFile.exists()) {
+				xmlFile = new File(oldGroupFile.getPath() + "/cpu_group_" + completeName + ".xml");
+				if (xmlFile.exists()) {
 					xmlFile.delete();
 				}
-				
+
 				oldGroupFile.renameTo(newGroupFile);
 				names = new ArrayList<String>();
 				completeName = "";
-				getGroupNames(newGroupFile,names);
-				for(int i=names.size()-1;i>=0;i--) {
-					completeName+=names.get(i);
+				getGroupNames(newGroupFile, names);
+				for (int i = names.size() - 1; i >= 0; i--) {
+					completeName += names.get(i);
 				}
-				xmlFile = new File(newGroupFile.getPath()+"/cpu_group_"+completeName+".xml");
-				if(xmlFile.exists()) {
+				xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + completeName + ".xml");
+				if (xmlFile.exists()) {
 					xmlFile.delete();
 				}
 				try {
@@ -1730,9 +1769,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					createPublicXml(newCore, xmlFile);
 				}
 			}
-
-			return true;
-		}		
+		}
+		return true;
 	}
 	
 	private boolean handleCpuOK() {
@@ -1745,26 +1783,44 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					"请填写Cpu名称");
 			return false;
 		}else {
+			boolean isOk = true;
+			File curFile = new File(curPath);
+			if(curFile!=null) {
+				File[] files = curFile.listFiles();
+				for(File f:files) {
+					if(f.getName().equals(groupName)) {
+						isOk = false;
+						break;
+					}
+				}
+			}
+			
 			File newCpuFile,oldCpuFile;
 			File xmlFile;
 			if(tempName == null) {//新建子目录或者cpu
-				curPath = curPath+"/"+cpuName;
-				newCpuFile = new File(curPath); 
-				if(! newCpuFile.exists()) {
-					newCpuFile.mkdir();
-				}
+				if(isOk) {
+					curPath = curPath+"/"+cpuName;
+					newCpuFile = new File(curPath); 
+					if(! newCpuFile.exists()) {
+						newCpuFile.mkdir();
+					}
 
-				xmlFile = new File(newCpuFile.getPath()+"/cpu_"+cpuName+".xml");
-				if(xmlFile.exists()) {
-					xmlFile.delete();
+					xmlFile = new File(newCpuFile.getPath()+"/cpu_"+cpuName+".xml");
+					if(xmlFile.exists()) {
+						xmlFile.delete();
+					}
+					try {
+						xmlFile.createNewFile();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					createNewCpuXml(newCpu,xmlFile,cpuName);
+				}else {
+					MessageDialog.openInformation(window.getShell(), "提示",
+							"该子Cpu名称已存在！");
 				}
-				try {
-					xmlFile.createNewFile();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				createNewCpuXml(newCpu,xmlFile,cpuName);
+				
 			}else {//修改配置信息
 				oldCpuFile = new File(curPath);
 				newCpuFile = new File(
@@ -1792,25 +1848,46 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	@Override
 	protected void okPressed() {
 		// TODO Auto-generated method stub
-		if(cpuTag.equals("group")) {
-			if(handleGroupOK()) {
-				super.okPressed();
-			}
-		}else if(cpuTag.equals("cpu")) {
-			if(handleCpuOK()) {
-				super.okPressed();
-			}
-		} else if(cpuTag.startsWith("revise")) {
-			if(cpuTag.endsWith("cpu")) {
-				if(handleCpuOK()) {
-					super.okPressed();
+		boolean isOK = true;
+		List<Core> cores = newCpu.getCores();
+		for(Core core:cores) {
+			List<CoreMemory> memorys = core.getMemorys();
+			for(CoreMemory memory:memorys) {
+				if(memory.getType() == null || memory.getStartAddr() == null || memory.getSize() == null) {
+					isOK = false;
+					break;
 				}
-			}else if(cpuTag.endsWith("group")) {
+			}
+			if(!isOK) {
+				break;
+			}
+		}
+		
+		if(isOK) {
+			if(cpuTag.equals("group")) {
 				if(handleGroupOK()) {
 					super.okPressed();
 				}
+			}else if(cpuTag.equals("cpu")) {
+				if(handleCpuOK()) {
+					super.okPressed();
+				}
+			} else if(cpuTag.startsWith("revise")) {
+				if(cpuTag.endsWith("cpu")) {
+					if(handleCpuOK()) {
+						super.okPressed();
+					}
+				}else if(cpuTag.endsWith("group")) {
+					if(handleGroupOK()) {
+						super.okPressed();
+					}
+				}
 			}
+		}else {
+			MessageDialog.openInformation(window.getShell(), "提示",
+					"请填写完整存储配置！");
 		}
+		
 	}
 	
 	private void createNewGroupXml(Cpu cpu,File file) {

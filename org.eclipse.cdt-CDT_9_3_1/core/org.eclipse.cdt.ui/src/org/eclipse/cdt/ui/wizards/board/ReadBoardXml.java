@@ -58,10 +58,10 @@ public class ReadBoardXml {
 						cpuOn.setCpuName(content);
 						break;
 					case "mianClk":
-						cpuOn.setMianClk(Integer.parseInt(content));
+						cpuOn.setMianClk(Float.parseFloat(content));
 						break;
 					case "rtcClk":
-						cpuOn.setRtcClk(Integer.parseInt(content));
+						cpuOn.setRtcClk(Float.parseFloat(content));
 						break;
 					case "chip":
 						NodeList chipList = cNode.getChildNodes();

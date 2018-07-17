@@ -156,6 +156,22 @@ public class DjyosMainWizardPage extends WizardPage {
 		setPageComplete(valid);
 	};
 	
+	private  Listener ibootSizeModifyListener = e -> {
+		String bootSize = fIbootSize.getTextControl(ibootComposite).getText();
+		Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
+        boolean isInt =  pattern.matcher(bootSize).matches();
+        if(!isInt) {
+        	fIbootSize.getTextControl(ibootComposite).setText("");
+        	IWorkbenchWindow window = PlatformUI.getWorkbench()
+    				.getActiveWorkbenchWindow();
+        	MessageDialog.openError(window.getShell(), promoteTitle,
+        			promoteDesc_Int_Data);
+        }else {
+        	boolean valid = validatePageBefore();
+    		setPageComplete(valid);
+        }
+	};
+	
 	void setLocationForSelection() {
 		locationArea.updateProjectName(getProjectNameFieldValue());
 	}
@@ -177,14 +193,12 @@ public class DjyosMainWizardPage extends WizardPage {
 	public DjyosMainWizardPage(String pageName) {
 		super(pageName);
 		setPageComplete(false);
-	
 	}
 
 	@SuppressWarnings("restriction")
 	@Override
 	public void createControl(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NULL);
-//		initializeDialogUnits(parent);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 		GridLayout layout = new GridLayout();
 		layout.marginHeight = 25;
@@ -196,7 +210,6 @@ public class DjyosMainWizardPage extends WizardPage {
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
-//		Dialog.applyDialogFont(composite);
 	}
 
 	private void createDynamicGroup(Composite composite) {
@@ -273,9 +286,6 @@ public class DjyosMainWizardPage extends WizardPage {
 		
 	}
 	
-	/*
-	 * Returns the action for the given wizard id, or null if not found.
-	 */
 	private IAction getAction(String id) {
 		// Keep a cache, rather than creating a new action each time,
 		// so that image caching in ActionContributionItem works.
@@ -292,7 +302,6 @@ public class DjyosMainWizardPage extends WizardPage {
 		}
 		return action;
 	}
-	
 		
 	private void copyHoldsOptions(IHoldsOptions src, IHoldsOptions dst, IResourceInfo res){
 		if(src instanceof ITool) {
@@ -462,7 +471,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		return ldsDesc;
 	}
 	
-	public static void creatTemplateUI(Composite parent) {
+	public void creatTemplateUI(Composite parent) {
 		Group group1 = ControlFactory.createGroup(parent, "Choose Template ", 1);
 		GridLayout gl = new GridLayout(2, false);
 		gl.marginHeight = 10;
@@ -489,6 +498,9 @@ public class DjyosMainWizardPage extends WizardPage {
 					projectTypeDesc.setText(templateDescs[a]);
 					if(a==radioBtns.length-1) {
 						fIbootSize.getTextControl(ibootComposite).setEnabled(false);
+						fIbootSize.getTextControl(ibootComposite).setText("");
+						boolean valid = validatePageBefore();
+			    		setPageComplete(valid);
 					}else {
 						fIbootSize.getTextControl(ibootComposite).setEnabled(true);
 					}
@@ -523,23 +535,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		fIbootSize.setValidRange(1, 10000);
 		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
 		ControlFactory.createLabel(group1, "K");
-		fIbootSize.getTextControl(ibootComposite).addModifyListener(new ModifyListener() {
-			
-			@Override
-			public void modifyText(ModifyEvent e) {
-				// TODO Auto-generated method stub
-				String bootSize = fIbootSize.getTextControl(ibootComposite).getText();
-				Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
-		        boolean isInt =  pattern.matcher(bootSize).matches();
-		        if(!isInt) {
-		        	fIbootSize.getTextControl(ibootComposite).setText("");
-		        	IWorkbenchWindow window = PlatformUI.getWorkbench()
-		    				.getActiveWorkbenchWindow();
-		        	MessageDialog.openError(window.getShell(), promoteTitle,
-		        			promoteDesc_Int_Data);
-		        }
-			}
-		});
+		fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify, ibootSizeModifyListener);
 
 	}
 
@@ -569,42 +565,14 @@ public class DjyosMainWizardPage extends WizardPage {
 			nmWizard.cpomtCfgPage.setDescription("工程裁剪与配置");
 			nmWizard.addPage(nmWizard.cpomtCfgPage);
 			nmWizard.addedComptCfg = true;
-//			if(haveApp()) {
-//				nmWizard.appCfgPage = new AppCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-////				nmWizard.appCfgPage.setTitle(DjyosMessages.App_Wizard_Title);
-////				nmWizard.appCfgPage.setDescription(DjyosMessages.App_Wizard_Desc);
-//				IWorkbenchWindow window = PlatformUI.getWorkbench()
-//	    				.getActiveWorkbenchWindow();
-//				nmWizard.appCfgPage.setTitle("App裁剪");
-//				nmWizard.appCfgPage.setDescription("裁剪、配置App的组件");
-//				nmWizard.addPage(nmWizard.appCfgPage);
-//				nmWizard.addedAppCfg = true;
-//			}else if(haveIboot()) {
-//				nmWizard.ibootCfgPage = new IbootCompntConfigWizard("basicModuleCfgPage",onBoardCpu,selectedBoard);
-////				nmWizard.ibootCfgPage.setTitle(DjyosMessages.Iboot_Wizard_Title);
-////				nmWizard.ibootCfgPage.setDescription(DjyosMessages.Iboot_Wizard_Desc);
-//				nmWizard.ibootCfgPage.setTitle("Iboot裁剪");
-//				nmWizard.ibootCfgPage.setDescription("裁剪、配置Iboot的组件");
-//				nmWizard.addPage(nmWizard.ibootCfgPage);
-//				nmWizard.addedIbootCfg = true;
-//			}
-			
 		} else {
 			if (clickedNext) {
 				nmWizard.importProject(projectPath);
-
+				nmWizard.clickedMianNext = true;
 			}
 		}
 		clickedNext = true;		
 		return super.getNextPage();
-	}
-
-	public URI getProjectLocation() {
-		return useDefaults() ? null : getLocationURI();
-	}
-	
-	public URI getLocationURI() {
-		return locationArea.getProjectLocationURI();
 	}
 
 	public String getProjectName() {
@@ -668,8 +636,15 @@ public class DjyosMainWizardPage extends WizardPage {
 	@SuppressWarnings("restriction")
 	protected boolean validatePageBefore() {
 		IWorkspace workspace = IDEWorkbenchPlugin.getPluginWorkspace();
-
 		String projectFieldContents = getProjectNameFieldValue();
+		
+		String ibootSize = fIbootSize.getTextControl(ibootComposite).getText();
+		if(getTemplateIndex() != 3) {
+			if(ibootSize.equals("")) {
+				return false;
+			}
+		}
+		
 		if (projectFieldContents.equals("")) { //$NON-NLS-1$
 			setErrorMessage(null);
 			setMessage("请填写工程名 !");
@@ -713,71 +688,6 @@ public class DjyosMainWizardPage extends WizardPage {
 		setErrorMessage(null);
 		setMessage(null);
 		return true;
-	}
-
-	protected boolean validatePage() {
-		setMessage(null);
-		if (validatePageBefore())
-			return false;
-
-		if (getProjectName().indexOf('#') >= 0) {
-			setErrorMessage(Messages.CDTMainWizardPage_0);
-			return false;
-		}
-
-		boolean bad = true; // should we treat existing project as error
-
-		if (bad) { // Skip this check if project already created
-			try {
-				IFileStore fs;
-				URI p = getProjectLocation();
-				if (p == null) {
-					fs = EFS.getStore(ResourcesPlugin.getWorkspace().getRoot().getLocationURI());
-					fs = fs.getChild(getProjectName());
-				} else
-					fs = EFS.getStore(p);
-				IFileInfo f = fs.fetchInfo();
-				if (f.exists()) {
-					if (f.isDirectory()) {
-						if (f.getAttribute(EFS.ATTRIBUTE_READ_ONLY)) {
-							setErrorMessage(Messages.CMainWizardPage_DirReadOnlyError);
-							return false;
-						}
-						else
-							setMessage(Messages.CMainWizardPage_7, IMessageProvider.WARNING);
-					} else {
-						setErrorMessage(Messages.CMainWizardPage_6);
-						return false;
-					}
-				}
-			} catch (CoreException e) {
-				CUIPlugin.log(e.getStatus());
-			}
-		}
-
-		if (tree.getItemCount() == 0) {
-			setErrorMessage(Messages.CMainWizardPage_3);
-			return false;
-		}
-
-		// it is not an error, but we cannot continue
-		if (h_selected == null) {
-			setErrorMessage(null);
-			return false;
-		}
-
-		String s = h_selected.getErrorMessage();
-		if (s != null) {
-			setErrorMessage(s);
-			return false;
-		}
-
-		setErrorMessage(null);
-		return true;
-	}
-	
-    public boolean useDefaults() {
-		return locationArea.isDefault();
 	}
     
     private String Lds_Head_Promopt = "\n/*由于MEMORY命令不能使用符号，这些常量的定义，必须与MEMORY命令处一致 */ \n\n" + "MEMORY\n"+ "{";

@@ -6,22 +6,23 @@ import java.util.List;
 import org.eclipse.cdt.ui.wizards.component.Component;
 
 public class OnBoardCpu {
-	private int mianClk;
-	private int rtcClk;
+	private float mianClk;
+	private float rtcClk;
 	private String cpuName;
 	private List<Component> peripherals = new ArrayList<Component>();
 	private List<Chip> chips = new ArrayList<Chip>();
 	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
-	public int getMianClk() {
+	
+	public float getMianClk() {
 		return mianClk;
 	}
-	public void setMianClk(int mianClk) {
+	public void setMianClk(float mianClk) {
 		this.mianClk = mianClk;
 	}
-	public int getRtcClk() {
+	public float getRtcClk() {
 		return rtcClk;
 	}
-	public void setRtcClk(int rtcClk) {
+	public void setRtcClk(float rtcClk) {
 		this.rtcClk = rtcClk;
 	}
 	public String getCpuName() {

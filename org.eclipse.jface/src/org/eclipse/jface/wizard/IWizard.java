@@ -242,4 +242,6 @@ public interface IWizard {
     public void setContainer(IWizardContainer wizardContainer);
 
 	boolean isCancelAvailable();
+	
+	boolean isPageDragable();
 }

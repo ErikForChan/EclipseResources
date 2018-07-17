@@ -94,6 +94,8 @@ public abstract class Wizard implements IWizard, IShellProvider {
     private boolean isHelpAvailable = false;
     
     private boolean isCancelAvailable = true;
+    
+    private boolean isPageDragable = true;
 
     /**
      * The default page image for pages without one of their one;
@@ -311,8 +313,14 @@ public abstract class Wizard implements IWizard, IShellProvider {
 	public boolean isCancelAvailable() {
 		return isCancelAvailable;
 	}
-    
+	
     @Override
+	public boolean isPageDragable() {
+		// TODO Auto-generated method stub
+		return isPageDragable;
+	}
+
+	@Override
 	public boolean needsPreviousAndNextButtons() {
         return forcePreviousAndNextButtons || pages.size() > 1;
     }
@@ -418,6 +426,10 @@ public abstract class Wizard implements IWizard, IShellProvider {
     
     public void setCancelAvailable(boolean b) {
         isCancelAvailable = b;
+    }
+    
+    public void setPageDragable(boolean b) {
+    	isPageDragable = b;
     }
 
     /**

@@ -16,11 +16,12 @@ import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 
 public class ReadComponent {
-	String fullPath = Platform.getInstallLocation().getURL().toString();
-	String eclipsePath = fullPath.substring(6,
+	private String fullPath = Platform.getInstallLocation().getURL().toString();
+	private String eclipsePath = fullPath.substring(6,
 			(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
-	List<Component> components = new ArrayList<Component>();
-	List<String> componentPaths = new ArrayList<String>();
+	private List<Component> components = new ArrayList<Component>();
+	private List<String> componentPaths = new ArrayList<String>();
+	private String deapPath = null;
 
 	private String getCpuSrcPath(String cpuName) {
 		String sourcePath = eclipsePath + "djysrc/bsp/cpudrv";
@@ -40,8 +41,6 @@ public class ReadComponent {
 		return path;
 	}
 
-	private String deapPath = null;
-
 	public String getDeapPath(File sourceFile, String cpuName) {
 		File[] files = sourceFile.listFiles();
 		String path = null;
@@ -60,78 +59,95 @@ public class ReadComponent {
 
 	// 遍历组件及其子组件
 	private void traverFiles(File file) {
+		//if(!file.getPath().contains("third"))
 		if(!file.getName().equals("include")) {
-//			System.out.println("file.getName():    "+file.getName());
-			File[] allFiles = file.listFiles();
-			boolean hExist = false;
-			Arrays.sort(allFiles, new Comparator<File>() {
-				public int compare(File f1, File f2) {
-					boolean isDiectory = f1.isDirectory();
-					if (isDiectory)
-						return 1;//文件夹放后面
-					else
-						return -1;//文件优先放前面
-				}
+			File[] files = file.listFiles();
+			List<File> allFiles = new ArrayList<File>();
+			List<File> pureFiles = new ArrayList<File>();
+			List<File> folderFiles = new ArrayList<File>();
 
-				public boolean equals(Object obj) {
-					return true;
+			for (File f : files) {
+				if(f.isDirectory()) {
+					folderFiles.add(f);
+				}else if(f.isFile() && (f.getName().endsWith(".c") || f.getName().endsWith(".h"))) {
+					pureFiles.add(f);
 				}
-			});
+			}
+			
+			allFiles.addAll(pureFiles);
+			allFiles.addAll(folderFiles);
+			
+			boolean hExist = false;
 			
 			for (File f : allFiles) {
 				if (f.getName().endsWith(".h") && f.getName().contains("component_config")) {
 					hExist = true;
+					try {
+						getComponent(f);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					break;
 				}
 			}
-			
-			for (File f : allFiles) {
-				if (f.isFile()) {
-					if (hExist && f.getName().endsWith(".h") && f.getName().contains("component_config")) {
-						try {
-							getComponent(f);
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					} else {
-						if(f.getName().endsWith(".c")) {
-							try {
-								getComponent(f);
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+
+			if (!hExist) {
+				if (!file.getPath().contains("third")) {
+					for (File f : allFiles) {
+						if (f.isFile()) {
+							if (f.getName().endsWith(".c")) {
+								try {
+									getComponent(f);
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 							}
+						} else if (f.isDirectory()) {
+							traverFiles(f);
 						}
 					}
-
-				} else if (f.isDirectory()) {
-					traverFiles(f);
+				}else {
+					for (File f : allFiles) {
+						if (f.isDirectory()) {
+							traverFiles(f);
+						}
+					}
 				}
 			}
+		
 		}	
 	}
 
 	public List<Component> getComponents(OnBoardCpu onBoardCpu,Board board) {
 		String componentPath = eclipsePath+"djysrc/component";
 		String djyosPath = eclipsePath+"djysrc/djyos";
+		String thirdPath = eclipsePath+"djysrc/third";
 		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
+		String userPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+board.getBoardName();
 		componentPaths.add(componentPath);
 		componentPaths.add(djyosPath);
 		componentPaths.add(demoPath);
-		for(int i=0;i<componentPaths.size();i++) {
+		componentPaths.add(userPath);
+		componentPaths.add(thirdPath);
+		for (int i = 0; i < componentPaths.size(); i++) {
 			File sourceFile = new File(componentPaths.get(i));
-			File[] files = sourceFile.listFiles();
-			for(File file:files) {				
-				if(file.isDirectory()) {
-					traverFiles(file);
-				}else {
-					if(file.getName().endsWith(".c")) {
-						try {
-							getComponent(file);
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+			if (sourceFile.exists()) {
+				File[] files = sourceFile.listFiles();
+				for (File file : files) {
+					if (file.isDirectory()) {
+						traverFiles(file);
+					} else {
+						if (!file.getPath().contains("third")) {
+							if (file.getName().endsWith(".c")) {
+								try {
+									getComponent(file);
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
 						}
 					}
 				}
@@ -149,21 +165,29 @@ public class ReadComponent {
 		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
 		if(chips.size()>0) {
 			File chipFile = new File(chipPath);
-			File[] chipfiles = chipFile.listFiles();
-			for (File file : chipfiles) {
-				if (file.isDirectory() && chipNames.contains(file.getName())) {
-					traverFiles(file);
+			
+			if(chipFile.exists()) {
+				File[] chipfiles = chipFile.listFiles();
+				for (File file : chipfiles) {
+					if (file.isDirectory() && chipNames.contains(file.getName())) {
+						traverFiles(file);
+					}
 				}
 			}
+			
 		}
 		if(cpuSrcPath!= null) {
 			File cpuFile = new File(cpuSrcPath);
-			File[] cpufiles = cpuFile.listFiles();
-			for (File file : cpufiles) {
-				if (file.isDirectory()) {
-					traverFiles(file);
+			
+			if(cpuFile.exists()) {
+				File[] cpufiles = cpuFile.listFiles();
+				for (File file : cpufiles) {
+					if (file.isDirectory()) {
+						traverFiles(file);
+					}
 				}
 			}
+			
 		}
 	
 		return components;
@@ -204,7 +228,10 @@ public class ReadComponent {
 		List<String> describeStrings = new ArrayList<String>();
 		List<String> configueStrings = new ArrayList<String>();
 		List<String> excludeStrings = new ArrayList<String>();
-		int iStart = 0,iStop = 0,dStart = 0,dStop = 0,cStart = 0,cStop = 0,eStart = 0,eStop = 0;
+		List<String> includeStrings = new ArrayList<String>();
+		int iStart = 0,iStop = 0,dStart = 0,dStop = 0,
+				cStart = 0,cStop = 0,eStart = 0,eStop = 0,
+				nStart = 0,nStop = 0;
 		reader = new FileReader(file.getPath());
 		BufferedReader br = new BufferedReader(reader);
 		String str = null;
@@ -240,6 +267,10 @@ public class ReadComponent {
 					eStart = i;
 				}else if(allStrings.get(i).contains("%$#@end exclude")){
 					eStop = i;
+				}else if(allStrings.get(i).contains("%$#@include path")){
+					nStart = i;
+				}else if(allStrings.get(i).contains("%$#@end include path")){
+					nStop = i;
 				}
 			}
 			
@@ -258,10 +289,18 @@ public class ReadComponent {
 				String configue = allStrings.get(i).trim();
 				configueStrings.add(allStrings.get(i));	
 			}
-			for(int i=eStart+1;i<eStop;i++) {
-				excludeStrings.add(allStrings.get(i).replaceAll("//../", ""));
+			for(int i=eStart+1;i<eStop;i++) {// /123
+				String[] curExcludes = allStrings.get(i).replaceFirst("//", "").split(";");
+				for(String exclude:curExcludes) {
+					excludeStrings.add(exclude.replace("..", "").replace("\\", "/"));
+				}
 			}
-			
+			for(int i=nStart+1;i<nStop;i++) {
+				String[] curIncludes = allStrings.get(i).replaceFirst("//", "").split(";");
+				for(String include:curIncludes) {
+					includeStrings.add(include.replace("..", "").replace("\\", "/"));
+				}
+			}
 			newComponent.setCode(listToString(initcodeStrings));
 			newComponent.setConfigure(listToString(configueStrings));
 			boolean reach = false;
@@ -321,6 +360,9 @@ public class ReadComponent {
 			
 			for (String exclude : excludeStrings) {
 				newComponent.getExcludes().add(exclude);
+			}
+			for (String include : includeStrings) {
+				newComponent.getIncludes().add(include);
 			}
 
 			components.add(newComponent);

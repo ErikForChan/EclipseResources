@@ -169,8 +169,8 @@ public class GetBoardDialog extends StatusDialog {
 								+ memory.getSize();
 					}
 				}
-				coreDesc += "\tArch: " + arch + "\n\tFamily: " + family + "\n\tFputype: " + fpuType
-						+ "\n\tResetAddr: " + resetAddr + "\n\tMemory:  " + memoryString + "\n";	
+				coreDesc += "\t架构: " + arch + "\n\t家族: " + family + "\n\t浮点: " + fpuType
+						+ "\n\t复位地址: " + resetAddr + "\n\t内存:  " + memoryString + "\n";	
 			}
 
 

@@ -11,7 +11,7 @@ public class Component {
 	private String code;
 	private String configure;
 	private String linkFolder;
-	private String fileName;
+	private String fileName;//描述文件.c/.h文件名
 	private String selectable;
 	private String parent;
 	private boolean isSelect = false;
@@ -19,8 +19,17 @@ public class Component {
 	private List<String> weakDependents = new ArrayList<String>();
 	private List<String> mutexs = new ArrayList<String>();
 	private List<String> excludes = new ArrayList<String>();
+	private List<String> includes = new ArrayList<String>();
 	private InitInfo init;
-	private String parentPath;
+	private String parentPath;//.h/.c父目录
+
+	public List<String> getIncludes() {
+		return includes;
+	}
+
+	public void setIncludes(List<String> includes) {
+		this.includes = includes;
+	}
 
 	public String getParentPath() {
 		return parentPath;

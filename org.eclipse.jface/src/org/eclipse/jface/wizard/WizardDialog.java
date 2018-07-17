@@ -306,8 +306,8 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 	 */
 	public WizardDialog(Shell parentShell, IWizard newWizard) {
 		super(parentShell);
-		setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
-				| SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
+//		setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
+//				| SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());//修改前的设置
 		setWizard(newWizard);
 		// since VAJava can't initialize an instance var with an anonymous
 		// class outside a constructor we do it here:
@@ -492,7 +492,7 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 	 */
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
-		((GridLayout) parent.getLayout()).makeColumnsEqualWidth = false;
+		((GridLayout) parent.getLayout()).makeColumnsEqualWidth = false;		
 		if (wizard.isHelpAvailable()) {
 			helpButton = createButton(parent, IDialogConstants.HELP_ID, IDialogConstants.HELP_LABEL, false);
 		}
@@ -503,11 +503,17 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 		if(wizard.isCancelAvailable()) {
 			cancelButton = createCancelButton(parent);
 		}
-		
 		if (parent.getDisplay().getDismissalAlignment() == SWT.RIGHT) {
             // Make the default button the right-most button.
             // See also special code in org.eclipse.jface.dialogs.Dialog#initializeBounds()
 			finishButton.moveBelow(null);
+		}
+		if(wizard.isPageDragable()) {
+			setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
+					| SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
+		}else {
+			setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
+					| SWT.APPLICATION_MODAL | getDefaultOrientation());
 		}
 	}
 
