@@ -115,6 +115,14 @@ public class ReadComponent {
 						}
 					}
 				}
+			}else {
+				if (!file.getPath().contains("third")) {
+					for (File f : allFiles) {
+						if (f.isDirectory()) {
+							traverFiles(f);
+						}
+					}
+				}
 			}
 		
 		}	
@@ -122,6 +130,7 @@ public class ReadComponent {
 
 	public List<Component> getComponents(OnBoardCpu onBoardCpu,Board board) {
 		String componentPath = eclipsePath+"djysrc/component";
+		String libcPath = eclipsePath+"djysrc/libc";
 		String djyosPath = eclipsePath+"djysrc/djyos";
 		String thirdPath = eclipsePath+"djysrc/third";
 		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
@@ -153,6 +162,8 @@ public class ReadComponent {
 				}
 			}
 		}
+		
+		traverFiles(new File(libcPath));
 		
 		// °åÔØcpuµÄÐ¾Æ¬¡¢cpuµÄsrcÄ¿Â¼
 		List<Chip> chips = onBoardCpu.getChips();
@@ -219,6 +230,8 @@ public class ReadComponent {
 			newComponent.setLinkFolder("djyos");
 		}else if(file.getPath().contains("boarddrv")){
 			newComponent.setLinkFolder("boarddrv");
+		}else if(file.getPath().contains("libc")){
+			newComponent.setLinkFolder("libc");
 		}
 		newComponent.setFileName(file.getName());
 		newComponent.setParentPath(file.getParentFile().getPath());
@@ -249,6 +262,7 @@ public class ReadComponent {
 			}
 		}
 
+		String targetLine = null;
 		if(allStrings.size() != 0) {
 			for(int i=0;i<allStrings.size();i++) {
 				if(allStrings.get(i).contains("%$#@initcode")) {
@@ -271,8 +285,15 @@ public class ReadComponent {
 					nStart = i;
 				}else if(allStrings.get(i).contains("%$#@end include path")){
 					nStop = i;
+				}else if(allStrings.get(i).contains("%$#@target")){
+					targetLine = allStrings.get(i);
 				}
 			}
+			
+			String[] tInfos = targetLine.split("=");
+			String[] rights = tInfos[1].split("//");
+			String targetString = rights[0].trim();
+			newComponent.setTarget(targetString);			
 			
 //			System.out.println("infos:  " + iStart+"  "+iStop+"  "+dStart+"  "+dStop+"  "+cStart+"  "+cStop+"  "+eStart+"  "+eStop);
 			

@@ -22,6 +22,15 @@ public class Component {
 	private List<String> includes = new ArrayList<String>();
 	private InitInfo init;
 	private String parentPath;//.h/.c¸¸Ä¿Â¼
+	private String target;
+	
+	public String getTarget() {
+		return target;
+	}
+
+	public void setTarget(String target) {
+		this.target = target;
+	}
 
 	public List<String> getIncludes() {
 		return includes;

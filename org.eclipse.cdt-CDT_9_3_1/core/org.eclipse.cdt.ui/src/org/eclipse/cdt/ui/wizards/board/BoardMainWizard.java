@@ -111,7 +111,47 @@ public class BoardMainWizard extends WizardPage{
 	private IWorkbenchWindow window = PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow();
 	
+	private List<Board> getBoards(){
+		ReadBoardXml rbx = new ReadBoardXml();
+		List<String> paths = new ArrayList<String>();
+		List<Board> boards = new ArrayList<Board>();
+		String userBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\user";
+		String demoBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\demo";
+		paths.add(userBoardFilePath);
+		paths.add(demoBoardFilePath);
+
+		for(int i=0;i<paths.size();i++) {
+			File boardFile = new File(paths.get(i));
+			File[] files = boardFile.listFiles();
+			for(int j=0;j<files.length;j++){
+					File file = files[j];
+					File[] mfiles = file.listFiles();
+					for(int k=0;k<mfiles.length;k++) {
+						if(mfiles[k].getName().endsWith(".xml")) {
+							try {
+								Board board = rbx.getBoard(mfiles[k]);
+								boards.add(board);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							break;
+						}
+					}
+			}
+		}
+		
+		return boards;
+	}
+	
 	public String vaildPage() {
+		String curBoardName = boardNameField.getText().trim();
+		List<Board> boards = getBoards();
+		for(Board board:boards){
+			if(board.getBoardName().equals(curBoardName)) {
+				return "该板件已存在，请重填板件名称！";
+			}
+		}
 		for(OnBoardCpu onBoardCpu:onBoardCpus) {
 			String cpuName = onBoardCpu.getCpuName();
 			List<OnBoardMemory>  memorys = onBoardCpu.getMemorys();

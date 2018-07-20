@@ -1804,7 +1804,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					if(! newCpuFile.exists()) {
 						newCpuFile.mkdir();
 					}
-
+					System.out.println("cpuName£º "+cpuName);
 					xmlFile = new File(newCpuFile.getPath()+"/cpu_"+cpuName+".xml");
 					if(xmlFile.exists()) {
 						xmlFile.delete();

@@ -55,14 +55,19 @@ public class LinkProjectFile {
 			}else if(tag.equals("boarddrv")) {
 				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
 				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
-			}else if(tag.equals("startup")) {
-				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
-				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
-			}else if(tag.equals("arch")) {
+			}
+//			else if(tag.equals("startup")) {
+//				nameNode.setTextContent("src/libos/bsp/boarddrv/"+tag+"/"+objectName);
+//				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
+//			}
+			else if(tag.equals("arch")) {
 				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
 				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
 			}else if(tag.equals("firmware")) {
 				nameNode.setTextContent("src/libos/bsp/"+tag+"/"+objectName);
+				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
+			}else if(tag.equals("libc")) {
+				nameNode.setTextContent("src/libos/"+tag);
 				locationURINode.setTextContent("DJYOS_SRC_LOCATION/"+objectPath.replace("\\", "/"));
 			}
 			

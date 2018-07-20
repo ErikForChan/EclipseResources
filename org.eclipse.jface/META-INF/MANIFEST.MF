@@ -30,7 +30,7 @@ Export-Package: org.eclipse.jface,org.eclipse.jface.action,org.eclipse
  .eclipse.jface.viewers.deferred,org.eclipse.jface.window,org.eclipse.
  jface.wizard,org.eclipse.jface.wizard.images
 Bundle-Name: %pluginName
-Bundle-Version: 3.13.0.v20170503-1507
+Bundle-Version: 3.13.1.v20170810-0135
 Bundle-ClassPath: .
 Bundle-Localization: plugin
 Created-By: Apache Maven 3.3.3

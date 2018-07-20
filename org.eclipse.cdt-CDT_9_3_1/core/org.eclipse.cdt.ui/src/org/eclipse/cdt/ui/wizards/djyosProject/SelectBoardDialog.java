@@ -169,7 +169,7 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTreeCpt.setLayout(new GridLayout());
 		
 		createTreeForBoards(boardTreeCpt);
-		boardTree.setSize(150, 200);
+		boardTree.setSize(170, 200);
 		Button newBoradBtn = new Button(boardTreeCpt,SWT.PUSH);
 		newBoradBtn.setText("ÐÂ½¨°å¼þ");
 		newBoradBtn.setBackground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));

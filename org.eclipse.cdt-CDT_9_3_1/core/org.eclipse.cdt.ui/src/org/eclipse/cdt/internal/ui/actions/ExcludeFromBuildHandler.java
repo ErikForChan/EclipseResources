@@ -169,6 +169,7 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 
 	private void setExclude(IResource res, ICConfigurationDescription cfg, boolean exclude) {
 		try {
+			System.out.println("setExclude2:  "+res.getFullPath()+"  "+(res instanceof IFolder));
 			ICSourceEntry[] newEntries = CDataUtil.setExcluded(res.getFullPath(), (res instanceof IFolder), exclude, cfg.getSourceEntries());
 			cfg.setSourceEntries(newEntries);
 		} catch (CoreException e) {
@@ -239,6 +240,7 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 							break;
 						}
 					}
+					System.out.println("res:  "+res.getName()+"   "+res.getFullPath());
 					setExclude(res, cfgds[i], exclude);
 				}
 				try {

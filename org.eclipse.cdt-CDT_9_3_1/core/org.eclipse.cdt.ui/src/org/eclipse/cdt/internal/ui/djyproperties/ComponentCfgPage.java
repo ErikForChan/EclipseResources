@@ -18,8 +18,10 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -71,6 +73,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.ibm.icu.text.DecimalFormat;
+
+import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.core.settings.model.ICSourceEntry;
+import org.eclipse.cdt.core.settings.model.util.CDataUtil;
+import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
@@ -104,9 +114,12 @@ public class ComponentCfgPage extends PropertyPage{
 	private TableEditor editor,editor1;
 	private String defineInit;
 	private boolean appExist = false,ibootExist = false;
+	DecimalFormat df  = new DecimalFormat("######0");
 	List<Component> compontentsList = null;
 	List<Component> appCompontents = new ArrayList<Component>();
 	List<Component> ibootCompontents = new ArrayList<Component>();
+	List<Component> appCompontentsInit = new ArrayList<Component>();
+	List<Component> ibootCompontentsInit = new ArrayList<Component>();
 	List<Component> appCompontentsChecked = new ArrayList<Component>();
 	List<Component> ibootCompontentsChecked = new ArrayList<Component>();
 	
@@ -123,6 +136,8 @@ public class ComponentCfgPage extends PropertyPage{
 	List<Component> appCheckedSort = new ArrayList<Component>();
 	List<Component> ibootCheckedSort = new ArrayList<Component>();
 	
+	private List<CmpntCheck> appCmpntChecks = null;
+	private List<CmpntCheck> ibootCmpntChecks = null;
 	
 	private String getDIDEPath() {
 		String fullPath = Platform.getInstallLocation().getURL().toString();
@@ -154,10 +169,7 @@ public class ComponentCfgPage extends PropertyPage{
 		createDynamicGroup(composite);
 		return composite;
 	}
-	
-	private List<CmpntCheck> appCmpntChecks = null;
-	private List<CmpntCheck> ibootCmpntChecks = null;
-	
+		
 	private void createDynamicGroup(Composite composite) {
 		// TODO Auto-generated method stub
 		IProject project = getProject();
@@ -213,6 +225,7 @@ public class ComponentCfgPage extends PropertyPage{
 				component.setIncludes(compontentsList.get(i).getIncludes());
 				component.setSelect(compontentsList.get(i).isSelect());
 				component.setParentPath(compontentsList.get(i).getParentPath());
+				component.setTarget(compontentsList.get(i).getTarget());
 				//当组件为必选且不需要配置时，不显示在界面上
 				if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 					appCompontentsChecked.add(component);
@@ -260,6 +273,8 @@ public class ComponentCfgPage extends PropertyPage{
 				component.setIncludes(compontentsList.get(i).getIncludes());
 				component.setSelect(compontentsList.get(i).isSelect());
 				component.setParentPath(compontentsList.get(i).getParentPath());
+				component.setTarget(compontentsList.get(i).getTarget());
+//				System.out.println("component.getName()"+component.getName());
 				//当组件为必选且不需要配置时，不显示在界面上
 				if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 					ibootCompontentsChecked.add(component);
@@ -272,6 +287,7 @@ public class ComponentCfgPage extends PropertyPage{
 				if(ibootCompontents.get(i).getAttribute().equals("核心组件")) {
 					ibootCoreComponents.add(ibootCompontents.get(i));
 				}else if(ibootCompontents.get(i).getAttribute().equals("bsp组件")) {
+					System.out.println("bsp组件:   "+ibootCompontents.get(i).getName());
 					ibootBspComponents.add(ibootCompontents.get(i));
 				}else if(ibootCompontents.get(i).getAttribute().equals("第三方组件")) {
 					ibootThirdComponents.add(ibootCompontents.get(i));
@@ -282,7 +298,13 @@ public class ComponentCfgPage extends PropertyPage{
 		}
 		
 		// 组件显示界面
-		folder = new TabFolder(composite, SWT.NONE);
+		Composite folderCpt = new Composite(composite, SWT.BORDER);
+		folderCpt.setLayout(new GridLayout());
+		GridData folderData = new GridData(GridData.FILL_BOTH);
+		folderData.grabExcessHorizontalSpace = true;
+		folderCpt.setLayoutData(folderData);
+		
+		folder = new TabFolder(folderCpt, SWT.NONE);
 		folder.setLayout(new TabFolderLayout());
 		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -302,17 +324,49 @@ public class ComponentCfgPage extends PropertyPage{
 		item.setText("用户组件"); //$NON-NLS-1$
 		item.setControl(createTabContent(folder,appUserComponents,ibootUserComponents));
 
+		InitComponents(appCompontents,appCompontentsInit);
+		InitComponents(ibootCompontents,ibootCompontentsInit);
+		
 		Control[] controls = folder.getChildren();
 		Tree coreTree = (Tree)controls[0];
 		TreeItem[] coreItems = coreTree.getItems();
 		configGroup = ControlFactory.createGroup(composite, "组件配置[请选中要配置的组件]", 1);
 		configGroup.setLayout(new GridLayout(1, false));
+		GridData groupData = new GridData(GridData.FILL_BOTH);
+		groupData.grabExcessHorizontalSpace = true;
 		configGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		creatConfigTable(configGroup);
 		table.setEnabled(false);
 
 	}
  	
+	private void InitComponents(List<Component> components, List<Component> componentsInit) {
+		// TODO Auto-generated method stub
+		for(int i=0;i<components.size();i++) {
+			Component component = new Component();
+			component.setName(components.get(i).getName());
+			component.setAnnotation(components.get(i).getAnnotation());
+			component.setAttribute(components.get(i).getAttribute());
+			component.setGrade(components.get(i).getGrade());
+			component.setCode(components.get(i).getCode());
+			component.setConfigure(components.get(i).getConfigure());
+			component.setLinkFolder(components.get(i).getLinkFolder());
+			component.setDependents(components.get(i).getDependents());
+			component.setMutexs(components.get(i).getMutexs());
+			component.setFileName(components.get(i).getFileName());
+			component.setSelectable(components.get(i).getSelectable());
+			component.setParent(components.get(i).getParent());
+			component.setWeakDependents(components.get(i).getWeakDependents());
+			component.setExcludes(components.get(i).getExcludes());
+			component.setIncludes(components.get(i).getIncludes());
+			component.setSelect(components.get(i).isSelect());
+			component.setParentPath(components.get(i).getParentPath());
+			component.setTarget(components.get(i).getTarget());
+			//当组件为必选且不需要配置时，不显示在界面上
+			componentsInit.add(component);
+		}
+	}
+
 	private void creatConfigTable(Composite parent) {
 		table = new Table(parent, SWT.NONE | SWT.FULL_SELECTION | SWT.H_SCROLL);
 		GridData gd = new GridData(GridData.FILL_BOTH);
@@ -405,69 +459,107 @@ public class ComponentCfgPage extends PropertyPage{
 					members = defines[0].trim().split("\\s+");
 				}
 				
-				if (tag.equals("enum")) {
-					
-				} else if (tag.equals("select")) {
+				List<String> rangesCopy = ranges;
+				if(rangesCopy.size() != 0) {
+					String minString = rangesCopy.get(0), maxString = rangesCopy.get(1);
+					if (tag.equals("enum")) {
+						
+					} else if (tag.equals("select")) {
 
-					
-				} else {
-					List<String> rangesCopy = ranges;
-					
-					if(tag.equals("int")) {
-						if(rangesCopy.size() != 0) {
-							
-							try {
-								String minString = rangesCopy.get(0), maxString = rangesCopy.get(1);
-								int min;
-								long max;
-								if(minString.startsWith("0x")) {
-									min = Integer.parseInt(minString.substring(2), 16);
-								}else {
+						
+					} else {
+						if(tag.equals("int")) {
+								try {
+									int min;
+									long max;
+									if(minString.startsWith("0x")) {
+										min = Integer.parseInt(minString.substring(2), 16);
+									}else {
+										min = Integer.parseInt(minString);
+									}
+									if(maxString.startsWith("0x")) {
+										max = Long.parseLong(maxString.substring(2), 16);
+									}else {
+										max = Long.parseLong(maxString);
+									}
+									long curData = -1;
+									if(pjCgfs.size()>0) {//如果已存在该组件的配置
+				            			for(String cfg:pjCgfs) {
+				            				if(cfg.contains(members[1])) {
+				            					String[] cfgs = cfg.trim().split("\\s+");
+				        						if (cfgs[2].startsWith("0x")) {
+				        							curData = Long.parseLong(cfgs[2].substring(2), 16);
+				        						}else if(cfgs[2].contains("+") || cfgs[2].contains("-") || cfgs[2].contains("*") || cfgs[2].contains("/")) {
+				        							String pureCal = cfgs[2].replaceAll("\\(|\\)", "");
+													if(pureCal.startsWith("-")) {
+														curData = toUnsigned(Long.parseLong(pureCal));
+													}else {
+														double result = Calculator.conversion(pureCal);
+														BigDecimal bd = new BigDecimal(df.format(result));
+														curData = Long.valueOf(bd.toPlainString());	
+													}
+				    							}else {
+				        							curData = Integer.parseInt(cfgs[2].replaceAll("\\(|\\)", ""));
+				        						}
+				        						
+				            					break;
+				            				}
+				            			}
+				            			
+				            		}else {
+				            			if (members[2].startsWith("0x")) {
+		        							curData = Long.parseLong(members[2].substring(2), 16);
+		        						}else if(members[2].contains("+") || members[2].contains("-") || members[2].contains("*") || members[2].contains("/")) {
+		        							String pureCal = members[2].replaceAll("\\(|\\)", "");
+											if(pureCal.startsWith("-")) {
+												curData = toUnsigned(Long.parseLong(pureCal));
+											}else {
+												double result = Calculator.conversion(pureCal);
+												BigDecimal bd = new BigDecimal(df.format(result));
+												curData = Long.valueOf(bd.toPlainString());	
+											}
+		    							}else {
+		        							curData = Integer.parseInt(members[2].replaceAll("\\(|\\)", ""));
+		        						}
+				            		}
+				
+	        						if(curData<min || curData>max) {
+	        							return false;
+	        						}
+								} catch (Exception e) {
+									// TODO: handle exception
+									MessageDialog.openError(window.getShell(), "提示",
+											"组件"+component.getName()+"配置信息有误，"+e.getMessage());
+								}
+								
+							}else if(tag.equals("string")) {
+								try {
+									int min,max,stringLength=-1;
 									min = Integer.parseInt(minString);
+									max = Integer.parseInt(maxString);
+									if(pjCgfs.size()>0) {//如果已存在该组件的配置
+				            			for(String cfg:pjCgfs) {
+				            				if(cfg.contains(members[1])) {
+				            					String[] cfgs = cfg.trim().split("\\s+");
+				            					stringLength = cfgs[2].replace("\"", "").length();
+				            					break;
+				            				}
+				            			}
+				            			
+				            		}else {
+				            			stringLength = members[2].replace("\"", "").length();
+				            		}
+									if(stringLength<min || stringLength>max) {
+	        							return false;
+	        						}
+								} catch (Exception e) {
+									// TODO: handle exception
+									MessageDialog.openError(window.getShell(), "提示",
+											"组件"+component.getName()+"配置信息有误，"+e.getMessage());
 								}
-								if(maxString.startsWith("0x")) {
-									max = Long.parseLong(maxString.substring(2), 16);
-								}else {
-									max = Long.parseLong(maxString);
-								}
-								long curData;
-								if(pjCgfs.size()>0) {//如果是通过右键Properties打开的界面，则显示修改后的数值
-			            			for(String cfg:pjCgfs) {
-			            				if(cfg.contains(members[1])) {
-			            					String[] cfgs = cfg.trim().split("\\s+");
-			        						if (cfgs[2].startsWith("0x")) {
-			        							curData = Long.parseLong(cfgs[2].substring(2), 16);
-			        						}else if(members[2].contains("+") || members[2].contains("-") || members[2].contains("*") || members[2].contains("/")) {
-			        							String pureCal = members[2].replaceAll("\\(|\\)", "");
-												if(pureCal.startsWith("-")) {
-													curData = toUnsigned(Long.parseLong(pureCal));
-												}else {
-													double result = Calculator.conversion(pureCal);
-													BigDecimal bd = new BigDecimal(String.valueOf(result));
-													curData = Long.valueOf(bd.toPlainString());	
-												}
-			    							}else {
-			        							curData = Integer.parseInt(cfgs[2]);
-			        						}
-			        						if(curData<min || curData>max) {
-			        							return false;
-			        						}
-			            					break;
-			            				}
-			            			}
-			            			
-			            		}
-							} catch (Exception e) {
-								// TODO: handle exception
-								MessageDialog.openError(window.getShell(), "提示",
-										"组件"+component.getName()+"配置信息有误，"+e.getMessage());
 							}
-							
-						}
-					
 					}
 				}
-
 			}
 		}
 		return true;
@@ -478,12 +570,22 @@ public class ComponentCfgPage extends PropertyPage{
 		return s & 0xFFFFFFFFL;
 	}
 	
+	private boolean isParentCompExist(List<Component> components,String parentName) {
+		for(Component component:components) {
+			if(component.getName().equals(parentName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	private Control createTabContent(TabFolder folder,List<Component> appTypeComponents,List<Component> ibootTypeComponents) {
 		// TODO Auto-generated method stub
 		//configGroup
-		Tree componentTree = new Tree(folder, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL | SWT.CHECK);
+
+		Tree componentTree = new Tree(folder, SWT.H_SCROLL | SWT.V_SCROLL | SWT.CHECK);
 		componentTree.setLayoutData(new GridData(GridData.FILL_BOTH));
-		componentTree.setSize(SWT.FILL,300);
+		componentTree.setSize(SWT.DEFAULT, 200);
 		
 		Menu menu = new Menu(componentTree);
 		MenuItem openFileItem = new MenuItem(menu, SWT.PUSH);
@@ -494,7 +596,8 @@ public class ComponentCfgPage extends PropertyPage{
 		if(appExist) {
 			List<Component> aFirstList = new ArrayList<Component>();
 			for(int i=0;i<appTypeComponents.size();i++) {
-				if(appTypeComponents.get(i).getParent().equals("none")) {
+				String parentName = appTypeComponents.get(i).getParent();
+				if(!isParentCompExist(appTypeComponents,parentName)) {
 					aFirstList.add(appTypeComponents.get(i));
 				}
 			}
@@ -527,7 +630,7 @@ public class ComponentCfgPage extends PropertyPage{
 				}
 				item.setText(component.getName());
 				item.setData(component.getParentPath());
-				
+
 				boolean pass = checkParameter(component,true);
 				if(pass) {
 					item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
@@ -544,7 +647,8 @@ public class ComponentCfgPage extends PropertyPage{
 		if(ibootExist) {
 			List<Component> iFirstList = new ArrayList<Component>();
 			for(int i=0;i<ibootTypeComponents.size();i++) {
-				if(ibootTypeComponents.get(i).getParent().equals("none")) {
+				String parentName = ibootTypeComponents.get(i).getParent();
+				if(!isParentCompExist(ibootTypeComponents,parentName)) {
 					iFirstList.add(ibootTypeComponents.get(i));
 				}
 			}
@@ -847,6 +951,18 @@ public class ComponentCfgPage extends PropertyPage{
 	public boolean performOk() {
 		// TODO Auto-generated method stub
 		IProject project = getProject();
+		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
+		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
+		resetExclude(appCompontents,appCompontentsInit,true,conds,project);
+		resetExclude(ibootCompontents,ibootCompontentsInit,false,conds,project);
+		
+		try {
+			CoreModel.getDefault().setProjectDescription(project, local_prjd);
+		} catch (CoreException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		List<File> cfgFiles = new ArrayList<File>();
 		File appCfgFile = new File(project.getLocation().toString()+"/src/app/OS_prjcfg/project_config.h");
 		File ibootCfgFile = new File(project.getLocation().toString()+"/src/iboot/OS_prjcfg/project_config.h");
@@ -904,6 +1020,74 @@ public class ComponentCfgPage extends PropertyPage{
 		}
 		
 		return super.performOk();
+	}
+	
+	private void resetExclude(List<Component> components,List<Component> componentsInit,boolean isApp, ICConfigurationDescription[] conds, IProject project) {
+		// TODO Auto-generated method stub
+		//appCompontents,ibootCompontents
+		String srcLocation = getDIDEPath()+"djysrc";
+		System.out.println("size1: "+components.size());
+		System.out.println("size2: "+componentsInit.size());
+		for(int i=0;i<components.size();i++) {
+			String componentPath = components.get(i).getParentPath().replace("\\", "/");
+			String relativePath = componentPath.replace(srcLocation, "").replace("\\", "/");
+			String notExclude = "/src/libos"+relativePath;
+			
+			String ifilePath = (project.getLocation().toString() + notExclude);
+			IFolder ifolder = project.getFolder(ifilePath.substring(project.getLocation().toString().length()));
+			if(componentsInit.get(i).isSelect()!=components.get(i).isSelect()) {
+				System.out.println("getName: "+componentsInit.get(i).getName());
+				for (int j = 0; j < conds.length; j++) {
+					if(isApp) {
+						if(conds[j].getName().contains("libos_App")) {
+							List<IFolder> includeFolders = new ArrayList<IFolder>();
+							getFolders(ifolder, includeFolders);
+							for(int k=includeFolders.size()-1;k>=0;k--) {
+								if(components.get(i).isSelect()) {
+									System.out.println("ifolderT: "+includeFolders.get(k).getName());
+									setExclude(includeFolders.get(k), conds[j], false);
+								}else {
+									System.out.println("ifolderF: "+includeFolders.get(k).getName());
+									setExclude(includeFolders.get(k), conds[j], true);
+								}
+							}
+							
+						}
+					}else {
+						if(conds[j].getName().contains("libos_Iboot")) {
+							List<IFolder> includeFolders = new ArrayList<IFolder>();
+							getFolders(ifolder, includeFolders);
+							for(int k=includeFolders.size()-1;k>=0;k--) {
+								if(components.get(i).isSelect()) {
+									setExclude(includeFolders.get(k), conds[j], false);
+								}else {
+									setExclude(includeFolders.get(k), conds[j], true);
+								}
+								
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private void getFolders(IFolder ifolder,List<IFolder> folders){
+		folders.add(ifolder);
+		IFolder parentFolder = (IFolder) ifolder.getParent();
+		if(!parentFolder.getName().equals("libos")) {
+			getFolders(parentFolder,folders);
+		}
+	}
+
+	//编译排除
+	private void setExclude(IFolder ifle, ICConfigurationDescription cfg, boolean exclude) {
+		try {
+			ICSourceEntry[] newEntries = CDataUtil.setExcluded(ifle.getFullPath(), (ifle instanceof IFolder), exclude, cfg.getSourceEntries());
+			cfg.setSourceEntries(newEntries);
+		} catch (CoreException e) {
+			CUIPlugin.log(e);
+		}
 	}
 	
 	@Override
@@ -1360,6 +1544,10 @@ public class ComponentCfgPage extends PropertyPage{
 					String min = ranges.get(0);
 					String max = ranges.get(1);
 					realComptName = realComptName+"( "+min+"~"+max+" )";
+				}else if (tag.equals("string") && ranges.size()>0){
+					String min = ranges.get(0);
+					String max = ranges.get(1);
+					realComptName = realComptName+"(长度："+min+"~"+max+" )";
 				}
 				
 				String dataString = null;
@@ -1464,45 +1652,64 @@ public class ComponentCfgPage extends PropertyPage{
 					tabelControls.add(text);
 					String flag = tag;
 					List<String> rangesCopy = ranges;
-
-					if(tag.equals("int")) {
-						if (rangesCopy.size() > 0) {
-							String minString = rangesCopy.get(0);
-							String maxString = rangesCopy.get(1);
+					if (rangesCopy.size() > 0) {
+						String minString = rangesCopy.get(0);
+						String maxString = rangesCopy.get(1);
+						if (tag.equals("int")) {
 							int min;
 							long max;
-							if(minString.startsWith("0x")) {
+							if (minString.startsWith("0x")) {
 								min = Integer.parseInt(minString.substring(2), 16);
-							}else {
+							} else {
 								min = Integer.parseInt(minString);
 							}
-							if(maxString.startsWith("0x")) {
+							if (maxString.startsWith("0x")) {
 								max = Long.parseLong(maxString.substring(2), 16);
-							}else {
+							} else {
 								max = Long.parseLong(maxString);
 							}
-							
+
 							long curData;
 							if (dataString.startsWith("0x")) {
 								curData = Long.parseLong(dataString.substring(2), 16);
-							}else if(members[2].contains("+") || members[2].contains("-") || members[2].contains("*") || members[2].contains("/")) {
+							} else if (members[2].contains("+") || members[2].contains("-")
+									|| members[2].contains("*") || members[2].contains("/")) {
 								String pureCal = members[2].replaceAll("\\(|\\)", "");
-								if(pureCal.startsWith("-")) {
+								if (pureCal.startsWith("-")) { 
 									curData = toUnsigned(Long.parseLong(pureCal));
-								}else {
+								} else {
 									double result = Calculator.conversion(pureCal);
-									BigDecimal bd = new BigDecimal(String.valueOf(result));
-									curData = Long.valueOf(bd.toPlainString());	
+									BigDecimal bd = new BigDecimal(df.format(result));
+									curData = Long.valueOf(bd.toPlainString());
 								}
-							}else {
-								curData = Integer.parseInt(dataString);
+							} else {
+								curData = Integer.parseInt(dataString.replaceAll("\\(|\\)", ""));
 							}
-							if(curData<min || curData>max) {
+							if (curData < min || curData > max) {
 								text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
 							}
+						}else if(tag.equals("string")) {
+								int min,max,stringLength=-1;
+								min = Integer.parseInt(minString);
+								max = Integer.parseInt(maxString);
+								if(pjCgfs.size()>0) {//如果已存在该组件的配置
+			            			for(String cfg:pjCgfs) {
+			            				if(cfg.contains(members[1])) {
+			            					String[] cfgs = cfg.trim().split("\\s+");
+			            					stringLength = cfgs[2].replace("\"", "").length();
+			            					break;
+			            				}
+			            			}
+			            			
+			            		}else {
+			            			stringLength = members[2].replace("\"", "").length();
+			            		}
+								if(stringLength<min || stringLength>max) {
+									text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
+	    						}
 						}
-						
 					}
+				
 					// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
 					text.addModifyListener(new ModifyListener() {
 						public void modifyText(ModifyEvent e) {
@@ -1534,13 +1741,13 @@ public class ComponentCfgPage extends PropertyPage{
 										toCalculate = true;
 										String pureCal = tempString.replaceAll("\\(|\\)", "");
 										double result = Calculator.conversion(pureCal);
-										BigDecimal bd = new BigDecimal(String.valueOf(result));
+										BigDecimal bd = new BigDecimal(df.format(result));
 										curNum = Long.valueOf(bd.toPlainString());	
 //										BigDecimal bd = new BigDecimal(String.valueOf(result));
 //										curNum = Integer.valueOf(bd.toPlainString());
 									} else {
 										if (isInt) {
-											curNum = Integer.parseInt(tempString);
+											curNum = Integer.parseInt(tempString.replaceAll("\\(|\\)", ""));
 										}
 									}
 									if (curNum < min || curNum > max) {
@@ -1644,10 +1851,12 @@ public class ComponentCfgPage extends PropertyPage{
 								pureDefine = configures[j];
 							}
 							String[] defines = pureDefine.split("//");
-							String[] infos = defines[1].split(",|，");
-							if(infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
-								annoName = infos[0];
-		            		}
+							if(defines.length>1) {
+								String[] infos = defines[1].split(",|，");
+								if (infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
+									annoName = infos[0];
+								}
+							}
 							if(annoName == null) {
 								defineInit += configures[j]+"\n";	
 							}else {
