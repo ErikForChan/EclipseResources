@@ -133,12 +133,14 @@ public class ReadComponent {
 		String libcPath = eclipsePath+"djysrc/libc";
 		String djyosPath = eclipsePath+"djysrc/djyos";
 		String thirdPath = eclipsePath+"djysrc/third";
+		String loaderPath = eclipsePath+"djysrc/loader";
 		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
 		String userPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+board.getBoardName();
 		componentPaths.add(componentPath);
 		componentPaths.add(djyosPath);
 		componentPaths.add(demoPath);
 		componentPaths.add(userPath);
+		componentPaths.add(loaderPath);
 		componentPaths.add(thirdPath);
 		for (int i = 0; i < componentPaths.size(); i++) {
 			File sourceFile = new File(componentPaths.get(i));
@@ -232,6 +234,8 @@ public class ReadComponent {
 			newComponent.setLinkFolder("boarddrv");
 		}else if(file.getPath().contains("libc")){
 			newComponent.setLinkFolder("libc");
+		}else if(file.getPath().contains("loader")){
+			newComponent.setLinkFolder("loader");
 		}
 		newComponent.setFileName(file.getName());
 		newComponent.setParentPath(file.getParentFile().getPath());

@@ -31,6 +31,7 @@ import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ModifyEvent;
@@ -77,7 +78,14 @@ import com.ibm.icu.text.DecimalFormat;
 
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICFileDescription;
+import org.eclipse.cdt.core.settings.model.ICFolderDescription;
+import org.eclipse.cdt.core.settings.model.ICLanguageSetting;
+import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.core.settings.model.ICResourceDescription;
+import org.eclipse.cdt.core.settings.model.ICSettingBase;
+import org.eclipse.cdt.core.settings.model.ICSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICSourceEntry;
 import org.eclipse.cdt.core.settings.model.util.CDataUtil;
 import org.eclipse.cdt.ui.CUIPlugin;
@@ -86,10 +94,12 @@ import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.component.CmpntCheck;
 import org.eclipse.cdt.ui.wizards.component.Component;
+import org.eclipse.cdt.ui.wizards.component.ConfigureTarget;
 import org.eclipse.cdt.ui.wizards.component.CreateCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.djyosProject.DjyosMessages;
+import org.eclipse.cdt.ui.wizards.djyosProject.ReadHardWareDesc;
 import org.eclipse.cdt.ui.wizards.djyosProject.tools.Calculator;
 
 import org.eclipse.ui.IWorkbenchPage;
@@ -107,6 +117,7 @@ public class ComponentCfgPage extends PropertyPage{
 	private Table table;
 	private TabFolder folder;
 	private boolean[] isSelect = null;
+	String[] tableHeader = { "参数", "值", "注释" };
 	private String depedentLabel = "依赖组件: ", mutexLabel = "互斥组件: ";
 	private Group configGroup = null;
 	private ArrayList<Control> tabelControls = new ArrayList<Control>();
@@ -176,24 +187,7 @@ public class ComponentCfgPage extends PropertyPage{
 		ReadCheckXml rccx = new ReadCheckXml();
 		File appCheckFile = new File(project.getLocation().toString()+"/data/app_component_check.xml");
 		File ibootCheckFile = new File(project.getLocation().toString()+"/data/iboot_component_check.xml");
-
-		Composite depedentCpt = new Composite(composite, SWT.BORDER);
-		depedentCpt.setLayout(new GridLayout(2, true));
-		depedentCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
-		// 显示依赖组件
-		dependentText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
-		GridData depedentData = new GridData(GridData.FILL_BOTH);
-		depedentData.grabExcessHorizontalSpace = true;
-		dependentText.setLayoutData(depedentData);
-		dependentText.setText(depedentLabel);
-		dependentText.setEditable(false);
-		dependentText.setSize(SWT.HORIZONTAL, 50);
-		// 显示互斥组件
-		mutexText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
-		mutexText.setLayoutData(depedentData);
-		mutexText.setText(mutexLabel);
-		mutexText.setEditable(false);
-		
+		creatDepedentCpt(composite);//创建依赖互斥组件显示	
 		getBoardAndCpu();
 		ReadComponent rc = new ReadComponent();
 		compontentsList = rc.getComponents(onBoardCpu, sBoard);
@@ -206,45 +200,7 @@ public class ComponentCfgPage extends PropertyPage{
 				e1.printStackTrace();
 			}
 			appExist = true;
-			for(int i=0;i<compontentsList.size();i++) {
-				Component component = new Component();
-				component.setName(compontentsList.get(i).getName());
-				component.setAnnotation(compontentsList.get(i).getAnnotation());
-				component.setAttribute(compontentsList.get(i).getAttribute());
-				component.setGrade(compontentsList.get(i).getGrade());
-				component.setCode(compontentsList.get(i).getCode());
-				component.setConfigure(compontentsList.get(i).getConfigure());
-				component.setLinkFolder(compontentsList.get(i).getLinkFolder());
-				component.setDependents(compontentsList.get(i).getDependents());
-				component.setMutexs(compontentsList.get(i).getMutexs());
-				component.setFileName(compontentsList.get(i).getFileName());
-				component.setSelectable(compontentsList.get(i).getSelectable());
-				component.setParent(compontentsList.get(i).getParent());
-				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
-				component.setExcludes(compontentsList.get(i).getExcludes());
-				component.setIncludes(compontentsList.get(i).getIncludes());
-				component.setSelect(compontentsList.get(i).isSelect());
-				component.setParentPath(compontentsList.get(i).getParentPath());
-				component.setTarget(compontentsList.get(i).getTarget());
-				//当组件为必选且不需要配置时，不显示在界面上
-				if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
-					appCompontentsChecked.add(component);
-				}else {
-					appCompontents.add(component);
-				}
-			}
-			
-			for(int i=0;i<appCompontents.size();i++) {
-				if(appCompontents.get(i).getAttribute().equals("核心组件")) {
-					appCoreComponents.add(appCompontents.get(i));
-				}else if(appCompontents.get(i).getAttribute().equals("bsp组件")) {
-					appBspComponents.add(appCompontents.get(i));
-				}else if(appCompontents.get(i).getAttribute().equals("第三方组件")) {
-					appThirdComponents.add(appCompontents.get(i));
-				}else if(appCompontents.get(i).getAttribute().equals("用户组件")) {
-					appUserComponents.add(appCompontents.get(i));
-				}
-			}
+			initAppComponent();
 		}
 		if(ibootCheckFile.exists()) {
 			try {
@@ -254,57 +210,13 @@ public class ComponentCfgPage extends PropertyPage{
 				e1.printStackTrace();
 			}
 			ibootExist = true;
-			for(int i=0;i<compontentsList.size();i++) {
-				Component component = new Component();
-				component.setName(compontentsList.get(i).getName());
-				component.setAnnotation(compontentsList.get(i).getAnnotation());
-				component.setAttribute(compontentsList.get(i).getAttribute());
-				component.setGrade(compontentsList.get(i).getGrade());
-				component.setCode(compontentsList.get(i).getCode());
-				component.setConfigure(compontentsList.get(i).getConfigure());
-				component.setLinkFolder(compontentsList.get(i).getLinkFolder());
-				component.setDependents(compontentsList.get(i).getDependents());
-				component.setMutexs(compontentsList.get(i).getMutexs());
-				component.setFileName(compontentsList.get(i).getFileName());
-				component.setSelectable(compontentsList.get(i).getSelectable());
-				component.setParent(compontentsList.get(i).getParent());
-				component.setWeakDependents(compontentsList.get(i).getWeakDependents());
-				component.setExcludes(compontentsList.get(i).getExcludes());
-				component.setIncludes(compontentsList.get(i).getIncludes());
-				component.setSelect(compontentsList.get(i).isSelect());
-				component.setParentPath(compontentsList.get(i).getParentPath());
-				component.setTarget(compontentsList.get(i).getTarget());
-//				System.out.println("component.getName()"+component.getName());
-				//当组件为必选且不需要配置时，不显示在界面上
-				if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
-					ibootCompontentsChecked.add(component);
-				}else {
-					ibootCompontents.add(component);
-				}
-			}
-			
-			for(int i=0;i<ibootCompontents.size();i++) {
-				if(ibootCompontents.get(i).getAttribute().equals("核心组件")) {
-					ibootCoreComponents.add(ibootCompontents.get(i));
-				}else if(ibootCompontents.get(i).getAttribute().equals("bsp组件")) {
-					System.out.println("bsp组件:   "+ibootCompontents.get(i).getName());
-					ibootBspComponents.add(ibootCompontents.get(i));
-				}else if(ibootCompontents.get(i).getAttribute().equals("第三方组件")) {
-					ibootThirdComponents.add(ibootCompontents.get(i));
-				}else if(ibootCompontents.get(i).getAttribute().equals("用户组件")) {
-					ibootUserComponents.add(ibootCompontents.get(i));
-				}
-			}
+			initibootComponent();
 		}
 		
+		SashForm sashForm = new SashForm(composite, SWT.VERTICAL);
+		sashForm.setLayoutData(new GridData(GridData.FILL_BOTH));
 		// 组件显示界面
-		Composite folderCpt = new Composite(composite, SWT.BORDER);
-		folderCpt.setLayout(new GridLayout());
-		GridData folderData = new GridData(GridData.FILL_BOTH);
-		folderData.grabExcessHorizontalSpace = true;
-		folderCpt.setLayoutData(folderData);
-		
-		folder = new TabFolder(folderCpt, SWT.NONE);
+		folder = new TabFolder(sashForm, SWT.NONE);
 		folder.setLayout(new TabFolderLayout());
 		folder.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -330,16 +242,125 @@ public class ComponentCfgPage extends PropertyPage{
 		Control[] controls = folder.getChildren();
 		Tree coreTree = (Tree)controls[0];
 		TreeItem[] coreItems = coreTree.getItems();
-		configGroup = ControlFactory.createGroup(composite, "组件配置[请选中要配置的组件]", 1);
+		configGroup = ControlFactory.createGroup(sashForm, "组件配置[请选中要配置的组件]", 1);
 		configGroup.setLayout(new GridLayout(1, false));
 		GridData groupData = new GridData(GridData.FILL_BOTH);
 		groupData.grabExcessHorizontalSpace = true;
 		configGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		creatConfigTable(configGroup);
 		table.setEnabled(false);
-
+		
+		sashForm.setWeights(new int[] {1, 1});// 内部容器之间宽度比例
 	}
  	
+	private void initibootComponent() {
+		// TODO Auto-generated method stub
+		for(int i=0;i<compontentsList.size();i++) {
+			Component component = new Component();
+			component.setName(compontentsList.get(i).getName());
+			component.setAnnotation(compontentsList.get(i).getAnnotation());
+			component.setAttribute(compontentsList.get(i).getAttribute());
+			component.setGrade(compontentsList.get(i).getGrade());
+			component.setCode(compontentsList.get(i).getCode());
+			component.setConfigure(compontentsList.get(i).getConfigure());
+			component.setLinkFolder(compontentsList.get(i).getLinkFolder());
+			component.setDependents(compontentsList.get(i).getDependents());
+			component.setMutexs(compontentsList.get(i).getMutexs());
+			component.setFileName(compontentsList.get(i).getFileName());
+			component.setSelectable(compontentsList.get(i).getSelectable());
+			component.setParent(compontentsList.get(i).getParent());
+			component.setWeakDependents(compontentsList.get(i).getWeakDependents());
+			component.setExcludes(compontentsList.get(i).getExcludes());
+			component.setIncludes(compontentsList.get(i).getIncludes());
+			component.setSelect(compontentsList.get(i).isSelect());
+			component.setParentPath(compontentsList.get(i).getParentPath());
+			component.setTarget(compontentsList.get(i).getTarget());
+//			System.out.println("component.getName()"+component.getName());
+			//当组件为必选且不需要配置时，不显示在界面上
+			if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
+				ibootCompontentsChecked.add(component);
+			}else {
+				ibootCompontents.add(component);
+			}
+		}
+		
+		for(int i=0;i<ibootCompontents.size();i++) {
+			if(ibootCompontents.get(i).getAttribute().equals("核心组件")) {
+				ibootCoreComponents.add(ibootCompontents.get(i));
+			}else if(ibootCompontents.get(i).getAttribute().equals("bsp组件")) {
+				System.out.println("bsp组件:   "+ibootCompontents.get(i).getName());
+				ibootBspComponents.add(ibootCompontents.get(i));
+			}else if(ibootCompontents.get(i).getAttribute().equals("第三方组件")) {
+				ibootThirdComponents.add(ibootCompontents.get(i));
+			}else if(ibootCompontents.get(i).getAttribute().equals("用户组件")) {
+				ibootUserComponents.add(ibootCompontents.get(i));
+			}
+		}
+	}
+
+	private void initAppComponent() {
+		// TODO Auto-generated method stub
+		for(int i=0;i<compontentsList.size();i++) {
+			Component component = new Component();
+			component.setName(compontentsList.get(i).getName());
+			component.setAnnotation(compontentsList.get(i).getAnnotation());
+			component.setAttribute(compontentsList.get(i).getAttribute());
+			component.setGrade(compontentsList.get(i).getGrade());
+			component.setCode(compontentsList.get(i).getCode());
+			component.setConfigure(compontentsList.get(i).getConfigure());
+			component.setLinkFolder(compontentsList.get(i).getLinkFolder());
+			component.setDependents(compontentsList.get(i).getDependents());
+			component.setMutexs(compontentsList.get(i).getMutexs());
+			component.setFileName(compontentsList.get(i).getFileName());
+			component.setSelectable(compontentsList.get(i).getSelectable());
+			component.setParent(compontentsList.get(i).getParent());
+			component.setWeakDependents(compontentsList.get(i).getWeakDependents());
+			component.setExcludes(compontentsList.get(i).getExcludes());
+			component.setIncludes(compontentsList.get(i).getIncludes());
+			component.setSelect(compontentsList.get(i).isSelect());
+			component.setParentPath(compontentsList.get(i).getParentPath());
+			component.setTarget(compontentsList.get(i).getTarget());
+			//当组件为必选且不需要配置时，不显示在界面上
+			if(component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
+				appCompontentsChecked.add(component);
+			}else {
+				appCompontents.add(component);
+			}
+		}
+		
+		for(int i=0;i<appCompontents.size();i++) {
+			if(appCompontents.get(i).getAttribute().equals("核心组件")) {
+				appCoreComponents.add(appCompontents.get(i));
+			}else if(appCompontents.get(i).getAttribute().equals("bsp组件")) {
+				appBspComponents.add(appCompontents.get(i));
+			}else if(appCompontents.get(i).getAttribute().equals("第三方组件")) {
+				appThirdComponents.add(appCompontents.get(i));
+			}else if(appCompontents.get(i).getAttribute().equals("用户组件")) {
+				appUserComponents.add(appCompontents.get(i));
+			}
+		}
+	}
+
+	private void creatDepedentCpt(Composite composite) {
+		// TODO Auto-generated method stub
+		Composite depedentCpt = new Composite(composite, SWT.BORDER);
+		depedentCpt.setLayout(new GridLayout(2, true));
+		depedentCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
+		// 显示依赖组件
+		dependentText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
+		GridData depedentData = new GridData(GridData.FILL_BOTH);
+		depedentData.grabExcessHorizontalSpace = true;
+		dependentText.setLayoutData(depedentData);
+		dependentText.setText(depedentLabel);
+		dependentText.setEditable(false);
+		dependentText.setSize(SWT.HORIZONTAL, 50);
+		// 显示互斥组件
+		mutexText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
+		mutexText.setLayoutData(depedentData);
+		mutexText.setText(mutexLabel);
+		mutexText.setEditable(false);
+	}
+
 	private void InitComponents(List<Component> components, List<Component> componentsInit) {
 		// TODO Auto-generated method stub
 		for(int i=0;i<components.size();i++) {
@@ -375,7 +396,6 @@ public class ComponentCfgPage extends PropertyPage{
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		// 创建表头的字符串数组
-		String[] tableHeader = { "参数", "值", "注释" };
 		for (int i = 0; i < tableHeader.length; i++) {
 			TableColumn tableColumn = new TableColumn(table, SWT.NONE | SWT.CENTER);
 			tableColumn.setAlignment(SWT.LEFT);
@@ -445,7 +465,7 @@ public class ComponentCfgPage extends PropertyPage{
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("select") && !tag.equals("free")) {
-					for (int j = 1; j < infos.length; j++) {// for (int j = 1; j < infos.length; j++)
+					for (int j = 1; j < infos.length; j++) {
 						ranges.add(infos[j]);
 					}
 				}
@@ -566,6 +586,9 @@ public class ComponentCfgPage extends PropertyPage{
 		
 	}
 	
+	/*
+	 * 转long类型为无符类型
+	 */
 	long toUnsigned(long s) {
 		return s & 0xFFFFFFFFL;
 	}
@@ -594,104 +617,11 @@ public class ComponentCfgPage extends PropertyPage{
 		componentTree.setMenu(menu);
 		
 		if(appExist) {
-			List<Component> aFirstList = new ArrayList<Component>();
-			for(int i=0;i<appTypeComponents.size();i++) {
-				String parentName = appTypeComponents.get(i).getParent();
-				if(!isParentCompExist(appTypeComponents,parentName)) {
-					aFirstList.add(appTypeComponents.get(i));
-				}
-			}
-			TreeItem rootApp = new TreeItem(componentTree, 0);
-			rootApp.setImage(CPluginImages.CFG_CPMT_OBJ.createImage());
-			rootApp.setText("App");
-			for(Component component : aFirstList) {
-				String configure  = component.getConfigure();
-				TreeItem item ;			
-				if(component.getSelectable().equals("必选"))
-				{
-					item = new TreeItem(rootApp, SWT.ERROR_CANNOT_SET_ENABLED);
-					item.setChecked(true);
-					component.setSelect(true);
-					appCompontentsChecked.add(component);
-				}else {
-					item = new TreeItem(rootApp, 0);
-				}
-				if(!item.getChecked()) {
-					for(CmpntCheck check:appCmpntChecks) {
-						if(check.getCmpntName().equals(component.getName())) {
-							if(check.isChecked().equals("true")) {
-								item.setChecked(true);
-								component.setSelect(true);
-								appCompontentsChecked.add(component);
-							}
-							break;
-						}
-					}
-				}
-				item.setText(component.getName());
-				item.setData(component.getParentPath());
-
-				boolean pass = checkParameter(component,true);
-				if(pass) {
-					item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
-				}else {
-					item.setImage(CPluginImages.CFG_COMPTERROR_VIEW.createImage());
-				}			
-				
-				if(haveChildren(component,appTypeComponents)) {
-					fillItem(item,appTypeComponents,rootApp,true);
-				}	
-			}
+			creatTabAppContent(appTypeComponents,componentTree);
 		}
 		
 		if(ibootExist) {
-			List<Component> iFirstList = new ArrayList<Component>();
-			for(int i=0;i<ibootTypeComponents.size();i++) {
-				String parentName = ibootTypeComponents.get(i).getParent();
-				if(!isParentCompExist(ibootTypeComponents,parentName)) {
-					iFirstList.add(ibootTypeComponents.get(i));
-				}
-			}
-
-			TreeItem rootIboot = new TreeItem(componentTree, 0);
-			rootIboot.setImage(CPluginImages.CFG_CPMT_OBJ.createImage());
-			rootIboot.setText("Iboot");
-			for(Component component : iFirstList) {
-				TreeItem item ;
-				if(component.getSelectable().equals("必选")) 
-				{
-					item = new TreeItem(rootIboot, SWT.ERROR_CANNOT_SET_ENABLED);
-					item.setChecked(true);
-					component.setSelect(true);
-					ibootCompontentsChecked.add(component);
-				}else {
-					item = new TreeItem(rootIboot, 0);
-				}
-				if(!item.getChecked()) {
-					for(CmpntCheck check:ibootCmpntChecks) {
-						if(check.getCmpntName().equals(component.getName())) {
-							if(check.isChecked().equals("true")) {
-								item.setChecked(true);
-								component.setSelect(true);
-								ibootCompontentsChecked.add(component);
-							}
-							break;
-						}
-					}
-				}
-				item.setData(component.getParentPath());
-				item.setText(component.getName());
-				boolean pass = checkParameter(component,false);
-				if(pass) {
-					item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
-				}else {
-					item.setImage(CPluginImages.CFG_COMPTERROR_VIEW.createImage());
-				}		
-				// 叶子节点对应的数值为相应文件夹的File对象
-				if(haveChildren(component,ibootTypeComponents)) {
-					fillItem(item,ibootTypeComponents,rootIboot,false);
-				}		
-			}
+			creatTabIbootContent(ibootTypeComponents,componentTree);
 		}
 		
 		openFileItem.addSelectionListener(new SelectionListener() {
@@ -743,6 +673,9 @@ public class ComponentCfgPage extends PropertyPage{
 				if (item == null) {
 					return;
 				}else {
+					if(item.getText().equals("App") || item.getText().equals("Iboot")) {
+						item.setChecked(true);
+					}
 					Component itemCompt ;
 					Control[] controls = folder.getChildren();
 					String type = getAIType(item);		
@@ -947,6 +880,113 @@ public class ComponentCfgPage extends PropertyPage{
 		return componentTree;
 	}
 	
+	private void creatTabIbootContent(List<Component> ibootTypeComponents, Tree componentTree) {
+		// TODO Auto-generated method stub
+		List<Component> iFirstList = new ArrayList<Component>();
+		for(int i=0;i<ibootTypeComponents.size();i++) {
+			String parentName = ibootTypeComponents.get(i).getParent();
+			if(!isParentCompExist(ibootTypeComponents,parentName)) {
+				iFirstList.add(ibootTypeComponents.get(i));
+			}
+		}
+
+		TreeItem rootIboot = new TreeItem(componentTree, 0);
+		rootIboot.setImage(CPluginImages.CFG_CPMT_OBJ.createImage());
+		rootIboot.setText("Iboot");
+		rootIboot.setGrayed(true);
+		rootIboot.setChecked(true);
+		for(Component component : iFirstList) {
+			TreeItem item ;
+			if(component.getSelectable().equals("必选")) 
+			{
+				item = new TreeItem(rootIboot, SWT.ERROR_CANNOT_SET_ENABLED);
+				item.setChecked(true);
+				component.setSelect(true);
+				ibootCompontentsChecked.add(component);
+			}else {
+				item = new TreeItem(rootIboot, 0);
+			}
+			if(!item.getChecked()) {
+				for(CmpntCheck check:ibootCmpntChecks) {
+					if(check.getCmpntName().equals(component.getName())) {
+						if(check.isChecked().equals("true")) {
+							item.setChecked(true);
+							component.setSelect(true);
+							ibootCompontentsChecked.add(component);
+						}
+						break;
+					}
+				}
+			}
+			item.setData(component.getParentPath());
+			item.setText(component.getName());
+			boolean pass = checkParameter(component,false);
+			if(pass) {
+				item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+			}else {
+				item.setImage(CPluginImages.CFG_COMPTERROR_VIEW.createImage());
+			}		
+			// 叶子节点对应的数值为相应文件夹的File对象
+			if(haveChildren(component,ibootTypeComponents)) {
+				fillItem(item,ibootTypeComponents,rootIboot,false);
+			}		
+		}
+	}
+
+	private void creatTabAppContent(List<Component> appTypeComponents, Tree componentTree) {
+		// TODO Auto-generated method stub
+		List<Component> aFirstList = new ArrayList<Component>();
+		for(int i=0;i<appTypeComponents.size();i++) {
+			String parentName = appTypeComponents.get(i).getParent();
+			if(!isParentCompExist(appTypeComponents,parentName)) {
+				aFirstList.add(appTypeComponents.get(i));
+			}
+		}
+		TreeItem rootApp = new TreeItem(componentTree, 0);
+		rootApp.setImage(CPluginImages.CFG_CPMT_OBJ.createImage());
+		rootApp.setText("App");
+		rootApp.setGrayed(true);
+		rootApp.setChecked(true);
+		for(Component component : aFirstList) {
+			String configure  = component.getConfigure();
+			TreeItem item ;			
+			if(component.getSelectable().equals("必选"))
+			{
+				item = new TreeItem(rootApp, SWT.ERROR_CANNOT_SET_ENABLED);
+				item.setChecked(true);
+				component.setSelect(true);
+				appCompontentsChecked.add(component);
+			}else {
+				item = new TreeItem(rootApp, 0);
+			}
+			if(!item.getChecked()) {
+				for(CmpntCheck check:appCmpntChecks) {
+					if(check.getCmpntName().equals(component.getName())) {
+						if(check.isChecked().equals("true")) {
+							item.setChecked(true);
+							component.setSelect(true);
+							appCompontentsChecked.add(component);
+						}
+						break;
+					}
+				}
+			}
+			item.setText(component.getName());
+			item.setData(component.getParentPath());
+
+			boolean pass = checkParameter(component,true);
+			if(pass) {
+				item.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
+			}else {
+				item.setImage(CPluginImages.CFG_COMPTERROR_VIEW.createImage());
+			}			
+			
+			if(haveChildren(component,appTypeComponents)) {
+				fillItem(item,appTypeComponents,rootApp,true);
+			}	
+		}
+	}
+
 	@Override
 	public boolean performOk() {
 		// TODO Auto-generated method stub
@@ -1141,49 +1181,55 @@ public class ComponentCfgPage extends PropertyPage{
 	}
 
 	private void getBoardAndCpu() {
-		String cpuName=null,boardName=null;
 		IProject project = getProject();
-		IFile pfile = project.getFile(".project");
-		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
-		factory.setIgnoringElementContentWhitespace(true);    
-		Document doc = null;
-		DocumentBuilder db;
-		try {
-			db = factory.newDocumentBuilder();
-			doc = db.parse(pfile.getLocation().toFile());
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		String srcPath = project.getLocation().toString()+"/src";
+		File hardWardInfoFile = new File(srcPath+"/../"+"data/hardware_info.xml");
+		ReadHardWareDesc rhwd = new ReadHardWareDesc();
+		List<String> hardwares = rhwd.getHardWares(hardWardInfoFile);
+		String cpuName=hardwares.get(1);
+		String boardName=hardwares.get(0);
 		
-		// 获取根节点
-        Element root = doc.getDocumentElement();
-        NodeList linkList = doc.getElementsByTagName("link");
-        boolean boardGet = false;
-        boolean cpuGet = false;
-        for(int i=0;i<linkList.getLength();i++) {
-        	Node node = linkList.item(i);
-        	NodeList cList = node.getChildNodes();
-			for (int j = 1; j < cList.getLength(); j += 2) {
-				org.w3c.dom.Node cNode = cList.item(j);
-				String nodeName = cNode.getNodeName();
-				String linkContent = cNode.getTextContent();		
-				//节点名字为name
-				if(nodeName.equals("name")) {
-					if(linkContent.contains("src/libos/bsp/boarddrv/")) {												
-						boardName = linkContent.replaceAll("src/libos/bsp/boarddrv/", "");
-						boardGet = true;
-					}else if(linkContent.contains("src/libos/bsp/cpudrv/")) {							
-						cpuName = linkContent.replaceAll("src/libos/bsp/cpudrv/", "");
-						cpuGet = true;	
-					}
-					break;
-				}  	        	
-			}      
-			if(boardGet && cpuGet){
-				break;
-			}
-        }
+//		IFile pfile = project.getFile(".project");
+//		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
+//		factory.setIgnoringElementContentWhitespace(true);    
+//		Document doc = null;
+//		DocumentBuilder db;
+//		try {
+//			db = factory.newDocumentBuilder();
+//			doc = db.parse(pfile.getLocation().toFile());
+//		} catch (Exception e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		// 获取根节点
+//        Element root = doc.getDocumentElement();
+//        NodeList linkList = doc.getElementsByTagName("link");
+//        boolean boardGet = false;
+//        boolean cpuGet = false;
+//        for(int i=0;i<linkList.getLength();i++) {
+//        	Node node = linkList.item(i);
+//        	NodeList cList = node.getChildNodes();
+//			for (int j = 1; j < cList.getLength(); j += 2) {
+//				org.w3c.dom.Node cNode = cList.item(j);
+//				String nodeName = cNode.getNodeName();
+//				String linkContent = cNode.getTextContent();		
+//				//节点名字为name
+//				if(nodeName.equals("name")) {
+//					if(linkContent.contains("src/libos/bsp/boarddrv/")) {												
+//						boardName = linkContent.replaceAll("src/libos/bsp/boarddrv/", "");
+//						boardGet = true;
+//					}else if(linkContent.contains("src/libos/bsp/cpudrv/")) {							
+//						cpuName = linkContent.replaceAll("src/libos/bsp/cpudrv/", "");
+//						cpuGet = true;	
+//					}
+//					break;
+//				}  	        	
+//			}      
+//			if(boardGet && cpuGet){
+//				break;
+//			}
+//        }
 
 		ReadBoardXml rbx = new ReadBoardXml();
 		List<Board> boards = new ArrayList<Board>();
@@ -1507,7 +1553,7 @@ public class ComponentCfgPage extends PropertyPage{
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("select") && !tag.equals("free")) {
-					for (int j = 1; j < infos.length; j++) {// for (int j = 1; j < infos.length; j++)
+					for (int j = 1; j < infos.length; j++) {
 						ranges.add(infos[j]);
 					}
 				}
@@ -1555,18 +1601,33 @@ public class ComponentCfgPage extends PropertyPage{
 					if(pjCgfs.size()>0) {//如果是通过右键Properties打开的界面，则显示修改后的数值
             			for(String cfg:pjCgfs) {
             				if(cfg.contains(members[1])) {
-            					String[] cfgs = cfg.trim().split("\\s+");
-            					dataString = cfgs[2];
-            					item.setText(new String[]{realComptName, cfgs[2].equals("default")?"":cfgs[2], defines.length>1?annoation:""});
+            					String[] cdefines = cfg.split("//");
+            					String[] cfgs = cdefines[0].trim().split("\\s+");
+            					if(cfgs.length == 3) {
+            						dataString = cfgs[2].equals("default")?"":cfgs[2];
+            						item.setText(new String[]{realComptName, dataString, cdefines.length>1?annoation:""});
+            					}else if(cfgs.length == 4){
+            						int begin = cdefines[0].indexOf("\"");
+            						int end = cdefines[0].lastIndexOf("\"");
+            						dataString = cdefines[0].substring(begin, end+1);
+            						item.setText(new String[]{realComptName, dataString, cdefines.length>1?annoation:""});
+            					}
             					break;
             				}
             			}
             			
             		}else {
-            			
-            			dataString = members[2];
-            			item.setText(new String[] { realComptName, members[2].equals("default") ? "" : members[2],
-    							defines.length > 1 ? annoation : "" });
+            			if (members.length == 3) {
+            				dataString = members[2].equals("default") ? "" : members[2];
+        					item.setText(new String[] { realComptName, dataString,
+        							defines.length > 1 ? annoation : "" });
+        				}else if (members.length == 4) {
+        					int begin = defines[0].indexOf("\"");
+        					int end = defines[0].lastIndexOf("\"");
+        					dataString = defines[0].substring(begin, end+1);
+        					item.setText(new String[] { realComptName, dataString,
+        							defines.length > 1 ? annoation : "" });
+        				}	
             		}
 				
 				} else {
@@ -1614,13 +1675,65 @@ public class ComponentCfgPage extends PropertyPage{
 					Button checkBtn = new Button(table, SWT.CHECK);
 					editor.setEditor(checkBtn, item, 1);
 					int cur = i;
-					if (parameter.startsWith("//")) {
-						isSelect[i] = false;
-						checkBtn.setSelection(false);
-					} else {
+					boolean symolsExist = false;
+					final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(curProject);
+					ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
+					for(int m=0;m<conds.length;m++) {
+						if(isApp) {
+							if(conds[m].getName().contains("libos_App")) {
+								ICResourceDescription rds = conds[m].getRootFolderDescription();
+								ICLanguageSetting[] languageSettings = getLangSetting(rds);
+								for (int n=0; n<languageSettings.length; n++) {
+									if(n==0) {
+										ICLanguageSetting lang = languageSettings[n];
+										List<ICLanguageSettingEntry>  entries = lang.getSettingEntriesList(ICSettingEntry.MACRO);
+										for(ICLanguageSettingEntry entry:entries) {
+											System.out.println("parameter:   "+parameter+"       entry:   "+entry.getName());
+											if(parameter.contains(entry.getName())) {
+												symolsExist = true;
+												break;
+											}
+										}
+										
+									}
+								}
+							}
+						}else {
+							if(conds[m].getName().contains("libos_Iboot")) {
+								ICResourceDescription rds = conds[m].getRootFolderDescription();
+								ICLanguageSetting[] languageSettings = getLangSetting(rds);
+								for (int n=0; n<languageSettings.length; n++) {
+									if(n==0) {
+										ICLanguageSetting lang = languageSettings[n];
+										List<ICLanguageSettingEntry>  entries = lang.getSettingEntriesList(ICSettingEntry.MACRO);
+										for(ICLanguageSettingEntry entry:entries) {
+											System.out.println("parameter:   "+parameter+"       entry:   "+entry.getName());
+											if(parameter.contains(entry.getName())) {
+												symolsExist = true;
+												break;
+											}
+										}
+										
+									}
+								}
+							}
+						}
+						
+					}
+					if (symolsExist) {
 						isSelect[i] = true;
 						checkBtn.setSelection(true);
+					} else {
+						isSelect[i] = false;
+						checkBtn.setSelection(false);
 					}
+//					if (parameter.startsWith("//")) {
+//						isSelect[i] = false;
+//						checkBtn.setSelection(false);
+//					} else {
+//						isSelect[i] = true;
+//						checkBtn.setSelection(true);
+//					}
 					checkBtn.addListener(SWT.CHECK, new Listener() {
 
 						@Override
@@ -1815,6 +1928,26 @@ public class ComponentCfgPage extends PropertyPage{
 				tabelControls.add(annoText);
 			}
 		}
+		// 重新布局表格  
+		for (int i = 0; i < tableHeader.length; i++)  
+		{  
+		    table.getColumn(i).pack();  
+		}
+	}
+	
+	public ICLanguageSetting[] getLangSetting(ICResourceDescription rcDes) {
+		switch (rcDes.getType()) {
+		case ICSettingBase.SETTING_PROJECT:
+		case ICSettingBase.SETTING_CONFIGURATION:
+		case ICSettingBase.SETTING_FOLDER:
+			ICFolderDescription foDes = (ICFolderDescription)rcDes;
+			return foDes.getLanguageSettings();
+		case ICSettingBase.SETTING_FILE:
+			ICFileDescription fiDes = (ICFileDescription)rcDes;
+			ICLanguageSetting langSetting = fiDes.getLanguageSetting();
+			return (langSetting != null) ? new ICLanguageSetting[] { langSetting } : null;
+		}
+		return null;
 	}
 	
 	public void creatProjectConfiure(File file,String coreConfigure,boolean isApp){
@@ -1837,34 +1970,36 @@ public class ComponentCfgPage extends PropertyPage{
 		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
 		for(int i=0;i<compontentsCheckedSort.size();i++) {		
-			if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
-				defineInit += "//******************************* Configure "+compontentsCheckedSort.get(i).getName()+
-												" ******************************************//\n";
-				String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
-				for(int j=0;j<configures.length;j++) {
-					if(configures[j].contains("#define")) {
-							String pureDefine = null;
-							String annoName = null;
-							if(configures[j].trim().startsWith("//")) {
-								pureDefine = configures[j].replaceFirst("//", "");
-							}else {
-								pureDefine = configures[j];
-							}
-							String[] defines = pureDefine.split("//");
-							if(defines.length>1) {
-								String[] infos = defines[1].split(",|，");
-								if (infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
-									annoName = infos[0];
+			if(compontentsCheckedSort.get(i).getTarget().equals(ConfigureTarget.HEADER.getName())) {
+				if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
+					defineInit += "//******************************* Configure "+compontentsCheckedSort.get(i).getName()+
+													" ******************************************//\n";
+					String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
+					for(int j=0;j<configures.length;j++) {
+						if(configures[j].contains("#define")) {
+								String pureDefine = null;
+								String annoName = null;
+								if(configures[j].trim().startsWith("//")) {
+									pureDefine = configures[j].replaceFirst("//", "");
+								}else {
+									pureDefine = configures[j];
 								}
-							}
-							if(annoName == null) {
-								defineInit += configures[j]+"\n";	
-							}else {
-								defineInit += configures[j].replace(annoName,"").replace(",", "").replace("，", "")+"\n";	
-							}						
+								String[] defines = pureDefine.split("//");
+								if(defines.length>1) {
+									String[] infos = defines[1].split(",|，");
+									if (infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
+										annoName = infos[0];
+									}
+								}
+								if(annoName == null) {
+									defineInit += configures[j]+"\n";	
+								}else {
+									defineInit += configures[j].replace(annoName,"").replace(",", "").replace("，", "")+"\n";	
+								}						
+						}
 					}
-				}
-			}		
+				}	
+			}
 		}
 		defineInit += "//******************************* Core Clock ******************************************//\n";
 		defineInit += coreConfigure;

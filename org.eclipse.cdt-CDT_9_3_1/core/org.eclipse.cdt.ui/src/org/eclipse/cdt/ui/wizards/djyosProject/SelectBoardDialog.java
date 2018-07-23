@@ -256,17 +256,19 @@ public class SelectBoardDialog extends StatusDialog{
 			File[] files = boardFile.listFiles();
 			for(int j=0;j<files.length;j++){
 					File file = files[j];
-					File[] mfiles = file.listFiles();
-					for(int k=0;k<mfiles.length;k++) {
-						if(mfiles[k].getName().endsWith(".xml")) {
-							try {
-								Board board = rbx.getBoard(mfiles[k]);
-								boards.add(board);
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+					if(file.isDirectory()) {
+						File[] mfiles = file.listFiles();
+						for(int k=0;k<mfiles.length;k++) {
+							if(mfiles[k].getName().endsWith(".xml")) {
+								try {
+									Board board = rbx.getBoard(mfiles[k]);
+									boards.add(board);
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								break;
 							}
-							break;
 						}
 					}
 			}

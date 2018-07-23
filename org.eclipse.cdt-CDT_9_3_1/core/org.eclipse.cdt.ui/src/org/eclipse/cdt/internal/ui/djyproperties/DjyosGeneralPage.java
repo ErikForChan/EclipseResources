@@ -34,6 +34,7 @@ import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.cpu.core.memory.CoreMemory;
+import org.eclipse.cdt.ui.wizards.djyosProject.ReadHardWareDesc;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 public class DjyosGeneralPage extends PropertyPage{
@@ -205,49 +206,56 @@ public class DjyosGeneralPage extends PropertyPage{
 	}
 	
 	private void getBoardAndCpu() {
-		String cpuName=null,boardName=null;
 		IProject project = getProject();
-		IFile pfile = project.getFile(".project");
-		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
-		factory.setIgnoringElementContentWhitespace(true);    
-		Document doc = null;
-		DocumentBuilder db;
-		try {
-			db = factory.newDocumentBuilder();
-			doc = db.parse(pfile.getLocation().toFile());
-		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		String srcPath = project.getLocation().toString()+"/src";
+		File hardWardInfoFile = new File(srcPath+"/../"+"data/hardware_info.xml");
+		ReadHardWareDesc rhwd = new ReadHardWareDesc();
+		List<String> hardwares = rhwd.getHardWares(hardWardInfoFile);
+		String cpuName=hardwares.get(1);
+		String boardName=hardwares.get(0);
+//		IFile pfile = project.getFile(".project");
+//		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
+//		factory.setIgnoringElementContentWhitespace(true);    
+//		Document doc = null;
+//		DocumentBuilder db;
+//		try {
+//			db = factory.newDocumentBuilder();
+//			doc = db.parse(pfile.getLocation().toFile());
+//		} catch (Exception e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		// 获取根节点
+//        Element root = doc.getDocumentElement();
+//        NodeList linkList = doc.getElementsByTagName("link");
+//        boolean boardGet = false;
+//        boolean cpuGet = false;
+//        for(int i=0;i<linkList.getLength();i++) {
+//        	Node node = linkList.item(i);
+//        	NodeList cList = node.getChildNodes();
+//			for (int j = 1; j < cList.getLength(); j += 2) {
+//				org.w3c.dom.Node cNode = cList.item(j);
+//				String nodeName = cNode.getNodeName();
+//				String linkContent = cNode.getTextContent();		
+//				//节点名字为name
+//				if(nodeName.equals("name")) {
+//					if(linkContent.contains("src/libos/bsp/boarddrv/")) {												
+//						boardName = linkContent.replaceAll("src/libos/bsp/boarddrv/", "");
+//						boardGet = true;
+//					}else if(linkContent.contains("src/libos/bsp/cpudrv/")) {							
+//						cpuName = linkContent.replaceAll("src/libos/bsp/cpudrv/", "");
+//						cpuGet = true;	
+//					}
+//					break;
+//				}  	        	
+//			}      
+//			if(boardGet && cpuGet){
+//				break;
+//			}
+//        }
 		
-		// 获取根节点
-        Element root = doc.getDocumentElement();
-        NodeList linkList = doc.getElementsByTagName("link");
-        boolean boardGet = false;
-        boolean cpuGet = false;
-        for(int i=0;i<linkList.getLength();i++) {
-        	Node node = linkList.item(i);
-        	NodeList cList = node.getChildNodes();
-			for (int j = 1; j < cList.getLength(); j += 2) {
-				org.w3c.dom.Node cNode = cList.item(j);
-				String nodeName = cNode.getNodeName();
-				String linkContent = cNode.getTextContent();		
-				//节点名字为name
-				if(nodeName.equals("name")) {
-					if(linkContent.contains("src/libos/bsp/boarddrv/")) {												
-						boardName = linkContent.replaceAll("src/libos/bsp/boarddrv/", "");
-						boardGet = true;
-					}else if(linkContent.contains("src/libos/bsp/cpudrv/")) {							
-						cpuName = linkContent.replaceAll("src/libos/bsp/cpudrv/", "");
-						cpuGet = true;	
-					}
-					break;
-				}  	        	
-			}      
-			if(boardGet && cpuGet){
-				break;
-			}
-        }
+		
 
 		ReadBoardXml rbx = new ReadBoardXml();
 		List<Board> boards = new ArrayList<Board>();

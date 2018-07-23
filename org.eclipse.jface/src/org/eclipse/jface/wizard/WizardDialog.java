@@ -306,8 +306,8 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 	 */
 	public WizardDialog(Shell parentShell, IWizard newWizard) {
 		super(parentShell);
-//		setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
-//				| SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());//修改前的设置
+		setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
+				| SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());//修改前的设置
 		setWizard(newWizard);
 		// since VAJava can't initialize an instance var with an anonymous
 		// class outside a constructor we do it here:
@@ -508,13 +508,15 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
             // See also special code in org.eclipse.jface.dialogs.Dialog#initializeBounds()
 			finishButton.moveBelow(null);
 		}
-		if(wizard.isPageDragable()) {
-			setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
-					| SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
-		}else {
-			setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
-					| SWT.APPLICATION_MODAL | getDefaultOrientation());
-		}
+//		if(wizard.isPageDragable()) {
+//			System.out.println("isPageDragable");
+//			setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
+//					| SWT.APPLICATION_MODAL | SWT.RESIZE | getDefaultOrientation());
+//		}else {
+//			System.out.println("!!!isPageDragable");
+//			setShellStyle(SWT.CLOSE | SWT.MAX | SWT.TITLE | SWT.BORDER
+//					| SWT.APPLICATION_MODAL | getDefaultOrientation());
+//		}
 	}
 
 	@Override

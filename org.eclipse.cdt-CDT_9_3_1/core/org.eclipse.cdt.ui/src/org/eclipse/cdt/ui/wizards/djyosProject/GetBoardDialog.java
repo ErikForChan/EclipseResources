@@ -317,13 +317,13 @@ public class GetBoardDialog extends StatusDialog {
 	public GetBoardDialog(Shell parent) {
 		super(parent);
 		setTitle("板件选择");
-		setShellStyle(getShellStyle() | SWT.CLOSE | SWT.MAX);
+		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
 	}
 
 	@Override
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
-		return new Point(500, 500);
+		return new Point(500, 600);
 	}
 
 	@Override
@@ -334,7 +334,7 @@ public class GetBoardDialog extends StatusDialog {
 		Composite composite = (Composite) super.createDialogArea(parent);
 		composite.setSize(500, 500);
 		GridLayout layout = new GridLayout();
-		layout.marginHeight = 5;
+		layout.marginTop = 5;
 		layout.numColumns = 1;
 		layout.marginLeft = 5;
 		Composite tipCpt = new Composite(composite, SWT.NONE);
@@ -411,7 +411,7 @@ public class GetBoardDialog extends StatusDialog {
 		baordDescCpt = new Composite(composite, SWT.NONE);
 		GridLayout gl = new GridLayout();
 		gl.numColumns = 1;
-		gl.marginHeight = 10;
+//		gl.marginTop = 10;
 		gl.marginLeft = 10;
 		baordDescCpt.setLayout(gl);
 		baordDescCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -432,7 +432,6 @@ public class GetBoardDialog extends StatusDialog {
 		+ "Cpu外设: ");
 
 		boardDetailsDesc.setEditable(false);
-		boardDetailsDesc.setBounds(0, 0, 200, 700);
 		super.createDialogArea(parent);
 		return super.createDialogArea(parent);
 	}

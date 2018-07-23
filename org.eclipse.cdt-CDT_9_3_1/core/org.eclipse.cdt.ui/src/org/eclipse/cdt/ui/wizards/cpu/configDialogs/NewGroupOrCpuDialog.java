@@ -1022,14 +1022,14 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 							int curNum = -1;         
 							Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$");  //^[-\\+]?[\\d]*$
     	    		        boolean isInt =  pattern.matcher(size).matches();
-		    				if(size.startsWith("0x")) {
+		    				if(size.startsWith("0x") && !size.trim().equals("0x")) {
 		    					curNum = Integer.parseInt(size.substring(2),16);
 		    				}else {
 		    					if(isInt) {
 		    						curNum = Integer.parseInt(size);
 		    					}
 		    				}             					
-	        				if(curNum<=0) {
+	        				if(curNum<0) {
 	        					sizeField.setText("");
 	        					MessageDialog.openInformation(window.getShell(), "提示",
 	        							"请输入正整数(不包含0)");
@@ -1849,12 +1849,18 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	protected void okPressed() {
 		// TODO Auto-generated method stub
 		boolean isOK = true;
+		String errorMsg = null;
 		List<Core> cores = newCpu.getCores();
-		for(Core core:cores) {
-			List<CoreMemory> memorys = core.getMemorys();
+		for(int i=0;i<cores.size();i++) {
+			List<CoreMemory> memorys = cores.get(i).getMemorys();
 			for(CoreMemory memory:memorys) {
 				if(memory.getType() == null || memory.getStartAddr() == null || memory.getSize() == null) {
 					isOK = false;
+					errorMsg = "请填写完整内核"+(i+1)+"的存储配置！";
+					break;
+				}else if(memory.getSize().equals("0") || memory.getSize().equals("0x")){
+					isOK = false;
+					errorMsg = "内核"+(i+1)+"的内存大小需大于0！";
 					break;
 				}
 			}
@@ -1885,7 +1891,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			}
 		}else {
 			MessageDialog.openInformation(window.getShell(), "提示",
-					"请填写完整存储配置！");
+					errorMsg);
 		}
 		
 	}

@@ -362,7 +362,7 @@ public class BoardMainWizard extends WizardPage{
 		
 		Composite boardNameCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout layoutBoardName = new GridLayout();
-		layoutBoardName.numColumns = 2;
+		layoutBoardName.numColumns = 3;
 		boardNameCpt.setLayout(layoutBoardName);
 		boardNameCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		Label nameLabel = new Label(boardNameCpt, SWT.NONE);
@@ -370,7 +370,11 @@ public class BoardMainWizard extends WizardPage{
 		boardNameField = new Text(boardNameCpt, SWT.BORDER);
 		GridData boardNameData = new GridData(GridData.FILL_HORIZONTAL);
 		boardNameField.setLayoutData(boardNameData);
+		boardNameField.setMessage("在此输入板件名可新建板件，点击右边按钮可修改/维护板件");
 		boardNameField.addListener(SWT.Modify, nameModifyListener);
+		Button selectBoardBtn = new Button(boardNameCpt,SWT.PUSH);
+		selectBoardBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		selectBoardBtn.setText("选择板件");
 		
 		Composite newSearchCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout layoutnewSearchCpt = new GridLayout();
@@ -739,14 +743,14 @@ public class BoardMainWizard extends WizardPage{
 						int curNum = -1;         
 						Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$");  //^[-\\+]?[\\d]*$
 	    		        boolean isInt =  pattern.matcher(size).matches();
-	    				if(size.startsWith("0x")) {
+	    				if(size.startsWith("0x") && !size.trim().equals("0x")) {
 	    					curNum = Integer.parseInt(size.substring(2),16);
 	    				}else {
 	    					if(isInt) {
 	    						curNum = Integer.parseInt(size);
 	    					}
 	    				}             					
-        				if(curNum<=0) {
+        				if(curNum<0) {
         					sizeField.setText("");
         					MessageDialog.openInformation(window.getShell(), "提示",
         							"请输入正整数(不包含0)");
