@@ -343,8 +343,6 @@ public class DjyosMainWizardPage extends WizardPage {
 				case IOption.UNDEF_LIBRARY_PATHS:
 				case IOption.UNDEF_LIBRARY_FILES:
 				case IOption.UNDEF_MACRO_FILES:
-//					if (((Option)op1).isDirty())
-//						isIndexerAffected = true;
 					@SuppressWarnings("unchecked")
 					String[] data = ((List<String>)op1[i].getValue()).toArray(new String[0]);
 					ManagedBuildManager.setOption(res, dst, op2[i], data);
@@ -389,7 +387,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		for(int i=0;i<selectedCpu.getCores().size();i++) {
 			Core core = selectedCpu.getCores().get(i);
 			for (int j = 0; j < core.getMemorys().size(); j++) {
-				if(core.getMemorys().get(j).getType().equals("ROM")) {
+				if(core.getMemorys().get(j).getType().equals("FLASH")) {
 					coreMemorys_ROM.add(core.getMemorys().get(j));				
 				}else if(core.getMemorys().get(j).getType().equals("RAM")) {
 					coreMemorys_RAM.add(core.getMemorys().get(j));
@@ -398,7 +396,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		}
 		
 		for(int i=0;i<coreMemorys_ROM.size();i++) {
-			ldsHead += "\n\textrom"+(i+1)+"(RX) : ORIGIN = "+coreMemorys_ROM.get(i).getStartAddr()
+			ldsHead += "\n\tInnerFlash"+(i+1)+"(RX) : ORIGIN = "+coreMemorys_ROM.get(i).getStartAddr()
 					+", LENGTH = "+coreMemorys_ROM.get(i).getSize();
 		}
 		for(int i=0;i<coreMemorys_RAM.size();i++) {
@@ -406,11 +404,11 @@ public class DjyosMainWizardPage extends WizardPage {
 					+", LENGTH = "+coreMemorys_RAM.get(i).getSize();
 		}
 		for(int i=0;i<onBoardMemorys_ROM.size();i++) {
-			ldsHead += "\n\tInnerFlash"+(i+1)+"(RX) : ORIGIN = "+onBoardMemorys_ROM.get(i).getStartAddr()
+			ldsHead += "\n\textrom"+(i+1)+"(RX) : ORIGIN = "+onBoardMemorys_ROM.get(i).getStartAddr()
 					+", LENGTH = "+onBoardMemorys_ROM.get(i).getSize();
 		}
 		for(int i=0;i<onBoardMemorys_RAM.size();i++) {
-			ldsHead += "\n\tRAM"+(i+1)+"(RXW) : ORIGIN = "+onBoardMemorys_RAM.get(i).getStartAddr()
+			ldsHead += "\n\textRam"+(i+1)+"(RXW) : ORIGIN = "+onBoardMemorys_RAM.get(i).getStartAddr()
 					+", LENGTH = "+onBoardMemorys_RAM.get(i).getSize();
 		}
 
@@ -443,7 +441,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		for(int i=0;i<selectedCpu.getCores().size();i++) {
 			Core core = selectedCpu.getCores().get(i);
 			for (int j = 0; j < core.getMemorys().size(); j++) {
-				if(core.getMemorys().get(j).getType().equals("ROM")) {
+				if(core.getMemorys().get(j).getType().equals("FLASH")) {
 					coreMemorys_ROM.add(core.getMemorys().get(j));
 				}else if(core.getMemorys().get(j).getType().equals("RAM")) {
 					coreMemorys_RAM.add(core.getMemorys().get(j));

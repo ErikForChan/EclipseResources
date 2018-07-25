@@ -13,4 +13,28 @@ public class DideHelper {
 		return didePath;
 	}
 	
+	public String getTemplatePath() {
+		return fullPath.substring(6)+"djyosTemplate";
+	}
+	
+	public String getDjyosSrcPath() {
+		return didePath+"djysrc";
+	}
+	
+	public String getUserBoardFilePath() {
+		return didePath+"djysrc\\bsp\\boarddrv\\user";
+	}
+	
+	public String getDemoBoardFilePath() {
+		return didePath+"djysrc\\bsp\\boarddrv\\demo";
+	}
+	
+	public String getRelativeUserBoardFilePath() {
+		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/user/";
+	}
+	
+	public String getRelativeDemoBoardFilePath() {
+		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/";
+	}
+	
 }

@@ -2,6 +2,7 @@ package org.eclipse.cdt.ui.wizards.board;
 
 import java.io.File;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -12,6 +13,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.eclipse.core.runtime.Platform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -23,7 +25,7 @@ import org.eclipse.cdt.ui.wizards.component.Component;
 
 public class CreatBoardXml {
 	 DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
-	 	
+	 
      public void creatBoardXml(Board board,File file) {
         try {
         	factory.setIgnoringElementContentWhitespace(false);

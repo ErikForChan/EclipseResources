@@ -479,7 +479,7 @@
             class="org.eclipse.cdt.ui.wizards.board.BoardWizard"
             finalPerspective="org.eclipse.cdt.ui.CPerspective"
             hasPages="true"
-            icon="icons/ovr16/board_img.png"
+            icon="icons/ovr16/board_img0725.gif"
             id="org.eclipse.cdt.ui.wizards.NewCWizard5"
             name = "%Board.title"
             project="true">

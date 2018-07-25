@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -124,7 +125,7 @@ public class ComponentCfgPage extends PropertyPage{
 	private ArrayList<String> comptVisited = new ArrayList<String>();
 	private TableEditor editor,editor1;
 	private String defineInit;
-	private boolean appExist = false,ibootExist = false;
+	private boolean appExist = false,ibootExist = false,configureChanged = false,selectChanged = false;
 	DecimalFormat df  = new DecimalFormat("######0");
 	List<Component> compontentsList = null;
 	List<Component> appCompontents = new ArrayList<Component>();
@@ -391,7 +392,9 @@ public class ComponentCfgPage extends PropertyPage{
 	private void creatConfigTable(Composite parent) {
 		table = new Table(parent, SWT.NONE | SWT.FULL_SELECTION | SWT.H_SCROLL);
 		GridData gd = new GridData(GridData.FILL_BOTH);
-		gd.minimumHeight = 80;
+		gd.minimumHeight = 120;
+		gd.grabExcessHorizontalSpace = true;
+		gd.grabExcessHorizontalSpace = true;
 		table.setLayoutData(gd);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -403,8 +406,9 @@ public class ComponentCfgPage extends PropertyPage{
 
 			// 设置表头可移动，默认为false
 			tableColumn.setMoveable(true);
+			int tWidth = table.getBorderWidth();
 			if (i == tableHeader.length - 1) {
-				tableColumn.setWidth(200);
+				tableColumn.setWidth(210);
 			} else {
 				tableColumn.setWidth(130);
 			}
@@ -669,6 +673,7 @@ public class ComponentCfgPage extends PropertyPage{
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
+				selectChanged = true;
 				TreeItem item = (TreeItem) event.item;
 				if (item == null) {
 					return;
@@ -987,78 +992,113 @@ public class ComponentCfgPage extends PropertyPage{
 		}
 	}
 
+	private void createComptCheck(String path,boolean isApp) {
+		// 生成component_check.xml文件
+		String xmlName = null;
+		List<Component> curCompontents = new ArrayList<Component>();
+		if (isApp) {
+			xmlName = "app_component_check.xml";
+			curCompontents = appCompontents;
+		} else {
+			xmlName = "iboot_component_check.xml";
+			curCompontents = ibootCompontents;
+		}
+		CreateCheckXml ccx = new CreateCheckXml();
+		File checkFile = new File(path + "/../" + "data/" + xmlName);
+		if (checkFile.exists()) {
+			checkFile.delete();
+		}
+		try {
+			checkFile.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ccx.createCheck(curCompontents, checkFile);
+	}
+	
 	@Override
 	public boolean performOk() {
 		// TODO Auto-generated method stub
 		IProject project = getProject();
-		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
-		ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
-		resetExclude(appCompontents,appCompontentsInit,true,conds,project);
-		resetExclude(ibootCompontents,ibootCompontentsInit,false,conds,project);
-		
-		try {
-			CoreModel.getDefault().setProjectDescription(project, local_prjd);
-		} catch (CoreException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		if(selectChanged) {
+			final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
+			ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration
+			if(appExist) {
+				createComptCheck(project.getLocation().toString()+"/src",true);
+				resetExclude(appCompontents,appCompontentsInit,true,conds,project);
+			}
+			if(ibootExist) {
+				createComptCheck(project.getLocation().toString()+"/src",false);
+				resetExclude(ibootCompontents,ibootCompontentsInit,false,conds,project);
+			}
+			
+			try {
+				CoreModel.getDefault().setProjectDescription(project, local_prjd);
+			} catch (CoreException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
 		}
-		
-		List<File> cfgFiles = new ArrayList<File>();
-		File appCfgFile = new File(project.getLocation().toString()+"/src/app/OS_prjcfg/project_config.h");
-		File ibootCfgFile = new File(project.getLocation().toString()+"/src/iboot/OS_prjcfg/project_config.h");
-		if(appExist) {
-			cfgFiles.add(appCfgFile);
-		}
-		if(ibootExist) {
-			cfgFiles.add(ibootCfgFile);
-		}		
-		
-		try {
-			IRunnableWithProgress runnable = new IRunnableWithProgress() {
-				@Override
-				public void run(IProgressMonitor monitor)
-						throws InvocationTargetException, InterruptedException {
-					monitor.beginTask("Configuration Reset...", 100);		
-					for(File file:cfgFiles) {
-						String str = null;
-						String coreConfigure = null;
-						boolean isApp;
-						if(file.getPath().contains("app")) {
-							isApp = true;
-						}else {
-							isApp = false;
-						}
-						try {
-							FileReader reader = new FileReader(file.getPath());
-							BufferedReader br = new BufferedReader(reader);
-							reader = new FileReader(file.getPath());
-							while ((str = br.readLine()) != null) {
-								if(str.contains("CFG_CORE_MCLK")) {
-									coreConfigure = str;
-									break;
-								}
+
+		if(configureChanged) {
+			List<File> cfgFiles = new ArrayList<File>();
+			File appCfgFile = new File(project.getLocation().toString()+"/src/app/OS_prjcfg/project_config.h");
+			File ibootCfgFile = new File(project.getLocation().toString()+"/src/iboot/OS_prjcfg/project_config.h");
+			if(appExist) {
+				cfgFiles.add(appCfgFile);
+			}
+			if(ibootExist) {
+				cfgFiles.add(ibootCfgFile);
+			}		
+			
+			try {
+				IRunnableWithProgress runnable = new IRunnableWithProgress() {
+					@Override
+					public void run(IProgressMonitor monitor)
+							throws InvocationTargetException, InterruptedException {
+						monitor.beginTask("Configuration Reset...", 100);		
+						for(File file:cfgFiles) {
+							String str = null;
+							String coreConfigure = null;
+							boolean isApp;
+							if(file.getPath().contains("app")) {
+								isApp = true;
+							}else {
+								isApp = false;
 							}
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+							try {
+								FileReader reader = new FileReader(file.getPath());
+								BufferedReader br = new BufferedReader(reader);
+								reader = new FileReader(file.getPath());
+								while ((str = br.readLine()) != null) {
+									if(str.contains("CFG_CORE_MCLK")) {
+										coreConfigure = str;
+										break;
+									}
+								}
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							
+							initProject(project.getLocation().toString()+"/src",isApp);
+							creatProjectConfiure(file,coreConfigure,isApp);
+							monitor.worked(100/cfgFiles.size());
+						}			
 						
-						initProject(project.getLocation().toString()+"/src",isApp);
-						creatProjectConfiure(file,coreConfigure,isApp);
-						monitor.worked(100/cfgFiles.size());
-					}			
-					
-					monitor.done();
-				}
-			};
-			ProgressMonitorDialog dialog = new ProgressMonitorDialog(
-					PlatformUI.getWorkbench().getDisplay().getActiveShell());
-			dialog.setCancelable(false);
-			dialog.run(true, true, runnable);
-		} catch (Exception e) {
-			e.printStackTrace();
+						monitor.done();
+					}
+				};
+				ProgressMonitorDialog dialog = new ProgressMonitorDialog(
+						PlatformUI.getWorkbench().getDisplay().getActiveShell());
+				dialog.setCancelable(false);
+				dialog.run(true, true, runnable);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
-		
 		return super.performOk();
 	}
 	
@@ -1066,8 +1106,6 @@ public class ComponentCfgPage extends PropertyPage{
 		// TODO Auto-generated method stub
 		//appCompontents,ibootCompontents
 		String srcLocation = getDIDEPath()+"djysrc";
-		System.out.println("size1: "+components.size());
-		System.out.println("size2: "+componentsInit.size());
 		for(int i=0;i<components.size();i++) {
 			String componentPath = components.get(i).getParentPath().replace("\\", "/");
 			String relativePath = componentPath.replace(srcLocation, "").replace("\\", "/");
@@ -1076,34 +1114,29 @@ public class ComponentCfgPage extends PropertyPage{
 			String ifilePath = (project.getLocation().toString() + notExclude);
 			IFolder ifolder = project.getFolder(ifilePath.substring(project.getLocation().toString().length()));
 			if(componentsInit.get(i).isSelect()!=components.get(i).isSelect()) {
-				System.out.println("getName: "+componentsInit.get(i).getName());
 				for (int j = 0; j < conds.length; j++) {
 					if(isApp) {
 						if(conds[j].getName().contains("libos_App")) {
 							List<IFolder> includeFolders = new ArrayList<IFolder>();
 							getFolders(ifolder, includeFolders);
-							for(int k=includeFolders.size()-1;k>=0;k--) {
-								if(components.get(i).isSelect()) {
-									System.out.println("ifolderT: "+includeFolders.get(k).getName());
+							if(components.get(i).isSelect()) {
+								for(int k=includeFolders.size()-1;k>=0;k--) {
 									setExclude(includeFolders.get(k), conds[j], false);
-								}else {
-									System.out.println("ifolderF: "+includeFolders.get(k).getName());
-									setExclude(includeFolders.get(k), conds[j], true);
 								}
+							}else{
+								setExclude(ifolder, conds[j], true);
 							}
-							
 						}
 					}else {
 						if(conds[j].getName().contains("libos_Iboot")) {
 							List<IFolder> includeFolders = new ArrayList<IFolder>();
 							getFolders(ifolder, includeFolders);
-							for(int k=includeFolders.size()-1;k>=0;k--) {
-								if(components.get(i).isSelect()) {
+							if(components.get(i).isSelect()) {
+								for(int k=includeFolders.size()-1;k>=0;k--) {
 									setExclude(includeFolders.get(k), conds[j], false);
-								}else {
-									setExclude(includeFolders.get(k), conds[j], true);
 								}
-								
+							}else{
+								setExclude(ifolder, conds[j], true);
 							}
 						}
 					}
@@ -1133,8 +1166,6 @@ public class ComponentCfgPage extends PropertyPage{
 	@Override
 	protected void performDefaults() {
 		// TODO Auto-generated method stub
-//		appCheckedSort = new ArrayList<Component>();
-//		ibootCheckedSort = new ArrayList<Component>();
 		appCompontentsChecked = new ArrayList<Component>();
 		ibootCompontentsChecked = new ArrayList<Component>();
 		Control[] controls = folder.getChildren();
@@ -1188,76 +1219,9 @@ public class ComponentCfgPage extends PropertyPage{
 		List<String> hardwares = rhwd.getHardWares(hardWardInfoFile);
 		String cpuName=hardwares.get(1);
 		String boardName=hardwares.get(0);
-		
-//		IFile pfile = project.getFile(".project");
-//		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
-//		factory.setIgnoringElementContentWhitespace(true);    
-//		Document doc = null;
-//		DocumentBuilder db;
-//		try {
-//			db = factory.newDocumentBuilder();
-//			doc = db.parse(pfile.getLocation().toFile());
-//		} catch (Exception e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		
-//		// 获取根节点
-//        Element root = doc.getDocumentElement();
-//        NodeList linkList = doc.getElementsByTagName("link");
-//        boolean boardGet = false;
-//        boolean cpuGet = false;
-//        for(int i=0;i<linkList.getLength();i++) {
-//        	Node node = linkList.item(i);
-//        	NodeList cList = node.getChildNodes();
-//			for (int j = 1; j < cList.getLength(); j += 2) {
-//				org.w3c.dom.Node cNode = cList.item(j);
-//				String nodeName = cNode.getNodeName();
-//				String linkContent = cNode.getTextContent();		
-//				//节点名字为name
-//				if(nodeName.equals("name")) {
-//					if(linkContent.contains("src/libos/bsp/boarddrv/")) {												
-//						boardName = linkContent.replaceAll("src/libos/bsp/boarddrv/", "");
-//						boardGet = true;
-//					}else if(linkContent.contains("src/libos/bsp/cpudrv/")) {							
-//						cpuName = linkContent.replaceAll("src/libos/bsp/cpudrv/", "");
-//						cpuGet = true;	
-//					}
-//					break;
-//				}  	        	
-//			}      
-//			if(boardGet && cpuGet){
-//				break;
-//			}
-//        }
-
+	
 		ReadBoardXml rbx = new ReadBoardXml();
-		List<Board> boards = new ArrayList<Board>();
-		List<String> paths = new ArrayList<String>();	
-		String userBoardFilePath = getDIDEPath()+"djysrc\\bsp\\boarddrv\\user";
-		String demoBoardFilePath = getDIDEPath()+"djysrc\\bsp\\boarddrv\\demo";
-		paths.add(userBoardFilePath);
-		paths.add(demoBoardFilePath);
-		for(int i=0;i<paths.size();i++) {
-			File boardFile = new File(paths.get(i));
-			File[] files = boardFile.listFiles();
-			for(int j=0;j<files.length;j++){
-					File file = files[j];
-					File[] mfiles = file.listFiles();
-					for(int k=0;k<mfiles.length;k++) {
-						if(mfiles[k].getName().endsWith(".xml")) {
-							try {
-								Board board = rbx.getBoard(mfiles[k]);
-								boards.add(board);
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							break;
-						}
-					}
-			}
-		}
+		List<Board> boards = rbx.getAllBoards();
 		
 		for(int i=0;i<boards.size();i++) {
 			if(boards.get(i).getBoardName().equals(boardName)) {
@@ -1499,7 +1463,7 @@ public class ComponentCfgPage extends PropertyPage{
 		String compName = componentSelect.getName();
 		IProject curProject = getProject();
 		List<String> pjCgfs = new ArrayList<String>();
-		if(!comptVisited.contains(compName)) {
+
 			File configFile = new File(
 					curProject.getLocation().toString() + "/src/" + (isApp?"app":"iboot") + "/OS_prjcfg/project_config.h");
 			FileReader reader;
@@ -1516,7 +1480,10 @@ public class ComponentCfgPage extends PropertyPage{
 					if (start && !stop) {
 						pjCgfs.add(str);// 添加当前组件的所有预定义值
 					}
-					if (str.contains("Configure") && str.contains(compName)) {
+					
+					String[] strs = str.split("\\s+");
+					List<String> strsList = Arrays.asList(strs);
+					if (strsList.contains("Configure") && strsList.contains(compName)) {
 						start = true;
 					}
 				}
@@ -1524,7 +1491,7 @@ public class ComponentCfgPage extends PropertyPage{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}	
+
 		
 		String configure = componentSelect.getConfigure();
 		String[] parametersDefined = configure.split("\n");
@@ -1600,6 +1567,7 @@ public class ComponentCfgPage extends PropertyPage{
 				if (members.length > 2) {
 					if(pjCgfs.size()>0) {//如果是通过右键Properties打开的界面，则显示修改后的数值
             			for(String cfg:pjCgfs) {
+            				System.out.println("cfg:	"+cfg);
             				if(cfg.contains(members[1])) {
             					String[] cdefines = cfg.split("//");
             					String[] cfgs = cdefines[0].trim().split("\\s+");
@@ -1660,6 +1628,7 @@ public class ComponentCfgPage extends PropertyPage{
 						@Override
 						public void widgetSelected(SelectionEvent e) {
 							// TODO Auto-generated method stub
+							configureChanged = true;
 							item.setText(1, combo.getText());
 							comptVisited.add(compName);
 							resetConfigure(componentSelect);
@@ -1688,7 +1657,6 @@ public class ComponentCfgPage extends PropertyPage{
 										ICLanguageSetting lang = languageSettings[n];
 										List<ICLanguageSettingEntry>  entries = lang.getSettingEntriesList(ICSettingEntry.MACRO);
 										for(ICLanguageSettingEntry entry:entries) {
-											System.out.println("parameter:   "+parameter+"       entry:   "+entry.getName());
 											if(parameter.contains(entry.getName())) {
 												symolsExist = true;
 												break;
@@ -1727,18 +1695,13 @@ public class ComponentCfgPage extends PropertyPage{
 						isSelect[i] = false;
 						checkBtn.setSelection(false);
 					}
-//					if (parameter.startsWith("//")) {
-//						isSelect[i] = false;
-//						checkBtn.setSelection(false);
-//					} else {
-//						isSelect[i] = true;
-//						checkBtn.setSelection(true);
-//					}
+
 					checkBtn.addListener(SWT.CHECK, new Listener() {
 
 						@Override
 						public void handleEvent(Event event) {
 							// TODO Auto-generated method stub
+							configureChanged = true;
 							boolean checked = checkBtn.getSelection();
 							if (checked) {
 								isSelect[cur] = true;
@@ -1759,7 +1722,6 @@ public class ComponentCfgPage extends PropertyPage{
 					text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 					// 将文本框当前值，设置为表格中的值
 					text.setText(item.getText(1).replaceAll("\\(|\\)", ""));
-					
 					// 关键方法，将编辑单元格与文本框绑定到表格的第一列
 					editor.setEditor(text, item, 1);
 					tabelControls.add(text);
@@ -1783,6 +1745,7 @@ public class ComponentCfgPage extends PropertyPage{
 							}
 
 							long curData;
+							System.out.println("parameter:	"+parameter+"  "+tag);
 							if (dataString.startsWith("0x")) {
 								curData = Long.parseLong(dataString.substring(2), 16);
 							} else if (members[2].contains("+") || members[2].contains("-")
@@ -1822,10 +1785,10 @@ public class ComponentCfgPage extends PropertyPage{
 	    						}
 						}
 					}
-				
 					// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
 					text.addModifyListener(new ModifyListener() {
 						public void modifyText(ModifyEvent e) {
+							configureChanged = true;
 							String tempString = text.getText();
 							boolean toCalculate = false;
 							IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
@@ -1909,6 +1872,7 @@ public class ComponentCfgPage extends PropertyPage{
 
 					});
 				}
+				
 				// 创建一个文本框，用于输入文字
 				Text annoText = new Text(table, SWT.BORDER);
 				annoText.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
@@ -1919,6 +1883,7 @@ public class ComponentCfgPage extends PropertyPage{
 					@Override
 					public void modifyText(ModifyEvent e) {
 						// TODO Auto-generated method stub
+						configureChanged = true;
 						String anno = annoText.getText();
 						item.setText(2, anno);
 						resetConfigure(componentSelect);
@@ -1929,10 +1894,17 @@ public class ComponentCfgPage extends PropertyPage{
 			}
 		}
 		// 重新布局表格  
-		for (int i = 0; i < tableHeader.length; i++)  
-		{  
-		    table.getColumn(i).pack();  
-		}
+//		int tWidth = table.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x;
+//		System.out.println("tWidth:  "+tWidth);
+//		for (int i = 0; i < tableHeader.length; i++)  
+//		{  
+//			if (i == tableHeader.length - 1) {
+//				 table.getColumn(i).setWidth(tWidth/2);
+//			} else {
+//				 table.getColumn(i).setWidth(tWidth/4);
+//			}
+//		}		
+		
 	}
 	
 	public ICLanguageSetting[] getLangSetting(ICResourceDescription rcDes) {
@@ -1972,8 +1944,8 @@ public class ComponentCfgPage extends PropertyPage{
 		for(int i=0;i<compontentsCheckedSort.size();i++) {		
 			if(compontentsCheckedSort.get(i).getTarget().equals(ConfigureTarget.HEADER.getName())) {
 				if(compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
-					defineInit += "//******************************* Configure "+compontentsCheckedSort.get(i).getName()+
-													" ******************************************//\n";
+					defineInit += "//*******************************  Configure "+compontentsCheckedSort.get(i).getName()+
+													"  ******************************************//\n";
 					String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
 					for(int j=0;j<configures.length;j++) {
 						if(configures[j].contains("#define")) {
@@ -2017,14 +1989,15 @@ public class ComponentCfgPage extends PropertyPage{
 	}
 	
 	public void initProject(String path,boolean isApp) {
-		String content = "";
-		String firstInit = "";
-		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n" + 
-				"\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
-		String moduleInit = "";
-		String djyMain = "";
+		String content = "",firstInit = "\tuint16_t evtt_main;\n\n",lastInit = "",moduleInit = "",gpioInit = "",djyMain = "",shellInit= "",
+				inoutInit = "\textern void Stdio_KnlInOutInit(char * StdioIn, char *StdioOut);\n"
+							+"\tStdio_KnlInOutInit(CFG_STDIO_IN_NAME,CFG_STDIO_OUT_NAME);\n\n";
 		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n";
+		initHead += "#include \"project_config.h\"\n"
+				+ "#include \"stdint.h\"\n"
+				+ "#include \"stddef.h\"\n"
+				+ "#include \"cpu_peri.h\"\n"
+				+ "extern ptu32_t djy_main(void);\n";
 		File file = new File(path+(isApp?"/app":"/iboot")+"/initPrj.c");
 		if(file.exists()) {
 			file.delete();
@@ -2039,9 +2012,13 @@ public class ComponentCfgPage extends PropertyPage{
 			for(int i=0;i<appCompontentsChecked.size();i++) {
 				List<String> dependents = appCompontentsChecked.get(i).getDependents();
 				List<String> weakDependents = appCompontentsChecked.get(i).getWeakDependents();
-				for(int j=i+1;j<appCompontentsChecked.size();j++) {
-					if(weakDependents.contains(appCompontentsChecked.get(j))) {
-						appCheckedSort.add(appCompontentsChecked.get(j));
+				for (int j = 0; j < appCompontentsChecked.size(); j++) {
+					if (!appCheckedSort.contains(appCompontentsChecked.get(j))) {
+						if (dependents.contains(appCompontentsChecked.get(j).getName())) {
+							appCheckedSort.add(appCompontentsChecked.get(j));
+						}else if (weakDependents.contains(appCompontentsChecked.get(j).getName())) {
+							appCheckedSort.add(appCompontentsChecked.get(j));
+						}
 					}
 				}
 				if(!appCheckedSort.contains(appCompontentsChecked.get(i))) {
@@ -2051,6 +2028,7 @@ public class ComponentCfgPage extends PropertyPage{
 			for(int i=0;i<appCheckedSort.size();i++) {
 				String grade = appCheckedSort.get(i).getGrade();
 				String code = appCheckedSort.get(i).getCode();
+				List<String> dependents = appCheckedSort.get(i).getDependents();
 				String codeStrings = "";
 				if(code!=null) {
 					String[] codes = code.split("\n");
@@ -2069,11 +2047,13 @@ public class ComponentCfgPage extends PropertyPage{
 					if (grade.equals("main")) {//初始化时机为main
 						djyMain +=  codeStrings + "\n";
 					} else if (grade.equals("init")){//初始化时机为init
-						if (componentName.equals("Stdio_KnlInOut")) {
-							firstInit +=  codeStrings + "\n";
-						} else if (componentName.equals("Heap_Dynamic")) {
-							lastInit += codeStrings + "\n";
-						} else {
+						if (dependents.contains("cpu_peri_gpio")) {
+							gpioInit += codeStrings + "\n";
+						}else if (componentName.equals("heap")) {
+							lastInit += evttMain+codeStrings + "\n";
+						}else if (componentName.equals("shell")) {
+							shellInit += inoutInit+ codeStrings + "\n";
+						}else {
 							moduleInit += codeStrings + "\n";
 						}
 					}
@@ -2083,9 +2063,13 @@ public class ComponentCfgPage extends PropertyPage{
 			for(int i=0;i<ibootCompontentsChecked.size();i++) {
 				List<String> dependents = ibootCompontentsChecked.get(i).getDependents();
 				List<String> weakDependents = ibootCompontentsChecked.get(i).getWeakDependents();
-				for(int j=i+1;j<ibootCompontentsChecked.size();j++) {
-					if(weakDependents.contains(ibootCompontentsChecked.get(j))) {
-						ibootCheckedSort.add(ibootCompontentsChecked.get(j));
+				for (int j = 0; j < ibootCompontentsChecked.size(); j++) {
+					if (!ibootCheckedSort.contains(ibootCompontentsChecked.get(j))) {
+						if (dependents.contains(ibootCompontentsChecked.get(j).getName())) {
+							ibootCheckedSort.add(ibootCompontentsChecked.get(j));
+						}else if (weakDependents.contains(ibootCompontentsChecked.get(j).getName())) {
+							ibootCheckedSort.add(ibootCompontentsChecked.get(j));
+						}
 					}
 				}
 				if(!ibootCheckedSort.contains(ibootCompontentsChecked.get(i))) {
@@ -2095,6 +2079,7 @@ public class ComponentCfgPage extends PropertyPage{
 			for(int i=0;i<ibootCheckedSort.size();i++) {
 				String grade = ibootCheckedSort.get(i).getGrade();
 				String code = ibootCheckedSort.get(i).getCode();
+				List<String> dependents = ibootCheckedSort.get(i).getDependents();
 				String codeStrings = "";
 				if(code!=null) {
 					String[] codes = code.split("\n");
@@ -2113,21 +2098,24 @@ public class ComponentCfgPage extends PropertyPage{
 					if (grade.equals("main")) {//初始化时机为main
 						djyMain +=  codeStrings + "\n";
 					} else if (grade.equals("init")){//初始化时机为init
-						if (componentName.equals("Stdio_KnlInOut")) {
-							firstInit +=  codeStrings + "\n";
-						} else if (componentName.equals("Heap_Dynamic")) {
-							lastInit += codeStrings + "\n";
-						} else {
+						if (dependents.contains("cpu_peri_gpio")) {
+							gpioInit += codeStrings + "\n";
+						}else if (componentName.equals("heap")) {
+							lastInit += evttMain+codeStrings + "\n";
+						}else if (componentName.equals("shell")) {
+							shellInit += inoutInit+ codeStrings + "\n";
+						}else {
 							moduleInit += codeStrings + "\n";
 						}
 					}
 				}
 			}
 		}
-	
+		lastInit+="\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
+				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
 		content+=initHead;
-		content+="\n"+initStart+firstInit+moduleInit+lastInit+initEnd;
-		content+=djyStart+djyMain+djyEnd;
+		content += "\n" + djyStart + djyMain + djyEnd;
+		content += initStart + firstInit + gpioInit + shellInit  + moduleInit + lastInit + initEnd;
 		FileWriter writer;
 		try {
 			writer = new FileWriter(file);
@@ -2138,28 +2126,6 @@ public class ComponentCfgPage extends PropertyPage{
 			e.printStackTrace();
 		}
 		
-		// 生成component_check.xml文件
-		String xmlName = null;
-		List<Component> curCompontents = new ArrayList<Component>();
-		if(isApp) {
-			xmlName = "app_component_check.xml";
-			curCompontents = appCompontents;
-		}else {
-			xmlName = "iboot_component_check.xml";
-			curCompontents = ibootCompontents;
-		}
-		CreateCheckXml ccx = new CreateCheckXml();
-		File checkFile = new File(path + "/../" + "data/"+xmlName);
-		if (checkFile.exists()) {
-			checkFile.delete();
-		}
-		try {
-			checkFile.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ccx.createCheck(curCompontents, checkFile);
 	}
 
 	@Override
@@ -2178,5 +2144,8 @@ public class ComponentCfgPage extends PropertyPage{
 	String initEnd = "\treturn ;\r\n" + 
 			"}\n\n";
 	String initHead = null;
-	
+	String evttMain = "\tevtt_main = Djy_EvttRegist(EN_CORRELATIVE,CN_PRIO_RRS,0,0,\r\n"
+			+ "\t__djy_main,NULL,CFG_MAINSTACK_LIMIT, \"main function\");\r\n"
+			+ "\t//事件的两个参数暂设为0,如果用shell启动,可用来采集shell命令行参数\r\n"
+			+ "\tDjy_EventPop(evtt_main,NULL,0,NULL,0,0);\n";
 }

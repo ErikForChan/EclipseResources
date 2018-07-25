@@ -149,18 +149,13 @@ public class ComponentConfigWizard extends WizardPage {
 		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
 		for (int i = 0; i < compontentsCheckedSort.size(); i++) {
+			System.out.println("compontentsCheckedSort: "+compontentsCheckedSort.get(i).getName());
 			if(compontentsCheckedSort.get(i).getTarget().equals(ConfigureTarget.HEADER.getName())) {
 				if (compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
-					defineInit += "//******************************* Configure "
-							+ compontentsCheckedSort.get(i).getName()
-							+ " ******************************************//\n";
-					// String filePath = compontentsCheckedSort.get(i).getFileName();
-					// filePath.substring(filePath.lastIndexOf("\\")+1, filePath.length()
-					// initDefineForComponent(path+"/OS_prjcfg/cfg/"+compontentsCheckedSort.get(i).getName()+"_config.h",compontentsCheckedSort.get(i));
+					defineInit += "//*******************************  Configure " + compontentsCheckedSort.get(i).getName() + "  ******************************************//\n";
 					String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
 					for (int j = 0; j < configures.length; j++) {
 						if (configures[j].contains("#define")) {
-							System.out.println("compontentsCheckedSort: "+compontentsCheckedSort.get(i).getName());
 							String pureDefine = null;
 							String annoName = null;
 							if (configures[j].trim().startsWith("//")) {
@@ -204,14 +199,15 @@ public class ComponentConfigWizard extends WizardPage {
 	}
 
 	public void initProject(String path, boolean isApp) {
-		String content = "";
-		String firstInit = "";
-		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
-				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
-		String moduleInit = "";
-		String djyMain = "";
+		String content = "",firstInit = "\tuint16_t evtt_main;\n\n",lastInit = "",moduleInit = "",gpioInit = "",djyMain = "",shellInit="",
+				inoutInit = "\textern void Stdio_KnlInOutInit(char * StdioIn, char *StdioOut);\n"
+						+"\tStdio_KnlInOutInit(CFG_STDIO_IN_NAME,CFG_STDIO_OUT_NAME);\n\n";
 		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n";
+		initHead += "#include \"project_config.h\"\n"
+				+ "#include \"stdint.h\"\n"
+				+ "#include \"stddef.h\"\n"
+				+ "#include \"cpu_peri.h\"\n"
+				+ "extern ptu32_t djy_main(void);\n";
 		File file = new File(path + (isApp ? "/app" : "/iboot") + "/initPrj.c");
 		if (file.exists()) {
 			file.delete();
@@ -226,9 +222,13 @@ public class ComponentConfigWizard extends WizardPage {
 			for (int i = 0; i < appCompontentsChecked.size(); i++) {
 				List<String> dependents = appCompontentsChecked.get(i).getDependents();
 				List<String> weakDependents = appCompontentsChecked.get(i).getWeakDependents();
-				for (int j = i + 1; j < appCompontentsChecked.size(); j++) {
-					if (weakDependents.contains(appCompontentsChecked.get(j))) {
-						appCheckedSort.add(appCompontentsChecked.get(j));
+				for (int j = 0; j < appCompontentsChecked.size(); j++) {
+					if (!appCheckedSort.contains(appCompontentsChecked.get(j))) {
+						if (dependents.contains(appCompontentsChecked.get(j).getName())) {
+							appCheckedSort.add(appCompontentsChecked.get(j));
+						}else if (weakDependents.contains(appCompontentsChecked.get(j).getName())) {
+							appCheckedSort.add(appCompontentsChecked.get(j));
+						}
 					}
 				}
 				if (!appCheckedSort.contains(appCompontentsChecked.get(i))) {
@@ -238,6 +238,7 @@ public class ComponentConfigWizard extends WizardPage {
 			for (int i = 0; i < appCheckedSort.size(); i++) {
 				String grade = appCheckedSort.get(i).getGrade();
 				String code = appCheckedSort.get(i).getCode();
+				List<String> dependents = appCheckedSort.get(i).getDependents();
 				String codeStrings = "";
 				if (code != null) {
 					String[] codes = code.split("\n");
@@ -256,11 +257,15 @@ public class ComponentConfigWizard extends WizardPage {
 					if (grade.equals("main")) {// 初始化时机为main
 						djyMain += codeStrings + "\n";
 					} else if (grade.equals("init")) {// 初始化时机为init
-						if (componentName.equals("Stdio_KnlInOut")) {
-							firstInit += codeStrings + "\n";
-						} else if (componentName.equals("Heap_Dynamic")) {
-							lastInit += codeStrings + "\n";
-						} else {
+						if (dependents.contains("cpu_peri_gpio")) {
+							gpioInit += codeStrings + "\n";
+						}else if (componentName.equals("heap")) {
+							lastInit += evttMain+codeStrings + "\n";
+						}else if (componentName.equals("shell")) {
+							shellInit += inoutInit+ 
+									codeStrings + "\n";
+						}
+						else {
 							moduleInit += codeStrings + "\n";
 						}
 					}
@@ -270,9 +275,13 @@ public class ComponentConfigWizard extends WizardPage {
 			for (int i = 0; i < ibootCompontentsChecked.size(); i++) {
 				List<String> dependents = ibootCompontentsChecked.get(i).getDependents();
 				List<String> weakDependents = ibootCompontentsChecked.get(i).getWeakDependents();
-				for (int j = i + 1; j < ibootCompontentsChecked.size(); j++) {
-					if (weakDependents.contains(ibootCompontentsChecked.get(j))) {
-						ibootCheckedSort.add(ibootCompontentsChecked.get(j));
+				for (int j = 0; j < ibootCompontentsChecked.size(); j++) {
+					if (!ibootCheckedSort.contains(ibootCompontentsChecked.get(j))) {
+						if (dependents.contains(ibootCompontentsChecked.get(j).getName())) {
+							ibootCheckedSort.add(ibootCompontentsChecked.get(j));
+						}else if (weakDependents.contains(ibootCompontentsChecked.get(j).getName())) {
+							ibootCheckedSort.add(ibootCompontentsChecked.get(j));
+						}
 					}
 				}
 				if (!ibootCheckedSort.contains(ibootCompontentsChecked.get(i))) {
@@ -282,6 +291,7 @@ public class ComponentConfigWizard extends WizardPage {
 			for (int i = 0; i < ibootCheckedSort.size(); i++) {
 				String grade = ibootCheckedSort.get(i).getGrade();
 				String code = ibootCheckedSort.get(i).getCode();
+				List<String> dependents = ibootCheckedSort.get(i).getDependents();
 				String codeStrings = "";
 				if (code != null) {
 					String[] codes = code.split("\n");
@@ -300,21 +310,25 @@ public class ComponentConfigWizard extends WizardPage {
 					if (grade.equals("main")) {// 初始化时机为main
 						djyMain += codeStrings + "\n";
 					} else if (grade.equals("init")) {// 初始化时机为init
-						if (componentName.equals("Stdio_KnlInOut")) {
-							firstInit += codeStrings + "\n";
-						} else if (componentName.equals("Heap_Dynamic")) {
-							lastInit += codeStrings + "\n";
-						} else {
+						if (dependents.contains("cpu_peri_gpio")) {
+							gpioInit += codeStrings + "\n";
+						}else if (componentName.equals("heap")) {
+							lastInit += evttMain+codeStrings + "\n";
+						}else if (componentName.equals("shell")) {
+							shellInit += inoutInit+ 
+									codeStrings + "\n";
+						}else {
 							moduleInit += codeStrings + "\n";
 						}
 					}
 				}
 			}
 		}
-
+		lastInit+="\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
+				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
 		content += initHead;
-		content += "\n" + initStart + firstInit + moduleInit + lastInit + initEnd;
-		content += djyStart + djyMain + djyEnd;
+		content += "\n" + djyStart + djyMain + djyEnd;
+		content += initStart + firstInit + gpioInit + shellInit + moduleInit + lastInit + initEnd;
 		FileWriter writer;
 		try {
 			writer = new FileWriter(file);
@@ -347,188 +361,6 @@ public class ComponentConfigWizard extends WizardPage {
 			e.printStackTrace();
 		}
 		ccx.createCheck(curCompontents, checkFile);
-	}
-
-	public void appInitProject(String path) {
-		String content = "";
-		String firstInit = "";
-		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
-				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
-		String moduleInit = "";
-		String djyMain = "";
-		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n";
-		File file = new File(path + "/initPrj.c");
-		if (file.exists()) {
-			file.delete();
-		}
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		for (int i = 0; i < appCompontentsChecked.size(); i++) {
-			List<String> dependents = appCompontentsChecked.get(i).getDependents();
-			List<String> weakDependents = appCompontentsChecked.get(i).getWeakDependents();
-			for (int j = i + 1; j < appCompontentsChecked.size(); j++) {
-				if (weakDependents.contains(appCompontentsChecked.get(j))) {
-					appCheckedSort.add(appCompontentsChecked.get(j));
-				}
-			}
-			if (!appCheckedSort.contains(appCompontentsChecked.get(i))) {
-				appCheckedSort.add(appCompontentsChecked.get(i));
-			}
-		}
-		for (int i = 0; i < appCheckedSort.size(); i++) {
-			String grade = appCheckedSort.get(i).getGrade();
-			String code = appCheckedSort.get(i).getCode();
-			String codeStrings = "";
-			if (code != null) {
-				String[] codes = code.split("\n");
-				for (int j = 0; j < codes.length; j++) {
-					if (codes[j].contains("#include")) {
-						initHead += codes[j].trim() + "\n";
-					} else {
-						codeStrings += "\t" + codes[j].trim() + "\n";
-					}
-				}
-			}
-
-			String componentName = appCheckedSort.get(i).getName();
-
-			if (grade != null && code != null) {
-				if (grade.equals("main")) {// 初始化时机为main
-					djyMain += codeStrings + "\n";
-				} else if (grade.equals("init")) {// 初始化时机为init
-					if (componentName.equals("Stdio_KnlInOut")) {
-						firstInit += codeStrings + "\n";
-					} else if (componentName.equals("Heap_Dynamic")) {
-						lastInit += codeStrings + "\n";
-					} else {
-						moduleInit += codeStrings + "\n";
-					}
-				}
-			}
-		}
-		content += initHead;
-		content += "\n" + initStart + firstInit + moduleInit + lastInit + initEnd;
-		content += djyStart + djyMain + djyEnd;
-		FileWriter writer;
-		try {
-			writer = new FileWriter(file);
-			writer.write(content);
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		// 生成component_check.xml文件
-		CreateCheckXml ccx = new CreateCheckXml();
-		File appcheckFile = new File(path + "/../" + "data/app_component_check.xml");
-		if (appcheckFile.exists()) {
-			appcheckFile.delete();
-		}
-		try {
-			appcheckFile.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ccx.createCheck(appCompontents, appcheckFile);
-
-	}
-
-	public void ibootInitProject(String path) {
-		String content = "";
-		String firstInit = "";
-		String lastInit = "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
-				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
-		String moduleInit = "";
-		String djyMain = "";
-		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n";
-		File file = new File(path + "/initPrj.c");
-		if (file.exists()) {
-			file.delete();
-		}
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		for (int i = 0; i < ibootCompontentsChecked.size(); i++) {
-			List<String> dependents = ibootCompontentsChecked.get(i).getDependents();
-			List<String> weakDependents = ibootCompontentsChecked.get(i).getWeakDependents();
-			for (int j = i + 1; j < ibootCompontentsChecked.size(); j++) {
-				if (weakDependents.contains(ibootCompontentsChecked.get(j))) {
-					ibootCheckedSort.add(ibootCompontentsChecked.get(j));
-				}
-			}
-			if (!ibootCheckedSort.contains(ibootCompontentsChecked.get(i))) {
-				ibootCheckedSort.add(ibootCompontentsChecked.get(i));
-			}
-		}
-		for (int i = 0; i < ibootCheckedSort.size(); i++) {
-			String grade = ibootCheckedSort.get(i).getGrade();
-			String code = ibootCheckedSort.get(i).getCode();
-			String codeStrings = "";
-			if (code != null) {
-				String[] codes = code.split("\n");
-				for (int j = 0; j < codes.length; j++) {
-					if (codes[j].contains("#include")) {
-						initHead += codes[j].trim() + "\n";
-					} else {
-						codeStrings += "\t" + codes[j].trim() + "\n";
-					}
-				}
-			}
-
-			String componentName = ibootCheckedSort.get(i).getName();
-
-			if (grade != null && code != null) {
-				if (grade.equals("main")) {// 初始化时机为main
-					djyMain += codeStrings + "\n";
-				} else if (grade.equals("init")) {// 初始化时机为init
-					if (componentName.equals("Stdio_KnlInOut")) {
-						firstInit += codeStrings + "\n";
-					} else if (componentName.equals("Heap_Dynamic")) {
-						lastInit += codeStrings + "\n";
-					} else {
-						moduleInit += codeStrings + "\n";
-					}
-				}
-			}
-		}
-		content += initHead;
-		content += "\n" + initStart + firstInit + moduleInit + lastInit + initEnd;
-		content += djyStart + djyMain + djyEnd;
-		FileWriter writer;
-		try {
-			writer = new FileWriter(file);
-			writer.write(content);
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		// 生成component_check.xml文件
-		CreateCheckXml ccx = new CreateCheckXml();
-		File ibootcheckFile = new File(path + "/../../" + "data/iboot_component_check.xml");
-		if (ibootcheckFile.exists()) {
-			ibootcheckFile.delete();
-		}
-		try {
-			ibootcheckFile.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ccx.createCheck(ibootCompontents, ibootcheckFile);
-
 	}
 
 	protected ComponentConfigWizard(String pageName, OnBoardCpu cpu, Board board, boolean haveApp,
@@ -685,6 +517,7 @@ public class ComponentConfigWizard extends WizardPage {
 			component.setSelect(compontentsList.get(i).isSelect());
 			component.setParentPath(compontentsList.get(i).getParentPath());
 			component.setTarget(compontentsList.get(i).getTarget());
+			List<String> excludes = component.getExcludes();
 			// 当组件为必选且不需要配置时，不显示在界面上
 			if (component.getSelectable().equals("必选")
 					&& (!component.getConfigure().contains("#define"))) {
@@ -1725,5 +1558,8 @@ public class ComponentConfigWizard extends WizardPage {
 	String initStart = "void Sys_ModuleInit(void)\r\n" + "{\n";
 	String initEnd = "\treturn ;\r\n" + "}\n\n";
 	String initHead = null;
-
+	String evttMain = "\tevtt_main = Djy_EvttRegist(EN_CORRELATIVE,CN_PRIO_RRS,0,0,\r\n"
+			+ "\t__djy_main,NULL,CFG_MAINSTACK_LIMIT, \"main function\");\r\n"
+			+ "\t//事件的两个参数暂设为0,如果用shell启动,可用来采集shell命令行参数\r\n"
+			+ "\tDjy_EventPop(evtt_main,NULL,0,NULL,0,0);\n";
 }

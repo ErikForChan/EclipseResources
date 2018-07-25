@@ -9,6 +9,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.eclipse.core.runtime.Platform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -34,12 +35,50 @@ public class ReadBoardXml {
 		}
 	}
 	
+	private String getDIDEPath() {
+		String fullPath = Platform.getInstallLocation().getURL().toString();
+		String eclipsePath = fullPath.substring(6,
+				(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
+		return eclipsePath;
+	}
+
+	public List<Board> getAllBoards() {
+		List<Board> boards = new ArrayList<Board>();
+		List<String> paths = new ArrayList<String>();
+		String userBoardFilePath = getDIDEPath() + "djysrc\\bsp\\boarddrv\\user";
+		String demoBoardFilePath = getDIDEPath() + "djysrc\\bsp\\boarddrv\\demo";
+		paths.add(userBoardFilePath);
+		paths.add(demoBoardFilePath);
+		for (int i = 0; i < paths.size(); i++) {
+			File boardFile = new File(paths.get(i));
+			File[] files = boardFile.listFiles();
+			for (int j = 0; j < files.length; j++) {
+				File file = files[j];
+				File[] mfiles = file.listFiles();
+				for (int k = 0; k < mfiles.length; k++) {
+					if (mfiles[k].getName().endsWith(".xml")) {
+						try {
+							Board board = getBoard(mfiles[k]);
+							boards.add(board);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						break;
+					}
+				}
+			}
+		}
+		return boards;
+	}
+
 	/*
 	 * 获取板件对象
 	 */
 	public static Board getBoard(File file) throws Exception {
 		document = db.parse(file);
 		Board board = new Board();
+		board.setBoardPath(file.getParentFile().getPath());
 		Node nameNode = document.getElementsByTagName("boardName").item(0);
 		board.setBoardName(nameNode.getTextContent());
 		NodeList onBoardCpuList = document.getElementsByTagName("cpu");
