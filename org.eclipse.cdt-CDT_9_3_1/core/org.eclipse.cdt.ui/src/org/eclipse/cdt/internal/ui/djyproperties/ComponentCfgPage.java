@@ -147,7 +147,7 @@ public class ComponentCfgPage extends PropertyPage{
 	
 	List<Component> appCheckedSort = new ArrayList<Component>();
 	List<Component> ibootCheckedSort = new ArrayList<Component>();
-	
+	private int checkcounter;
 	private List<CmpntCheck> appCmpntChecks = null;
 	private List<CmpntCheck> ibootCmpntChecks = null;
 	
@@ -1457,9 +1457,11 @@ public class ComponentCfgPage extends PropertyPage{
 			}
 			return isDepedent;
 		}
+
 		
 	private void initTable(Component componentSelect,boolean isApp,TreeItem eventItem) {
 		tabelControls.clear();
+		checkcounter = 0;
 		String compName = componentSelect.getName();
 		IProject curProject = getProject();
 		List<String> pjCgfs = new ArrayList<String>();
@@ -1519,7 +1521,8 @@ public class ComponentCfgPage extends PropertyPage{
 
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
-				if (!tag.equals("select") && !tag.equals("free")) {
+				if (!tag.equals("free")) {
+				//if (!tag.equals("select") && !tag.equals("free")) {
 					for (int j = 1; j < infos.length; j++) {
 						ranges.add(infos[j]);
 					}
@@ -1688,15 +1691,28 @@ public class ComponentCfgPage extends PropertyPage{
 						}
 						
 					}
+					int rangeSize = ranges.size();
+					int chkran = 0;
+					if(rangeSize>0) {
+						chkran = Integer.parseInt(ranges.get(0));
+					}
+					int chk = chkran;
 					if (symolsExist) {
 						isSelect[i] = true;
 						checkBtn.setSelection(true);
+						if(rangeSize>0) {
+							checkcounter += 1;
+							if(checkcounter > chk){
+								MessageDialog.openError(window.getShell(), "提示",
+											"不得勾选多于"+ chk + "项");
+							}
+						}
 					} else {
 						isSelect[i] = false;
 						checkBtn.setSelection(false);
 					}
 
-					checkBtn.addListener(SWT.CHECK, new Listener() {
+					checkBtn.addListener(SWT.Selection, new Listener() {
 
 						@Override
 						public void handleEvent(Event event) {
@@ -1705,16 +1721,33 @@ public class ComponentCfgPage extends PropertyPage{
 							boolean checked = checkBtn.getSelection();
 							if (checked) {
 								isSelect[cur] = true;
+								if(rangeSize>0) {
+									checkcounter += 1;
+									if(checkcounter > chk){
+										checkcounter = chk;
+										checkBtn.setSelection(false);
+										MessageDialog.openError(window.getShell(), "提示",
+													"不得勾选多于"+ chk + "项");
+									}
+								}
+								
 							} else {
 								isSelect[cur] = false;
+								
+								if(rangeSize>0){
+									checkcounter -= 1;
+									if(checkcounter < 0){
+										checkcounter = 0;
+									}
+								}
+							
 							}
 							comptVisited.add(compName);
+							//处理代码
 							resetConfigure(componentSelect);
 						}
 					});
-
 					tabelControls.add(checkBtn);
-					
 				} else {
 					isSelect[i] = true;
 					// 创建一个文本框，用于输入文字
