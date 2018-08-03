@@ -372,16 +372,16 @@ public class ParallelBuilder {
 				continue main_loop;
 			}
 			
-//			int cmdCount = 1;
+			int cmdCount = 1;
 			// Check if we need to schedule another process
 			if (queue.size() != 0 && activeCount < maxProcesses) {
 				// Need to schedule another process 
 				Iterator<BuildQueueElement> iter = queue.iterator();
 
 				// Iterate over build queue
-				//while (iter.hasNext() && cmdCount<queue.size())
-				while (iter.hasNext()) {
-//					cmdCount++;
+				while (iter.hasNext() && cmdCount<queue.size()){
+//				while (iter.hasNext()) {
+					cmdCount++;
 					BuildQueueElement elem = iter.next();
 					
 					// If "active steps" list reaches maximum, then break loop
@@ -448,8 +448,8 @@ public class ParallelBuilder {
 			}
 			
 			// Now finally, check if we're done
-			//if (activeCount <= 0 && queue.size() <= 1) 
-			if (activeCount <= 0 && queue.size() == 0) 
+			if (activeCount <= 0 && queue.size() == 1) 
+//			if (activeCount <= 0 && queue.size() == 0) 
 				break main_loop;
 		}
 

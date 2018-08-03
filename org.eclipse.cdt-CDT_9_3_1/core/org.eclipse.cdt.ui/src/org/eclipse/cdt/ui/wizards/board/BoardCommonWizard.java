@@ -5,6 +5,12 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -13,13 +19,19 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.wizards.newresource.BasicNewResourceWizard;
+
+import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
+import org.eclipse.cdt.ui.wizards.djyosProject.tools.DideHelper;
+import org.eclipse.cdt.ui.wizards.djyosProject.tools.LinkHelper;
 
 public class BoardCommonWizard extends BasicNewResourceWizard{
 
-	protected  BoardMainWizard1 fMainPage = new BoardMainWizard1("New Board");
+	protected  BoardMainWizard fMainPage = new BoardMainWizard("New Board");
 	private String wz_title;
 	private String wz_desc;
 	private String eclipsePath = getEclipsePath();
@@ -68,9 +80,67 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 	}
 
 	
+	LinkHelper linkHelper = new LinkHelper();
+	DideHelper dideHelper = new DideHelper();
+	 
 	@Override
 	public boolean performFinish() {
 		// TODO Auto-generated method stub
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IProject[] projects = workspace.getRoot().getProjects();
+		Board newBoard = fMainPage.getBoard();
+		String baordPath = newBoard.getBoardPath();
+		if(baordPath!=null) {
+			String relativePath = newBoard.getBoardPath().replace(dideHelper.getDjyosSrcPath(), "");
+//			System.out.println("relativePath:  "+relativePath);
+			IRunnableWithProgress runnable = new IRunnableWithProgress() {
+
+				@Override
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					// TODO Auto-generated method stub
+					monitor.beginTask("配置板件...", projects.length+1);	
+					for(IProject project:projects) {
+						IFolder folder = project.getFolder("src/libos" + relativePath);
+						final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
+						ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
+						for (int i = 0; i < conds.length; i++) {
+							if (conds[i].getName().contains("libos")) {
+								linkHelper.setExclude(folder, conds[i], true);
+							}
+						}
+						
+						try {
+							CoreModel.getDefault().setProjectDescription(project, local_prjd);
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						monitor.worked(1);
+					}
+					
+					monitor.setTaskName("工作空间刷新中...");
+					try {
+						workspace.getRoot().refreshLocal(IResource.DEPTH_INFINITE, null);
+					} catch (CoreException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					monitor.worked(1);
+					monitor.done();
+				}
+				
+			};
+
+			try {
+				
+				ProgressMonitorDialog dialog = new ProgressMonitorDialog(
+						PlatformUI.getWorkbench().getDisplay().getActiveShell());
+				dialog.setCancelable(false);
+				dialog.run(true, true, runnable);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		return true;
 	}
 

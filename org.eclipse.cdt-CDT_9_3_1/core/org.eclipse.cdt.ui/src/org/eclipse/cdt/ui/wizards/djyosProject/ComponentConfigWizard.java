@@ -70,6 +70,8 @@ import org.eclipse.cdt.ui.wizards.component.CreateCheckXml;
 import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
 import org.eclipse.cdt.ui.wizards.djyosProject.tools.Calculator;
+import org.eclipse.cdt.ui.wizards.djyosProject.tools.DideHelper;
+import org.eclipse.cdt.ui.wizards.djyosProject.tools.LinkHelper;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
@@ -108,6 +110,9 @@ public class ComponentConfigWizard extends WizardPage {
 
 	List<Component> appCheckedSort = new ArrayList<Component>();
 	List<Component> ibootCheckedSort = new ArrayList<Component>();
+	
+	private DideHelper dideHelper = new DideHelper();
+	private LinkHelper linkHelper = new LinkHelper();
 
 	public List<Component> getAppCompontentsChecked() {
 		return appCompontentsChecked;
@@ -631,7 +636,7 @@ public class ComponentConfigWizard extends WizardPage {
 										|| members[2].contains("*") || members[2].contains("/")) {
 									String pureCal = members[2].replaceAll("\\(|\\)", "");
 									if (pureCal.startsWith("-")) {
-										curData = toUnsigned(Long.parseLong(pureCal));
+										curData = dideHelper.toUnsigned(Long.parseLong(pureCal));
 									} else {
 										double result = Calculator.conversion(pureCal);
 										BigDecimal bd = new BigDecimal(df.format(result));
@@ -650,11 +655,14 @@ public class ComponentConfigWizard extends WizardPage {
 							}
 						} else if (tag.equals("string")) {
 							try {
-								int min, max, stringLength = -1;
+								int min, max;
+								String value = null;
 								min = Integer.parseInt(minString);
 								max = Integer.parseInt(maxString);
-								stringLength = members[2].replace("\"", "").length();
-								if (stringLength < min || stringLength > max) {
+								int begin = defines[0].indexOf("\"");
+        						int end = defines[0].lastIndexOf("\"");
+        						value = defines[0].substring(begin+1, end);
+								if (value.length() < min || value.length() > max) {
 									return false;
 								}
 							} catch (Exception e) {
@@ -684,10 +692,6 @@ public class ComponentConfigWizard extends WizardPage {
 	private Control createTabContent(TabFolder folder, List<Component> appTypeComponents,
 			List<Component> ibootTypeComponents) {
 		// TODO Auto-generated method stub
-		// configGroup
-		// Composite sourceTreeCpt = new Composite(folder, SWT.NULL);
-		// sourceTreeCpt.setLayout(new GridLayout());
-		// sourceTreeCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		Tree componentTree = new Tree(folder, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL | SWT.CHECK);
 		componentTree.setLayoutData(new GridData(GridData.FILL_BOTH));
 		componentTree.setSize(SWT.FILL, 300);
@@ -858,7 +862,7 @@ public class ComponentConfigWizard extends WizardPage {
 									TreeItem[] fChilds = tempTree.getItems();
 									for (TreeItem treeItem : fChilds) {
 										if (treeItem.getText().equals(type)) {
-											boolean isDepedent = isDepedent(treeItem, item, type);
+											boolean isDepedent = isDepedent(treeItem, item, type,itemCompt,isApp);
 											if (isDepedent) {
 												itemCompt.setSelect(false);
 												if (isApp) {
@@ -1038,9 +1042,10 @@ public class ComponentConfigWizard extends WizardPage {
 		}
 	}
 
-	protected boolean isDepedent(TreeItem treeItem, TreeItem eventTreeItem, String type) {
+	protected boolean isDepedent(TreeItem treeItem, TreeItem eventTreeItem, String type, Component itemCompt, boolean isApp) {
 		// TODO Auto-generated method stub
 		TreeItem[] items = treeItem.getItems();
+		List<String> eventDepedents = itemCompt.getDependents();
 		boolean isDepedent = true;
 		for (TreeItem item : items) {
 			Component tempCompt;
@@ -1050,17 +1055,27 @@ public class ComponentConfigWizard extends WizardPage {
 				tempCompt = getIbootComponent(item.getData().toString());
 			}
 			if (item.getChecked()) {
-				if (tempCompt.getDependents().contains(eventTreeItem.getText())) {
-					eventTreeItem.setChecked(true);
-					isDepedent = false;
-					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-					MessageDialog.openError(window.getShell(), "提示",
-							"该组件被" + tempCompt.getName() + " 等已勾选的组件依赖，不可取消勾选");
+				if(tempCompt.getDependents().contains(eventTreeItem.getText())) {
+					if(eventDepedents.contains(tempCompt.getName())){
+						item.setChecked(false);
+						if(isApp) {
+							appCompontentsChecked.remove(tempCompt);
+						}else {
+							ibootCompontentsChecked.remove(tempCompt);
+						}
+					}else {
+						eventTreeItem.setChecked(true);
+						isDepedent = false;
+						IWorkbenchWindow window = PlatformUI.getWorkbench()
+								.getActiveWorkbenchWindow();
+						MessageDialog.openError(window.getShell(), "提示",
+								"该组件被" + tempCompt.getName() + " 等已勾选的组件依赖，不可取消勾选");
+					}
 				}
 			}
 
 			if (item.getItems().length > 0 && isDepedent) {
-				isDepedent = isDepedent(item, eventTreeItem, type);
+				isDepedent = isDepedent(item,eventTreeItem,type,itemCompt,isApp);
 			}
 		}
 		return isDepedent;
@@ -1370,7 +1385,7 @@ public class ComponentConfigWizard extends WizardPage {
 									|| members[2].contains("*") || members[2].contains("/")) {
 								String pureCal = members[2].replaceAll("\\(|\\)", "");
 								if (pureCal.startsWith("-")) {
-									curData = toUnsigned(Long.parseLong(pureCal));
+									curData = dideHelper.toUnsigned(Long.parseLong(pureCal));
 								} else {
 									double result = Calculator.conversion(pureCal);
 									BigDecimal bd = new BigDecimal(df.format(result));
@@ -1383,13 +1398,16 @@ public class ComponentConfigWizard extends WizardPage {
 								text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
 							}
 					}else if(tag.equals("string")) {
-							int min,max,stringLength=-1;
+							int min, max;
+							String value = null;
 							min = Integer.parseInt(minString);
 							max = Integer.parseInt(maxString);
-		            		stringLength = members[2].replace("\"", "").length();
-							if(stringLength<min || stringLength>max) {
+							int begin = defines[0].indexOf("\"");
+							int end = defines[0].lastIndexOf("\"");
+							value = defines[0].substring(begin + 1, end);
+							if (value.length() < min || value.length() > max) {
 								text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
-    						}
+							}
 					}
 					}
 				
@@ -1491,10 +1509,6 @@ public class ComponentConfigWizard extends WizardPage {
 		}
 	}
 
-	long toUnsigned(long s) {
-		return s & 0xFFFFFFFFL;
-	}
-
 	protected void resetConfigure(Component componentSelect) {
 		// TODO Auto-generated method stub
 		TableItem[] items = table.getItems();
@@ -1561,5 +1575,5 @@ public class ComponentConfigWizard extends WizardPage {
 	String evttMain = "\tevtt_main = Djy_EvttRegist(EN_CORRELATIVE,CN_PRIO_RRS,0,0,\r\n"
 			+ "\t__djy_main,NULL,CFG_MAINSTACK_LIMIT, \"main function\");\r\n"
 			+ "\t//事件的两个参数暂设为0,如果用shell启动,可用来采集shell命令行参数\r\n"
-			+ "\tDjy_EventPop(evtt_main,NULL,0,NULL,0,0);\n";
+			+ "\tDjy_EventPop(evtt_main,NULL,0,NULL,0,0);\n\n";
 }

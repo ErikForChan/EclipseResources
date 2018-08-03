@@ -74,9 +74,9 @@ public class ReadComponent {
 				}
 			}
 			
-			allFiles.addAll(pureFiles);
 			allFiles.addAll(folderFiles);
-			
+			allFiles.addAll(pureFiles);
+					
 			boolean hExist = false;
 			
 			for (File f : allFiles) {
@@ -95,20 +95,18 @@ public class ReadComponent {
 			if (!hExist) {
 				if (!file.getPath().contains("third")) {
 					for (File f : allFiles) {
-						if (f.isFile()) {
-							if (f.getName().endsWith(".c")) {
-								try {
-									getComponent(f);
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							}
-						} else if (f.isDirectory()) {
+						if (f.isDirectory()) {
 							traverFiles(f);
+						} else if (f.getName().endsWith(".c")) {
+							try {
+								getComponent(f);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
 					}
-				}else {
+				} else {
 					for (File f : allFiles) {
 						if (f.isDirectory()) {
 							traverFiles(f);
@@ -136,6 +134,8 @@ public class ReadComponent {
 		String loaderPath = eclipsePath+"djysrc/loader";
 		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
 		String userPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+board.getBoardName();
+		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
+		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
 		componentPaths.add(componentPath);
 		componentPaths.add(djyosPath);
 		componentPaths.add(demoPath);
@@ -174,11 +174,9 @@ public class ReadComponent {
 		for(int i=0;i<chips.size();i++) {
 			chipNames.add(chips.get(i).getChipName());
 		}
-		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
-		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
+		
 		if(chips.size()>0) {
 			File chipFile = new File(chipPath);
-			
 			if(chipFile.exists()) {
 				File[] chipfiles = chipFile.listFiles();
 				for (File file : chipfiles) {
@@ -189,23 +187,106 @@ public class ReadComponent {
 			}
 			
 		}
+		
+		traverParentSrc(cpuSrcPath);
+		return components;
+	}
+	
+	public List<Component> getAllComponents(OnBoardCpu onBoardCpu,Board board) {
+		String componentPath = eclipsePath+"djysrc/component";
+		String libcPath = eclipsePath+"djysrc/libc";
+		String djyosPath = eclipsePath+"djysrc/djyos";
+		String thirdPath = eclipsePath+"djysrc/third";
+		String loaderPath = eclipsePath+"djysrc/loader";
+		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
+		String userPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+board.getBoardName();
+		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
+		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
+		componentPaths.add(componentPath);
+		componentPaths.add(djyosPath);
+		componentPaths.add(demoPath);
+		componentPaths.add(userPath);
+		componentPaths.add(chipPath);
+		componentPaths.add(loaderPath);
+		componentPaths.add(thirdPath);
+		for (int i = 0; i < componentPaths.size(); i++) {
+			File sourceFile = new File(componentPaths.get(i));
+			if (sourceFile.exists()) {
+				File[] files = sourceFile.listFiles();
+				List<File> allFiles = new ArrayList<File>();
+				List<File> pureFiles = new ArrayList<File>();
+				List<File> folderFiles = new ArrayList<File>();
+
+				for (File f : files) {
+					if(f.isDirectory()) {
+						folderFiles.add(f);
+					}else if(f.isFile() && (f.getName().endsWith(".c") || f.getName().endsWith(".h"))) {
+						pureFiles.add(f);
+					}
+				}
+				
+				allFiles.addAll(folderFiles);
+				allFiles.addAll(pureFiles);
+				
+				for (File file : allFiles) {
+					if (file.isDirectory()) {
+						traverFiles(file);
+					} else {
+						if (!file.getPath().contains("third")) {
+							if (file.getName().endsWith(".c")) {
+								try {
+									getComponent(file);
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		traverFiles(new File(libcPath));
+		
+		// cpuµÄsrcÄ¿Â¼
+		String cpuSrcPath = getCpuSrcPath(onBoardCpu.getCpuName());
+		traverParentSrc(cpuSrcPath);
+		return components;
+	}
+	
+	private void traverParentSrc(String cpuSrcPath) {
+		// TODO Auto-generated method stub
 		if(cpuSrcPath!= null) {
 			File cpuFile = new File(cpuSrcPath);
-			
+//			System.out.println("cpuSrcPath:   "+cpuSrcPath);
 			if(cpuFile.exists()) {
 				File[] cpufiles = cpuFile.listFiles();
 				for (File file : cpufiles) {
 					if (file.isDirectory()) {
 						traverFiles(file);
+					}else {
+						if (file.getName().endsWith(".c")) {
+							try {
+//								System.out.println("file.getName():   "+file.getName());
+								getComponent(file);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
 					}
 				}
 			}
 			
 		}
-	
-		return components;
+		String parentSrcPath = cpuSrcPath+"/../../src";
+		File parentSrcFile = new File(parentSrcPath);
+		if(parentSrcFile.exists()) {
+			traverParentSrc(parentSrcPath);
+		}
 	}
-	
+
 	public List<Component> getSrcPeripherals(File srcFile){
 		File[] srcfiles = srcFile.listFiles();
 		for (File file : srcfiles) {

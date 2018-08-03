@@ -10,8 +10,15 @@ public class Cpu {
 	private int coreNum;
 	private String cpuName;
 	private String firmwareLib;
+	private String parentPath;
 	private List<Core> cores = new ArrayList<Core>();
 	
+	public String getParentPath() {
+		return parentPath;
+	}
+	public void setParentPath(String parentPath) {
+		this.parentPath = parentPath;
+	}
 	public String getFirmwareLib() {
 		return firmwareLib;
 	}
@@ -41,11 +48,11 @@ public class Cpu {
 		this.cpuName = cpuName;
 		this.cores = cores;
 	}
-	
-	public Cpu(String cpuName, String firmwareLib, List<Core> cores) {
+
+	public Cpu(String cpuName, String parentPath, List<Core> cores) {
 		super();
 		this.cpuName = cpuName;
-		this.firmwareLib = firmwareLib;
+		this.parentPath = parentPath;
 		this.cores = cores;
 	}
 	public Cpu() {

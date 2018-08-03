@@ -96,7 +96,7 @@ public class ReadCpuXml {
 						Cpu cpu = new Cpu();
 						File parentFile = file.getParentFile();
 						traverseParents(cpu,parentFile);
-						Cpu newCpu = new Cpu(cpu.getCpuName(),cpu.getCores());
+						Cpu newCpu = new Cpu(cpu.getCpuName(),cpu.getParentPath(),cpu.getCores());
 						cpus.add(newCpu);
 					} 
 				} catch (Exception e) {
@@ -109,6 +109,9 @@ public class ReadCpuXml {
 	
 	public Cpu getCpuInfos(File file) throws Exception {
 		Cpu cpu = new Cpu();
+		if(file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
+			cpu.setParentPath(file.getParentFile().getPath());
+		}
 		document = db.parse(file);
 		NodeList nameList = document.getElementsByTagName("cpuName");
 		for(int i=0;i<nameList.getLength();i++) {
@@ -192,6 +195,10 @@ public class ReadCpuXml {
 	public Cpu unitCpu(Cpu cpu,File file) throws Exception {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
 		document = db.parse(file);
+		if(file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
+			cpu.setParentPath(file.getParentFile().getPath());
+		}
+		
 		NodeList nameList = document.getElementsByTagName("cpuName");
 		for(int i=0;i<nameList.getLength();i++) {
 			String cpuName = nameList.item(i).getFirstChild().getTextContent();
@@ -326,6 +333,8 @@ public class ReadCpuXml {
 					Node cNode = cList.item(j);
 					if(cNode.getNodeType() == Node.ELEMENT_NODE) {
 						String nodeName = cNode.getNodeName();
+//						System.out.println("file:  "+file.getPath());
+//						System.out.println("nodeName:  "+nodeName);
 						String content = cNode.getFirstChild().getTextContent();
 						switch(nodeName) {
 						case "type":

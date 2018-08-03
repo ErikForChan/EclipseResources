@@ -38,11 +38,13 @@ import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
 import org.eclipse.ui.wizards.IWizardDescriptor;
 
 import org.eclipse.cdt.ui.wizards.board.Board;
-import org.eclipse.cdt.ui.wizards.board.BoardMainWizard;
+import org.eclipse.cdt.ui.wizards.board.BoardMainWizard_bak;
 import org.eclipse.cdt.ui.wizards.board.BoardWizard;
 import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
+
+import org.eclipse.cdt.internal.ui.CPluginImages;
 
 public class SelectBoardDialog extends StatusDialog{
 
@@ -69,6 +71,7 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTree.removeAll();
 		for(int i=0;i<boardsFiltered.size();i++) {
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
+			t.setImage(CPluginImages.DESC_BOARD_VIEW.createImage());
 			t.setText(boardsFiltered.get(i).getBoardName());
 		}
 	};
@@ -80,6 +83,7 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTree.removeAll();
 		for(int i=0;i<boardsFiltered.size();i++) {
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
+			t.setImage(CPluginImages.DESC_BOARD_VIEW.createImage());
 			t.setText(boardsFiltered.get(i).getBoardName());
 		}
 	};
@@ -169,7 +173,7 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTreeCpt.setLayout(new GridLayout());
 		
 		createTreeForBoards(boardTreeCpt);
-		boardTree.setSize(170, 200);
+		boardTree.setSize(180, 200);
 		Button newBoradBtn = new Button(boardTreeCpt,SWT.PUSH);
 		newBoradBtn.setText("新建板件");
 		newBoradBtn.setBackground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
@@ -191,6 +195,7 @@ public class SelectBoardDialog extends StatusDialog{
 				boardTree.removeAll();
 				for(int i=0;i<boards.size();i++) {
 					TreeItem t = new TreeItem(boardTree, SWT.NONE);
+					t.setImage(CPluginImages.DESC_BOARD_VIEW.createImage());
 					t.setText(boards.get(i).getBoardName());
 				}
 
@@ -277,6 +282,7 @@ public class SelectBoardDialog extends StatusDialog{
 		boardsFiltered = boards;
 		for(int i=0;i<boards.size();i++) {
 			TreeItem t = new TreeItem(boardTree, SWT.NONE);
+			t.setImage(CPluginImages.DESC_BOARD_VIEW.createImage());
 			t.setText(boards.get(i).getBoardName());
 		}
 		
@@ -348,7 +354,7 @@ public class SelectBoardDialog extends StatusDialog{
 		});
 		final TreeColumn columnBoards = new TreeColumn(boardTree, SWT.NONE);
 		columnBoards.setText("板件列表");
-		columnBoards.setWidth(140);
+		columnBoards.setWidth(160);
 		columnBoards.setResizable(false);
 		columnBoards.setToolTipText("Board");
 	}

@@ -1,5 +1,6 @@
 package org.eclipse.cdt.ui.wizards.board;
 
+import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -13,12 +14,17 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -26,17 +32,24 @@ import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.TouchEvent;
+import org.eclipse.swt.events.TouchListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.events.TreeEvent;
+import org.eclipse.swt.events.TreeListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
@@ -47,151 +60,63 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
+import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
+import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.eclipse.ui.wizards.IWizardDescriptor;
 
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
-import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
 import org.eclipse.cdt.ui.wizards.component.Component;
 import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.component.ReadComponentXml;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
-import org.eclipse.cdt.ui.wizards.djyosProject.tools.DideHelper;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
 import org.eclipse.cdt.internal.ui.CPluginImages;
 
-public class NewOrReviseBoard extends StatusDialog{
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
+import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardMemory;
 
-	private Tree cpuArhives, cpuArhivesNeed, chipTree, chipOnTree, cpudrvTree, cpudrvOnTree, memoryTree;
-	private Button gotoBtn = null, backBtn = null;
+public class BoardMainWizard_bak extends WizardPage{
+	
+	private Tree cpuArhives,cpuArhivesNeed, chipTree,chipOnTree,cpudrvTree,
+				cpudrvOnTree,memoryTree;
+	private Button gotoBtn = null,backBtn = null;
+	private Board newBoard = new Board();
 	private List<OnBoardCpu> onBoardCpus = new ArrayList<OnBoardCpu>();
 	private Cpu newCpu;
 	private Component newComponent;
 	private Chip newChip;
-	private Text boardNameField, mainClkField, rtcClkField, addrField, sizeField;
+	private Text boardNameField,mainClkField,rtcClkField,addrField,sizeField;
 	private TabFolder folder;
-	private Combo interfaceCombo, memoryTypeCombo;
+	private Combo interfaceCombo,memoryTypeCombo;
 	private Label mainClkLabel;
 	private Button rtcClkBtn;
 	private Button addBtn;
 	private Button deleteBtn;
-	private Board boardInit;
-	private List<Cpu> cpusList = null, cpusOn = null;
-	private List<Component> peripheralsList = new ArrayList<Component>();;// 外设列表
-	private List<Component> peripheralsOn = new ArrayList<Component>();// 用到的外设
-	private List<Component> allPeripherals;// 所有外设
-	private List<Chip> chipsList = null, chipsOn = null;
+	
+	private List<Cpu> cpusList = null,cpusOn = null;
+	private List<Component> peripheralsList = new ArrayList<Component>();;//外设列表
+	private List<Component> peripheralsOn = new ArrayList<Component>();//用到的外设
+	private List<Component> allPeripherals;//所有外设
+	private List<Chip> chipsList = null,chipsOn = null;
 	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
-	private List<Component> thePeripherals;// 点击板载cpu时用到的临时所有外设
-	private ReadComponentXml rcx = new ReadComponentXml();
+	private List<Component> thePeripherals;//点击板载cpu时用到的临时所有外设
+	private ReadComponentXml rcx = new ReadComponentXml();	
 	private Composite boardAttributesCpt;
 	private Group ConfigurationGroup;
-	private String didePath = getDIDEPath();
-	private IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-	private String lastBoardName;
-	DideHelper dideHelper = new DideHelper();	
+	private String eclipsePath = getEclipsePath();
+	private IWorkbenchWindow window = PlatformUI.getWorkbench()
+			.getActiveWorkbenchWindow();
 	
-	@Override
-	protected void okPressed() {
-		// TODO Auto-generated method stub
-		lastBoardName = boardNameField.getText().trim();
-		String vaildMsg = vaildPage();
-		if(vaildMsg!=null) {
-			MessageDialog.openInformation(window.getShell(), "提示",
-					vaildMsg);
-		}else {
-			Board board = getBoard();
-			String dirPath = dideHelper.getUserBoardFilePath()+"/"+lastBoardName;
-			String xmlPath = dirPath+"\\Board_"+board.getBoardName()+".xml";
-			File file = new File(xmlPath);
-			if(boardInit!=null) {
-				if(file.exists()) {
-					file.delete();
-				} 
-			}
-			try {
-				IRunnableWithProgress runnable = new IRunnableWithProgress() {
-					@Override
-					public void run(IProgressMonitor monitor)
-							throws InvocationTargetException, InterruptedException {
-
-						monitor.beginTask("创建板件……", 100);
-
-						/*
-						 * 处理事务，worked方法表示工作了多少的进度
-						 */
-						CreatBoardXml ctbx = new CreatBoardXml();
-						File boardDir = new File(dirPath);
-						boardDir.mkdirs();
-						if(!file.exists()) {
-							try {
-								file.createNewFile();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-						ctbx.creatBoardXml(board, file);
-						monitor.worked(10);
-						monitor.done();
-					}
-				};
-				ProgressMonitorDialog dialog = new ProgressMonitorDialog(
-						PlatformUI.getWorkbench().getDisplay().getActiveShell());
-				dialog.setCancelable(false);
-				dialog.run(true, true, runnable);
-			} catch (InvocationTargetException | InterruptedException e) {
-				e.printStackTrace();
-			}
-			super.okPressed();
-		}
-	}
-
-	public String getDIDEPath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
-	}
-	
-	public NewOrReviseBoard(Shell parent,boolean toNew,Board board) {
-		super(parent);
-		// TODO Auto-generated constructor stub
-		if(toNew) {
-			setTitle("新建板件");
-		}else {
-			setTitle("维护板件");
-			boardInit = board;
-		}
-		setShellStyle(getShellStyle() | SWT.CLOSE | SWT.MAX);
-	}
-	
-	@Override
-	protected Point getInitialSize() {
-		// TODO Auto-generated method stub
-		return new Point(500, 660);
-	}
-
-	@Override
-	protected Control createDialogArea(Composite parent) {
-		// TODO Auto-generated method stub
-		Composite composite = new Composite(parent, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		composite.setLayout(layout);
-		createDynamicGroup(composite);
-
-		return super.createDialogArea(parent);
-	}
-
 	private List<Board> getBoards(){
 		ReadBoardXml rbx = new ReadBoardXml();
 		List<String> paths = new ArrayList<String>();
 		List<Board> boards = new ArrayList<Board>();
-		String userBoardFilePath = dideHelper.getUserBoardFilePath();
-		String demoBoardFilePath = dideHelper.getDemoBoardFilePath();
+		String userBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\user";
+		String demoBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\demo";
 		paths.add(userBoardFilePath);
 		paths.add(demoBoardFilePath);
 
@@ -200,19 +125,17 @@ public class NewOrReviseBoard extends StatusDialog{
 			File[] files = boardFile.listFiles();
 			for(int j=0;j<files.length;j++){
 					File file = files[j];
-					if(file.isDirectory()) {
-						File[] mfiles = file.listFiles();
-						for(int k=0;k<mfiles.length;k++) {
-							if(mfiles[k].getName().endsWith(".xml")) {
-								try {
-									Board board = rbx.getBoard(mfiles[k]);
-									boards.add(board);
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								break;
+					File[] mfiles = file.listFiles();
+					for(int k=0;k<mfiles.length;k++) {
+						if(mfiles[k].getName().endsWith(".xml")) {
+							try {
+								Board board = rbx.getBoard(mfiles[k]);
+								boards.add(board);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
 							}
+							break;
 						}
 					}
 			}
@@ -223,26 +146,18 @@ public class NewOrReviseBoard extends StatusDialog{
 	
 	public String vaildPage() {
 		String curBoardName = boardNameField.getText().trim();
-		if(boardInit==null) {
-			List<Board> boards = getBoards();
-			for(Board board:boards){
-				if(board.getBoardName().equals(curBoardName)) {
-					return "该板件已存在，请重填板件名称！";
-				}
+		List<Board> boards = getBoards();
+		for(Board board:boards){
+			if(board.getBoardName().equals(curBoardName)) {
+				return "该板件已存在，请重填板件名称！";
 			}
 		}
 		for(OnBoardCpu onBoardCpu:onBoardCpus) {
 			String cpuName = onBoardCpu.getCpuName();
 			List<OnBoardMemory>  memorys = onBoardCpu.getMemorys();
-			for(int i=0;i<memorys.size();i++) {
-				OnBoardMemory memory = memorys.get(i);
-				if(memory.getStartAddr()==null || memory.getSize()==null || memory.getType() == null) {
+			for(OnBoardMemory memeory:memorys) {
+				if(memeory.getStartAddr()==null || memeory.getSize()==null || memeory.getType() == null) {
 					return "请完整填写["+cpuName+"]的存储信息";
-				}else {
-					int memoryInt = Integer.parseInt(memory.getSize());
-					if(memory.getSize().equals("0") || memory.getSize().equals("0x")) {	
-						return onBoardCpu.getCpuName()+"的存储memory"+(i+1)+"大小需大于0";
-					}
 				}
 			}
 			if(onBoardCpu.getMianClk()==0) {
@@ -275,16 +190,24 @@ public class NewOrReviseBoard extends StatusDialog{
 	}
 	
 	public Board getBoard() {
-		Board newBoard = new Board();
-		String boardName = lastBoardName;
+		String boardName = boardNameField.getText().trim();
 		newBoard.setBoardName(boardName);
-		if(boardInit==null) {
-			newBoard.setBoardPath((dideHelper.getUserBoardFilePath()+"/"+lastBoardName).replace("\\", "/"));
-		}
 		newBoard.setOnBoardCpus(onBoardCpus);
 		return newBoard;
 	}
 	
+	public String getEclipsePath() {
+		String fullPath = Platform.getInstallLocation().getURL().toString();
+		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+		return eclipsePath;
+	}
+	
+	protected BoardMainWizard_bak(String pageName) {
+		super(pageName);
+		// TODO Auto-generated constructor stub
+		setPageComplete(true);
+	}
+
 	public void changeCpusOn(String cpuName,boolean toAdd) {
 		if(toAdd) {
 			for(int i=0;i<cpusList.size();i++) {
@@ -382,12 +305,22 @@ public class NewOrReviseBoard extends StatusDialog{
 
 	}
 	
-
+	private  Listener nameModifyListener = e -> {
+		if(boardNameField.getText().trim().equals("")) {
+			setErrorMessage("板件名不能为空");
+			setPageComplete(false);
+		}else {
+			setErrorMessage(null);
+			setPageComplete(true);
+		}
+	};
+	
 	private IAction getAction(String id) {
 		// Keep a cache, rather than creating a new action each time,
 		// so that image caching in ActionContributionItem works.
 		IAction action = null;
 		IWizardDescriptor wizardDesc = WorkbenchPlugin.getDefault().getNewWizardRegistry().findWizard(id);
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		if (wizardDesc != null) {
 			action = new NewWizardShortcutAction(window, wizardDesc);
 			IConfigurationElement element = Adapters.adapt(wizardDesc, IConfigurationElement.class);
@@ -399,8 +332,16 @@ public class NewOrReviseBoard extends StatusDialog{
 		return action;
 	}
 	
-	private void createDynamicGroup(Composite composite) {
+	@Override
+	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
+		Composite composite = new Composite(parent, SWT.NONE);
+		initializeDialogUnits(parent);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
+		GridLayout layout = new GridLayout();
+		composite.setLayout(layout);
+//		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
+
 		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL
                 | SWT.H_SCROLL);
 		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -415,7 +356,7 @@ public class NewOrReviseBoard extends StatusDialog{
 		
 		Composite boardNameCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout layoutBoardName = new GridLayout();
-		layoutBoardName.numColumns = 2;
+		layoutBoardName.numColumns = 3;
 		boardNameCpt.setLayout(layoutBoardName);
 		boardNameCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		Text nameLabel = new Text(boardNameCpt, SWT.NONE);
@@ -424,10 +365,11 @@ public class NewOrReviseBoard extends StatusDialog{
 		boardNameField = new Text(boardNameCpt, SWT.BORDER);
 		GridData boardNameData = new GridData(GridData.FILL_HORIZONTAL);
 		boardNameField.setLayoutData(boardNameData);
-		boardNameField.setMessage("请输入板件名");
-		if(boardInit!=null) {
-			boardNameField.setText(boardInit.getBoardName());
-		}
+		boardNameField.setMessage("输入板件名可新建板件，点击右方按钮可维护板件");
+		boardNameField.addListener(SWT.Modify, nameModifyListener);
+		Button selectBoardBtn = new Button(boardNameCpt,SWT.PUSH);
+		selectBoardBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		selectBoardBtn.setText("选择板件");
 		
 		Composite newSearchCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout layoutnewSearchCpt = new GridLayout();
@@ -451,7 +393,6 @@ public class NewOrReviseBoard extends StatusDialog{
 				cpusList =  rcx.getAllCpus();
 				for(int i=0;i<cpusList.size();i++) {
 					TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
-					t.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
 					t.setText(cpusList.get(i).getCpuName());
 				}
 				super.widgetSelected(e);
@@ -506,6 +447,11 @@ public class NewOrReviseBoard extends StatusDialog{
 		scrolledComposite.setMinHeight(point.y);
 		scrolledComposite.setExpandHorizontal(true);
 	    scrolledComposite.setExpandVertical(true);
+
+		setErrorMessage(null);
+		setMessage(null);
+		setControl(composite);
+		Dialog.applyDialogFont(composite);
 	}
 	
 	private void createContentForAttribute(Composite parent) {
@@ -841,8 +787,18 @@ public class NewOrReviseBoard extends StatusDialog{
 		columnCpudrvs.setWidth(120);
 		columnCpudrvs.setResizable(false);
 		columnCpudrvs.setToolTipText("Cpu Drivers");
-		chipTree.setSize(140, 155);
 		
+		File cpudrvFile = new File(eclipsePath+"djysrc/bsp/chipdrv");
+		File[] files = cpudrvFile.listFiles();
+		chipsList = new ArrayList<Chip>();
+		for(int i=0;i<files.length;i++) {
+			TreeItem t = new TreeItem(chipTree, SWT.NONE);
+			t.setText(files[i].getName());
+			Chip chip = new Chip();
+			chip.setChipName(files[i].getName());
+			chipsList.add(chip);
+		}
+		chipTree.setSize(160, 155);
 		Composite btnCpt = new Composite(composite, SWT.NULL);
 		btnCpt.setLayout(new GridLayout());
 		btnCpt.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER | GridData.HORIZONTAL_ALIGN_CENTER));
@@ -978,19 +934,45 @@ public class NewOrReviseBoard extends StatusDialog{
 			}
 		});
 
-		chipOnTree.setSize(140, 155);
+		chipOnTree.setSize(160, 155);
 		
-		File chipFile = new File(didePath+"djysrc/bsp/chipdrv");
-		File[] files = chipFile.listFiles();
-		chipsList = new ArrayList<Chip>();
-		for(int i=0;i<files.length;i++) {
-			TreeItem t = new TreeItem(chipTree, SWT.NONE);
-			t.setText(files[i].getName());
-			Chip chip = new Chip();
-			chip.setChipName(files[i].getName());
-			chipsList.add(chip);
-		}
-
+		Composite peripheralCpt = new Composite(composite, SWT.NULL);
+		GridLayout peripheralLayout = new GridLayout();
+		peripheralCpt.setLayout(peripheralLayout);
+		peripheralCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+//		Label interfaceLabel = new Label(peripheralCpt,SWT.NONE);
+//		interfaceLabel.setText("与Cpu接口: ");
+//		interfaceCombo = new Combo(peripheralCpt,SWT.READ_ONLY);
+//		interfaceCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+//		interfaceCombo.setEnabled(false);
+//		interfaceCombo.addSelectionListener(new SelectionListener() {
+//			
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				int comboIndex = interfaceCombo.getSelectionIndex();
+//				TreeItem[] items = chipOnTree.getSelection();
+//				if(items.length>0) {
+//					String selectChip = items[0].getText().trim();
+//					for(int i=0;i<chipsOn.size();i++) {
+//						Chip chip = chipsOn.get(i);
+//						if(chip.getChipName().equals(selectChip)) {
+//							String theInterface = interfaceCombo.getItem(comboIndex);
+//							chip.setTheInterface(theInterface);
+//							break;
+//						}
+//					}
+//				}
+//				
+//			}
+//			
+//			@Override
+//			public void widgetDefaultSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//		});
+		
 		return composite;
 	}
 
@@ -1011,7 +993,7 @@ public class NewOrReviseBoard extends StatusDialog{
 		columnCpudrvs.setWidth(120);
 		columnCpudrvs.setResizable(false);
 		columnCpudrvs.setToolTipText("Cpu Drivers");
-		cpudrvTree.setSize(140, 155);
+		cpudrvTree.setSize(160, 155);
 		
 		Composite btnCpt = new Composite(composite, SWT.NULL);
 		btnCpt.setLayout(new GridLayout());
@@ -1139,7 +1121,7 @@ public class NewOrReviseBoard extends StatusDialog{
 		columnCpudrvsOn.setResizable(false);
 		columnCpudrvsOn.setToolTipText("Cpu DriversOn");
 
-		cpudrvOnTree.setSize(140, 155);
+		cpudrvOnTree.setSize(160, 155);
 		
 		return composite;
 	}
@@ -1274,15 +1256,6 @@ public class NewOrReviseBoard extends StatusDialog{
 		cpuArhivesNeed = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		cpuArhivesNeed.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		cpuArhivesNeed.setHeaderVisible(true);
-		if(boardInit!=null) {
-			List<OnBoardCpu> onCpus = boardInit.getOnBoardCpus();
-			onBoardCpus = onCpus;
-			for(OnBoardCpu onBoardCpu:onCpus) {
-				TreeItem t = new TreeItem(cpuArhivesNeed, SWT.NONE);
-				t.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
-				t.setText(onBoardCpu.getCpuName());
-			}
-		}
 		cpuArhivesNeed.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -1350,8 +1323,10 @@ public class NewOrReviseBoard extends StatusDialog{
 					cpudrvOnTree.removeAll();
 					//板载外设为空
 					if(boardPeripherals.size() == 0) {
+						System.out.println("allPeripherals.size():   "+allPeripherals.size());
 						peripheralsOn = new ArrayList<Component>();
 						for(int i=0;i<allPeripherals.size();i++) {
+							System.out.println(allPeripherals.get(i).getName());
 							TreeItem t = new TreeItem(cpudrvTree, SWT.NONE);
 							t.setText(allPeripherals.get(i).getName());
 						}
@@ -1391,9 +1366,6 @@ public class NewOrReviseBoard extends StatusDialog{
 					
 					List<OnBoardMemory> memorysOn = onBoardCpu.getMemorys();
 					memoryTree.removeAll();
-					memoryTypeCombo.deselectAll();
-					addrField.setText("");
-					sizeField.setText("");
 					if(memorysOn == null) {
 						memorys = new ArrayList<OnBoardMemory>();
 						memoryTypeCombo.setText("");
@@ -1403,7 +1375,6 @@ public class NewOrReviseBoard extends StatusDialog{
 						memorys = memorysOn;
 						if(memorys.size()>0) {
 							for(int i=0;i<memorys.size();i++) {
-								memorys.get(i).setName("memory"+(i+1));
 								String memoryOnName = memorys.get(i).getName();
 								TreeItem t = new TreeItem(memoryTree, SWT.NONE);
 								t.setText(memoryOnName);
@@ -1418,6 +1389,7 @@ public class NewOrReviseBoard extends StatusDialog{
 							memoryTree.setSelection(memoryTree.getItems()[0]);
 						}
 					}
+				
 //					updateConfigurationIntereface();
 				}
 			}
@@ -1478,6 +1450,8 @@ public class NewOrReviseBoard extends StatusDialog{
 					onBoardCpu.setCpuName(selectCpuName);
 					onBoardCpus.add(onBoardCpu);
 					updateCpuOn();
+					boolean valid = validatePage();
+					setPageComplete(valid);
 				}
 			}
 			
@@ -1504,6 +1478,8 @@ public class NewOrReviseBoard extends StatusDialog{
 					}
 					items[0].dispose();
 //					updateCpuList();
+					boolean valid = validatePage();
+					setPageComplete(valid);
 				}
 			}
 
@@ -1605,31 +1581,31 @@ public class NewOrReviseBoard extends StatusDialog{
 		});
 	}
 
-//	private boolean validatePage() {
-//		for(int i=0;i<onBoardCpus.size();i++) {
-////			List<OnBoardMemory> onBoardMemorys =onBoardCpus.get(i).getMemorys();
-////			if(onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
-////				onBoardCpus.remove(i);
-////			}
-//		}
-//		if(boardNameField.getText().trim().equals("")) {
-//			setErrorMessage("请填写板件名");
-//			return false;
-//		}else {
-//			setErrorMessage(null);
-//			setMessage(null);
-//		}
-//		if(cpuArhivesNeed.getItems().length == 0) {
-//			ConfigurationGroup.setText("板载Cpu配置(请先选中您要配置的Cpu)");
-//			enableOperate(false);
-//			setErrorMessage("请至少选择一个Cpu");
-//			return false;
-//		}else {
-//			setErrorMessage(null);
-//			setMessage(null);
-//		}
-//		return true;
-//	}
+	private boolean validatePage() {
+		for(int i=0;i<onBoardCpus.size();i++) {
+//			List<OnBoardMemory> onBoardMemorys =onBoardCpus.get(i).getMemorys();
+//			if(onBoardCpus.get(i).getCpuName().equals(selectCpuName)) {
+//				onBoardCpus.remove(i);
+//			}
+		}
+		if(boardNameField.getText().trim().equals("")) {
+			setErrorMessage("请填写板件名");
+			return false;
+		}else {
+			setErrorMessage(null);
+			setMessage(null);
+		}
+		if(cpuArhivesNeed.getItems().length == 0) {
+			ConfigurationGroup.setText("板载Cpu配置(请先选中您要配置的Cpu)");
+			enableOperate(false);
+			setErrorMessage("请至少选择一个Cpu");
+			return false;
+		}else {
+			setErrorMessage(null);
+			setMessage(null);
+		}
+		return true;
+	}
 	
 	private void updatePeripheralsList() {
 		TreeItem t = new TreeItem(cpudrvTree, SWT.NONE);
@@ -1647,9 +1623,8 @@ public class NewOrReviseBoard extends StatusDialog{
 	}
 	
 	private void updateCpuOn() {
+		TreeItem t = new TreeItem(cpuArhivesNeed, SWT.NONE);
 		if(newCpu != null) {
-			TreeItem t = new TreeItem(cpuArhivesNeed, SWT.NONE);
-			t.setImage(CPluginImages.DESC_CPU_VIEW.createImage());
 			t.setText(newCpu.getCpuName());
 		}
 	}
@@ -1666,7 +1641,7 @@ public class NewOrReviseBoard extends StatusDialog{
 	}	
 	
 	private String getCpuPath(String cpuName) {
-		String sourcePath = didePath+"djysrc/bsp/cpudrv";
+		String sourcePath = eclipsePath+"djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
 		File[] files = sourceFile.listFiles();
 		String path = null;

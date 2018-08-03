@@ -628,8 +628,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 			}
 		});
 
-		// 鼠标单击选择树的叶子节点事件
-//		final Treetest tr = new Treetest();
 		tree.addListener(SWT.MouseDown, new Listener() {
 			public void handleEvent(Event event) {
 				String descTitleChang = null;
@@ -690,6 +688,45 @@ public class CpuMainWiazrdPage extends WizardPage{
 				
 			}
 
+		});
+		
+		tree.addListener(SWT.MouseDoubleClick, new Listener() {
+			
+			@Override
+			public void handleEvent(Event event) {
+				// TODO Auto-generated method stub
+				List<String> configs = null;
+				cpu = new Cpu();
+				TreeItem[] items = tree.getSelection();
+				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+				String tag = "cpu";
+				
+				if(items.length>0) {
+					File curFile = new File(curFilePath);//当前选中文件
+					File xmlParentFile = getXmlFile(curFile);	
+					if(xmlParentFile!=null) {
+						if(xmlParentFile.getName().contains("group")) {
+							tag = "group";
+						}
+						try {
+							rcx.unitCpu(cpu,xmlParentFile);
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}					
+					}
+					traverseParents(curFile);		
+					configs = getConfigs(cpu,false);
+				}
+				
+				NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"revise_"+tag);
+				if (dialog.open() == Window.OK) {
+					TreeItem parentItem = items[0].getParentItem();
+					parentItem.removeAll();
+					new TreeItem(parentItem, 0);
+					parentItem.setExpanded(false);
+				}
+			}
 		});
 		
 		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);

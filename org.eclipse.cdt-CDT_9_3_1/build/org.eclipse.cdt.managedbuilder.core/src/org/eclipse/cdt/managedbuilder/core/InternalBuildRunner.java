@@ -148,27 +148,32 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 	
 			bsMngr.setProjectBuildState(project, pBS);
 			buildRunnerHelper.close();
-			buildRunnerHelper.goodbye();
+//			buildRunnerHelper.goodbye();
 
 			if (status != ICommandLauncher.ILLEGAL_COMMAND) {
 				buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
-			}
+			}else {
+			}			
 			
-			
-			/*
+			/*New
 			 * after Interalbuilder build successthen invoke Externalbuilder
 			 */
-//			BuildStatus buildstatus = new  BuildStatus(builder);
-//			buildstatus.setRebuild();
-//			CommonBuilder cb = new CommonBuilder();
-//			((Configuration) configuration).enableInternalBuilder(false);				
-//			buildRunnerHelper.printLine("Toggle to ExternalBuilder... Please Waitting");	
-//			IBuilder myBuilder = configuration.getEditableBuilder();
-//			CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
-//			cb.performPrebuildGeneration(IncrementalProjectBuilder.FULL_BUILD,bInfo,buildstatus,monitor);
-//			if (status == ParallelBuilder.STATUS_OK) {
-//				cb.build(IncrementalProjectBuilder.FULL_BUILD, bInfo, monitor);		
-//			}
+			
+			BuildStatus buildstatus = new  BuildStatus(builder);
+			buildstatus.setRebuild();
+			CommonBuilder cb = new CommonBuilder();
+			((Configuration) configuration).enableInternalBuilder(false);				
+			IBuilder myBuilder = configuration.getEditableBuilder();
+			CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
+			cb.performPrebuildGeneration(IncrementalProjectBuilder.FULL_BUILD,bInfo,buildstatus,monitor);
+			
+			if (status == ParallelBuilder.STATUS_OK) {
+				buildRunnerHelper.printLine("正在切换到External Builder，请等候...");	
+				cb.build(IncrementalProjectBuilder.FULL_BUILD, bInfo, monitor);		
+			}
+			/*New
+			 * after Interalbuilder build successthen invoke Externalbuilder
+			 */
 
 		} catch (Exception e) {
 			projectBuilder.forgetLastBuiltState();
