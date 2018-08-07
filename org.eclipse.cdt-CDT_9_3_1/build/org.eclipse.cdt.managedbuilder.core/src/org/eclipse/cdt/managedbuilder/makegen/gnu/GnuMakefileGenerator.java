@@ -1731,7 +1731,18 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 				}
 				buildCmd = command + WHITESPACE + toolFlags + WHITESPACE + outflag + WHITESPACE + outputPrefix + primaryOutputs + WHITESPACE + IN_MACRO;
 			}
-			else buildCmd = cmdLInfo.getCommandLine();
+			else {
+//				 String cmd = "";
+//				 String cmdline = cmdLInfo.getCommandLine();
+//				 String[] elems = cmdline.split("\\s+");
+//				 cmd += cmdline.replace(elems[3], "$(wordlist 1, 100, "+elems[3]+")");
+//				 cmd += "\n\t"+cmdline.replace(elems[3], "$(wordlist 101, 200, "+elems[3]+")");
+//				 cmd += "\n\t"+cmdline.replace(elems[3], "$(wordlist 201, 300, "+elems[3]+")");
+//				 cmd += "\n\t"+cmdline.replace(elems[3], "$(wordlist 301, 400, "+elems[3]+")");
+//				 cmd += "\n\t"+cmdline.replace(elems[3], "$(wordlist 401, $(words "+elems[3]+"), "+elems[3]+")");
+//				 buildCmd = cmd;
+				 buildCmd = cmdLInfo.getCommandLine();
+			}
 
             // resolve any remaining macros in the command after it has been
             // generated

@@ -161,15 +161,16 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 			
 			BuildStatus buildstatus = new  BuildStatus(builder);
 			buildstatus.setRebuild();
-			CommonBuilder cb = new CommonBuilder();
-			((Configuration) configuration).enableInternalBuilder(false);				
-			IBuilder myBuilder = configuration.getEditableBuilder();
-			CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
-			cb.performPrebuildGeneration(IncrementalProjectBuilder.FULL_BUILD,bInfo,buildstatus,monitor);
+			
+//			cb.performPrebuildGeneration(kind,bInfo,buildstatus,monitor);
 			
 			if (status == ParallelBuilder.STATUS_OK) {
+				CommonBuilder cb = new CommonBuilder();
+				((Configuration) configuration).enableInternalBuilder(false);				
+				IBuilder myBuilder = configuration.getEditableBuilder();
+				CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
 				buildRunnerHelper.printLine("正在切换到External Builder，请等候...");	
-				cb.build(IncrementalProjectBuilder.FULL_BUILD, bInfo, monitor);		
+				cb.build(kind, bInfo, monitor);		
 			}
 			/*New
 			 * after Interalbuilder build successthen invoke Externalbuilder

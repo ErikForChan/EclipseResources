@@ -750,27 +750,28 @@ public class CommonBuilder extends ACBuilder {
 		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
 		Configuration configuration = (Configuration) bInfo.getConfiguration();		
 		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
-		if (folder.getName().startsWith("libos") || folder.getName().startsWith("libOS")) {
+		if (configuration.getName().startsWith("libos") || configuration.getName().startsWith("libOS")) {
 			if (!folder.exists()) {
 				configuration.enableInternalBuilder(true);
 				builder = configuration.getEditableBuilder();
 				bInfo = getCfgBuildInfo(builder, true);
-			}  else {
-				Boolean makefileExist = false;
-				IPath path = folder.getLocation();
-				File file = path.toFile();
-				for (File cfile : file.listFiles()) {
-					if (cfile.getName().equals("makefile")) {
-						makefileExist = true;
-						break;
-					}
-				}
-				if (!makefileExist) {
-					configuration.enableInternalBuilder(true);
-					builder = configuration.getEditableBuilder();
-					bInfo = getCfgBuildInfo(builder, true);
-				}
-			}
+			}  
+//			else {
+//				Boolean makefileExist = false;
+//				IPath path = folder.getLocation();
+//				File file = path.toFile();
+//				for (File cfile : file.listFiles()) {
+//					if (cfile.getName().equals("makefile")) {
+//						makefileExist = true;
+//						break;
+//					}
+//				}
+//				if (!makefileExist) {
+//					configuration.enableInternalBuilder(true);
+//					builder = configuration.getEditableBuilder();
+//					bInfo = getCfgBuildInfo(builder, true);
+//				}
+//			}
 		}
 		
 		/*
@@ -927,7 +928,12 @@ public class CommonBuilder extends ACBuilder {
 		if(builder.isInternalBuilder())
 			return buildStatus;
 
-		buildStatus = performCleanning(kind, bInfo, buildStatus, monitor);
+//		if(needToChangeBuilder) {
+//			buildStatus.setRebuild();
+//		}else {
+			buildStatus = performCleanning(kind, bInfo, buildStatus, monitor);
+//		}
+		
 		IManagedBuilderMakefileGenerator generator = builder.getBuildFileGenerator();
 		if(generator != null){
 			initializeGenerator(generator, kind, bInfo, monitor);

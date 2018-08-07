@@ -1677,6 +1677,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		return new Point(520,400);
 	}
 	
+	public Cpu getCpuCreated() {
+		return newCpu;
+	}
+	
 	private boolean handleGroupOK() {
 		groupName = groupNameField.getText();
 		String completeName = "";
@@ -1815,6 +1819,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					newCpu.setParentPath(newCpuFile.getPath());
 					createNewCpuXml(newCpu,xmlFile,cpuName);
 				}else {
 					MessageDialog.openInformation(window.getShell(), "ÌבÊ¾",

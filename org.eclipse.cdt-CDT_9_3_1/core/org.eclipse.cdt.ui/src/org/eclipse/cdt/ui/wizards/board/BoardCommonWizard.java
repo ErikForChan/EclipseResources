@@ -89,8 +89,8 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IProject[] projects = workspace.getRoot().getProjects();
 		Board newBoard = fMainPage.getBoard();
-		String baordPath = newBoard.getBoardPath();
-		if(baordPath!=null) {
+		
+		if(newBoard!=null) {
 			String relativePath = newBoard.getBoardPath().replace(dideHelper.getDjyosSrcPath(), "");
 //			System.out.println("relativePath:  "+relativePath);
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {
@@ -139,9 +139,12 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 				dialog.run(true, true, runnable);
 			} catch (Exception e) {
 				e.printStackTrace();
+				return false;
 			}
+			return true;
+		}else {
+			return true;
 		}
-		return true;
 	}
 
 }

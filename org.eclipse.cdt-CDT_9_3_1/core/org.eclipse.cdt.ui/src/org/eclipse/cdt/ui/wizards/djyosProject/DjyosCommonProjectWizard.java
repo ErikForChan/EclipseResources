@@ -98,6 +98,7 @@ import org.eclipse.cdt.ui.newui.CDTPrefUtil;
 import org.eclipse.cdt.ui.wizards.CWizardHandler;
 import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.CreatBoardXml;
+import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.Chip;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.component.Component;
@@ -106,6 +107,9 @@ import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.ui.wizards.cpu.core.Core;
+import org.eclipse.cdt.ui.wizards.djyosProject.info.CreateBoardInfo;
+import org.eclipse.cdt.ui.wizards.djyosProject.info.CreateComponentInfo;
+import org.eclipse.cdt.ui.wizards.djyosProject.info.CreateCpuInfo;
 import org.eclipse.cdt.ui.wizards.djyosProject.tools.DideHelper;
 import org.eclipse.cdt.ui.wizards.djyosProject.tools.LinkHelper;
 import org.eclipse.cdt.ui.wizards.parsexml.ReviseLinkToXML;
@@ -421,6 +425,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		if(! projectPath.contains(projectName)) {
 			project = curProject;
 		}	
+		
+		File hardwareFile = new File(project.getLocation().toString()+"/data/hardwares");
+		if(!hardwareFile.exists()) {
+			hardwareFile.mkdirs();
+		}
+		
 		List<String> includes = new ArrayList<String>();		
 
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
@@ -520,12 +530,27 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		String archtectureString = "src/libos/bsp/arch/"+type+"/"+arch+"/"+family;
 		IFolder archtectureFolder = project.getFolder(archtectureString);
 		List<IFolder> archtectureFolders = new ArrayList<IFolder>();
-		getArchFolders(archtectureFolder, archtectureFolders);
+		getArchFolders(archtectureFolder, archtectureFolders); 
 		setFoldersInclude(archtectureFolders,conds);
 		
+		ReadComponent rc = new ReadComponent();
+		OnBoardCpu onBoardCpu = null ;
+		List<OnBoardCpu> onBoardCpus = board.getOnBoardCpus();
+		for (int i = 0; i < onBoardCpus.size(); i++) {
+			if (onBoardCpus.get(i).getCpuName().equals(cpu.getCpuName())) {
+				onBoardCpu = onBoardCpus.get(i);
+				break;
+			}
+		}
+		List<Component> compontentsList = rc.getAllComponents(onBoardCpu, board);
+
+		CreateComponentInfo createComponentInfo = new CreateComponentInfo();
+		File compInfoFile = new File(project.getLocation().toString()+"/data/hardwares/component_infos.xml");
+		createNewFile(compInfoFile);
+		createComponentInfo.createComponentInfo(compInfoFile, compontentsList);
 		//為組建添加link項		
-		linkComponentResource(true,appCompontentsChecked,srcLocation,_cpuName,project,conds);
-//		linkComponentResource(false,ibootCompontentsChecked,srcLocation,_cpuName,project,conds);
+		linkComponentResource(true,appCompontentsChecked,compontentsList,srcLocation,_cpuName,project,conds);
+		linkComponentResource(false,ibootCompontentsChecked,compontentsList,srcLocation,_cpuName,project,conds);
 		
 //		File djySrcFile = new File(dideHelper.getDjyosSrcPath());
 //		setFoldersToExclude(djySrcFile,conds,project);
@@ -534,7 +559,14 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		ReviseVariableToXML rvtx = new ReviseVariableToXML();
 		rvtx.reviseXmlVariable("DJYOS_SRC_LOCATION","file:/"+didePath+"djysrc", 
 				project.getFile(".project"),projectName);
-		ReviseLinkToXML rltx = new ReviseLinkToXML();
+
+		ReadBoardXml rbx = new ReadBoardXml();
+		CreateBoardInfo createBoardInfo = new CreateBoardInfo();
+		List<Board> allBoards = rbx.getAllBoards();
+		File boardInfoFile = new File(project.getLocation().toString()+"/data/hardwares/board_infos.xml");
+		createNewFile(boardInfoFile);
+		createBoardInfo.createBoardInfo(boardInfoFile, allBoards);
+		
 		System.out.println("board.getBoardName():   "+board.getBoardName());
 		if(isDemoBoard) {
 			setBoardExclude(true,board.getBoardName(),project,conds);
@@ -556,6 +588,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 //		}
 		ReadCpuXml rcx = new ReadCpuXml();
 		List<Cpu> allCpus = rcx.getAllCpus();
+		//保存所有的cpu信息
+		File cpuInfoFile = new File(project.getLocation().toString()+"/data/hardwares/cpu_infos.xml");
+		createNewFile(cpuInfoFile);
+		CreateCpuInfo createCpuInfo = new CreateCpuInfo();
+		createCpuInfo.createCpuInfo(cpuInfoFile, allCpus);
+		
 		Cpu myCpu = null;
 		for(Cpu c:allCpus) {
 			if(c.getCpuName().equals(_cpuName)) {
@@ -574,6 +612,19 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		
 	}
 	
+	private void createNewFile(File file) {
+		// TODO Auto-generated method stub
+		if(file.exists()) {
+			file.delete();
+		}
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	public void getArchFolders(IFolder ifolder,List<IFolder> folders){
 		folders.add(ifolder);
 //		System.out.println("ifolderArch:   "+ifolder.getFullPath().toString());
@@ -663,7 +714,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		// TODO Auto-generated method stub
 		File boardDrvFile = new File(dideHelper.getDjyosSrcPath()+"/bsp/boarddrv");
 		File[] files = boardDrvFile.listFiles();
-		System.out.println("isDemoBoard:   "+isDemoBoard);
+//		System.out.println("isDemoBoard:   "+isDemoBoard);
 		for(File file:files) {
 			File[] myFiles = file.listFiles();
 			if(isDemoBoard) {
@@ -736,22 +787,11 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		}
 	}
 
-	private void linkComponentResource(boolean isApp,List<Component> compontentsChecked, String srcLocation, String _cpuName, IProject project, ICConfigurationDescription[] conds) {
+	private void linkComponentResource(boolean isApp,List<Component> compontentsChecked, List<Component> compontentsList, String srcLocation, String _cpuName, IProject project, ICConfigurationDescription[] conds) {
 		// TODO Auto-generated method stub
 		List<String> notExcludes = new ArrayList<String>();
 		List<String> excludes = new ArrayList<String>();	
-		ReadComponent rc = new ReadComponent();
-		Board board = fMainPage.getSelectBoard();
-		Cpu cpu = fMainPage.getSelectCpu();
-		OnBoardCpu onBoardCpu = null ;
-		List<OnBoardCpu> onBoardCpus = board.getOnBoardCpus();
-		for (int i = 0; i < onBoardCpus.size(); i++) {
-			if (onBoardCpus.get(i).getCpuName().equals(cpu.getCpuName())) {
-				onBoardCpu = onBoardCpus.get(i);
-				break;
-			}
-		}
-		List<Component> compontentsList = rc.getAllComponents(onBoardCpu, board);
+		
 		List<Component> compontentsExclude = new ArrayList<Component>();
 		getCompontentsExclude(compontentsExclude,compontentsChecked,compontentsList);
 		for(int j=0;j<compontentsExclude.size();j++) {
@@ -760,7 +800,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 //			System.out.println("componentName:  "+componentName);
 			String componentPath = component.getParentPath().replace("\\", "/");
 			String relativePath = componentPath.replace(srcLocation, "");
-			System.out.println("relativePath1111111:  "+relativePath);
+//			System.out.println("relativePath1111111:  "+relativePath);
 			IFolder folder = project.getFolder("src/libos"+relativePath);
 			IFile file = project.getFile("src/libos"+relativePath+"/"+component.getFileName());
 			

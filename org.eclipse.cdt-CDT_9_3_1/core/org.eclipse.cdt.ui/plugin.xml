@@ -5189,5 +5189,11 @@
        </adapter>
     </factory>
  </extension>
+ <extension
+       point="org.eclipse.ui.startup">
+    <startup
+          class="org.eclipse.cdt.ui.startup.FolderAddedHandler">
+    </startup>
+ </extension>
 
 </plugin>

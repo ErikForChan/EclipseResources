@@ -25,7 +25,7 @@ import org.eclipse.cdt.ui.wizards.component.Component;
 public class DideHelper {
 	
 	private IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-	String fullPath = Platform.getInstallLocation().getURL().toString();
+	String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
 	String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 	DecimalFormat df = new DecimalFormat("######0");
 	

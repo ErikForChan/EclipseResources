@@ -243,8 +243,8 @@ public class ComponentCfgPage extends PropertyPage {
 		item.setText("用户组件"); //$NON-NLS-1$
 		item.setControl(createTabContent(folder, appUserComponents, ibootUserComponents));
 
-		InitComponents(appCompontents, appCompontentsInit);
-		InitComponents(ibootCompontents, ibootCompontentsInit);
+		InitComponents(appCompontents, appCompontentsInit, appCmpntChecks);
+		InitComponents(ibootCompontents, ibootCompontentsInit, ibootCmpntChecks);
 
 		Control[] controls = folder.getChildren();
 		Tree coreTree = (Tree) controls[0];
@@ -367,8 +367,9 @@ public class ComponentCfgPage extends PropertyPage {
 		mutexText.setEditable(false);
 	}
 
-	private void InitComponents(List<Component> components, List<Component> componentsInit) {
+	private void InitComponents(List<Component> components, List<Component> componentsInit, List<CmpntCheck> cmpntChecks) {
 		// TODO Auto-generated method stub
+		List<String> checkNames = getChecks(cmpntChecks);
 		for (int i = 0; i < components.size(); i++) {
 			Component component = new Component();
 			component.setName(components.get(i).getName());
@@ -389,9 +390,22 @@ public class ComponentCfgPage extends PropertyPage {
 			component.setSelect(components.get(i).isSelect());
 			component.setParentPath(components.get(i).getParentPath());
 			component.setTarget(components.get(i).getTarget());
+			if(!checkNames.contains(component.getName())) {
+				component.setSelect(false);
+			}
 			// 当组件为必选且不需要配置时，不显示在界面上
 			componentsInit.add(component);
 		}
+	}
+
+
+	private List<String> getChecks(List<CmpntCheck> cmpntChecks) {
+		// TODO Auto-generated method stub
+		List<String> checkNames = new ArrayList<String>();
+		for(CmpntCheck check:cmpntChecks) {
+			checkNames.add(check.getCmpntName());
+		}
+		return checkNames;
 	}
 
 	private void creatConfigTable(Composite parent) {

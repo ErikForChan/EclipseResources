@@ -93,10 +93,15 @@ public class CpuMainWiazrdPage extends WizardPage{
 	private String eclipsePath = getEclipsePath();
 	private ReadCpuXml rcx = new ReadCpuXml();
 	private Cpu cpu = new Cpu();
+	private Cpu cpuCreated = null;
 	private Tree tree;
 	private Text configInfoText = null;
 	private MenuItem newGroupItem,newCpuItem,deleteItem,reviseItem;
-	
+
+	public Cpu getCpuCreated() {
+		return cpuCreated;
+	}
+
 	protected CpuMainWiazrdPage(String pageName) {
 		super(pageName);
 		// TODO Auto-generated constructor stub
@@ -311,6 +316,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"cpu");
 				if (dialog.open() == Window.OK) {
 					String newFileName = dialog.getGroupName();
+					cpuCreated = dialog.getCpuCreated();
 					final TreeItem root = items[0];
 					root.removeAll();
 					File file = (File) root.getData();
