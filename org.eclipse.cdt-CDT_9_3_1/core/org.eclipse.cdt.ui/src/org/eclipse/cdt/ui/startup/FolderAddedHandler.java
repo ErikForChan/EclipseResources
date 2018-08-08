@@ -9,8 +9,10 @@ public class FolderAddedHandler implements IStartup{
 	@Override
 	public void earlyStartup() {
 		// TODO Auto-generated method stub
-		HandleFolderAdded folderListener = new HandleFolderAdded(); 
-		folderListener.handleAddeed();
+//		HandleFolderAdded folderListener = new HandleFolderAdded(); 
+//		folderListener.handleAddeed();
+		AddDefaultPostCmd defaultPostCmd=new AddDefaultPostCmd();
+		defaultPostCmd.getDefaultPostCmd();
 	}
 
 }
