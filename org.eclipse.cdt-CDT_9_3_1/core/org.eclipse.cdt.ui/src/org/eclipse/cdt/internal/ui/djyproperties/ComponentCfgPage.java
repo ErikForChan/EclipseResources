@@ -1932,7 +1932,6 @@ public class ComponentCfgPage extends PropertyPage {
 								// eventItem.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
 								// }
 							}
-
 							comptVisited.add(compName);
 							if (toCalculate) {
 								item.setText(1, "(" + text.getText() + ")");
