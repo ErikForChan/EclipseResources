@@ -158,6 +158,7 @@ public class ComponentCfgPage extends PropertyPage {
 	private LinkHelper linkHelper = new LinkHelper();
 
 	private int checkcounter;
+	private int lastchk;
 	
 	private IProject getProject() {
 		Object element = getElement();
@@ -1530,6 +1531,7 @@ public class ComponentCfgPage extends PropertyPage {
 		String[] infos = null;
 		List<String> ranges = null;
 		isSelect = new boolean[parametersDefined.length];
+		Button checkBtn[] = new Button[parametersDefined.length];
 		for (int i = 0; i < parametersDefined.length; i++) {
 			isSelect[i] = false;
 			String parameter = parametersDefined[i];
@@ -1674,8 +1676,8 @@ public class ComponentCfgPage extends PropertyPage {
 						}
 					});
 				} else if (tag.equals("select")) {
-					Button checkBtn = new Button(table, SWT.CHECK);
-					editor.setEditor(checkBtn, item, 1);
+					checkBtn[i] = new Button(table, SWT.CHECK);
+					editor.setEditor(checkBtn[i], item, 1);
 					int cur = i;
 					boolean symolsExist = false;
 					final ICProjectDescription local_prjd = CoreModel.getDefault()
@@ -1736,10 +1738,14 @@ public class ComponentCfgPage extends PropertyPage {
 
 					if (symolsExist) {
 						isSelect[i] = true;
-						checkBtn.setSelection(true);
+						checkcounter += 1;
+						if(range1==1){
+							lastchk = i;
+						}
+						checkBtn[i].setSelection(true);
 					} else {
 						isSelect[i] = false;
-						checkBtn.setSelection(false);
+						checkBtn[i].setSelection(false);
 					}
 					// if (parameter.startsWith("//")) {
 					// isSelect[i] = false;
@@ -1749,24 +1755,29 @@ public class ComponentCfgPage extends PropertyPage {
 					// checkBtn.setSelection(true);
 					// }
 					int chkran = range1;
-					checkBtn.addListener(SWT.Selection, new Listener() {
+					checkBtn[i].addListener(SWT.Selection, new Listener() {
 
 						@Override
 						public void handleEvent(Event event) {
 							// TODO Auto-generated method stub
 
-							boolean checked = checkBtn.getSelection();
+							boolean checked = checkBtn[cur].getSelection();
 							System.out.println("handleEvent:   " + checked);
+							System.out.println(table.getSelectionIndex());
 							if (checked) {
 								isSelect[cur] = true;
 								if (rangeSize > 0) {
 									checkcounter += 1;
-									if (checkcounter > chkran) {
+									if ((checkcounter > chkran)&&(chkran>1)) {
 										checkcounter = chkran;
-										checkBtn.setSelection(false);
+										checkBtn[cur].setSelection(false);
 										MessageDialog.openError(window.getShell(), "提示",
 												"不得勾选多于" + chkran + "项");
+									}else if((checkcounter > chkran)&&(chkran==1)){
+										checkcounter = chkran;
+										checkBtn[lastchk].setSelection(false);
 									}
+									lastchk = cur;
 								}
 
 							} else {
@@ -1784,7 +1795,7 @@ public class ComponentCfgPage extends PropertyPage {
 							resetConfigure(componentSelect);
 						}
 					});
-					tabelControls.add(checkBtn);
+					tabelControls.add(checkBtn[i]);
 				} else {
 					isSelect[i] = true;
 					// 创建一个文本框，用于输入文字
