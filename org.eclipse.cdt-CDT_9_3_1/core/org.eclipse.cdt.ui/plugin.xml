@@ -5192,7 +5192,7 @@
  <extension
        point="org.eclipse.ui.startup">
     <startup
-          class="org.eclipse.cdt.ui.startup.FolderAddedHandler">
+          class="org.eclipse.cdt.ui.startup.StartupHandler">
     </startup>
  </extension>
 

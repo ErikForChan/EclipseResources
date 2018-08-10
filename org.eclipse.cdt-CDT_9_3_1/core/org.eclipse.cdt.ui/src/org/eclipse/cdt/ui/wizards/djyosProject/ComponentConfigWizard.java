@@ -832,9 +832,14 @@ public class ComponentConfigWizard extends WizardPage {
 											travelItems_Depedent(treeItem, itemCompt, isApp);
 											itemCompt.setSelect(true);
 											if (isApp) {
-												appCompontentsChecked.add(itemCompt);
+												if(!appCompontentsChecked.contains(itemCompt)) {
+													appCompontentsChecked.add(itemCompt);
+												}
 											} else {
-												ibootCompontentsChecked.add(itemCompt);
+												if(!ibootCompontentsChecked.contains(itemCompt)) {
+													ibootCompontentsChecked.add(itemCompt);
+												}
+												
 											}
 										}
 										break;
@@ -1059,9 +1064,13 @@ public class ComponentConfigWizard extends WizardPage {
 					if(eventDepedents.contains(tempCompt.getName())){
 						item.setChecked(false);
 						if(isApp) {
-							appCompontentsChecked.remove(tempCompt);
+							if(!appCompontentsChecked.contains(tempCompt)) {
+								appCompontentsChecked.add(tempCompt);
+							}
 						}else {
-							ibootCompontentsChecked.remove(tempCompt);
+							if(!ibootCompontentsChecked.contains(tempCompt)) {
+								ibootCompontentsChecked.add(tempCompt);
+							}
 						}
 					}else {
 						eventTreeItem.setChecked(true);

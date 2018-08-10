@@ -451,6 +451,10 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			String conName = conds[i].getName();
 			ICResourceDescription rds = conds[i].getRootFolderDescription();
 			IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
+			if(!conName.contains("libos")) {
+				cfg.setPostbuildStep("make "+conName+".bin && elf_to_bin.exe "+conName+".elf "+conName+".bin && ren "+conName+".bin new"+conName+".bin");	
+			}
+			
 			IResourceInfo resourceInfo = cfg.getRootFolderInfo();
 			IToolChain toolchain = resourceInfo.getParent().getToolChain();
 			ICSourceEntry[] sourceEntrys = conds[i].getSourceEntries();

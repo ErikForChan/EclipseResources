@@ -10,6 +10,8 @@ import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICFolderDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
+import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.ui.wizards.board.Board;
 import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
@@ -79,6 +81,14 @@ public class HandleFolderAdded{
 			
 			List<String> hardwares;
 			if(hardWardInfoFile.exists()) {
+//				for(int i=0;i<conds.length;i++) {
+//					String conName = conds[i].getName();
+//					ICResourceDescription rds = conds[i].getRootFolderDescription();
+//					IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
+//					if(!conName.contains("libos")) {
+//						cfg.setPostbuildStep("make "+conName+".bin && elf_to_bin.exe "+conName+".elf "+conName+".bin && ren "+conName+".bin new"+conName+".bin");	
+//					}
+//				}
 				hardwares = rhwd.getHardWares(hardWardInfoFile);
 				Board sBoard = null;
 				OnBoardCpu onBoardCpu = null;
@@ -100,37 +110,36 @@ public class HandleFolderAdded{
 							break;
 						}
 					}
-				}
-				
-				List<Component> allCompontents = rc.getAllComponents(onBoardCpu, sBoard);
-				if(compInfoFile.exists()) {
-					List<String> compPaths = readCpusInfo.getCpusInfo(compInfoFile);
-					
-					for (Component component : allCompontents) { 
-						String componentPath = component.getParentPath().replace("\\", "/");
-						String fileName = component.getFileName();
-						String relativePath = componentPath.replace(srcLocation, "");
-						String compPath = relativePath+"/"+fileName;
-						if(!compPaths.contains(compPath)) {
-							if(fileName.endsWith(".c")) {
-								IFile ifile = project.getFile("src/libos"+compPath);
-								for (int j = 0; j < conds.length; j++) {
-									linkHelper.setFileExclude(ifile, conds[j], true);
-								}
-								
-							}else if(fileName.endsWith(".h")) {
-								IFolder ifolder = project.getFolder("src/libos"+relativePath);
-								for (int j = 0; j < conds.length; j++) {
-									linkHelper.setExclude(ifolder, conds[j], true);
+					List<Component> allCompontents = rc.getAllComponents(onBoardCpu, sBoard);
+					if(compInfoFile.exists()) {
+						List<String> compPaths = readCpusInfo.getCpusInfo(compInfoFile);
+						
+						for (Component component : allCompontents) { 
+							String componentPath = component.getParentPath().replace("\\", "/");
+							String fileName = component.getFileName();
+							String relativePath = componentPath.replace(srcLocation, "");
+							String compPath = relativePath+"/"+fileName;
+							if(!compPaths.contains(compPath)) {
+								if(fileName.endsWith(".c")) {
+									IFile ifile = project.getFile("src/libos"+compPath);
+									for (int j = 0; j < conds.length; j++) {
+										linkHelper.setFileExclude(ifile, conds[j], true);
+									}
+									
+								}else if(fileName.endsWith(".h")) {
+									IFolder ifolder = project.getFolder("src/libos"+relativePath);
+									for (int j = 0; j < conds.length; j++) {
+										linkHelper.setExclude(ifolder, conds[j], true);
+									}
 								}
 							}
+							
 						}
-						
 					}
+					createNewFile(compInfoFile);
+					createComponentInfo.createComponentInfo(compInfoFile, allCompontents);
 				}
-				createNewFile(compInfoFile);
-				createComponentInfo.createComponentInfo(compInfoFile, allCompontents);
-				
+
 				if(boardInfoFile.exists()) {
 					List<String> boardNames = readBoardsInfo.getBoardsInfo(boardInfoFile);
 					for(Board board:boards) {

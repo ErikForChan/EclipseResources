@@ -227,7 +227,26 @@ public class PreferenceDialog extends TrayDialog implements IPreferencePageConta
 	protected void buttonPressed(int buttonId) {
 		switch (buttonId) {
 		case IDialogConstants.OK_ID: {
-			okPressed();
+			boolean haveDjyos = false;
+			Iterator<IPreferenceNode> nodes = preferenceManager.getElements(PreferenceManager.PRE_ORDER)
+					.iterator();
+			while (nodes.hasNext()) {
+				IPreferenceNode node = nodes.next();
+				IPreferencePage page = node.getPage();
+				if (page != null) {
+					if(page.isDjyos()) {
+						haveDjyos = true;
+						if (page.performOk()) {
+							setReturnCode(OK);
+							close();
+						}
+						break;
+					}
+				}
+			}
+			if(!haveDjyos) {
+				okPressed();
+			}
 			return;
 		}
 		case IDialogConstants.CANCEL_ID: {

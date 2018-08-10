@@ -679,8 +679,14 @@ public abstract class PreferencePage extends DialogPage implements
 		// TODO Auto-generated method stub
 		return isPageDragable;
 	}
-	
-    public void setPageDragable(boolean b) {
+
+    @Override
+	public boolean isDjyos() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void setPageDragable(boolean b) {
     	isPageDragable = b;
     }
     

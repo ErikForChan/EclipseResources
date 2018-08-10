@@ -77,4 +77,6 @@ public interface IPreferencePage extends IDialogPage {
     public void setSize(Point size);
     
     public boolean isPageDragable();
+    
+    public boolean isDjyos();
 }
