@@ -781,8 +781,14 @@ public class CpuMainWiazrdPage extends WizardPage{
 	private boolean containsXml(File file) {
 		File[] files = file.listFiles();
 		for(File f:files) {
-			if(f.getName().endsWith(".xml")) {
-				return true;
+			if(f.isDirectory()) {
+				if(containsXml(f)) {
+					return true;
+				}
+			}else {
+				if(f.getName().endsWith(".xml")) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -845,55 +851,57 @@ public class CpuMainWiazrdPage extends WizardPage{
 	private String traverseParents(File curFile,String descContent) {
 		if (!curFile.getName().contains("cpudrv")) {
 			File xmlFile = getXmlFile(curFile);
-			try {
-				Cpu cpu = rcx.getCpuInfos(xmlFile);
+			if(xmlFile != null) {
+				try {
+					Cpu cpu = rcx.getCpuInfos(xmlFile);
 
-				if (cpu.getCoreNum() != 0) {
-					if(xmlFile.getName().contains("group")) {
-						descContent += "子目录["+curFile.getName()+"]配置：";
-					}else {
-						descContent += "Cpu  ["+curFile.getName()+"]配置：";
-					}
-					
-					for (int i = 0; i < cpu.getCoreNum(); i++) {
-						Core core = cpu.getCores().get(i);
-						descContent += "\n内核" + (i + 1) + "：";
-						if (core.getType() != null) {
-							descContent += core.getType();
+					if (cpu.getCoreNum() != 0) {
+						if(xmlFile.getName().contains("group")) {
+							descContent += "子目录["+curFile.getName()+"]配置：";
+						}else {
+							descContent += "Cpu  ["+curFile.getName()+"]配置：";
 						}
-						if (core.getArch() != null) {
-							descContent += "，架构：" + core.getArch();
-						}
-						if (core.getFamily() != null) {
-							descContent += "，家族：" + core.getFamily();
-						}
-						if (core.getFpuType() != null) {
-							descContent += "\n\t浮点：" + core.getFpuType();
-						}
-						if (core.getResetAddr() != null) {
-							descContent += "\n\t复位地址：" + core.getResetAddr();
-						}
-						if(core.getMemorys().size()!=0) {
-							List<CoreMemory> memorys = core.getMemorys();
-							for(int j = 0; j < memorys.size(); j++) {
-								descContent += "\n\t内存" + (j + 1) + "：";
-								if (memorys.get(j).getType() != null) {
-									descContent +=  memorys.get(j).getType();
-								}
-								if (memorys.get(j).getStartAddr() != null) {
-									descContent += "，起始地址：" + memorys.get(j).getStartAddr();
-								}
-								if (memorys.get(j).getSize() != null) {
-									descContent += "，大小：" + memorys.get(j).getSize();
-								}		
+						
+						for (int i = 0; i < cpu.getCoreNum(); i++) {
+							Core core = cpu.getCores().get(i);
+							descContent += "\n内核" + (i + 1) + "：";
+							if (core.getType() != null) {
+								descContent += core.getType();
 							}
+							if (core.getArch() != null) {
+								descContent += "，架构：" + core.getArch();
+							}
+							if (core.getFamily() != null) {
+								descContent += "，家族：" + core.getFamily();
+							}
+							if (core.getFpuType() != null) {
+								descContent += "\n\t浮点：" + core.getFpuType();
+							}
+							if (core.getResetAddr() != null) {
+								descContent += "\n\t复位地址：" + core.getResetAddr();
+							}
+							if(core.getMemorys().size()!=0) {
+								List<CoreMemory> memorys = core.getMemorys();
+								for(int j = 0; j < memorys.size(); j++) {
+									descContent += "\n\t内存" + (j + 1) + "：";
+									if (memorys.get(j).getType() != null) {
+										descContent +=  memorys.get(j).getType();
+									}
+									if (memorys.get(j).getStartAddr() != null) {
+										descContent += "，起始地址：" + memorys.get(j).getStartAddr();
+									}
+									if (memorys.get(j).getSize() != null) {
+										descContent += "，大小：" + memorys.get(j).getSize();
+									}		
+								}
+							}
+							descContent += "\n----------------------------------------------------------\n";
 						}
-						descContent += "\n----------------------------------------------------------\n";
 					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 			File parentFile = curFile.getParentFile();
 			descContent = traverseParents(parentFile, descContent);

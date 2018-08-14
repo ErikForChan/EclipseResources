@@ -954,12 +954,14 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		
 		ICLanguageSetting[] languageSettings = linkHelper.getLangSetting(rds);
 		for (int j=0; j<languageSettings.length; j++) {
+			ICLanguageSetting lang = languageSettings[j];//获取语言类型
+			List<ICLanguageSettingEntry>  _entries = new ArrayList<ICLanguageSettingEntry>();
+			linkHelper.fillSymbols(compontentsChecked,_entries);
+			linkHelper.changeIt(ICSettingEntry.MACRO,_entries,lang.getSettingEntries(ICSettingEntry.MACRO),lang);
+			
 			//Assembly添加链接
 			if(j==0) {
-				ICLanguageSetting lang = languageSettings[j];//获取语言类型
-//				ICLanguageSettingEntry[] ents = null;
 				List<ICLanguageSettingEntry>  entries = new ArrayList<ICLanguageSettingEntry>();
-				List<ICLanguageSettingEntry>  _entries = new ArrayList<ICLanguageSettingEntry>();
 				for(int k=0;k<assemblyLinks.size();k++) {
 					ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(assemblyLinks.get(k), 0);
 					entries.add(entry);
@@ -970,23 +972,18 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 						entries.add(entry);
 					}
 				}
-				linkHelper.fillSymbols(compontentsChecked,_entries);
+				
 				linkHelper.changeIt(ICSettingEntry.INCLUDE_PATH,entries,lang.getSettingEntries(ICSettingEntry.INCLUDE_PATH),lang);
-				linkHelper.changeIt(ICSettingEntry.MACRO,_entries,lang.getSettingEntries(ICSettingEntry.MACRO),lang);
 			}
 			//GNU C/C++ 添加链接
 			else {
-				ICLanguageSetting lang = languageSettings[j];
 				ICLanguageSettingEntry[] ents = null;
 				List<ICLanguageSettingEntry>  entries = new ArrayList<ICLanguageSettingEntry>();
-				List<ICLanguageSettingEntry>  _entries = new ArrayList<ICLanguageSettingEntry>();
 				for(int k=0;k<myLinks.size();k++) {
 					ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(myLinks.get(k), 0);
 					entries.add(entry);
 				}
-				linkHelper.fillSymbols(compontentsChecked,_entries);
 				linkHelper.changeIt(ICSettingEntry.INCLUDE_PATH,entries,lang.getSettingEntries(ICSettingEntry.INCLUDE_PATH),lang);
-				linkHelper.changeIt(ICSettingEntry.MACRO,_entries,lang.getSettingEntries(ICSettingEntry.MACRO),lang);
 			}			
 		}
 		

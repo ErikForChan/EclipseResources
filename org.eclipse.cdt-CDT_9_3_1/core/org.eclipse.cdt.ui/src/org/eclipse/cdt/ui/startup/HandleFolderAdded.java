@@ -45,38 +45,31 @@ public class HandleFolderAdded{
 	LinkHelper linkHelper = new LinkHelper();
 	DideHelper dideHelper = new DideHelper();
 	final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-	ReadComponent rcp = new ReadComponent();
-	ReadCpuXml rcx = new ReadCpuXml();
-	ReadBoardXml rbx = new ReadBoardXml();
-	ReadHardWareDesc rhwd = new ReadHardWareDesc();
-	List<Cpu> allCpus = null;
-	List<Board> boardsList = null;
-	ReadCpusInfo readCpusInfo = new ReadCpusInfo();
-	ReadBoardsInfo readBoardsInfo = new ReadBoardsInfo();
-	ReadComponentsInfo ReadComponentsInfo = new ReadComponentsInfo();
-	CreateComponentInfo createComponentInfo = new CreateComponentInfo();
-	CreateBoardInfo createBoardInfo = new CreateBoardInfo();
-	CreateCpuInfo createCpuInfo = new CreateCpuInfo();
-	ReadComponent rc = new ReadComponent();
 	private String didePath = new DideHelper().getDIDEPath();
 	String srcLocation = didePath+"djysrc";
 	
 	public void handleAddeed() {
-		
-		allCpus = rcx.getAllCpus();
-		boardsList = rbx.getAllBoards();
+
 		IProject[] projects = workspace.getRoot().getProjects();
 		File boardFile = new File(dideHelper.getDjyosSrcPath()+"/boarddrv");
 		for(IProject project:projects) {
+			ReadComponent rcp = new ReadComponent();
+			ReadCpuXml rcx = new ReadCpuXml();
+			ReadBoardXml rbx = new ReadBoardXml();
+			ReadHardWareDesc rhwd = new ReadHardWareDesc();
+			ReadCpusInfo readCpusInfo = new ReadCpusInfo();
+			ReadBoardsInfo readBoardsInfo = new ReadBoardsInfo();
+			ReadComponentsInfo ReadComponentsInfo = new ReadComponentsInfo();
+			CreateComponentInfo createComponentInfo = new CreateComponentInfo();
+			CreateBoardInfo createBoardInfo = new CreateBoardInfo();
+			CreateCpuInfo createCpuInfo = new CreateCpuInfo();
+			ReadComponent rc = new ReadComponent();
 			final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 			ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
 			File compInfoFile = new File(project.getLocation().toString()+"/data/hardwares/component_infos.xml");
 			File cpuInfoFile = new File(project.getLocation().toString()+"/data/hardwares/cpu_infos.xml");
 			File boardInfoFile = new File(project.getLocation().toString()+"/data/hardwares/board_infos.xml");
 			File hardWardFolder = new File(project.getLocation().toString()+"/data/hardwares");
-			if(!hardWardFolder.exists()) {
-				hardWardFolder.mkdirs();
-			}
 			File hardWardInfoFile = new File(project.getLocation().toString()+"/data/hardware_info.xml");
 			
 			List<String> hardwares;
@@ -89,6 +82,9 @@ public class HandleFolderAdded{
 //						cfg.setPostbuildStep("make "+conName+".bin && elf_to_bin.exe "+conName+".elf "+conName+".bin && ren "+conName+".bin new"+conName+".bin");	
 //					}
 //				}
+				if(!hardWardFolder.exists()) {
+					hardWardFolder.mkdirs();
+				}
 				hardwares = rhwd.getHardWares(hardWardInfoFile);
 				Board sBoard = null;
 				OnBoardCpu onBoardCpu = null;
@@ -143,7 +139,6 @@ public class HandleFolderAdded{
 				if(boardInfoFile.exists()) {
 					List<String> boardNames = readBoardsInfo.getBoardsInfo(boardInfoFile);
 					for(Board board:boards) {
-						System.out.println("board:   "+board.getBoardName());
 						if(!boardNames.contains(board.getBoardName())) {
 							System.out.println("ExcludeBoard:   "+board.getBoardName());
 							String boardPath = board.getBoardPath().replace("\\", "/");
@@ -155,6 +150,13 @@ public class HandleFolderAdded{
 						}
 					}
 				}
+//				List<IFolder> nonBoardFolders = getNonBoardFolders(project);
+//				for(IFolder folder:nonBoardFolders) {
+//					System.out.println("nonBoardFolders：  "+folder.getFullPath());
+//					for (int j = 0; j < conds.length; j++) {
+//						linkHelper.setExclude(folder, conds[j], true);
+//					}
+//				}
 				createNewFile(boardInfoFile);
 				createBoardInfo.createBoardInfo(boardInfoFile, boards);
 				
@@ -192,6 +194,41 @@ public class HandleFolderAdded{
 		
 	}
 	
+	private List<IFolder> getNonBoardFolders(IProject project){
+		List<IFolder> folders = new ArrayList<IFolder>();
+		List<String> paths = new ArrayList<String>();
+		String userBoardFilePath = dideHelper.getDIDEPath() + "djysrc\\bsp\\boarddrv\\user";
+		String demoBoardFilePath = dideHelper.getDIDEPath() + "djysrc\\bsp\\boarddrv\\demo";
+		paths.add(userBoardFilePath);
+		paths.add(demoBoardFilePath);
+		for (int i = 0; i < paths.size(); i++) {
+			File boardFile = new File(paths.get(i));
+			File[] files = boardFile.listFiles();
+			for (int j = 0; j < files.length; j++) {
+				File file = files[j];
+				if(file.isDirectory()) {
+					if(!isContainsXml(file)) {
+						String relativePath = file.getPath().replace(dideHelper.getDjyosSrcPath(), "");
+						IFolder folder = project.getFolder("src/libos" + relativePath);
+						folders.add(folder);
+					}
+				}
+			}
+		}
+		return folders;
+	}
+	
+	private boolean isContainsXml(File file) {
+		File[] files = file.listFiles();
+		for(File f:files) {
+			if(f.getName().endsWith(".xml")) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
 	private void createNewFile(File file) {
 		// TODO Auto-generated method stub
 		if(file.exists()) {
@@ -211,7 +248,7 @@ public class HandleFolderAdded{
 		IFolder folder = project.getFolder("src/libos"+relativePath);
 		folders.add(folder);
 		File parentFile = file.getParentFile();
-		
+		System.out.println("folder:  "+"src/libos"+relativePath);
 		if(!parentFile.getName().equals("cpudrv") && !toInclude(parentFile,cpuName)) {
 			getFolders(project,folders,parentFile,cpuName);
 		}

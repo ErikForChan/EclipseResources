@@ -51,6 +51,7 @@ public class ReadCpuXml {
 			}
 		}
 		
+		System.out.println("cpus.size():   "+cpus.size());
 		return cpus;
 		
 	}

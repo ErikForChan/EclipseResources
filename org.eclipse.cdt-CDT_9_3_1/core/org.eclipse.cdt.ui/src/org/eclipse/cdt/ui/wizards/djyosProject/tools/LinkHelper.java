@@ -50,11 +50,6 @@ public class LinkHelper {
 				lsEntries.add(entries.get(i));
 			}
 		}
-		if(kind == ICSettingEntry.MACRO) {
-			for(ICLanguageSettingEntry en:lsEntries) {
-				System.out.println("en1:   "+en.getName());
-			}
-		}
 		setSettingEntries(kind, lsEntries, lang);
 	}
 	
@@ -96,6 +91,7 @@ public class LinkHelper {
 							String[] defines = parameter.trim().split("//");
 							String[] members = defines[0].trim().split("\\s+");
 							ICLanguageSettingEntry entry = CDataUtil.createCMacroEntry(members[1], members.length>2?members[2]:"", 0);
+							System.out.println("entry:  "+entry.getName());
 							entries.add(entry);
 						}
 					}

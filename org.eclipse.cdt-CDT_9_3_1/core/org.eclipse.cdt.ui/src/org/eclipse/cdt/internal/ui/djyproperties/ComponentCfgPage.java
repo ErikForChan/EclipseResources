@@ -193,14 +193,16 @@ public class ComponentCfgPage extends PropertyPage {
 		File appCheckFile = new File(project.getLocation().toString() + "/data/app_component_check.xml");
 		File ibootCheckFile = new File(project.getLocation().toString() + "/data/iboot_component_check.xml");
 		creatDepedentCpt(composite);// 创建依赖互斥组件显示
-		getBoardAndCpu();
+		try {
+			getBoardAndCpu();
+		} catch (Exception e) {
+			// TODO: handle exception
+			MessageDialog.openError(window.getShell(), "提示", "当前工程的组件、cpu读取错误！");
+		}
+		
 		ReadComponent rc = new ReadComponent();
 		compontentsList = rc.getComponents(onBoardCpu, sBoard);
 
-//		for(Component c:compontentsList) {
-//			System.out.println("getParentPath:   "+c.getParentPath());
-//		}
-		
 		if (appCheckFile.exists()) {
 			try {
 				appCmpntChecks = rccx.getCmpntChecks(appCheckFile);
@@ -286,11 +288,12 @@ public class ComponentCfgPage extends PropertyPage {
 			component.setTarget(compontentsList.get(i).getTarget());
 			// System.out.println("component.getName()"+component.getName());
 			// 当组件为必选且不需要配置时，不显示在界面上
-			if (component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
-				ibootCompontentsChecked.add(component);
-			} else {
-				ibootCompontents.add(component);
-			}
+//			if (component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
+//				ibootCompontentsChecked.add(component);
+//			} else {
+//				ibootCompontents.add(component);
+//			}
+			ibootCompontents.add(component);
 		}
 
 		for (int i = 0; i < ibootCompontents.size(); i++) {
@@ -329,11 +332,12 @@ public class ComponentCfgPage extends PropertyPage {
 			component.setParentPath(compontentsList.get(i).getParentPath());
 			component.setTarget(compontentsList.get(i).getTarget());
 			// 当组件为必选且不需要配置时，不显示在界面上
-			if (component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
-				appCompontentsChecked.add(component);
-			} else {
-				appCompontents.add(component);
-			}
+//			if (component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
+//				appCompontentsChecked.add(component);
+//			} else {
+//				appCompontents.add(component);
+//			}
+			appCompontents.add(component);
 		}
 
 		for (int i = 0; i < appCompontents.size(); i++) {
@@ -986,7 +990,6 @@ public class ComponentCfgPage extends PropertyPage {
 		return true;
 	}
 	
-	
 	@SuppressWarnings("finally")
 	@Override
 	public boolean performOk() {
@@ -1523,21 +1526,31 @@ public class ComponentCfgPage extends PropertyPage {
 	protected void travelItems_Depedent(TreeItem treeItem, Component itemCompt, boolean isApp) {
 		// TODO Auto-generated method stub
 		List<String> depedents = itemCompt.getDependents();
+		
 		TreeItem[] items = treeItem.getItems();
 		for (TreeItem item : items) {
 			if (depedents.contains(item.getText())) {
 				item.setChecked(true);
+				Component curComp;
 				if (isApp) {
-					Component curComponent = getAppComponent(item.getData().toString());
-					curComponent.setSelect(true);
-					if(!appCompontentsChecked.contains(curComponent)) {
-						appCompontentsChecked.add(curComponent);
+					curComp = getAppComponent(item.getData().toString());
+					if(!appCompontentsChecked.contains(curComp)) {
+						appCompontentsChecked.add(curComp);
 					}
 				} else {
-					Component curComponent = getIbootComponent(item.getData().toString());
-					curComponent.setSelect(true);
-					if(!ibootCompontentsChecked.contains(curComponent)) {
-						ibootCompontentsChecked.add(curComponent);
+					curComp = getIbootComponent(item.getData().toString());
+					if(!ibootCompontentsChecked.contains(curComp)) {
+						ibootCompontentsChecked.add(curComp);
+					}
+				}
+				curComp.setSelect(true);
+				
+				Control[] controls = folder.getChildren();
+				for (Control c : controls) {
+					Tree tempTree = (Tree) c;
+					TreeItem[] fChilds = tempTree.getItems();
+					for (TreeItem t : fChilds) {
+						travelItems_Depedent(t, curComp, isApp);
 					}
 				}
 			}

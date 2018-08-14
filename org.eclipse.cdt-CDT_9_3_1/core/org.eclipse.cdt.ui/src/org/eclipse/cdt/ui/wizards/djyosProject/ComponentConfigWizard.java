@@ -113,6 +113,9 @@ public class ComponentConfigWizard extends WizardPage {
 	
 	private DideHelper dideHelper = new DideHelper();
 	private LinkHelper linkHelper = new LinkHelper();
+	
+	private int checkcounter;
+	private int lastchk;
 
 	public List<Component> getAppCompontentsChecked() {
 		return appCompontentsChecked;
@@ -479,12 +482,13 @@ public class ComponentConfigWizard extends WizardPage {
 			component.setParentPath(compontentsList.get(i).getParentPath());
 			component.setTarget(compontentsList.get(i).getTarget());
 			// 当组件为必选且不需要配置时，不显示在界面上
-			if (component.getSelectable().equals("必选")
-					&& (!component.getConfigure().contains("#define"))) {
-				ibootCompontentsChecked.add(component);
-			} else {
-				ibootCompontents.add(component);
-			}
+//			if (component.getSelectable().equals("必选")
+//					&& (!component.getConfigure().contains("#define"))) {
+//				ibootCompontentsChecked.add(component);
+//			} else {
+//				ibootCompontents.add(component);
+//			}
+			ibootCompontents.add(component);
 		}
 
 		for (int i = 0; i < ibootCompontents.size(); i++) {
@@ -524,12 +528,13 @@ public class ComponentConfigWizard extends WizardPage {
 			component.setTarget(compontentsList.get(i).getTarget());
 			List<String> excludes = component.getExcludes();
 			// 当组件为必选且不需要配置时，不显示在界面上
-			if (component.getSelectable().equals("必选")
-					&& (!component.getConfigure().contains("#define"))) {
-				appCompontentsChecked.add(component);
-			} else {
-				appCompontents.add(component);
-			}
+//			if (component.getSelectable().equals("必选")
+//					&& (!component.getConfigure().contains("#define"))) {
+//				appCompontentsChecked.add(component);
+//			} else {
+//				appCompontents.add(component);
+//			}
+			appCompontents.add(component);
 		}
 
 		for (int i = 0; i < appCompontents.size(); i++) {
@@ -1120,14 +1125,27 @@ public class ComponentConfigWizard extends WizardPage {
 		for (TreeItem item : items) {
 			if (depedents.contains(item.getText())) {
 				item.setChecked(true);
+				Component curComp;
 				if (isApp) {
-					Component curComponent = getAppComponent(item.getData().toString());
-					curComponent.setSelect(true);
-					appCompontentsChecked.add(curComponent);
+					curComp = getAppComponent(item.getData().toString());
+					if(!appCompontentsChecked.contains(curComp)) {
+						appCompontentsChecked.add(curComp);
+					}
 				} else {
-					Component curComponent = getIbootComponent(item.getData().toString());
-					curComponent.setSelect(true);
-					ibootCompontentsChecked.add(curComponent);
+					curComp = getIbootComponent(item.getData().toString());
+					if(!ibootCompontentsChecked.contains(curComp)) {
+						ibootCompontentsChecked.add(curComp);
+					}
+				}
+				curComp.setSelect(true);
+				
+				Control[] controls = folder.getChildren();
+				for (Control c : controls) {
+					Tree tempTree = (Tree) c;
+					TreeItem[] fChilds = tempTree.getItems();
+					for (TreeItem t : fChilds) {
+						travelItems_Depedent(t, curComp, isApp);
+					}
 				}
 			}
 			travelItems_Depedent(item, itemCompt, isApp);
@@ -1215,12 +1233,14 @@ public class ComponentConfigWizard extends WizardPage {
 
 	private void initTable(Component componentSelect) {
 		tabelControls.clear();
+		checkcounter = 0;
 		String configure = componentSelect.getConfigure();
 		String[] parametersDefined = configure.split("\n");
 		String tag = null;
 		String[] infos = null;
 		List<String> ranges = null;
 		isSelect = new boolean[parametersDefined.length];
+		Button checkBtn[] = new Button[parametersDefined.length];
 		for (int i = 0; i < parametersDefined.length; i++) {
 			isSelect[i] = false;
 			String parameter = parametersDefined[i];
@@ -1334,31 +1354,68 @@ public class ComponentConfigWizard extends WizardPage {
 						}
 					});
 				} else if (tag.equals("select")) {
-					Button checkBtn = new Button(table, SWT.CHECK);
-					editor.setEditor(checkBtn, item, 1);
+					checkBtn[i] = new Button(table, SWT.CHECK);
+					editor.setEditor(checkBtn[i], item, 1);
+					
+					int range1 = 0;
+					int rangeSize = ranges.size();
+					if (rangeSize > 0) {
+						range1 = Integer.parseInt(ranges.get(0));
+					}
+					
 					int cur = i;
 					if (parameter.startsWith("//")) {
 						isSelect[i] = false;
-						checkBtn.setSelection(false);
+						checkBtn[i].setSelection(false);
 					} else {
 						isSelect[i] = true;
-						checkBtn.setSelection(true);
+						checkcounter += 1;
+						if(range1==1){
+							lastchk = i;
+						}
+						checkBtn[i].setSelection(true);
 					}
-					checkBtn.addListener(SWT.CHECK, new Listener() {
+					
+					int chkran = range1;
+					checkBtn[i].addListener(SWT.CHECK, new Listener() {
 
 						@Override
 						public void handleEvent(Event event) {
 							// TODO Auto-generated method stub
-							boolean checked = checkBtn.getSelection();
+							boolean checked = checkBtn[cur].getSelection();
 							if (checked) {
-								isSelect[cur] = true;
+								if (rangeSize > 0) {
+									checkcounter += 1;
+									if ((checkcounter > chkran)) {
+										if (chkran>1) {
+											checkcounter = chkran;
+											checkBtn[cur].setSelection(false);
+											MessageDialog.openError(window.getShell(), "提示",
+													"不得勾选多于" + chkran + "项");
+										}else if (chkran==1){
+											checkcounter = chkran;
+											checkBtn[lastchk].setSelection(false);
+											isSelect[lastchk] = false;
+											isSelect[cur] = true;
+										}
+									}else {
+										isSelect[cur] = true;
+									}
+									lastchk = cur;
+								}
 							} else {
 								isSelect[cur] = false;
+								if (rangeSize > 0) {
+									checkcounter -= 1;
+									if (checkcounter < 0) {
+										checkcounter = 0;
+									}
+								}
 							}
 							resetConfigure(componentSelect);
 						}
 					});
-					tabelControls.add(checkBtn);
+					tabelControls.add(checkBtn[i]);
 				} else {
 					isSelect[i] = true;
 					// 创建一个文本框，用于输入文字
