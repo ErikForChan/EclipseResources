@@ -13,11 +13,14 @@ import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.ui.wizards.board.Board;
+import org.eclipse.cdt.ui.wizards.board.GetNonBoardFiles;
 import org.eclipse.cdt.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.ui.wizards.board.onboardcpu.OnBoardCpu;
 import org.eclipse.cdt.ui.wizards.component.Component;
+import org.eclipse.cdt.ui.wizards.component.GetNonCompFiles;
 import org.eclipse.cdt.ui.wizards.component.ReadComponent;
 import org.eclipse.cdt.ui.wizards.cpu.Cpu;
+import org.eclipse.cdt.ui.wizards.cpu.GetNonCpuFiles;
 import org.eclipse.cdt.ui.wizards.cpu.ReadCpuXml;
 import org.eclipse.cdt.ui.wizards.djyosProject.ReadHardWareDesc;
 import org.eclipse.cdt.ui.wizards.djyosProject.info.CreateBoardInfo;
@@ -64,6 +67,7 @@ public class HandleFolderAdded{
 			CreateBoardInfo createBoardInfo = new CreateBoardInfo();
 			CreateCpuInfo createCpuInfo = new CreateCpuInfo();
 			ReadComponent rc = new ReadComponent();
+			GetNonCompFiles gecf = new GetNonCompFiles();
 			final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 			ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
 			File compInfoFile = new File(project.getLocation().toString()+"/data/hardwares/component_infos.xml");
@@ -74,14 +78,6 @@ public class HandleFolderAdded{
 			
 			List<String> hardwares;
 			if(hardWardInfoFile.exists()) {
-//				for(int i=0;i<conds.length;i++) {
-//					String conName = conds[i].getName();
-//					ICResourceDescription rds = conds[i].getRootFolderDescription();
-//					IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
-//					if(!conName.contains("libos")) {
-//						cfg.setPostbuildStep("make "+conName+".bin && elf_to_bin.exe "+conName+".elf "+conName+".bin && ren "+conName+".bin new"+conName+".bin");	
-//					}
-//				}
 				if(!hardWardFolder.exists()) {
 					hardWardFolder.mkdirs();
 				}
@@ -109,27 +105,46 @@ public class HandleFolderAdded{
 					List<Component> allCompontents = rc.getAllComponents(onBoardCpu, sBoard);
 					if(compInfoFile.exists()) {
 						List<String> compPaths = readCpusInfo.getCpusInfo(compInfoFile);
-						
+						//排除未被選中的組建
 						for (Component component : allCompontents) { 
 							String componentPath = component.getParentPath().replace("\\", "/");
 							String fileName = component.getFileName();
 							String relativePath = componentPath.replace(srcLocation, "");
 							String compPath = relativePath+"/"+fileName;
 							if(!compPaths.contains(compPath)) {
-								if(fileName.endsWith(".c")) {
-									IFile ifile = project.getFile("src/libos"+compPath);
-									for (int j = 0; j < conds.length; j++) {
-										linkHelper.setFileExclude(ifile, conds[j], true);
-									}
-									
-								}else if(fileName.endsWith(".h")) {
-									IFolder ifolder = project.getFolder("src/libos"+relativePath);
-									for (int j = 0; j < conds.length; j++) {
-										linkHelper.setExclude(ifolder, conds[j], true);
-									}
+//								if(fileName.endsWith(".c")) {
+//									IFile ifile = project.getFile("src/libos"+compPath);
+//									for (int j = 0; j < conds.length; j++) {
+//										linkHelper.setFileExclude(ifile, conds[j], true);
+//									}
+//									
+//								}else if(fileName.endsWith(".h")) {
+//									IFolder ifolder = project.getFolder("src/libos"+relativePath);
+//									for (int j = 0; j < conds.length; j++) {
+//										linkHelper.setExclude(ifolder, conds[j], true);
+//									}
+//								}
+								IFolder ifolder = project.getFolder("src/libos"+relativePath);
+								for (int j = 0; j < conds.length; j++) {
+									linkHelper.setExclude(ifolder, conds[j], true);
 								}
 							}
-							
+						}
+						//排除不是組建的文件
+						List<File> excludeCompFiles = gecf.getExcludeCompFiles(onBoardCpu, sBoard);
+						for(File f:excludeCompFiles) {
+							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
+							if(f.isFile()) {
+								IFile ifile = project.getFile("src/libos"+relativePath);
+								for (int j = 0; j < conds.length; j++) {
+									linkHelper.setFileExclude(ifile, conds[j], true);
+								}
+							}else if(f.isDirectory()) {
+								IFolder ifolder = project.getFolder("src/libos"+relativePath);
+								for (int j = 0; j < conds.length; j++) {
+									linkHelper.setExclude(ifolder, conds[j], true);
+								}
+							}
 						}
 					}
 					createNewFile(compInfoFile);
@@ -140,13 +155,23 @@ public class HandleFolderAdded{
 					List<String> boardNames = readBoardsInfo.getBoardsInfo(boardInfoFile);
 					for(Board board:boards) {
 						if(!boardNames.contains(board.getBoardName())) {
-							System.out.println("ExcludeBoard:   "+board.getBoardName());
+//							System.out.println("ExcludeBoard:   "+board.getBoardName());
 							String boardPath = board.getBoardPath().replace("\\", "/");
 							String relativePath = boardPath.replace(srcLocation, "");
 							IFolder ifolder = project.getFolder("src/libos"+relativePath);
 							for (int j = 0; j < conds.length; j++) {
 								linkHelper.setExclude(ifolder, conds[j], true);
 							}
+						}
+					}
+					
+					GetNonBoardFiles gnbf = new GetNonBoardFiles();
+					List<File> excludeBoardFiles = gnbf.getNonBoards();
+					for(File f:excludeBoardFiles) {
+						String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
+						IFolder ifolder = project.getFolder("src/libos"+relativePath);
+						for (int j = 0; j < conds.length; j++) {
+							linkHelper.setExclude(ifolder, conds[j], true);
 						}
 					}
 				}
@@ -176,6 +201,19 @@ public class HandleFolderAdded{
 							}
 						}
 					}
+					
+					GetNonCpuFiles gncf = new GetNonCpuFiles();
+					List<File> excludeCpuFiles = gncf.getNonCpus();
+					for(File f:excludeCpuFiles) {
+//						System.out.println("f.getName():   "+f.getName());
+						String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
+//						System.out.println("relativePath:   "+relativePath);
+						IFolder ifolder = project.getFolder("src/libos"+relativePath);
+						for (int j = 0; j < conds.length; j++) {
+							linkHelper.setExclude(ifolder, conds[j], true);
+						}
+					}
+					
 				}
 				createNewFile(cpuInfoFile);
 				createCpuInfo.createCpuInfo(cpuInfoFile, allCpus);

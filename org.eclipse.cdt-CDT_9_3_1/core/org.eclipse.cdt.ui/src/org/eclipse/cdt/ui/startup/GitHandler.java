@@ -15,6 +15,12 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.egit.ui.Activator;
+import org.eclipse.egit.ui.JobFamilies;
+import org.eclipse.egit.ui.internal.UIText;
 import org.eclipse.egit.ui.internal.clone.GitCloneWizard;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -30,6 +36,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
@@ -45,7 +52,7 @@ public class GitHandler {
 	DideHelper dideHelper = new DideHelper();
 	String djysrcPath= dideHelper.getDjyosSrcPath();
 	String comparePath= dideHelper.getDIDEPath()+"gitTemp";
-	public String remotePath = "https://gitee.com/djyos/source.git";//djyos远程库路径	
+	public String remotePath = "https://git.coding.net/djyos/source.git";//djyos远程库路径	
 	private IWorkspace workspace = ResourcesPlugin.getWorkspace();
 	File compareFile = new File(comparePath);
 //	public String savePath = "C:\\Users\\admin\\git\\source";//本地路径
@@ -153,6 +160,37 @@ public class GitHandler {
 	
 	private boolean cloneRepository(String url, String localPath) {
 		
+//		final Job job = new Job(NLS.bind(UIText.GitCloneWizard_jobName,
+//				url)) {
+//			@Override
+//			protected IStatus run(final IProgressMonitor monitor) {
+//				CloneCommand cc = Git.cloneRepository().setURI(url);
+//				try {
+//					cc.setDirectory(new File(localPath)).call();
+//				} catch (InvalidRemoteException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				} catch (TransportException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				} catch (GitAPIException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				return Status.OK_STATUS;
+//			}
+//
+//			@Override
+//			public boolean belongsTo(Object family) {
+//				if (JobFamilies.CLONE.equals(family))
+//					return true;
+//				return super.belongsTo(family);
+//			}
+//		};
+//		job.setUser(true);
+//		job.schedule();
+//		return true;
+		
 		IRunnableWithProgress runnable = new IRunnableWithProgress() {
 
 			@Override
@@ -181,6 +219,7 @@ public class GitHandler {
 			}
 			
 		};
+		
 		try {
 			ProgressMonitorDialog dialog = new ProgressMonitorDialog(
 					PlatformUI.getWorkbench().getDisplay().getActiveShell());
@@ -191,6 +230,7 @@ public class GitHandler {
 			e.printStackTrace();
 			return false;
 		}
+		
 //		try {
 //			System.out.println("开始下载......");
 //			CloneCommand cc = Git.cloneRepository().setURI(url);
@@ -294,16 +334,16 @@ public class GitHandler {
 						if(!djysrcFile.exists()) {
 							djysrcFile.mkdirs();
 						}
-						GitCloneWizard wizard;
+//						GitCloneWizard wizard;
 						// if (presetURI == null)
 						// wizard = new GitCloneWizard();
 						// else
-						wizard = new GitCloneWizard(remotePath);
-						wizard.setShowProjectImport(true);
-						WizardDialog dlg = new WizardDialog(window.getShell(), wizard);
-						dlg.setHelpAvailable(true);
-						dlg.open();
-//						cloneRepository(remotePath,djysrcPath);
+//						wizard = new GitCloneWizard(remotePath);
+//						wizard.setShowProjectImport(true);
+//						WizardDialog dlg = new WizardDialog(window.getShell(), wizard);
+//						dlg.setHelpAvailable(true);
+//						dlg.open();
+						cloneRepository(remotePath,djysrcPath);
 					}
 			
 			}

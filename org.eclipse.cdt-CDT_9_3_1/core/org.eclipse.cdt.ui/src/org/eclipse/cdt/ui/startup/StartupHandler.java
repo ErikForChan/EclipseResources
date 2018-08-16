@@ -10,12 +10,14 @@ public class StartupHandler implements IStartup{
 	public void earlyStartup() {
 		// TODO Auto-generated method stub
 		
-		GitHandler gitHandler = new GitHandler();
-		gitHandler.remindUpdate();
-//		AddDefaultPostCmd defaultPostCmd=new AddDefaultPostCmd();
-//		defaultPostCmd.getDefaultPostCmd();
-//		HandleFolderAdded folderListener = new HandleFolderAdded(); 
-//		folderListener.handleAddeed();
+//		SaveFileHandler saveHandler = new SaveFileHandler();
+//		ResourcesPlugin.getWorkspace().addResourceChangeListener(saveHandler);	
+//		GitHandler gitHandler = new GitHandler();
+//		gitHandler.remindUpdate();
+		AddDefaultPostCmd defaultPostCmd=new AddDefaultPostCmd();
+		defaultPostCmd.getDefaultPostCmd();
+		HandleFolderAdded folderListener = new HandleFolderAdded(); 
+		folderListener.handleAddeed();
 
 	}
 

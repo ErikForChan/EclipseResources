@@ -81,7 +81,7 @@ public class LinkHelper {
 		for(int j=0;j<compontentsChecked.size();j++) {
 			Component component = compontentsChecked.get(j);
 			if(component.getTarget().equals(ConfigureTarget.CMDLINE.getName())) {
-				System.out.println("CMDLINE component:  "+component.getName());
+//				System.out.println("CMDLINE component:  "+component.getName());
 				String[] parametersDefined = component.getConfigure().split("\n");
 				for (int i = 0; i < parametersDefined.length; i++) {
 					if (parametersDefined[i].contains("#define")) {
@@ -91,8 +91,8 @@ public class LinkHelper {
 							String[] defines = parameter.trim().split("//");
 							String[] members = defines[0].trim().split("\\s+");
 							ICLanguageSettingEntry entry = CDataUtil.createCMacroEntry(members[1], members.length>2?members[2]:"", 0);
-							System.out.println("entry:  "+entry.getName());
 							entries.add(entry);
+							System.out.println("entry:   "+entry.getName());
 						}
 					}
 				}

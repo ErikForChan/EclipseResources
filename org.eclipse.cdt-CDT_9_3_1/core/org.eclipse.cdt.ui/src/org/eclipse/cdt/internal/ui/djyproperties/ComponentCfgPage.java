@@ -120,7 +120,7 @@ public class ComponentCfgPage extends PropertyPage {
 	private Text dependentText, mutexText;
 	private Table table;
 	private TabFolder folder;
-	String[] tableHeader = { "参数", "值", "注释" };
+	private String[] tableHeader = { "参数", "值", "注释" };
 	private String depedentLabel = "依赖组件: ", mutexLabel = "互斥组件: ";
 	private Group configGroup = null;
 	private ArrayList<Control> tabelControls = new ArrayList<Control>();
@@ -129,28 +129,28 @@ public class ComponentCfgPage extends PropertyPage {
 	private String defineInit;
 	private boolean appExist = false, ibootExist = false, appConfigureChanged = false,
 			ibootConfigureChanged = false, selectChanged = false;
-	DecimalFormat df = new DecimalFormat("######0");
+	private DecimalFormat df = new DecimalFormat("######0");
 	private String didePath = new DideHelper().getDIDEPath();
-	List<Component> compontentsList = null;
-	List<Component> appCompontents = new ArrayList<Component>();
-	List<Component> ibootCompontents = new ArrayList<Component>();
-	List<Component> appCompontentsInit = new ArrayList<Component>();
-	List<Component> ibootCompontentsInit = new ArrayList<Component>();
-	List<Component> appCompontentsChecked = new ArrayList<Component>();
-	List<Component> ibootCompontentsChecked = new ArrayList<Component>();
+	private List<Component> compontentsList = null;
+	private List<Component> appCompontents = new ArrayList<Component>();
+	private List<Component> ibootCompontents = new ArrayList<Component>();
+	private List<Component> appCompontentsInit = new ArrayList<Component>();
+	private List<Component> ibootCompontentsInit = new ArrayList<Component>();
+	private List<Component> appCompontentsChecked = new ArrayList<Component>();
+	private List<Component> ibootCompontentsChecked = new ArrayList<Component>();
 
-	List<Component> appCoreComponents = new ArrayList<Component>();
-	List<Component> appBspComponents = new ArrayList<Component>();
-	List<Component> appThirdComponents = new ArrayList<Component>();
-	List<Component> appUserComponents = new ArrayList<Component>();
+	private List<Component> appCoreComponents = new ArrayList<Component>();
+	private List<Component> appBspComponents = new ArrayList<Component>();
+	private List<Component> appThirdComponents = new ArrayList<Component>();
+	private List<Component> appUserComponents = new ArrayList<Component>();
 
-	List<Component> ibootCoreComponents = new ArrayList<Component>();
-	List<Component> ibootBspComponents = new ArrayList<Component>();
-	List<Component> ibootThirdComponents = new ArrayList<Component>();
-	List<Component> ibootUserComponents = new ArrayList<Component>();
+	private List<Component> ibootCoreComponents = new ArrayList<Component>();
+	private List<Component> ibootBspComponents = new ArrayList<Component>();
+	private List<Component> ibootThirdComponents = new ArrayList<Component>();
+	private List<Component> ibootUserComponents = new ArrayList<Component>();
 
-	List<Component> appCheckedSort = new ArrayList<Component>();
-	List<Component> ibootCheckedSort = new ArrayList<Component>();
+	private List<Component> appCheckedSort = new ArrayList<Component>();
+	private List<Component> ibootCheckedSort = new ArrayList<Component>();
 
 	private List<CmpntCheck> appCmpntChecks = null;
 	private List<CmpntCheck> ibootCmpntChecks = null;
@@ -161,6 +161,7 @@ public class ComponentCfgPage extends PropertyPage {
 	private int checkcounter;
 	private int lastchk;
 	
+	//获取当前工程
 	private IProject getProject() {
 		Object element = getElement();
 		IProject project = null;
@@ -172,7 +173,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return project;
 	}
-
+	
 	@Override
 	protected Control createContents(Composite parent) {
 		// TODO Auto-generated method stub
@@ -202,6 +203,11 @@ public class ComponentCfgPage extends PropertyPage {
 		
 		ReadComponent rc = new ReadComponent();
 		compontentsList = rc.getComponents(onBoardCpu, sBoard);
+		for(Component c:compontentsList){
+//			System.out.println("------------------------------------");
+			System.out.println("Component: "+c.getFileName());
+//			System.out.println("------------------------------------"+);
+		}
 
 		if (appCheckFile.exists()) {
 			try {
@@ -263,7 +269,7 @@ public class ComponentCfgPage extends PropertyPage {
 
 		sashForm.setWeights(new int[] { 1, 1 });// 内部容器之间宽度比例
 	}
-
+	//初始化Iboot组件
 	private void initibootComponent() {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < compontentsList.size(); i++) {
@@ -308,7 +314,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-
+	//初始化App组件
 	private void initAppComponent() {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < compontentsList.size(); i++) {
@@ -352,7 +358,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-
+	//创建依赖组件界面
 	private void creatDepedentCpt(Composite composite) {
 		// TODO Auto-generated method stub
 		Composite depedentCpt = new Composite(composite, SWT.BORDER);
@@ -372,7 +378,7 @@ public class ComponentCfgPage extends PropertyPage {
 		mutexText.setText(mutexLabel);
 		mutexText.setEditable(false);
 	}
-
+	//初始化所有组件
 	private void InitComponents(List<Component> components, List<Component> componentsInit, List<CmpntCheck> cmpntChecks) {
 		// TODO Auto-generated method stub
 		List<String> checkNames = getChecks(cmpntChecks);
@@ -403,7 +409,7 @@ public class ComponentCfgPage extends PropertyPage {
 			componentsInit.add(component);
 		}
 	}
-
+	//获取被选中的组件
 	private List<String> getChecks(List<CmpntCheck> cmpntChecks) {
 		// TODO Auto-generated method stub
 		List<String> checkNames = new ArrayList<String>();
@@ -412,7 +418,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return checkNames;
 	}
-
+	//创建配置参数的Table
 	private void creatConfigTable(Composite parent) {
 		table = new Table(parent, SWT.NONE | SWT.FULL_SELECTION | SWT.H_SCROLL);
 		GridData gd = new GridData(GridData.FILL_BOTH);
@@ -438,7 +444,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-
+	//判断当前组件是否存在父组件
 	private boolean isParentCompExist(List<Component> components, String parentName) {
 		for (Component component : components) {
 			if (component.getName().equals(parentName)) {
@@ -447,7 +453,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return false;
 	}
-
+	//创建用于存放组件的Tab
 	private Control createTabContent(TabFolder folder, List<Component> appTypeComponents,
 			List<Component> ibootTypeComponents) {
 		// TODO Auto-generated method stub
@@ -555,7 +561,6 @@ public class ComponentCfgPage extends PropertyPage {
 											itemCompt.setSelect(true);
 											if (isApp) {
 												if(!appCompontentsChecked.contains(itemCompt)) {
-													System.out.println("appCompontentsChecked.add(itemCompt)");
 													appCompontentsChecked.add(itemCompt);
 												}
 											} else {
@@ -734,7 +739,7 @@ public class ComponentCfgPage extends PropertyPage {
 
 		return componentTree;
 	}
-
+	//创建Tab的内容:Iboot组件
 	private void creatTabIbootContent(List<Component> ibootTypeComponents, Tree componentTree) {
 		// TODO Auto-generated method stub
 		List<Component> iFirstList = new ArrayList<Component>();
@@ -791,7 +796,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-
+	//创建Tab的内容:App组件
 	private void creatTabAppContent(List<Component> appTypeComponents, Tree componentTree) {
 		// TODO Auto-generated method stub
 		List<Component> aFirstList = new ArrayList<Component>();
@@ -847,7 +852,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-
+	//创建被选中的组件的xml文件
 	private void createComptCheck(String path, boolean isApp) {
 		// 生成component_check.xml文件
 		String xmlName = null;
@@ -990,7 +995,6 @@ public class ComponentCfgPage extends PropertyPage {
 		return true;
 	}
 	
-	@SuppressWarnings("finally")
 	@Override
 	public boolean performOk() {
 		// TODO Auto-generated method stub
@@ -1022,7 +1026,7 @@ public class ComponentCfgPage extends PropertyPage {
 		// TODO Auto-generated method stub
 		return true;
 	}
-
+	//添加组件链接
 	protected void linkComponentGUN(List<Component> compontentsChecked, ICConfigurationDescription cond) {
 		// TODO Auto-generated method stub
 		String srcLocation = didePath + "djysrc";
@@ -1043,7 +1047,7 @@ public class ComponentCfgPage extends PropertyPage {
 		for(String include:includes) {
 			myLinks.add("${DJYOS_SRC_LOCATION}"+include);
 		}
-		System.out.println("cond.getName():  "+cond.getName());
+
 		ICLanguageSetting[] languageSettings = linkHelper.getLangSetting(cond.getRootFolderDescription());
 		List<ICLanguageSettingEntry> defaultEntries = new ArrayList<ICLanguageSettingEntry>();
 		List<ICLanguageSettingEntry> entriesMACROExist = languageSettings[1]
@@ -1079,7 +1083,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 
 	}
-
+	//重置文件排除
 	private void resetExclude(List<Component> components, List<Component> componentsInit, boolean isApp,
 			ICConfigurationDescription[] conds, IProject project) {
 		// TODO Auto-generated method stub
@@ -1114,11 +1118,12 @@ public class ComponentCfgPage extends PropertyPage {
 									linkHelper.setFileExclude(ifile, conds[j], false);
 								}
 							} else {
-								if(comp.getFileName().endsWith(".c")) {
-									linkHelper.setFileExclude(ifile, conds[j], true);
-								}else if(comp.getFileName().endsWith(".h")) {
-									linkHelper.setExclude(ifolder, conds[j], true);
-								}
+//								if(comp.getFileName().endsWith(".c")) {
+//									linkHelper.setFileExclude(ifile, conds[j], true);
+//								}else if(comp.getFileName().endsWith(".h")) {
+//									linkHelper.setExclude(ifolder, conds[j], true);
+//								}
+								linkHelper.setExclude(ifolder, conds[j], true);
 							}
 						}
 					} else {
@@ -1133,11 +1138,12 @@ public class ComponentCfgPage extends PropertyPage {
 									linkHelper.setFileExclude(ifile, conds[j], false);
 								}
 							} else {
-								if(comp.getFileName().endsWith(".c")) {
-									linkHelper.setFileExclude(ifile, conds[j], true);
-								}else if(comp.getFileName().endsWith(".h")) {
-									linkHelper.setExclude(ifolder, conds[j], true);
-								}
+//								if(comp.getFileName().endsWith(".c")) {
+//									linkHelper.setFileExclude(ifile, conds[j], true);
+//								}else if(comp.getFileName().endsWith(".h")) {
+//									linkHelper.setExclude(ifolder, conds[j], true);
+//								}
+								linkHelper.setExclude(ifolder, conds[j], true);
 							}
 						}
 					}
@@ -1182,7 +1188,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		super.performDefaults();
 	}
-
+	//将设置恢复为默认状态
 	private void checkOrignalTreeItem(TreeItem treeItem, List<CmpntCheck> cmpntChecks, boolean isApp) {
 		// TODO Auto-generated method stub
 		TreeItem[] childItems = treeItem.getItems();
@@ -1210,7 +1216,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-
+	//通过hardware_info.xml获取当前工程所用到的板件和Cpu
 	private void getBoardAndCpu() {
 		IProject project = getProject();
 		String srcPath = project.getLocation().toString() + "/src";
@@ -1241,7 +1247,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 
 	}
-
+	//初始化当前组件的Configure
 	private void initConfiguration(Component component, boolean isApp) {
 		// TODO Auto-generated method stub
 		String compName = component.getName();
@@ -1343,7 +1349,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-	
+	//重置当前组件的Configure
 	protected void resetConfigure(Component componentSelect,boolean[] isSelect) {
 		// TODO Auto-generated method stub
 		TableItem[] items = table.getItems();
@@ -1383,7 +1389,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		componentSelect.setConfigure(newConfig);
 	}
-
+	//通过组件名获取当前组件对象
 	private Component getAppComponent(String itemName) {
 		for (Component component : appCompontents) {
 			if (component.getParentPath().equals(itemName)) {
@@ -1392,7 +1398,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return null;
 	}
-
+	//通过组件名获取当前组件对象
 	private Component getIbootComponent(String itemName) {
 		for (Component component : ibootCompontents) {
 			if (component.getParentPath().equals(itemName)) {
@@ -1401,7 +1407,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return null;
 	}
-
+	//判断当前组件时候有子组件
 	private boolean haveChildren(Component parent, List<Component> componentList) {
 		for (Component compt : componentList) {
 			if (compt.getParent().equals(parent.getName())) {
@@ -1410,7 +1416,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return false;
 	}
-
+	//添加子组件
 	private void fillItem(TreeItem parentItem, List<Component> compontentsList, TreeItem rootItem,
 			boolean isApp) {
 		// TODO Auto-generated method stub
@@ -1484,7 +1490,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-
+	//获取当前组件的类型:App或者Iboot
 	private String getAIType(TreeItem item) {
 		TreeItem parentItem = item.getParentItem();
 		if (parentItem != null) {
@@ -1499,7 +1505,7 @@ public class ComponentCfgPage extends PropertyPage {
 			return null;
 		}
 	}
-
+	//遍历与App/Iboot有关的组件，如果与当前选中的组件互斥，则返回true
 	protected boolean travelItems_Mutex(TreeItem treeItem, Component itemCompt, TreeItem eventTreeItem) {
 		// TODO Auto-generated method stub
 		boolean isMutx = false;
@@ -1522,7 +1528,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return isMutx;
 	}
-
+	//遍历与App/Iboot有关的组件，如果被当前选中的组件依赖，则选中该组件
 	protected void travelItems_Depedent(TreeItem treeItem, Component itemCompt, boolean isApp) {
 		// TODO Auto-generated method stub
 		List<String> depedents = itemCompt.getDependents();
@@ -1557,7 +1563,7 @@ public class ComponentCfgPage extends PropertyPage {
 			travelItems_Depedent(item, itemCompt, isApp);
 		}
 	}
-
+	//判断组件是否被已经选中的组件依赖，如果被依赖，返回true
 	protected boolean isDepedent(TreeItem treeItem, TreeItem eventTreeItem, String type) {
 		// TODO Auto-generated method stub
 		TreeItem[] items = treeItem.getItems();
@@ -1585,7 +1591,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return isDepedent;
 	}
-
+	//初始化配置参数的表格
 	private void initTable(Component componentSelect, boolean isApp, TreeItem eventItem) {
 		tabelControls.clear();
 		checkcounter = 0;
@@ -2070,6 +2076,7 @@ public class ComponentCfgPage extends PropertyPage {
 		// }
 	}
 
+	//创建projectconfigure.h文件
 	public void creatProjectConfiure(File file, String coreConfigure, boolean isApp) {
 		List<Component> compontentsCheckedSort = null;
 		if (isApp) {
@@ -2137,12 +2144,12 @@ public class ComponentCfgPage extends PropertyPage {
 			e.printStackTrace();
 		}
 	}
-
+	//创建initPrj.c文件
 	public void initProject(String path, boolean isApp) {
 		String content = "", firstInit = "\tuint16_t evtt_main;\n\n", lastInit = "", moduleInit = "",
-				gpioInit = "", djyMain = "", shellInit = "",
-				inoutInit = "\textern void Stdio_KnlInOutInit(char * StdioIn, char *StdioOut);\n"
-						+ "\tStdio_KnlInOutInit(CFG_STDIO_IN_NAME,CFG_STDIO_OUT_NAME);\n\n";
+				gpioInit = "", djyMain = "", shellInit = "";
+		//inoutInit = "\textern void Stdio_KnlInOutInit(char * StdioIn, char *StdioOut);\n"
+		//+ "\tStdio_KnlInOutInit(CFG_STDIO_IN_NAME,CFG_STDIO_OUT_NAME);\n\n"
 		initHead = DjyosMessages.Automatically_Generated;
 		initHead += "#include \"project_config.h\"\n" + "#include \"stdint.h\"\n" + "#include \"stddef.h\"\n"
 				+ "#include \"cpu_peri.h\"\n" + "extern ptu32_t djy_main(void);\n";
@@ -2176,9 +2183,6 @@ public class ComponentCfgPage extends PropertyPage {
 			for (int i = 0; i < appCheckedSort.size(); i++) {
 				String grade = appCheckedSort.get(i).getGrade();
 				String code = appCheckedSort.get(i).getCode();
-//				System.out.println("name:\n"+appCheckedSort.get(i).getName());
-//				System.out.println("code:\n"+code);
-//				System.out.println("grade:\n"+appCheckedSort.get(i).getGrade());
 				List<String> dependents = appCheckedSort.get(i).getDependents();
 				String codeStrings = "";
 				if (code != null) {
@@ -2203,7 +2207,7 @@ public class ComponentCfgPage extends PropertyPage {
 						} else if (componentName.equals("heap")) {
 							lastInit += evttMain + codeStrings + "\n";
 						} else if (componentName.equals("shell")) {
-							shellInit += inoutInit + codeStrings + "\n";
+							shellInit += codeStrings + "\n";
 						} else {
 							moduleInit += codeStrings + "\n";
 						}
@@ -2255,7 +2259,7 @@ public class ComponentCfgPage extends PropertyPage {
 						} else if (componentName.equals("heap")) {
 							lastInit += evttMain + codeStrings + "\n";
 						} else if (componentName.equals("shell")) {
-							shellInit += inoutInit + codeStrings + "\n";
+							shellInit += codeStrings + "\n";
 						} else {
 							moduleInit += codeStrings + "\n";
 						}
