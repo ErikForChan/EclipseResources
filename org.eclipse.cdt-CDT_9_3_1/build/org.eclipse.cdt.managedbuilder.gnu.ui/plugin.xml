@@ -1912,7 +1912,7 @@
 				  </tool>   
 			  </toolChain>
  
-              <toolChain
+            <toolChain
                     archList="all"
                     configurationEnvironmentSupplier="org.eclipse.cdt.managedbuilder.gnu.cygwin.GnuCygwinConfigurationEnvironmentSupplier"
                     id="cdt.managedbuild.toolchain.gnu.cygwin.base"
@@ -2133,7 +2133,40 @@
                   </tool>
                </toolChain>
                
-               <!--toolChain
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.solaris.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="%ToolChainName.Solaris"
+                     osList="solaris"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.solaris.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="solaris"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.solaris.base">
+		     	  </builder>    
+	              
+				  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.cpp.compiler.base"
+                      name="%ToolName.compiler.solaris.cpp"
+                      superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+                  </tool>
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+			  
+		   <!--toolChain
                      name="%ToolChainName.Solaris"
                      targetTool="cdt.managedbuild.tool.gnu.solaris.cpp.linker.base;cdt.managedbuild.tool.gnu.solaris.c.linker.base"
                      archList="all"
@@ -2199,29 +2232,22 @@
 
                <toolChain
                      archList="all"
-                     id="cdt.managedbuild.toolchain.gnu.solaris.base"
+                     id="cdt.managedbuild.toolchain.gnu.ckcoreelf.base"
                      languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
-                     name="%ToolChainName.Solaris"
-                     osList="solaris"
+                     name="CKcore Elf Toolchain"
+                     osList="ckcoreelf"
                      superClass="cdt.managedbuild.toolchain.gnu.base">
 		          <targetPlatform
-		              id="cdt.managedbuild.target.gnu.solaris.base"
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
 		              name="%PlatformName.Dbg"
 		              binaryParser="org.eclipse.cdt.core.ELF"
-		              osList="solaris"
+		              osList="ckcoreelf"
 		              archList="all">
 	              </targetPlatform>
 	              <builder
 					  superClass="cdt.managedbuild.target.gnu.builder"
-				      id="cdt.managedbuild.target.gnu.builder.solaris.base">
-		     	  </builder>    
-	              
-				  <tool
-                      id="cdt.managedbuild.tool.gnu.solaris.cpp.compiler.base"
-                      name="%ToolName.compiler.solaris.cpp"
-                      superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base"
-                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
-                  </tool>
+				      id="cdt.managedbuild.target.gnu.builder.ckcoreelf.base">
+		     	  </builder>    	              
                   <tool
                       id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
                       name="%ToolName.compiler.solaris.c"
@@ -2229,6 +2255,192 @@
                       commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
 				  </tool>
 			  </toolChain>
+
+
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.cskyabiv1elf.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="CSky abiv1 Elf Toolchain"
+                     osList="ckcoreelf"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="ckcoreelf"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.cskyabiv1elf.base">
+		     	  </builder>    	              
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.cskyabiv1linux.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="CSky abiv1 Linux Toolchain"
+                     osList="ckcoreelf"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="ckcoreelf"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.cskyabiv1linux.base">
+		     	  </builder>    	              
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.cskyabiv1uCLinux.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="CSky abiv1 uCLinux Toolchain"
+                     osList="ckcoreelf"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="ckcoreelf"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.cskyabiv1uCLinux.base">
+		     	  </builder>    	              
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.cskyabiv2elf.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="CSky abiv2 Elf Toolchain"
+                     osList="ckcoreelf"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="ckcoreelf"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.cskyabiv2elf.base">
+		     	  </builder>    	              
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.cskyabiv2elfstaticlibrary.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="CSky abiv2 Elf Toolchain Static Library"
+                     osList="ckcoreelf"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="ckcoreelf"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.cskyabiv2elfstaticlibrary.base">
+		     	  </builder>    	              
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+
+
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.cskyabiv2linux.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="CSky abiv2 Linux Toolchain"
+                     osList="ckcoreelf"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="ckcoreelf"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.cskyabiv2linux.base">
+		     	  </builder>    	              
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+
+               <toolChain
+                     archList="all"
+                     id="cdt.managedbuild.toolchain.gnu.cskyabiv2linuxstaticlibrary.base"
+                     languageSettingsProviders="org.eclipse.cdt.managedbuilder.core.GCCBuildCommandParser;org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector"
+                     name="CSky abiv2 Linux Toolchain Static Library"
+                     osList="ckcoreelf"
+                     superClass="cdt.managedbuild.toolchain.gnu.base">
+		          <targetPlatform
+		              id="cdt.managedbuild.target.gnu.ckcoreelf.base"
+		              name="%PlatformName.Dbg"
+		              binaryParser="org.eclipse.cdt.core.ELF"
+		              osList="ckcoreelf"
+		              archList="all">
+	              </targetPlatform>
+	              <builder
+					  superClass="cdt.managedbuild.target.gnu.builder"
+				      id="cdt.managedbuild.target.gnu.builder.cskyabiv2linuxstaticlibrary.base">
+		     	  </builder>    	              
+                  <tool
+                      id="cdt.managedbuild.tool.gnu.solaris.c.compiler.base"
+                      name="%ToolName.compiler.solaris.c"
+                      superClass="cdt.managedbuild.tool.gnu.c.compiler.base"
+                      commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}">                          
+				  </tool>
+			  </toolChain>
+
+
 
          <configuration
                cleanCommand="rm -rf"
