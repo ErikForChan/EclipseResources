@@ -364,20 +364,6 @@ public class CPluginImages {
 
 	public static final ImageDescriptor DESC_OVR_WARNING= createUnManaged(T_OVR, "warning_co.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor DESC_OVR_ERROR= createUnManaged(T_OVR, "error_co.gif"); //$NON-NLS-1$
-	//新建Cpu和新建板件的图标
-	public static final ImageDescriptor DESC_CPU_VIEW= createUnManaged(T_OVR, "cpu_img.gif"); //$NON-NLS-1$
-	public static final ImageDescriptor DESC_BOARD_VIEW= createUnManaged(T_OVR, "board_img0725.gif"); //$NON-NLS-1$
-	public static final ImageDescriptor DESC_GROUP_VIEW= createUnManaged(T_OVR, "group_view.gif"); //$NON-NLS-1$ 
-	public static final ImageDescriptor TREE_FLODER_VIEW= createUnManaged(T_OVR, "fldr_obj.gif"); //$NON-NLS-1$
-	public static final ImageDescriptor CFG_DONE_VIEW= createUnManaged(T_OVR, "cfg_done.png"); //$NON-NLS-1$
-	public static final ImageDescriptor CFG_CMPT_VIEW= createUnManaged(T_OVR, "config-component.gif"); //$NON-NLS-1$
-	public static final ImageDescriptor CFG_REVISE_VIEW= createUnManaged(T_OVR, "config-revise.gif"); //$NON-NLS-1$
-	public static final ImageDescriptor CFG_DELETE_OBJ= createUnManaged(T_OVR, "delete_obj.png"); //$NON-NLS-1$ 
-	public static final ImageDescriptor CFG_COMPONENT_OBJ= createUnManaged(T_OVR, "component.gif"); //$NON-NLS-1$
-	public static final ImageDescriptor CFG_CPMT_OBJ= createUnManaged(T_OVR, "cpmt.gif"); //$NON-NLS-1$
-	public static final ImageDescriptor CFG_OPENFILE_VIEW= createUnManaged(T_OVR, "open_file.gif"); //$NON-NLS-1$ 
-	public static final ImageDescriptor CFG_COMPTERROR_VIEW= createUnManaged(T_OVR, "component_warning.png"); //$NON-NLS-1$
-	public static final ImageDescriptor CPU_REVISE_VIEW= createUnManaged(T_OVR, "cpu_revise.gif"); //$NON-NLS-1$
 
 	public static final ImageDescriptor DESC_WIZABAN_NEW_PROJ= createUnManaged(T_WIZBAN, "newcprj_wiz.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor DESC_WIZBAN_NEWCLASS= createUnManaged(T_WIZBAN, "newclass_wiz.gif");	 //$NON-NLS-1$

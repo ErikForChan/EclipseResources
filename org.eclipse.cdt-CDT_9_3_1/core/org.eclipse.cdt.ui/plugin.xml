@@ -458,51 +458,7 @@
              %Cproject.desc
          </description>
       </wizard>
-       <wizard
-            canFinishEarly="false"
-            category="org.eclipse.cdt.ui.newCWizards"
-            class="org.eclipse.cdt.ui.wizards.cpu.CpuWizard"
-            finalPerspective="org.eclipse.cdt.ui.CPerspective"
-            hasPages="true"
-            icon="icons/ovr16/cpu_img.gif"
-            id="org.eclipse.cdt.ui.wizards.NewCWizard4"
-            name="%Cpu.title"
-            project="true">
-        <description>
-           %Cpu.desc
-        </description>
-     </wizard>
    
-        <wizard
-            canFinishEarly="false"
-            category="org.eclipse.cdt.ui.newCWizards"
-            class="org.eclipse.cdt.ui.wizards.board.BoardWizard"
-            finalPerspective="org.eclipse.cdt.ui.CPerspective"
-            hasPages="true"
-            icon="icons/ovr16/board_img0725.gif"
-            id="org.eclipse.cdt.ui.wizards.NewCWizard5"
-            name = "%Board.title"
-            project="true">
-        <description>
-            %Board.desc
-        </description>
-     </wizard>
-     
-      <wizard
-            canFinishEarly="false"
-            category="org.eclipse.cdt.ui.newCWizards"
-            class="org.eclipse.cdt.ui.wizards.djyosProject.DjyosProjectWizard"
-            finalPerspective="org.eclipse.cdt.ui.CPerspective"
-            hasPages="true"
-            icon="icons/ovr16/djyos_logo.gif"
-            id="org.eclipse.cdt.ui.wizards.NewCWizard3"
-            name="%DJYOSproject"
-            project="true">
-        <description>
-            %DJYOSproject.desc
-        </description>
-     </wizard>
-     
        <wizard
              canFinishEarly="false"
              category="org.eclipse.cdt.ui.newCWizards"
@@ -3495,36 +3451,6 @@
 		    </or>          
          </enabledWhen>
       </page>   
-      
-        <page
-            class="org.eclipse.cdt.internal.ui.djyproperties.DjyosGeneralPage"
-            id="org.eclipse.ui.cdt.djyosGeneral.configurations"
-            name="%page.djyos.general">
-          <enabledWhen>
-            <or>
-		     <adapt type="org.eclipse.core.resources.IProject"/>
-		     
-		     <instanceof value="org.eclipse.core.resources.IFolder"/>
-		     <instanceof value="org.eclipse.cdt.core.model.ICContainer"/>
-
-	         <instanceof value="org.eclipse.core.resources.IFile"/>
-         	 <instanceof value="org.eclipse.cdt.core.model.ITranslationUnit"/>
-		    </or>          
-         </enabledWhen>
-      </page> 
-      
-       <page
-            name="Component Configure"
-            class="org.eclipse.cdt.internal.ui.djyproperties.ComponentCfgPage"
-            category="org.eclipse.ui.cdt.djyosGeneral.configurations"
-            id="org.eclipse.cdt.ui.peoject_ComponentConfiguration">
-         <enabledWhen>
-		     <adapt type="org.eclipse.core.resources.IProject">
-		          <test property="org.eclipse.core.resources.projectNature"
-		                value="org.eclipse.cdt.core.cnature"/>
-		     </adapt>         
-         </enabledWhen>
-      </page>
 
       <page
             name="%CDTIndexerProperty.name"
@@ -4052,70 +3978,7 @@
          	</or>
          </enablement>
 	   </commonWizard>
-	    <commonWizard
-	         associatedExtensionId="org.eclipse.cdt.ui.navigator.content"
-	         menuGroupId="org.eclipse.cdt.ui.newProject"
-	         type="new"
-	         wizardId="org.eclipse.cdt.ui.wizards.NewCWizard4">
-		 <enablement>
-		 	<or>
-	         	<with variable="activeWorkbenchWindow.activePerspective">
-                    <equals
-                          value="org.eclipse.cdt.ui.CPerspective">
-                    </equals>
-	         	</with>
-	         	<instanceof value="org.eclipse.cdt.core.model.ICElement" />	
-		        <and>
-		            <instanceof value="org.eclipse.core.resources.IProject"/>
-		            <test property="org.eclipse.core.resources.projectNature"
-		                  value="org.eclipse.cdt.core.cnature"/>
-		        </and>
-         	</or>
-         </enablement>
-	   </commonWizard>
-	    <commonWizard
-	         associatedExtensionId="org.eclipse.cdt.ui.navigator.content"
-	         menuGroupId="org.eclipse.cdt.ui.newProject"
-	         type="new"
-	         wizardId="org.eclipse.cdt.ui.wizards.NewCWizard3">
-		 <enablement>
-		 	<or>
-	         	<with variable="activeWorkbenchWindow.activePerspective">
-                    <equals
-                          value="org.eclipse.cdt.ui.CPerspective">
-                    </equals>
-	         	</with>
-	         	<instanceof value="org.eclipse.cdt.core.model.ICElement" />	
-		        <and>
-		            <instanceof value="org.eclipse.core.resources.IProject"/>
-		            <test property="org.eclipse.core.resources.projectNature"
-		                  value="org.eclipse.cdt.core.cnature"/>
-		        </and>
-         	</or>
-         </enablement>
-	   </commonWizard>
-	   
-	    <commonWizard
-	         associatedExtensionId="org.eclipse.cdt.ui.navigator.content"
-	         menuGroupId="org.eclipse.cdt.ui.newProject"
-	         type="new"
-	         wizardId="org.eclipse.cdt.ui.wizards.NewCWizard5">
-		 <enablement>
-		 	<or>
-	         	<with variable="activeWorkbenchWindow.activePerspective">
-                    <equals
-                          value="org.eclipse.cdt.ui.CPerspective">
-                    </equals>
-	         	</with>
-	         	<instanceof value="org.eclipse.cdt.core.model.ICElement" />	
-		        <and>
-		            <instanceof value="org.eclipse.core.resources.IProject"/>
-		            <test property="org.eclipse.core.resources.projectNature"
-		                  value="org.eclipse.cdt.core.cnature"/>
-		        </and>
-         	</or>
-         </enablement>
-	   </commonWizard>
+
 	   <commonWizard
 	         associatedExtensionId="org.eclipse.cdt.ui.navigator.content"
 	         menuGroupId="org.eclipse.cdt.ui"
@@ -5189,11 +5052,4 @@
        </adapter>
     </factory>
  </extension>
- <extension
-       point="org.eclipse.ui.startup">
-    <startup
-          class="org.eclipse.cdt.ui.startup.StartupHandler">
-    </startup>
- </extension>
-
 </plugin>

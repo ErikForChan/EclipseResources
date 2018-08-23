@@ -13,6 +13,7 @@ package org.eclipse.ui.internal.handlers;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.expressions.EvaluationResult;
 import org.eclipse.core.expressions.IEvaluationContext;
+import org.eclipse.jface.action.LegacyActionTools;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISaveablePart;
 import org.eclipse.ui.ISaveablesSource;
