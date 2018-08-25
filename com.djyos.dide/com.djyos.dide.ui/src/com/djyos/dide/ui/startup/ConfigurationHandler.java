@@ -2,6 +2,7 @@ package com.djyos.dide.ui.startup;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 
@@ -14,12 +15,19 @@ import org.eclipse.cdt.managedbuilder.core.ITool;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 
-public class AddDefaultPostCmd{
+public class ConfigurationHandler{
 	
 	String pattern = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(addsuffix *.o,$(subst \\,/,$(dir $(subst $(dir $(shell for /r  %%i in (*makefile) do @echo %%i)),./,$(dir $(shell for /r  %%i in (*subdir.mk) do @echo %%i))))))";
 	
-	public void getDefaultPostCmd(){
+	public void handlerConfiguration(){
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		setBuildingToAuto(workspace);
+		setDefaultArchiverCmd(workspace);
+	}
+
+	//设置默认命令为pattern
+	private void setDefaultArchiverCmd(IWorkspace workspace) {
+		// TODO Auto-generated method stub
 		String str;
 		IProject[] projects = workspace.getRoot().getProjects();
 		for(IProject project:projects) {			
@@ -51,7 +59,19 @@ public class AddDefaultPostCmd{
 				e1.printStackTrace();
 			}
 		}
-		
+	}
+
+	//设置工程不为自动编译
+	private void setBuildingToAuto(IWorkspace workspace) {
+		// TODO Auto-generated method stub
+		IWorkspaceDescription desc = workspace.getDescription();
+		desc.setAutoBuilding(false);
+		try {
+			workspace.setDescription(desc);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 }

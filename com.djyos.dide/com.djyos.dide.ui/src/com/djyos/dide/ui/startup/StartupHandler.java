@@ -10,15 +10,17 @@ public class StartupHandler implements IStartup{
 	public void earlyStartup() {
 		// TODO Auto-generated method stub
 		
-//		SaveFileHandler saveHandler = new SaveFileHandler();
-//		ResourcesPlugin.getWorkspace().addResourceChangeListener(saveHandler, IResourceChangeEvent.POST_BUILD);
+//		FileHandler fileHandler = new FileHandler();
+//		ResourcesPlugin.getWorkspace().addResourceChangeListener(fileHandler, IResourceChangeEvent.POST_BUILD);
 		
-//		GitHandler gitHandler = new GitHandler();
+//		GitHandler gitHandler = new GitHandler(); 
 //		gitHandler.remindUpdate();
 //		
-		AddDefaultPostCmd defaultPostCmd=new AddDefaultPostCmd();
-		defaultPostCmd.getDefaultPostCmd();
+		//初始化工作空间的配置
+		ConfigurationHandler cfgHandler=new ConfigurationHandler();
+		cfgHandler.handlerConfiguration();
 		
+		//处理所有工程未被排除编译的文件
 		HandleFolderAdded folderListener = new HandleFolderAdded(); 
 		folderListener.handleAddeed();
 

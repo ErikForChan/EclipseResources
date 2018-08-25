@@ -94,11 +94,8 @@ public class DideHelper {
 	    }  
 	}  
 
-	public boolean checkParameter(Component component, Boolean isApp, IProject curProject) {
-
-		List<String> pjCgfs = new ArrayList<String>();
-		File configFile = new File(curProject.getLocation().toString() + "/src/" + (isApp ? "app" : "iboot")
-				+ "/OS_prjcfg/project_config.h");
+	public void getPrjCfgs(List<String> pjCgfs, File configFile, Component component) {
+		// TODO Auto-generated method stub
 		FileReader reader;
 		try {
 			reader = new FileReader(configFile.getPath());
@@ -122,32 +119,47 @@ public class DideHelper {
 			e.printStackTrace();
 		}
 
-		String configure = component.getConfigure();
-		String[] parametersDefined = configure.split("\n");
-		String tag = null;
-		String[] infos = null;
-		List<String> ranges = null;
-		List<String> paras = new ArrayList<String>();
+	}
+	
+	public String getTag(String parameter, String tag) {
+		// TODO Auto-generated method stub
+		if (parameter.contains("%$#@num")) {
+			return "int";
+		} else if (parameter.contains("%$#@string")) {
+			return "string";
+		} else if (parameter.contains("%$#@enum")) {
+			return "enum";
+		} else if (parameter.contains("%$#@select")) {
+			return "select";
+		} else if (parameter.contains("%$#@free")) {
+			return"free";
+		}else if (parameter.contains("%$#@object_num")) {
+			return "obj_num";
+		}else if (parameter.contains("%$#@object_para")) {
+			return "obj_para";
+		}
+		return tag;
+	}
+	
+	public boolean checkParameter(Component component, Boolean isApp, IProject curProject) {
+
+		List<String> pjCgfs = new ArrayList<String>();
+		File configFile = new File(curProject.getLocation().toString() + "/src/" + (isApp ? "app" : "iboot")
+				+ "/OS_prjcfg/project_config.h");
+		getPrjCfgs(pjCgfs,configFile,component);
+	
+		String configure = component.getConfigure(),tag = null;
+		String[] parametersDefined = configure.split("\n"),infos = null;
+		List<String> ranges = null,paras = new ArrayList<String>();
+		
 		for (int i = 0; i < parametersDefined.length; i++) {
 			String parameter = parametersDefined[i];
-			if (parameter.contains("%$#@num") || parameter.contains("%$#@string")
-					|| parameter.contains("%$#@enum") || parameter.contains("%$#@select")
-					|| parameter.contains("%$#@free")) {
-				if (parameter.contains("%$#@num")) {
-					tag = "int";
-				} else if (parameter.contains("%$#@string")) {
-					tag = "string";
-				} else if (parameter.contains("%$#@enum")) {
-					tag = "enum";
-				} else if (parameter.contains("%$#@select")) {
-					tag = "select";
-				} else if (parameter.contains("%$#@free")) {
-					tag = "free";
-				}
-
+			if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
+					|| parameter.contains("%$#@select") || parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
+				tag = getTag(parameter,tag);
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
-				if (!tag.equals("select") && !tag.equals("free")) {
+				if (tag.equals("int") || tag.equals("string")) {
 					for (int j = 1; j < infos.length; j++) {
 						ranges.add(infos[j]);
 					}
@@ -161,7 +173,7 @@ public class DideHelper {
 				} else {
 					members = defines[0].trim().split("\\s+");
 				}
-				paras.add(members[1]);
+				paras.add(members[1]);//将所有参数存放到paras
 				List<String> rangesCopy = ranges;
 				if (rangesCopy.size() != 0) {
 					String minString = rangesCopy.get(0), maxString = rangesCopy.get(1);
@@ -171,101 +183,12 @@ public class DideHelper {
 
 					} else {
 						if (tag.equals("int")) {
-							try {
-								int min;
-								long max;
-								if (minString.startsWith("0x")) {
-									min = Integer.parseInt(minString.substring(2), 16);
-								} else {
-									min = Integer.parseInt(minString);
-								}
-								if (maxString.startsWith("0x")) {
-									max = Long.parseLong(maxString.substring(2), 16);
-								} else {
-									max = Long.parseLong(maxString);
-								}
-								long curData = -1;
-								if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
-									for (String cfg : pjCgfs) {
-										if (cfg.contains(members[1])) {
-											String[] cfgs = cfg.trim().split("\\s+");
-											if (cfgs[2].startsWith("0x")) {
-												curData = Long.parseLong(cfgs[2].substring(2), 16);
-											} else if (cfgs[2].contains("+") || cfgs[2].contains("-")
-													|| cfgs[2].contains("*") || cfgs[2].contains("/")) {
-												String pureCal = cfgs[2].replaceAll("\\(|\\)", "");
-												if (pureCal.startsWith("-")) {
-													curData = toUnsigned(Long.parseLong(pureCal));
-												} else {
-													double result = Calculator.conversion(pureCal);
-													BigDecimal bd = new BigDecimal(df.format(result));
-													curData = Long.valueOf(bd.toPlainString());
-												}
-											} else {
-												curData = Integer.parseInt(cfgs[2].replaceAll("\\(|\\)", ""));
-											}
-
-											break;
-										}
-									}
-
-								} else {
-									if (members[2].startsWith("0x")) {
-										curData = Long.parseLong(members[2].substring(2), 16);
-									} else if (members[2].contains("+") || members[2].contains("-")
-											|| members[2].contains("*") || members[2].contains("/")) {
-										String pureCal = members[2].replaceAll("\\(|\\)", "");
-										if (pureCal.startsWith("-")) {
-											curData = toUnsigned(Long.parseLong(pureCal));
-										} else {
-											double result = Calculator.conversion(pureCal);
-											BigDecimal bd = new BigDecimal(df.format(result));
-											curData = Long.valueOf(bd.toPlainString());
-										}
-									} else {
-										curData = Integer.parseInt(members[2].replaceAll("\\(|\\)", ""));
-									}
-								}
-
-								if (curData < min || curData > max) {
-									return false;
-								}
-							} catch (Exception e) {
-								// TODO: handle exception
-								MessageDialog.openError(window.getShell(), "提示",
-										"组件" + component.getName() + "配置信息有误，" + e.getMessage());
+							if (!handleIntPara(minString, maxString, pjCgfs, members)) {
+								return false;
 							}
-
 						} else if (tag.equals("string")) {
-							try {
-								int min, max;
-								String value = null;
-								min = Integer.parseInt(minString);
-								max = Integer.parseInt(maxString);
-								if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
-									for (String cfg : pjCgfs) {
-										String[] cdefines = cfg.split("//");
-										if (cfg.contains(members[1])) {
-											String[] cfgs = cdefines[0].trim().split("\\s+");
-											int begin = cdefines[0].indexOf("\"");
-											int end = cdefines[0].lastIndexOf("\"");
-											value = cdefines[0].substring(begin + 1, end);
-											break;
-										}
-									}
-
-								} else {
-									int begin = defines[0].indexOf("\"");
-									int end = defines[0].lastIndexOf("\"");
-									value = defines[0].substring(begin + 1, end);
-								}
-								if (value.length() < min || value.length() > max) {
-									return false;
-								}
-							} catch (Exception e) {
-								// TODO: handle exception
-								MessageDialog.openError(window.getShell(), "提示",
-										"组件" + component.getName() + "配置信息有误，" + e.getMessage());
+							if (!handleStringPara(minString, maxString, pjCgfs, members, defines)) {
+								return false;
 							}
 						}
 					}
@@ -281,7 +204,97 @@ public class DideHelper {
 		return true;
 
 	}
-	
-	
-	
+
+	private boolean handleStringPara(String minString, String maxString, List<String> pjCgfs, String[] members, String[] defines) {
+		// TODO Auto-generated method stub
+		int min, max;
+		String value = null;
+		min = Integer.parseInt(minString);
+		max = Integer.parseInt(maxString);
+		if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
+			for (String cfg : pjCgfs) {
+				String[] cdefines = cfg.split("//");
+				if (cfg.contains(members[1])) {
+					String[] cfgs = cdefines[0].trim().split("\\s+");
+					int begin = cdefines[0].indexOf("\"");
+					int end = cdefines[0].lastIndexOf("\"");
+					value = cdefines[0].substring(begin + 1, end);
+					break;
+				}
+			}
+
+		} else {
+			int begin = defines[0].indexOf("\"");
+			int end = defines[0].lastIndexOf("\"");
+			value = defines[0].substring(begin + 1, end);
+		}
+		if (value.length() < min || value.length() > max) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean handleIntPara(String minString, String maxString, List<String> pjCgfs, String[] members) {
+		// TODO Auto-generated method stub
+		int min;
+		long max,curData = -1;
+		if (minString.startsWith("0x")) {
+			min = Integer.parseInt(minString.substring(2), 16);
+		} else {
+			min = Integer.parseInt(minString);
+		}
+		if (maxString.startsWith("0x")) {
+			max = Long.parseLong(maxString.substring(2), 16);
+		} else {
+			max = Long.parseLong(maxString);
+		}
+		if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
+			for (String cfg : pjCgfs) {
+				if (cfg.contains(members[1])) {
+					String[] cfgs = cfg.trim().split("\\s+");
+					if (cfgs[2].startsWith("0x")) {
+						curData = Long.parseLong(cfgs[2].substring(2), 16);
+					} else if (cfgs[2].contains("+") || cfgs[2].contains("-")
+							|| cfgs[2].contains("*") || cfgs[2].contains("/")) {
+						String pureCal = cfgs[2].replaceAll("\\(|\\)", "");
+						if (pureCal.startsWith("-")) {
+							curData = toUnsigned(Long.parseLong(pureCal));
+						} else {
+							double result = Calculator.conversion(pureCal);
+							BigDecimal bd = new BigDecimal(df.format(result));
+							curData = Long.valueOf(bd.toPlainString());
+						}
+					} else {
+						curData = Integer.parseInt(cfgs[2].replaceAll("\\(|\\)", ""));
+					}
+
+					break;
+				}
+			}
+
+		} else {
+			if (members[2].startsWith("0x")) {
+				curData = Long.parseLong(members[2].substring(2), 16);
+			} else if (members[2].contains("+") || members[2].contains("-")
+					|| members[2].contains("*") || members[2].contains("/")) {
+				String pureCal = members[2].replaceAll("\\(|\\)", "");
+				if (pureCal.startsWith("-")) {
+					curData = toUnsigned(Long.parseLong(pureCal));
+				} else {
+					double result = Calculator.conversion(pureCal);
+					BigDecimal bd = new BigDecimal(df.format(result));
+					curData = Long.valueOf(bd.toPlainString());
+				}
+			} else {
+				curData = Integer.parseInt(members[2].replaceAll("\\(|\\)", ""));
+			}
+		}
+
+		if (curData < min || curData > max) {
+			return false;
+		}
+		
+		return true;
+	}
+
 }

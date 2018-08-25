@@ -94,6 +94,8 @@ public class HandleFolderAdded{
 						break;
 					}
 				}
+				
+				//处理组件
 				if (sBoard != null) {
 					List<OnBoardCpu> onBoardCpus = sBoard.getOnBoardCpus();
 					for (int i = 0; i < onBoardCpus.size(); i++) {
@@ -112,7 +114,7 @@ public class HandleFolderAdded{
 							String relativePath = componentPath.replace(srcLocation, "");
 							String compPath = relativePath+"/"+fileName;
 							if(!compPaths.contains(compPath)) {
-								System.out.println("compPath:   "+compPath);
+//								System.out.println("compPath:   "+compPath);
 //								if(fileName.endsWith(".c")) {
 //									IFile ifile = project.getFile("src/libos"+compPath);
 //									for (int j = 0; j < conds.length; j++) {
@@ -134,10 +136,9 @@ public class HandleFolderAdded{
 						//排除不是組建的文件
 						List<File> excludeCompFiles = gecf.getExcludeCompFiles(onBoardCpu, sBoard);
 						for(File f:excludeCompFiles) {
-							System.out.println("f.getName():   "+f.getName());
+//							System.out.println("f.getName():   "+f.getName());
 							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-							System.out.println("relativePath:   "+relativePath);
-//							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
+//							System.out.println("relativePath:   "+relativePath);
 							if(f.isFile()) {
 								IFile ifile = project.getFile("src/libos"+relativePath);
 								for (int j = 0; j < conds.length; j++) {
@@ -155,6 +156,7 @@ public class HandleFolderAdded{
 					createComponentInfo.createComponentInfo(compInfoFile, allCompontents);
 				}
 
+				//处理板件
 				if(boardInfoFile.exists()) {
 					List<String> boardNames = readBoardsInfo.getBoardsInfo(boardInfoFile);
 					for(Board board:boards) {
@@ -189,6 +191,7 @@ public class HandleFolderAdded{
 				createNewFile(boardInfoFile);
 				createBoardInfo.createBoardInfo(boardInfoFile, boards);
 				
+				//处理Cpu
 				List<Cpu> allCpus = rcx.getAllCpus();
 				if(cpuInfoFile.exists()) {
 					List<String> cpuNames = readCpusInfo.getCpusInfo(cpuInfoFile);
@@ -236,6 +239,7 @@ public class HandleFolderAdded{
 		
 	}
 	
+	//获取不存在配置文件的板件
 	private List<IFolder> getNonBoardFolders(IProject project){
 		List<IFolder> folders = new ArrayList<IFolder>();
 		List<String> paths = new ArrayList<String>();
@@ -290,7 +294,7 @@ public class HandleFolderAdded{
 		IFolder folder = project.getFolder("src/libos"+relativePath);
 		folders.add(folder);
 		File parentFile = file.getParentFile();
-		System.out.println("folder:  "+"src/libos"+relativePath);
+//		System.out.println("folder:  "+"src/libos"+relativePath);
 		if(!parentFile.getName().equals("cpudrv") && !toInclude(parentFile,cpuName)) {
 			getFolders(project,folders,parentFile,cpuName);
 		}
@@ -308,106 +312,5 @@ public class HandleFolderAdded{
 		return false;
 	}
 
-//	private void travelFiles(IProject project, ICConfigurationDescription[] conds, File boardFile) {
-//		File[] childFiles = boardFile.listFiles();
-//		List<String> includePaths = new ArrayList<String>();
-//		for(File file:childFiles) {
-//			String fileName = file.getName();
-//			if(file.isDirectory()) {
-//				if (!fileName.equals("include") && !fileName.equals("startup") && !fileName.equals("src")) {
-//					String relativePath = file.getPath().replace(dideHelper.getDjyosSrcPath(), "");
-//					IFolder folder = project.getFolder("src/libos"+relativePath);
-//					for (int i = 0; i < conds.length; i++) {
-//						if (conds[i].getName().contains("libos")) {
-//							ICResourceDescription resDesc = conds[i].getResourceDescription(folder.getProjectRelativePath(), true);
-//							boolean isExclude = resDesc.isExcluded();
-//							if(!isExclude) {
-//								if(!includePaths.contains(relativePath)) {
-//									linkHelper.setExclude(folder, conds[i], true);
-//								}
-////								travelFiles(project,conds,);
-//							}else {
-//								break;
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//	}
-//	
-//	@Override
-//	public void resourceChanged(IResourceChangeEvent event) {
-//		// TODO Auto-generated method stub
-//		try {
-//			event.getDelta().accept(new IResourceDeltaVisitor() {
-//
-//				@Override
-//				public boolean visit(IResourceDelta delta) throws CoreException {
-//					// TODO Auto-generated method stub
-//					IResource resource = delta.getResource();
-//					
-//					switch(resource.getType()){
-//					case IResource.PROJECT:
-//						System.out.println("PROJECT.getName():   "+resource.getName());
-//						break;
-//					case IResource.FOLDER:
-//						System.out.println("FOLDER.getName():   "+resource.getName());
-//						break;
-////					case IResource.FILE:
-////						System.out.println("FILE.getName():   "+resource.getName());
-//					case IResource.ROOT:
-//						System.out.println("ROOT.getName():   "+resource.getName());
-//						break;
-//					}
-//					if (resource instanceof IFolder ) {
-//						IFolder cruFolder = (IFolder)resource;
-//						if(cruFolder.getFullPath().toString().contains("/libos/")) {
-//							IProject project = cruFolder.getProject();
-//							final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
-//							ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
-//							
-//								switch (delta.getKind()) {
-//								case IResourceDelta.COPIED_FROM:
-//									System.out.println("IResourceDelta.COPIED_FROM:  "+cruFolder.getFullPath().toString());
-//									;
-//								case IResourceDelta.ADDED:
-//									// handle added resource
-////									System.out.println("IResourceDelta.ADDED:  "+cruFolder.getFullPath().toString());
-////									for (int i = 0; i < conds.length; i++) {
-////										if(conds[i].getName().contains("libos")) {
-////											linkHelper.setExclude(cruFolder, conds[i], true);
-////										}
-////									}
-////									try {
-////										CoreModel.getDefault().setProjectDescription(project, local_prjd);
-////										cruFolder.getParent().refreshLocal(IResource.DEPTH_INFINITE, null);
-////		
-////									} catch (Exception e1) {
-////										// TODO Auto-generated catch block
-////										e1.printStackTrace();
-////									}
-//									break;
-//								case IResourceDelta.REMOVED:
-//									// handle removed resource
-////									System.out.println("IResourceDelta.REMOVED:  "+cruFolder.getFullPath().toString());
-//									break;
-//								case IResourceDelta.CHANGED:
-//									// handle changed resource		
-////									System.out.println("IResourceDelta.CHANGED:  "+cruFolder.getFullPath().toString());				
-//									break;					
-//								}
-//						}
-//					}
-//					return true;
-//				}
-//				
-//			});
-//		} catch (CoreException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
 
 }

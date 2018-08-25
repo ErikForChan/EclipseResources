@@ -121,7 +121,6 @@ import com.djyos.dide.ui.wizards.djyosProject.CreateHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosMainWizardPage;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 import com.djyos.dide.ui.wizards.djyosProject.LinkProjectFile;
-import com.djyos.dide.ui.wizards.djyosProject.ModuleConfigurationWizard;
 import com.djyos.dide.ui.wizards.parsexml.ReviseLinkToXML;
 import com.djyos.dide.ui.wizards.parsexml.ReviseVariableToXML;
 
@@ -136,7 +135,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			existingPath = false,projectExist = false,addedComptCfg = false;
 	protected DjyosMainWizardPage fMainPage;//主界面
 	protected ComponentConfigWizard cpomtCfgPage = null;//组件配置界面
-	protected ModuleConfigurationWizard modulePage;//Module向导界面
 	private String deapPath = null,wz_title, wz_desc, lastProjectName,boardModuleTrimPath;
 	private String didePath = new DideHelper().getDIDEPath();
 	private URI lastProjectLocation = null;

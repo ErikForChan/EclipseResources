@@ -413,7 +413,7 @@ public class ReadComponent {
 				if(!pureString.trim().equals("")) {
 					String[] curExcludes = pureString.split(";");
 					for(String exclude:curExcludes) {
-						System.out.println("exclude:  "+exclude);
+//						System.out.println("exclude:  "+exclude);
 						excludeStrings.add(exclude.replace("..", "").replace("\\", "/"));
 					}
 				}
