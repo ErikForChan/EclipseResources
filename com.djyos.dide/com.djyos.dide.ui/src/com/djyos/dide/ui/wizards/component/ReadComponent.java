@@ -61,7 +61,6 @@ public class ReadComponent {
 
 	// 遍历组件及其子组件
 	private void traverFiles(File file) {
-		//if(!file.getPath().contains("third"))
 		if(!file.getName().equals("include")) {
 			File[] files = file.listFiles();
 			List<File> allFiles = new ArrayList<File>();
@@ -97,6 +96,7 @@ public class ReadComponent {
 			if (!hExist) {
 				if (!file.getPath().contains("third")) {
 					for (File f : allFiles) {
+						System.out.println("file2:   "+f.getName());
 						if (f.isDirectory()) {
 							traverFiles(f);
 						} else if (f.getName().endsWith(".c")) {
@@ -212,7 +212,7 @@ public class ReadComponent {
 		componentPaths.add(loaderPath);
 		componentPaths.add(thirdPath);
 		for (int i = 0; i < componentPaths.size(); i++) {
-			File sourceFile = new File(componentPaths.get(i));
+			File sourceFile = new File(componentPaths.get(i));//component,djyos,third...
 			if (sourceFile.exists()) {
 				File[] files = sourceFile.listFiles();
 				List<File> allFiles = new ArrayList<File>();
@@ -231,6 +231,7 @@ public class ReadComponent {
 				allFiles.addAll(pureFiles);
 				
 				for (File file : allFiles) {
+					System.out.println("file1:   "+file.getName());
 					if (file.isDirectory()) {
 						traverFiles(file);
 					} else {
@@ -261,7 +262,6 @@ public class ReadComponent {
 		// TODO Auto-generated method stub
 		if(cpuSrcPath!= null) {
 			File cpuFile = new File(cpuSrcPath);
-//			System.out.println("cpuSrcPath:   "+cpuSrcPath);
 			if(cpuFile.exists()) {
 				File[] cpufiles = cpuFile.listFiles();
 				for (File file : cpufiles) {
@@ -270,8 +270,6 @@ public class ReadComponent {
 					}else {
 						if (file.getName().endsWith(".c")) {
 							try {
-//								System.out.println("file.getName():   "+file.getName());
-								getComponent(file);
 							} catch (Exception e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -413,7 +411,6 @@ public class ReadComponent {
 				if(!pureString.trim().equals("")) {
 					String[] curExcludes = pureString.split(";");
 					for(String exclude:curExcludes) {
-//						System.out.println("exclude:  "+exclude);
 						excludeStrings.add(exclude.replace("..", "").replace("\\", "/"));
 					}
 				}

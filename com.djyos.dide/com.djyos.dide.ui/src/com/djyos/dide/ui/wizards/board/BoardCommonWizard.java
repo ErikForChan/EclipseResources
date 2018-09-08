@@ -81,6 +81,13 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 	}
 
 	
+	@Override
+	public boolean isPageDragable() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
 	LinkHelper linkHelper = new LinkHelper();
 	DideHelper dideHelper = new DideHelper();
 	 
@@ -91,7 +98,7 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 		IProject[] projects = workspace.getRoot().getProjects();
 		Board newBoard = fMainPage.getBoard();
 		
-		if(newBoard!=null) {
+		if(newBoard!=null && projects.length>0) {
 			String relativePath = newBoard.getBoardPath().replace(dideHelper.getDjyosSrcPath(), "");
 //			System.out.println("relativePath:  "+relativePath);
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {
@@ -103,20 +110,29 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 					for(IProject project:projects) {
 						IFolder folder = project.getFolder("src/libos" + relativePath);
 						final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
-						ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
-						for (int i = 0; i < conds.length; i++) {
-							if (conds[i].getName().contains("libos")) {
-								linkHelper.setExclude(folder, conds[i], true);
+						if(local_prjd != null) {
+							ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
+							for (int i = 0; i < conds.length; i++) {
+								if (conds[i].getName().contains("libos")) {
+									linkHelper.setExclude(folder, conds[i], true);
+								}
+							}
+							
+							try {
+								CoreModel.getDefault().setProjectDescription(project, local_prjd);
+							} catch (Exception e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							monitor.worked(1);
+							try {
+								CoreModel.getDefault().setProjectDescription(project, local_prjd);
+							} catch (CoreException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
 							}
 						}
 						
-						try {
-							CoreModel.getDefault().setProjectDescription(project, local_prjd);
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-						monitor.worked(1);
 					}
 					
 					monitor.setTaskName("工作空间刷新中...");
@@ -142,10 +158,9 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 				e.printStackTrace();
 				return false;
 			}
-			return true;
-		}else {
-			return true;
 		}
+		
+		return true;
 	}
 
 }

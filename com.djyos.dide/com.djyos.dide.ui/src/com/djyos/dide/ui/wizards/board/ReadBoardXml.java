@@ -52,21 +52,23 @@ public class ReadBoardXml {
 		paths.add(demoBoardFilePath);
 		for (int i = 0; i < paths.size(); i++) {
 			File boardFile = new File(paths.get(i));
-			File[] files = boardFile.listFiles();
-			for (int j = 0; j < files.length; j++) {
-				File file = files[j];
-				if(file.isDirectory()) {
-					File[] mfiles = file.listFiles();
-					for (int k = 0; k < mfiles.length; k++) {
-						if (mfiles[k].getName().endsWith(".xml")) {
-							try {
-								Board board = getBoard(mfiles[k]);
-								boards.add(board);
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
+			if(boardFile.exists()) {
+				File[] files = boardFile.listFiles();
+				for (int j = 0; j < files.length; j++) {
+					File file = files[j];
+					if(file.isDirectory()) {
+						File[] mfiles = file.listFiles();
+						for (int k = 0; k < mfiles.length; k++) {
+							if (mfiles[k].getName().endsWith(".xml")) {
+								try {
+									Board board = getBoard(mfiles[k]);
+									boards.add(board);
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								break;
 							}
-							break;
 						}
 					}
 				}

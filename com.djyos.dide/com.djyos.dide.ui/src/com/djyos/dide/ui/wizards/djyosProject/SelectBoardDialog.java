@@ -331,7 +331,7 @@ public class SelectBoardDialog extends StatusDialog{
 									peripheralString+= ((k!=0?"，":"")+cpu.getPeripherals().get(k).getName());
 								}
 								detailsDesc+="Cpu"+(j+1)+": "+cpu.getCpuName()
-								+"\n主时钟频率: "+cpu.getMianClk()
+								+"\n主晶振频率: "+cpu.getMianClk()
 								+"\nRtc钟频率: "+cpu.getRtcClk()
 								+"\n芯片: "+chipString
 								+"\n外设: "+peripheralString

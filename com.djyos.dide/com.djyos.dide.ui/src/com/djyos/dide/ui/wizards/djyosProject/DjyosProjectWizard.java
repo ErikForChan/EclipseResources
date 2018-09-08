@@ -27,7 +27,7 @@ import com.djyos.dide.ui.wizards.djyosProject.DjyosCommonProjectWizard;
 public class DjyosProjectWizard extends DjyosCommonProjectWizard {
 	
 	public DjyosProjectWizard() {
-		super("New Djyos", "创建Djyos工程");
+		super("New Project", "创建Djyos工程");
 	}
 	
 }

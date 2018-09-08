@@ -26,6 +26,7 @@ public class DPluginImages {
 
 	// 新建Cpu和新建板件的图标
 	public static final ImageDescriptor DESC_CPU_VIEW = createUnManaged(T_OVR, "cpu_img.gif"); //$NON-NLS-1$
+	public static final ImageDescriptor DESC_ARCH_VIEW = createUnManaged(T_OVR, "arch_img.png"); //$NON-NLS-1$
 	public static final ImageDescriptor DESC_BOARD_VIEW = createUnManaged(T_OVR, "board_img.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor DESC_GROUP_VIEW = createUnManaged(T_OVR, "group_view.gif"); //$NON-NLS-1$
 	public static final ImageDescriptor TREE_FLODER_VIEW = createUnManaged(T_OVR, "fldr_obj.gif"); //$NON-NLS-1$

@@ -102,7 +102,7 @@ public class CpuCommonWizard extends BasicNewResourceWizard{
 		IProject[] projects = workspace.getRoot().getProjects();
 		Cpu cpu = fMianPage.getCpuCreated();
 		
-		if(cpu != null) {
+		if(cpu != null && projects.length>0) {
 			ReadHardWareDesc rhwd = new ReadHardWareDesc();
 			
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {

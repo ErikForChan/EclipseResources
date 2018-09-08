@@ -47,15 +47,17 @@ public class SaveFileHandler extends SaveHandler{
 		// TODO Auto-generated method stub
 		super.execute(event);
 		IWorkbenchPart activePart = HandlerUtil.getActivePart(event);
-		String fileName = LegacyActionTools.escapeMnemonics(activePart.getTitle()); //save的文件名
-		String infos[] = activePart.getTitleToolTip().split("libos");
-		String filePath  = srcLocation + infos[1];
-		File file = new File(filePath);
-		if(isComponent(file)) {
-			List<String> excludeStrings = new ArrayList<String>();
-			List<String> includeStrings = new ArrayList<String>();
-			getInExclude(excludeStrings,includeStrings);
-			travelProjects(file,excludeStrings,includeStrings);
+//		String fileName = LegacyActionTools.escapeMnemonics(activePart.getTitle()); //save的文件名
+		if(activePart.getTitleToolTip().contains("libos")) {
+			String infos[] = activePart.getTitleToolTip().split("libos");
+			String filePath  = srcLocation + infos[1];
+			File file = new File(filePath);
+			if(isComponent(file) && filePath.contains("third")) {
+				List<String> excludeStrings = new ArrayList<String>();
+				List<String> includeStrings = new ArrayList<String>();
+				getInExclude(excludeStrings,includeStrings);
+				travelProjects(file,excludeStrings,includeStrings);
+			}
 		}
 		return null;
 	}

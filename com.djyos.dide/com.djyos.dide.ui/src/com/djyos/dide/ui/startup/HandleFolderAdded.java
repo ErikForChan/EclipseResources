@@ -69,174 +69,174 @@ public class HandleFolderAdded{
 			ReadComponent rc = new ReadComponent();
 			GetNonCompFiles gecf = new GetNonCompFiles();
 			final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
-			ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
-			File compInfoFile = new File(project.getLocation().toString()+"/data/hardwares/component_infos.xml");
-			File cpuInfoFile = new File(project.getLocation().toString()+"/data/hardwares/cpu_infos.xml");
-			File boardInfoFile = new File(project.getLocation().toString()+"/data/hardwares/board_infos.xml");
-			File hardWardFolder = new File(project.getLocation().toString()+"/data/hardwares");
-			File hardWardInfoFile = new File(project.getLocation().toString()+"/data/hardware_info.xml");
-			
-			List<String> hardwares;
-			if(hardWardInfoFile.exists()) {
-				if(!hardWardFolder.exists()) {
-					hardWardFolder.mkdirs();
-				}
-				hardwares = rhwd.getHardWares(hardWardInfoFile);
-				Board sBoard = null;
-				OnBoardCpu onBoardCpu = null;
+			if(local_prjd!=null) {
+				ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
+				File compInfoFile = new File(project.getLocation().toString()+"/data/hardwares/component_infos.xml");
+				File cpuInfoFile = new File(project.getLocation().toString()+"/data/hardwares/cpu_infos.xml");
+				File boardInfoFile = new File(project.getLocation().toString()+"/data/hardwares/board_infos.xml");
+				File hardWardFolder = new File(project.getLocation().toString()+"/data/hardwares");
+				File hardWardInfoFile = new File(project.getLocation().toString()+"/data/hardware_info.xml");
 				
-				String cpuName = hardwares.get(1);
-				String boardName = hardwares.get(0);
-				List<Board> boards = rbx.getAllBoards();
-				for (int i = 0; i < boards.size(); i++) {
-					if (boards.get(i).getBoardName().equals(boardName)) {
-						sBoard = boards.get(i);
-						break;
+				List<String> hardwares;
+				if(hardWardInfoFile.exists()) {
+					if(!hardWardFolder.exists()) {
+						hardWardFolder.mkdirs();
 					}
-				}
-				
-				//处理组件
-				if (sBoard != null) {
-					List<OnBoardCpu> onBoardCpus = sBoard.getOnBoardCpus();
-					for (int i = 0; i < onBoardCpus.size(); i++) {
-						if (onBoardCpus.get(i).getCpuName().equals(cpuName)) {
-							onBoardCpu = onBoardCpus.get(i);
+					hardwares = rhwd.getHardWares(hardWardInfoFile);
+					Board sBoard = null;
+					OnBoardCpu onBoardCpu = null;
+					
+					String cpuName = hardwares.get(1);
+					String boardName = hardwares.get(0);
+					List<Board> boards = rbx.getAllBoards();
+					for (int i = 0; i < boards.size(); i++) {
+						if (boards.get(i).getBoardName().equals(boardName)) {
+							sBoard = boards.get(i);
 							break;
 						}
 					}
-					List<Component> allCompontents = rc.getAllComponents(onBoardCpu, sBoard);
-					if(compInfoFile.exists()) {
-						List<String> compPaths = readComponentsInfo.getCompsInfo(compInfoFile);
-						//排除未被選中的組建
-						for (Component component : allCompontents) { 
-							String componentPath = component.getParentPath().replace("\\", "/");
-							String fileName = component.getFileName();
-							String relativePath = componentPath.replace(srcLocation, "");
-							String compPath = relativePath+"/"+fileName;
-							if(!compPaths.contains(compPath)) {
-//								System.out.println("compPath:   "+compPath);
-//								if(fileName.endsWith(".c")) {
-//									IFile ifile = project.getFile("src/libos"+compPath);
-//									for (int j = 0; j < conds.length; j++) {
-//										linkHelper.setFileExclude(ifile, conds[j], true);
+					
+					//处理组件
+					if (sBoard != null) {
+						System.out.println("getBoardName：  "+sBoard.getBoardName());
+						List<OnBoardCpu> onBoardCpus = sBoard.getOnBoardCpus();
+						System.out.println("size：  "+onBoardCpus.size());
+						for (int i = 0; i < onBoardCpus.size(); i++) {
+							System.out.println("getCpuName：  "+onBoardCpus.get(i).getCpuName());
+							System.out.println("cpuName：  "+cpuName);
+							if (onBoardCpus.get(i).getCpuName().equals(cpuName)) {
+								System.out.println("true：  ");
+								onBoardCpu = onBoardCpus.get(i);
+								break;
+							}
+						}
+						List<Component> allCompontents = rc.getAllComponents(onBoardCpu, sBoard);
+						if(compInfoFile.exists()) {
+							List<String> compPaths = readComponentsInfo.getCompsInfo(compInfoFile);
+							//排除未被選中的組建
+							for (Component component : allCompontents) { 
+								String componentPath = component.getParentPath().replace("\\", "/");
+								String fileName = component.getFileName();
+								String relativePath = componentPath.replace(srcLocation, "");
+								String compPath = relativePath+"/"+fileName;
+								if(!compPaths.contains(compPath)) {
+//									System.out.println("compPath:   "+compPath);
+//									if(fileName.endsWith(".c")) {
+//										IFile ifile = project.getFile("src/libos"+compPath);
+//										for (int j = 0; j < conds.length; j++) {
+//											linkHelper.setFileExclude(ifile, conds[j], true);
+//										}
+//										
+//									}else if(fileName.endsWith(".h")) {
+//										IFolder ifolder = project.getFolder("src/libos"+relativePath);
+//										for (int j = 0; j < conds.length; j++) {
+//											linkHelper.setExclude(ifolder, conds[j], true);
+//										}
 //									}
-//									
-//								}else if(fileName.endsWith(".h")) {
-//									IFolder ifolder = project.getFolder("src/libos"+relativePath);
-//									for (int j = 0; j < conds.length; j++) {
-//										linkHelper.setExclude(ifolder, conds[j], true);
-//									}
-//								}
-								IFolder ifolder = project.getFolder("src/libos"+relativePath);
-								for (int j = 0; j < conds.length; j++) {
-									linkHelper.setExclude(ifolder, conds[j], true);
+									IFolder ifolder = project.getFolder("src/libos"+relativePath);
+									for (int j = 0; j < conds.length; j++) {
+										linkHelper.setExclude(ifolder, conds[j], true);
+									}
+								}
+							}
+							//排除不是組建的文件
+							List<File> excludeCompFiles = gecf.getExcludeCompFiles(onBoardCpu, sBoard);
+							for(File f:excludeCompFiles) {
+//								System.out.println("f.getName():   "+f.getName());
+								String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
+//								System.out.println("relativePath:   "+relativePath);
+								if(f.isFile()) {
+									IFile ifile = project.getFile("src/libos"+relativePath);
+									for (int j = 0; j < conds.length; j++) {
+										linkHelper.setFileExclude(ifile, conds[j], true);
+									}
+								}else if(f.isDirectory()) {
+									IFolder ifolder = project.getFolder("src/libos"+relativePath);
+									for (int j = 0; j < conds.length; j++) {
+										linkHelper.setExclude(ifolder, conds[j], true);
+									}
 								}
 							}
 						}
-						//排除不是組建的文件
-						List<File> excludeCompFiles = gecf.getExcludeCompFiles(onBoardCpu, sBoard);
-						for(File f:excludeCompFiles) {
-//							System.out.println("f.getName():   "+f.getName());
-							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-//							System.out.println("relativePath:   "+relativePath);
-							if(f.isFile()) {
-								IFile ifile = project.getFile("src/libos"+relativePath);
-								for (int j = 0; j < conds.length; j++) {
-									linkHelper.setFileExclude(ifile, conds[j], true);
-								}
-							}else if(f.isDirectory()) {
-								IFolder ifolder = project.getFolder("src/libos"+relativePath);
-								for (int j = 0; j < conds.length; j++) {
-									linkHelper.setExclude(ifolder, conds[j], true);
-								}
-							}
-						}
+						createNewFile(compInfoFile);
+						createComponentInfo.createComponentInfo(compInfoFile, allCompontents);
 					}
-					createNewFile(compInfoFile);
-					createComponentInfo.createComponentInfo(compInfoFile, allCompontents);
-				}
 
-				//处理板件
-				if(boardInfoFile.exists()) {
-					List<String> boardNames = readBoardsInfo.getBoardsInfo(boardInfoFile);
-					for(Board board:boards) {
-						if(!boardNames.contains(board.getBoardName())) {
-//							System.out.println("ExcludeBoard:   "+board.getBoardName());
-							String boardPath = board.getBoardPath().replace("\\", "/");
-							String relativePath = boardPath.replace(srcLocation, "");
+					//处理板件
+					if(boardInfoFile.exists()) {
+						List<String> boardNames = readBoardsInfo.getBoardsInfo(boardInfoFile);
+						for(Board board:boards) {
+							if(!boardNames.contains(board.getBoardName())) {
+//								System.out.println("ExcludeBoard:   "+board.getBoardName());
+								String boardPath = board.getBoardPath().replace("\\", "/");
+								String relativePath = boardPath.replace(srcLocation, "");
+								IFolder ifolder = project.getFolder("src/libos"+relativePath);
+								for (int j = 0; j < conds.length; j++) {
+									linkHelper.setExclude(ifolder, conds[j], true);
+								}
+							}
+						}
+						
+						GetNonBoardFiles gnbf = new GetNonBoardFiles();
+						List<File> excludeBoardFiles = gnbf.getNonBoards();
+						for(File f:excludeBoardFiles) {
+							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
 							IFolder ifolder = project.getFolder("src/libos"+relativePath);
 							for (int j = 0; j < conds.length; j++) {
 								linkHelper.setExclude(ifolder, conds[j], true);
 							}
 						}
 					}
-					
-					GetNonBoardFiles gnbf = new GetNonBoardFiles();
-					List<File> excludeBoardFiles = gnbf.getNonBoards();
-					for(File f:excludeBoardFiles) {
-						String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-						IFolder ifolder = project.getFolder("src/libos"+relativePath);
-						for (int j = 0; j < conds.length; j++) {
-							linkHelper.setExclude(ifolder, conds[j], true);
-						}
-					}
-				}
-//				List<IFolder> nonBoardFolders = getNonBoardFolders(project);
-//				for(IFolder folder:nonBoardFolders) {
-//					System.out.println("nonBoardFolders：  "+folder.getFullPath());
-//					for (int j = 0; j < conds.length; j++) {
-//						linkHelper.setExclude(folder, conds[j], true);
+//					List<IFolder> nonBoardFolders = getNonBoardFolders(project);
+//					for(IFolder folder:nonBoardFolders) {
+//						System.out.println("nonBoardFolders：  "+folder.getFullPath());
+//						for (int j = 0; j < conds.length; j++) {
+//							linkHelper.setExclude(folder, conds[j], true);
+//						}
 //					}
-//				}
-				createNewFile(boardInfoFile);
-				createBoardInfo.createBoardInfo(boardInfoFile, boards);
-				
-				//处理Cpu
-				List<Cpu> allCpus = rcx.getAllCpus();
-				if(cpuInfoFile.exists()) {
-					List<String> cpuNames = readCpusInfo.getCpusInfo(cpuInfoFile);
-					for(Cpu cpu:allCpus) {
-						if(!cpuNames.contains(cpu.getCpuName())) {
-							String cpuPath =  cpu.getParentPath().replace("\\", "/");
-							File cpuFolder = new File(cpuPath);
-							List<IFolder> folders = new ArrayList<IFolder>();
-							getFolders(project,folders,cpuFolder,cpuName);
-							for(IFolder folder:folders) {
-								for (int j = 0; j < conds.length; j++) {
-									linkHelper.setExclude(folder, conds[j], true);
+					createNewFile(boardInfoFile);
+					createBoardInfo.createBoardInfo(boardInfoFile, boards);
+					
+					//处理Cpu
+					List<Cpu> allCpus = rcx.getAllCpus();
+					if(cpuInfoFile.exists()) {
+						List<String> cpuNames = readCpusInfo.getCpusInfo(cpuInfoFile);
+						for(Cpu cpu:allCpus) {
+							if(!cpuNames.contains(cpu.getCpuName())) {
+								String cpuPath =  cpu.getParentPath().replace("\\", "/");
+								File cpuFolder = new File(cpuPath);
+								List<IFolder> folders = new ArrayList<IFolder>();
+								getFolders(project,folders,cpuFolder,cpuName);
+								for(IFolder folder:folders) {
+									for (int j = 0; j < conds.length; j++) {
+										linkHelper.setExclude(folder, conds[j], true);
+									}
 								}
 							}
 						}
-					}
-					
-					GetNonCpuFiles gncf = new GetNonCpuFiles();
-					List<File> excludeCpuFiles = gncf.getNonCpus();
-					for(File f:excludeCpuFiles) {
-//						System.out.println("f.getName():   "+f.getName());
-						String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-//						System.out.println("relativePath:   "+relativePath);
-						IFolder ifolder = project.getFolder("src/libos"+relativePath);
-						for (int j = 0; j < conds.length; j++) {
-							linkHelper.setExclude(ifolder, conds[j], true);
+						
+						GetNonCpuFiles gncf = new GetNonCpuFiles();
+						List<File> excludeCpuFiles = gncf.getNonCpus();
+						for(File f:excludeCpuFiles) {
+							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
+							IFolder ifolder = project.getFolder("src/libos"+relativePath);
+							for (int j = 0; j < conds.length; j++) {
+								linkHelper.setExclude(ifolder, conds[j], true);
+							}
 						}
 					}
-					
+					createNewFile(cpuInfoFile);
+					createCpuInfo.createCpuInfo(cpuInfoFile, allCpus);
 				}
-				createNewFile(cpuInfoFile);
-				createCpuInfo.createCpuInfo(cpuInfoFile, allCpus);
 				
+				try {
+					CoreModel.getDefault().setProjectDescription(project, local_prjd);
+				} catch (CoreException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
-			
-			try {
-				CoreModel.getDefault().setProjectDescription(project, local_prjd);
-			} catch (CoreException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-
-//			travelFiles(project,conds,boardFile);
 		}
-		
 	}
 	
 	//获取不存在配置文件的板件

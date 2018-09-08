@@ -93,7 +93,7 @@ public class LinkHelper {
 							String[] members = defines[0].trim().split("\\s+");
 							ICLanguageSettingEntry entry = CDataUtil.createCMacroEntry(members[1], members.length>2?members[2]:"", 0);
 							entries.add(entry);
-							System.out.println("entry:   "+entry.getName());
+//							System.out.println("entry:   "+entry.getName());
 						}
 					}
 				}

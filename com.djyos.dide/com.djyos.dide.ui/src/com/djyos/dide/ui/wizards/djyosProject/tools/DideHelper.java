@@ -51,7 +51,12 @@ public class DideHelper {
 	}
 	
 	public String getUserBoardFilePath() {
-		return didePath+"djysrc\\bsp\\boarddrv\\user";
+		String userBoardPath = didePath+"djysrc\\bsp\\boarddrv\\user";
+		File userBoardFile = new File(userBoardPath);
+		if(!userBoardFile.exists()) {
+			userBoardFile.mkdirs();
+		}
+		return userBoardPath;
 	}
 	
 	public String getDemoBoardFilePath() {
@@ -103,6 +108,7 @@ public class DideHelper {
 			String str = null;
 			boolean start = false, stop = false;
 			while ((str = br.readLine()) != null) {
+				String[] infos = str.split("\\s+");
 				if (start && str.contains("Configure")) {
 					stop = true;
 					break;
@@ -110,7 +116,7 @@ public class DideHelper {
 				if (start && !stop) {
 					pjCgfs.add(str);// 添加当前组件的所有预定义值
 				}
-				if (str.contains("Configure") && str.contains(component.getName())) {
+				if (str.contains("Configure") && infos[2].equals(component.getName())) {
 					start = true;
 				}
 			}

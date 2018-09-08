@@ -509,7 +509,6 @@ public class DjyosMainWizardPage extends WizardPage {
 		for (int i = 0; i < radioBtns.length; i++) {
 			radioBtns[i] = new Button(RADIOCpt, SWT.RADIO | SWT.LEFT);
 			radioBtns[i].setText(templateLabels[i]);
-//			radioBtns[i].setToolTipText(templateLabels[i]);
 			int a = i;
 			radioBtns[i].addSelectionListener(new SelectionAdapter() {
 				@Override
@@ -671,16 +670,13 @@ public class DjyosMainWizardPage extends WizardPage {
 		}
 		
 		String prjPathSelect = locationArea.locationPathField.getText();
-		if(prjPathSelect.contains(projectFieldContents)) {
-			prjPathSelect = prjPathSelect.replace("\\"+projectFieldContents, "");
+		if(!prjPathSelect.endsWith(projectFieldContents)) {
+			prjPathSelect = prjPathSelect+"\\"+projectFieldContents;
 		}
-		File prjParentFile = new File(prjPathSelect);
-		File[] files = prjParentFile.listFiles();
-		for(File file:files) {
-			if(file.getName().equals(projectFieldContents)) {
-				setErrorMessage("工作空间或者磁盘已经存在目标工程 !");
-				return false;
-			}
+		File prjFile = new File(prjPathSelect);
+		if(prjFile.exists()) {
+			setErrorMessage("工作空间或者磁盘已经存在目标工程 !");
+			return false;
 		}
 		
 		String boardFieldContents = getBoardNameFieldValue();

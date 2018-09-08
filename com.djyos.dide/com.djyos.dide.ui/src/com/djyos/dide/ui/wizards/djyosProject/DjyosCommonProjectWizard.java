@@ -142,8 +142,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	protected IProject newProject;
 	private IWorkbenchWindow window = PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow();
-	DideHelper dideHelper = new DideHelper();
-	LinkHelper linkHelper = new LinkHelper();
+	private DideHelper dideHelper = new DideHelper();
+	private LinkHelper linkHelper = new LinkHelper();
 	
 	public Board getBoard() {
 		return fMainPage.getSelectBoard();
@@ -232,6 +232,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 					SubMonitor subMonitor = SubMonitor.convert(monitor, 1);
 					// Import as many projects as we can; accumulate errors to
 					// report to the user
+					@SuppressWarnings("restriction")
 					MultiStatus status = new MultiStatus(IDEWorkbenchPlugin.IDE_WORKBENCH, 1,
 							DataTransferMessages.WizardProjectsImportPage_projectsInWorkspaceAndInvalid, null);
 					importExistingProject(subMonitor.split(1),projectName,userPath,destPath);		
@@ -298,6 +299,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	/*
 	 * 导入模板工程到当前工作空间
 	 */
+	@SuppressWarnings("restriction")
 	private IStatus importExistingProject(IProgressMonitor mon, String projectName, String userPath,String destPath) {
 
 		SubMonitor subMonitor = SubMonitor.convert(mon, 3);
@@ -433,6 +435,10 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			String conName = conds[i].getName();
 			ICResourceDescription rds = conds[i].getRootFolderDescription();
 			IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
+
+			cfg.setBuildCommand("${cross_make}");
+			cfg.setBuildArguments("SHELL=cmd.exe"+" "+cfg.getBuildArguments().replaceAll("SHELL=cmd.exe", "").trim());
+			
 			if(!conName.contains("libos")) {
 				cfg.setPostbuildStep("make "+conName+".bin && elf_to_bin.exe "+conName+".elf "+conName+".bin && ren "+conName+".bin new"+conName+".bin");	
 			}
@@ -542,9 +548,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		GetNonCompFiles gecf = new GetNonCompFiles();
 		List<File> excludeCompFiles = gecf.getExcludeCompFiles(onBoardCpu, board);
 		for(File f:excludeCompFiles) {
-//			System.out.println("f.getName():   "+f.getName());
 			String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-//			System.out.println("relativePath:   "+relativePath);
 			if(f.isFile()) {
 				IFile ifile = project.getFile("src/libos"+relativePath);
 				for (int j = 0; j < conds.length; j++) {
@@ -570,7 +574,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		createNewFile(boardInfoFile);
 		createBoardInfo.createBoardInfo(boardInfoFile, allBoards);
 		
-//		System.out.println("board.getBoardName():   "+board.getBoardName());
 		if(isDemoBoard) {
 			setBoardExclude(true,board.getBoardName(),project,conds);
 //			notExcludes.add("src/libos/bsp/boarddrv/demo/"+board.getBoardName());
@@ -620,7 +623,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 
 	public void getArchFolders(IFolder ifolder,List<IFolder> folders){
 		folders.add(ifolder);
-//		System.out.println("ifolderArch:   "+ifolder.getFullPath().toString());
 		IFolder parentFolder = (IFolder) ifolder.getParent();
 		if(!parentFolder.getName().equals("arch")) {
 			getArchFolders(parentFolder,folders);
@@ -630,7 +632,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	private void setCpuFilesExclude(IProject project, ICConfigurationDescription[] conds, Cpu myCpu, List<Cpu> allCpus) {
 		// TODO Auto-generated method stub
 		File cpuDrvFile = new File(dideHelper.getDjyosSrcPath()+"/bsp/cpudrv");
-		System.out.println("myCpu.getParentPath():  "+myCpu.getParentPath());
 		
 		//Exclude没有描述文件的的cpu
 		GetNonCpuFiles gncf = new GetNonCpuFiles();
@@ -660,29 +661,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		File myCpuParentFile= new File(myCpu.getParentPath());
 		travelCpuParentInclude(myCpuParentFile,project,conds);
 	}
-	
-//	private boolean isFileExclude(File parentFile, IProject project, ICConfigurationDescription[] conds) {
-//		// TODO Auto-generated method stub
-//		String srcLocation = dideHelper.getDjyosSrcPath();
-//		String filePath = parentFile.getPath().toString().replace("\\", "/");
-//		String relativePath = filePath.replace(srcLocation, "");
-//		IFolder folder = project.getFolder("src/libos"+relativePath);
-//		for (int i = 0; i < conds.length; i++) {
-//			if (conds[i].getName().contains("libos")) {
-//				ICResourceDescription resDesc = conds[i].getResourceDescription(folder.getProjectRelativePath(), true);
-//				boolean isExclude = resDesc.isExcluded();
-//				if(isExclude) {
-//					return true;
-//				}else {
-//					break;
-//				}
-//			}
-//		}
-//		return false;
-//	}
 
 	private void travelCpuParentExclude(File parentFile, IProject project, ICConfigurationDescription[] conds){
-//		System.out.println("parentFileExclude:   "+parentFile.getPath());
 		setFolderExclude(parentFile,project,conds);
 		parentFile = parentFile.getParentFile();
 		if(!parentFile.getName().equals("cpudrv")) {
@@ -691,7 +671,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 	}
 	
 	private void travelCpuParentInclude(File file, IProject project, ICConfigurationDescription[] conds){
-//		System.out.println("parentFileInclude:   "+file.getPath());
 		File parentFile = file.getParentFile();
 		if(!parentFile.getName().equals("cpudrv")) {
 			travelCpuParentInclude(parentFile,project,conds);
@@ -715,33 +694,35 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		File boardDrvFile = new File(dideHelper.getDjyosSrcPath() + "/bsp/boarddrv");
 		File[] files = boardDrvFile.listFiles();
 		for (File file : files) {
-			File[] myFiles = file.listFiles();
-			if (isDemoBoard) {
-				if (file.getName().equals("demo")) {
-					for (File f : myFiles) {
-						if (!f.getName().equals(boardName)) {
+			if(file.isDirectory()) {
+				File[] myFiles = file.listFiles();
+				if (isDemoBoard) {
+					if (file.getName().equals("demo")) {
+						for (File f : myFiles) {
+							if (!f.getName().equals(boardName)) {
+								setFolderExclude(f, project, conds);
+							} else {
+								setFolderInclude(f, project, conds);
+							}
+						}
+					} else {
+						for (File f : myFiles) {
 							setFolderExclude(f, project, conds);
-						} else {
-							setFolderInclude(f, project, conds);
 						}
 					}
 				} else {
-					for (File f : myFiles) {
-						setFolderExclude(f, project, conds);
-					}
-				}
-			} else {
-				if (file.getName().equals("user")) {
-					for (File f : myFiles) {
-						if (!f.getName().equals(boardName)) {
-							setFolderExclude(f, project, conds);
-						} else {
-							setFolderInclude(f, project, conds);
+					if (file.getName().equals("user")) {
+						for (File f : myFiles) {
+							if (!f.getName().equals(boardName)) {
+								setFolderExclude(f, project, conds);
+							} else {
+								setFolderInclude(f, project, conds);
+							}
 						}
-					}
-				} else {
-					for (File f : myFiles) {
-						setFolderExclude(f, project, conds);
+					} else {
+						for (File f : myFiles) {
+							setFolderExclude(f, project, conds);
+						}
 					}
 				}
 			}
@@ -779,7 +760,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		for (int i = 0; i < conds.length; i++) {
 			if(conds[i].getName().contains("libos")) {
 				for(int k=folders.size()-1;k>=0;k--) {
-					System.out.println("folders.get(k):   "+folders.get(k).getFullPath().toString());
+//					System.out.println("folders.get(k):   "+folders.get(k).getFullPath().toString());
 					linkHelper.setExclude(folders.get(k), conds[i], false);
 				}
 			}
@@ -800,7 +781,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			String relativePath = componentPath.replace(srcLocation, "");
 			IFolder folder = project.getFolder("src/libos"+relativePath);
 			IFile file = project.getFile("src/libos"+relativePath+"/"+component.getFileName());
-			
+			System.out.println("compontentsExclude:  "+compontentsExclude.get(j).getName());
 			for (int i = 0; i < conds.length; i++) {
 				if(isApp) {
 					if(conds[i].getName().contains("libos_App")) {
@@ -831,7 +812,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			String componentPath = component.getParentPath().replace("\\", "/");
 			String relativePath = componentPath.replace(srcLocation, "").replace("\\", "/");	// /third/.../componentName
 			List<String> excludeFiles = component.getExcludes();
-//			System.out.println("componentName:  "+componentName);
 			for (String exclude : excludeFiles) {
 				excludes.add("src/libos" + relativePath + exclude);
 //				System.out.println("exclude:    /src/libos" + relativePath + exclude);
@@ -841,7 +821,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		}
 		
 		// 隐藏不需要编译的文件
-		System.out.println("excludes.size():  " + excludes.size());
+//		System.out.println("excludes.size():  " + excludes.size());
 		for (int j = 0; j < excludes.size(); j++) {
 			System.out.println("excludes.get(j):  " + excludes.get(j));
 			IFile ifle = project.getFile(excludes.get(j));
@@ -903,28 +883,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 //		sortComponent(compontentsExclude);
 	}
 
-//	private void sortComponent(List<Component> compontentsExclude) {
-//		// TODO Auto-generated method stub
-//		List<Component> parents = new ArrayList<Component>();
-//		List<Component> compontentsExcludeSorted = new ArrayList<Component>();
-//		for(Component comp:compontentsExclude) {
-//			if(comp.getParent().equals("none")) {
-//				travelChilds(comp,compontentsExcludeSorted,compontentsExclude);
-//				compontentsExcludeSorted.add(comp);
-//			}
-//		}
-//	}
-
-//	private void travelChilds(Component comp, List<Component> compontentsExcludeSorted, List<Component> compontentsExclude){
-//		for(Component com:compontentsExclude) {
-//			String parent = com.getParent();
-//			if(parent.equals(comp.getName())) {
-//				travelChilds();
-//				compontentsExcludeSorted.add(com);
-//			}
-//		}
-//	}
-	
 	private void linkComponentGUN(List<Component> compontentsChecked, List<String> links, List<String> includes, boolean isDemoBoard, File[] cpudrvFiles, String _cpuName, String srcLocation, String _boardName, List<String> assemblyLinks, ICResourceDescription rds) {
 		// TODO Auto-generated method stub
 		List<String> myLinks = new ArrayList<String>();
@@ -949,7 +907,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		//MACRO Entries
 		List<ICLanguageSettingEntry>  _entries = new ArrayList<ICLanguageSettingEntry>();
 		linkHelper.fillSymbols(compontentsChecked,_entries);
-		System.out.println("-----------------------------------------------");
 		//C/C++ Entries
 		List<ICLanguageSettingEntry>  entries = new ArrayList<ICLanguageSettingEntry>();
 		for(int k=0;k<myLinks.size();k++) {
@@ -1123,18 +1080,30 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		String sourcePath = fMainPage.projectPath;
 		
 		int index = fMainPage.getTemplateIndex();
-		boolean containsPrj = projectPath.contains(projectName);
-		String srcPath = containsPrj?projectPath+"/src":projectPath+"/"+projectName+"/src";
-    	List<Component> compontentsChecked = new ArrayList<Component>();
-    	List<Component> appCompontentsChecked = cpomtCfgPage.getAppCompontentsChecked();
-    	List<Component> ibootCompontentsChecked = cpomtCfgPage.getIbootCompontentsChecked();
-    	File hardWardInfoFile = new File(srcPath+"/../"+"data/hardware_info.xml");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		if(! projectPath.contains(projectName)) {
+			project = curProject;
+		}	
+		
+		String projectLocation = project.getLocation().toString();
+		File dataFolder = new File(projectLocation+"/data");
+		if(!dataFolder.exists()) {
+			dataFolder.mkdirs();
+		}
+		File hardWardInfoFile = new File(projectLocation+"/data/hardware_info.xml");
     	try {
 			hardWardInfoFile.createNewFile();
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+    	CreateHardWareDesc chwd = new CreateHardWareDesc();
+		chwd.createHardWareXml(board, cpu, hardWardInfoFile);
+		
+    	List<Component> compontentsChecked = new ArrayList<Component>();
+    	List<Component> appCompontentsChecked = cpomtCfgPage.getAppCompontentsChecked();
+    	List<Component> ibootCompontentsChecked = cpomtCfgPage.getIbootCompontentsChecked();
+    	
     	IRunnableWithProgress runnable = new IRunnableWithProgress() {
 			@Override
 			public void run(IProgressMonitor monitor)
@@ -1147,28 +1116,22 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				prefs.setConfigurationRelations(ICProjectDescriptionPreferences.CONFIGS_LINK_SETTINGS_AND_ACTIVE);
 				prjDescMgr.setProjectDescriptionWorkspacePreferences(prefs, false, new NullProgressMonitor());
 				
-				CreateHardWareDesc chwd = new CreateHardWareDesc();
-				chwd.createHardWareXml(board, cpu, hardWardInfoFile);
 				//生成initPrj.c,initPrj.h,memory.lds文件
 				monitor.setTaskName("配置工程初始化文件...");
 				if (index == 0 || index == 1) {
 					try {
-						cpomtCfgPage.initProject(srcPath, false);
-						cpomtCfgPage.creatProjectConfiure(srcPath, core, false);
+						cpomtCfgPage.initProject(projectLocation, false);
+						cpomtCfgPage.creatProjectConfiure(projectLocation, core, false);
 					} catch (Exception e) {
-						// TODO: handle exception
-						MessageDialog.openInformation(window.getShell(), "提示",
-								"配置Iboot初始化文件错误："+e.getMessage());
+						showErrorMessage("配置Iboot初始化文件错误："+e.getMessage());
 					}
 				}
 				if (index == 0 || index == 2 || index == 3) {
 					try {
-						cpomtCfgPage.initProject(srcPath, true);
-						cpomtCfgPage.creatProjectConfiure(srcPath, core, true);
+						cpomtCfgPage.initProject(projectLocation, true);
+						cpomtCfgPage.creatProjectConfiure(projectLocation, core, true);
 					} catch (Exception e) {
-						// TODO: handle exception
-						MessageDialog.openInformation(window.getShell(), "提示",
-								"配置App初始化文件错误："+e.getMessage());
+						showErrorMessage("配置App初始化文件错误："+e.getMessage());
 					}
 				}
 				monitor.worked(2);
@@ -1178,9 +1141,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				try {
 					getMemoryToLds(ldsHead,ldsDesc,projectName,sourcePath);
 				} catch (Exception e) {
-					// TODO: handle exception
-					MessageDialog.openInformation(window.getShell(), "提示",
-							"lds配置错误："+e.getMessage());
+					showErrorMessage("lds配置错误："+e.getMessage());
 				}
 				monitor.worked(6);
 				
@@ -1189,9 +1150,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 				try {
 					handleCProject(appCompontentsChecked,ibootCompontentsChecked,board,cpu,core,projectPath,projectName,index);
 				} catch (Exception e) {
-					// TODO: handle exception
-					MessageDialog.openInformation(window.getShell(), "提示",
-							"工程链接配置错误："+e.getMessage());
+					showErrorMessage("工程链接配置错误："+e.getMessage());
 				}
 				
 				monitor.worked(1);
@@ -1218,16 +1177,26 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			dialog.run(true, true, runnable);
 		} catch (Exception e) {
 			e.printStackTrace();
+			return false;
 		}
     	
-//    	ICConfigurationDescription[] cfgDescs = getCfgs(curProject);
-//		for (ICConfigurationDescription cfgDesc : cfgDescs) {
-//			System.out.println("cfgDesc.getName()"+cfgDesc.getName());
-//		}
-//    	
-//    	createBuild(curProject);
+//		createBuild(curProject);
+//    	if(createBuild(curProject)) {
+//    		MessageDialog.openInformation(window.getShell(),
+//    				"提示","后台编译库完成");
+//    	}
 		
 		return true;
+	}
+	
+	private void showErrorMessage(String message){
+		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+				MessageDialog.openInformation(window.getShell(),
+						"提示",message);
+		}
+		});
 	}
 	
     @Override
@@ -1242,16 +1211,18 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		boolean isClean = false;
 		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
 		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+		File libFile = new File(project.getLocation().toString()+"/lib");
+		
 		for (IConfiguration cfg : cfgs) {
 			IBuilder builder = cfg.getEditableBuilder();
 			String cfgName = cfg.getName();
-			if (cfgName.equals("libos_demo_o0") || cfgName.equals("libos_demo_o2")) {
+			if (cfgName.startsWith("libos")) {
 				CfgBuildInfo binfo = new CfgBuildInfo(builder, true);
 				BuildStatus status = new BuildStatus(builder);
 				status.setRebuild();
 				IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace().getRuleFactory();
 				final ISchedulingRule rule = ruleFactory.modifyRule(binfo.getProject());
-				Job backgroundJob = new Job("CDT Common Builder") {
+				Job backgroundJob = new Job("Building "+cfgName) {
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
 						// TODO Auto-generated method stub
@@ -1267,13 +1238,27 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 						} catch (CoreException e) {
 							return e.getStatus();
 						}
-						IStatus returnStatus = Status.OK_STATUS;
-						return returnStatus;
+//						IStatus returnStatus = Status.OK_STATUS;
+						return Status.OK_STATUS;
 					}
 				};
 				backgroundJob.setRule(rule);
 				backgroundJob.schedule();
 			}
+//			if(isClean) {
+//				File cfgFile = new File(project.getLocation().toString()+"/"+cfgName);
+//				File[] files = cfgFile.listFiles();
+//				for(File file:files) {
+//					if(file.getName().endsWith(".a")) {
+//						try {
+//							dideHelper.copyFolder(file,libFile);
+//						} catch (IOException e) {
+//							// TODO Auto-generated catch block
+//							e.printStackTrace();
+//						}
+//					}
+//				}
+//			}
 		}
 		try {
 			project.refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -1281,34 +1266,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if(isClean) {
-			File o0File = new File(project.getLocation().toString()+"libos_demo_o0");
-			File o2File = new File(project.getLocation().toString()+"libos_demo_o2");
-			File[] o0files = o0File.listFiles();
-			File[] o2files = o2File.listFiles();
-			File libFile = new File(project.getLocation().toString()+"lib");
-			for(File file:o0files) {
-				if(file.getName().endsWith(".a")) {
-					try {
-						dideHelper.copyFolder(file,libFile);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-			for(File file:o2files) {
-				if(file.getName().endsWith(".a")) {
-					try {
-						dideHelper.copyFolder(file,libFile);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-
 		return true;
 	}
     

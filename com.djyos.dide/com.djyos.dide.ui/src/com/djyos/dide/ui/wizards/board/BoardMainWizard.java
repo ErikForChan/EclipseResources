@@ -1,6 +1,11 @@
 package com.djyos.dide.ui.wizards.board;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +16,15 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DragSource;
+import org.eclipse.swt.dnd.DragSourceEvent;
+import org.eclipse.swt.dnd.DragSourceListener;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.DropTargetListener;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -51,6 +65,8 @@ public class BoardMainWizard extends WizardPage{
 	
 	private Tree tree;
 	private Text configInfoText = null;
+	private TreeItem t1,t2;
+	public static TreeItem fileItem = null,tmssItem = null;
 	private MenuItem newBoardItem,deleteItem,reviseItem;
 	private Composite infoArea;
 	private List<Board> boardsList;
@@ -115,7 +131,6 @@ public class BoardMainWizard extends WizardPage{
 		
 		Label promoteLabel = new Label(promoteArea,SWT.NULL);
 		promoteLabel.setText(promoteString);
-//		promoteLabel.setForeground(infoArea.getDisplay().getSystemColor(SWT.COLOR_RED));
 		FontData newFontData = promoteLabel.getFont().getFontData()[0];
 		newFontData.setStyle(SWT.BOLD);
 		newFontData.setHeight(8);
@@ -138,12 +153,14 @@ public class BoardMainWizard extends WizardPage{
 		createBoardTree(contentCpt);
 		
 		initPopup();
+		handleTreeDrag();
 		Composite sashForm = new Composite(contentCpt, SWT.NULL);
 		sashForm.setLayout(new RowLayout());
 		configInfoText = new Text(sashForm, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
 		configInfoText.setEditable(false);
-		configInfoText.setLayoutData(new RowData(350,250));
-		
+		configInfoText.setLayoutData(new RowData(350,350));
+		configInfoText.setText("选中板件即可显示选中的板件配置信息");
+
 		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		scrolledComposite.setContent(infoArea);
 		scrolledComposite.setMinHeight(point.y);
@@ -154,6 +171,147 @@ public class BoardMainWizard extends WizardPage{
 		setMessage(null);
 		setControl(composite);
 		Dialog.applyDialogFont(composite);
+	}
+	
+	private void handleTreeDrag() {
+		// TODO Auto-generated method stub
+		// 定义拖放源对象
+		DragSource dragSource = new DragSource(tree, DND.DROP_MOVE | DND.DROP_COPY);
+		// 设置传输的数据为文本型String类型
+		dragSource.setTransfer(new Transfer[] { TextTransfer.getInstance() });
+		// 注册拖放源时的事件处理
+		dragSource.addDragListener(new DragSourceListener() {
+
+			@Override
+			public void dragStart(DragSourceEvent event) {
+				// TODO Auto-generated method stub
+				if (tree.getSelectionCount() == 0)
+					event.doit = false;
+			}
+
+			@Override
+			public void dragSetData(DragSourceEvent event) {
+				// TODO Auto-generated method stub
+				if (TextTransfer.getInstance().isSupportedType(event.dataType)) {
+					event.data = tree.getSelection()[0].getText(0);
+					fileItem = tree.getSelection()[0];
+				}
+			}
+
+			@Override
+			public void dragFinished(DragSourceEvent event) {
+				// TODO Auto-generated method stub
+				System.out.println("dragFinished");
+			}
+		});
+
+		// 定义拖放目标对象
+		DropTarget dropTarget = new DropTarget(tree, DND.DROP_MOVE | DND.DROP_DEFAULT | DND.DROP_COPY);
+		// 设置目标对象可传输的数据类型
+		dropTarget.setTransfer(new Transfer[] { TextTransfer.getInstance() });
+		// 注册目标对象的事件处理
+		dropTarget.addDropListener(new DropTargetListener() {
+
+			@Override
+			public void dropAccept(DropTargetEvent event) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void drop(DropTargetEvent event) {
+				// TODO Auto-generated method stub
+				if (event.item == null)
+					return;
+				// 首先获得目标对象中拖拽的树节点
+				TreeItem eventItem = (TreeItem) event.item;
+
+				if (TextTransfer.getInstance().isSupportedType(event.currentDataType)) {
+					// 获得数据源设置的字符串
+					String s = (String) event.data;
+					// 在tmss位置插入一个节点
+					File srcFile = new File(fileItem.getData().toString());
+					File destFile = new File(eventItem.getData().toString() + "\\" + s);
+					String isDropable = isFileDropable(fileItem,srcFile, new File(eventItem.getData().toString()));
+					if (isDropable == null) {
+						tmssItem = new TreeItem(eventItem, SWT.NONE);
+						tmssItem.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
+						tmssItem.setExpanded(false);
+
+						tmssItem.setText(s);
+						tmssItem.setData(destFile);
+						try {
+							copyFolder(srcFile, destFile);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+						DeleteFolder dlf = new DeleteFolder();
+						dlf.deleteFolder(fileItem.getData().toString());
+						// 删除原来的节点
+						if (tree != null) {
+							fileItem.dispose();
+						}
+					} else {
+						IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+						MessageDialog.openError(window.getShell(), "提示", isDropable);
+					}
+
+				}
+			}
+
+			@Override
+			public void dragOver(DropTargetEvent event) {
+				// TODO Auto-generated method stub
+				event.feedback = DND.FEEDBACK_EXPAND | DND.FEEDBACK_SELECT;
+			}
+
+			@Override
+			public void dragOperationChanged(DropTargetEvent event) {
+				// TODO Auto-generated method stub
+				if (event.detail == DND.DROP_DEFAULT)
+					event.detail = DND.DROP_COPY;
+			}
+
+			@Override
+			public void dragLeave(DropTargetEvent event) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void dragEnter(DropTargetEvent event) {
+				// TODO Auto-generated method stub
+				if (event.detail == DND.DROP_DEFAULT)
+					event.detail = DND.DROP_COPY;
+			}
+		});
+				
+	}
+	
+	private String isFileDropable(TreeItem fileItem, File srcFile, File destFile) {
+		// TODO Auto-generated method stub
+		File tempSrcFile = new File(srcFile.getPath());
+		File tempDestFile = new File(destFile.getPath());
+		
+		if(fileItem.getText().contains("板件")){
+			return "该目录不可拖动！";
+		}
+		
+		File parentSrcFile = tempSrcFile.getParentFile();
+		if (parentSrcFile.getName().equals(destFile.getName())) {
+			return "该目录下已经存在["+tempSrcFile.getName()+"]！";
+		}
+		
+		tempDestFile = new File(destFile.getPath());
+		File[] destFiles = tempDestFile.listFiles();
+		for(File file : destFiles) {
+			if(file.getName().endsWith(".xml")) {
+				return "不可托拉到板件下！";
+			}
+		}
+		return null;
 	}
 	
 	public Board getBoard() {
@@ -185,10 +343,12 @@ public class BoardMainWizard extends WizardPage{
 				if(newBoardDialog.open() == Window.OK) {
 					Board board = newBoardDialog.getBoard();
 					boardCreated = board;
-					TreeItem t = new TreeItem(tree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+					TreeItem t = new TreeItem(t2, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL, 0);
 					t.setData(board.getBoardPath());
 					t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
 					t.setText(board.getBoardName());	
+					tree.select(t);
+					displayBoardDetails(t);
 				}	
 			}
 			
@@ -199,24 +359,12 @@ public class BoardMainWizard extends WizardPage{
 			}
 		});
 		
-		reviseItem.addSelectionListener(new SelectionListener() {
-			
+		reviseItem.addSelectionListener(new SelectionAdapter() {
+
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				TreeItem[] items = tree.getSelection();
-				if(items.length>0) {
-					String itemName = items[0].getText().trim();//获取当前选中文件的路径
-					Board board = getBoardByName(itemName);
-					NewOrReviseBoard newBoardDialog = new NewOrReviseBoard(infoArea.getShell(),false,board);
-					newBoardDialog.open();
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
+				handleReviseClick();
 			}
 		});
 		
@@ -250,7 +398,7 @@ public class BoardMainWizard extends WizardPage{
 		Composite sourceTreeCpt = new Composite(contentCpt, SWT.NULL);
 		tree = new Tree(sourceTreeCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		tree.setLayoutData(new GridData(GridData.FILL_BOTH));
-		tree.setSize(200, 260);
+		tree.setSize(200, 360);
 		tree.setHeaderVisible(true);
 		sourceTreeCpt.setTouchEnabled(true);
 		final TreeColumn columnArhives = new TreeColumn(tree, SWT.NONE);
@@ -259,10 +407,26 @@ public class BoardMainWizard extends WizardPage{
 		columnArhives.setResizable(true);
 		columnArhives.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
 		
+		t2 = new TreeItem(tree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		t2.setData(dideHelper.getUserBoardFilePath());
+		t2.setImage(DPluginImages.DESC_GROUP_VIEW.createImage());
+		t2.setText("用户板件");
+		
+		t1 = new TreeItem(tree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		t1.setData(dideHelper.getDemoBoardFilePath());
+		t1.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+		t1.setText("Djyos板件");		
+			
 		ReadBoardXml rbx = new ReadBoardXml();
 		boardsList = rbx.getAllBoards();
 		for(int i=0;i<boardsList.size();i++) {
-			TreeItem t = new TreeItem(tree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			TreeItem t;
+			if(boardsList.get(i).getBoardPath().contains("demo")) {
+				 t = new TreeItem(t1, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			}else{
+				 t = new TreeItem(t2, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			}
+			
 			t.setData(boardsList.get(i).getBoardPath());
 			t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
 			t.setText(boardsList.get(i).getBoardName());		
@@ -275,51 +439,17 @@ public class BoardMainWizard extends WizardPage{
 				// TODO Auto-generated method stub
 				Point point = new Point(event.x, event.y);
 				TreeItem item = tree.getItem(point);
-				Board curBoard = null;
-				String boardDesc = "";
-				if(item == null) {
-					
-				}
 				if(item != null) {
 					String itemText = item.getText();
-					ReadBoardXml rbx = new ReadBoardXml();
-					boardsList = rbx.getAllBoards();
-					for(Board borad:boardsList) {
-						if(borad.getBoardName().endsWith(itemText)) {
-							curBoard = borad;
-							break;
-						}
+					if(itemText.contains("板件")) {
+						deleteItem.setEnabled(false);
+						reviseItem.setEnabled(false);
+						configInfoText.setText("选中板件即可显示选中的板件配置信息");
+					}else {
+						deleteItem.setEnabled(true);
+						reviseItem.setEnabled(true);
+						displayBoardDetails(item);
 					}
-					List<OnBoardCpu> onBoardCpus = curBoard.getOnBoardCpus();
-					String cpuDesc = "";
-					int cpuCount = 1;
-					for(OnBoardCpu onBoardCpu:onBoardCpus) {
-						if(onBoardCpus.size()<2) {
-							cpuDesc += "板载Cpu："+onBoardCpu.getCpuName()+"\n";
-						}else {
-							cpuDesc += "板载Cpu"+cpuCount+"："+onBoardCpu.getCpuName()+"\n";
-						}
-						Cpu cpu = getCpuByOnBoardCpu(onBoardCpu);
-						cpuDesc += "\t架构:"+cpu.getCores().get(0).getArch()+"，家族:"+cpu.getCores().get(0).getFamily()
-								+"\n浮点:"+cpu.getCores().get(0).getFpuType()+"，复位地址:"+cpu.getCores().get(0).getResetAddr()+"\n";
-						String chipString = "";
-						String peripheralString = "";
-						List<Chip> chips = onBoardCpu.getChips(); 
-						List<Component> components = onBoardCpu.getPeripherals();
-						for(int i=0;i<chips.size();i++) {
-							chipString+="  "+chips.get(i).getChipName();
-						}
-						for(int i=0;i<components.size();i++) {
-							peripheralString+="  "+components.get(i).getName();
-						}
-						cpuDesc += cpuDesc
-								+ "主晶振频率: "+onBoardCpu.getMianClk() +"\n" 
-								+ "Rtc钟频率: " +onBoardCpu.getRtcClk() +"\n"
-								+ "板载设备: " +chipString+ "\n" 
-								+ "Cpu外设: " +peripheralString;
-						cpuCount++;
-					}
-					configInfoText.setText(cpuDesc);
 				}
 			}
 		});
@@ -329,18 +459,85 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
-				TreeItem[] items = tree.getSelection();
-				if(items.length>0) {
-					String itemName = items[0].getText().trim();//获取当前选中文件的路径
-					Board board = getBoardByName(itemName);
-					NewOrReviseBoard newBoardDialog = new NewOrReviseBoard(infoArea.getShell(),false,board);
-					newBoardDialog.open();
-				}
+				handleReviseClick();
 			}
 		});
 		
 	}
 	
+	protected void handleReviseClick() {
+		// TODO Auto-generated method stub
+		TreeItem[] items = tree.getSelection();
+		if(items.length>0) {
+			String itemName = items[0].getText().trim();//获取当前选中文件的路径
+			TreeItem parentItem = items[0].getParentItem();
+			if(!itemName.contains("板件")) {
+				Board board = getBoardByName(itemName);
+				NewOrReviseBoard dialog = new NewOrReviseBoard(infoArea.getShell(),false,board);
+				if(dialog.open() == Window.OK) {
+					String reviseName = dialog.lastBoardName;
+					items[0].dispose();
+					TreeItem item = new TreeItem(parentItem,SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL,0);
+					item.setText(reviseName);			
+					item.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
+					item.setExpanded(false);
+					item.setData(new File(parentItem.getData().toString()+"/"+reviseName));
+					tree.select(item);
+					displayBoardDetails(item);
+				};
+			}
+		}
+	}
+
+	protected void displayBoardDetails(TreeItem item) {
+		// TODO Auto-generated method stub
+		String boardDesc = "";
+		Board curBoard = null;
+		if(item != null) {
+			String itemText = item.getText();
+			ReadBoardXml rbx = new ReadBoardXml();
+			boardsList = rbx.getAllBoards();
+			for(Board borad:boardsList) {
+				if(borad.getBoardName().endsWith(itemText)) {
+					curBoard = borad;
+					break;
+				}
+			}
+			List<OnBoardCpu> onBoardCpus = curBoard.getOnBoardCpus();
+			boardDesc += "板件 ["+itemText+"] 配置信息：\n\n";
+			int cpuCount = 1;
+			for(OnBoardCpu onBoardCpu:onBoardCpus) {
+				Cpu cpu = getCpuByOnBoardCpu(onBoardCpu);
+				if(cpu != null) {
+					if(onBoardCpus.size()<2) {
+						boardDesc += "板载Cpu："+onBoardCpu.getCpuName()+"\n";
+					}else {
+						boardDesc += "板载Cpu"+cpuCount+"："+onBoardCpu.getCpuName()+"\n";
+					}
+//					cpuDesc += "\t架构:"+cpu.getCores().get(0).getArch()+"，家族:"+cpu.getCores().get(0).getFamily()
+//							+"\n浮点:"+cpu.getCores().get(0).getFpuType()+"，复位地址:"+cpu.getCores().get(0).getResetAddr()+"\n";
+					String chipString = "";
+					String peripheralString = "";
+					List<Chip> chips = onBoardCpu.getChips(); 
+					List<Component> components = onBoardCpu.getPeripherals();
+					for(int i=0;i<chips.size();i++) {
+						chipString+="  "+chips.get(i).getChipName();
+					}
+					for(int i=0;i<components.size();i++) {
+						peripheralString+="  "+components.get(i).getName()+",";
+					}
+					boardDesc +=  "主晶振频率: "+onBoardCpu.getMianClk() +"\n" 
+							+ "Rtc钟频率: " +onBoardCpu.getRtcClk() +"\n"
+							+ "板载芯片: " +chipString+ "\n" 
+							+ "Cpu外设: " +peripheralString;
+					cpuCount++;
+				}
+				
+			}
+			configInfoText.setText(boardDesc);
+		}
+	}
+
 	private Cpu getCpuByOnBoardCpu(OnBoardCpu onBoardCpus) {
 		// TODO Auto-generated method stub
 		ReadCpuXml rcx = new ReadCpuXml();
@@ -362,4 +559,31 @@ public class BoardMainWizard extends WizardPage{
 		return null;
 	}
 	
+	private void copyFolder(File src, File dest) throws IOException {  
+	    if (src.isDirectory()) {  
+	        if (!dest.exists()) {  
+	            dest.mkdir();  
+	        }  
+	        String files[] = src.list();  
+	        for (String file : files) {  
+	            File srcFile = new File(src, file);  
+	            File destFile = new File(dest, file);  
+	            // 递归复制  
+	            copyFolder(srcFile, destFile);  
+	        }  
+	    } else {  
+	        InputStream in = new FileInputStream(src);  
+	        OutputStream out = new FileOutputStream(dest);  
+	  
+	        byte[] buffer = new byte[1024];  
+	  
+	        int length;  
+	          
+	        while ((length = in.read(buffer)) > 0) {  
+	            out.write(buffer, 0, length);  
+	        }  
+	        in.close();  
+	        out.close();  
+	    }  
+	}  
 }

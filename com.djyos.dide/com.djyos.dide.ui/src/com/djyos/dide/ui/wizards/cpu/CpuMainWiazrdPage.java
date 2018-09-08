@@ -68,8 +68,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.xml.sax.SAXException;
 
-import com.djyos.dide.ui.wizards.cpu.configDialogs.NewGroupOrCpuDialog;
-import com.djyos.dide.ui.wizards.cpu.configDialogs.ResetConfigurationDialog;
+import com.djyos.dide.ui.wizards.cpu.NewGroupOrCpuDialog;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
@@ -87,24 +86,21 @@ import org.eclipse.cdt.internal.ui.newui.Messages;
 
 public class CpuMainWiazrdPage extends WizardPage{
 
+	DideHelper dideHelper = new DideHelper();
 	public static final IPath ICONS_PATH= new Path("$nl$/icons"); //$NON-NLS-1$
 	public static TreeItem fileItem = null,tmssItem = null;
-	private Tree cpuAttributes;
-	private String currentAttributeId = null;
 	private static String currentAttributeIdGlobal = null;
 	private static final int[] DEFAULT_ENTRIES_SASH_WEIGHTS = new int[] { 10, 30 };
 	private Combo[] pathCombos = new Combo[6];
-	private String eclipsePath = getEclipsePath();
 	private ReadCpuXml rcx = new ReadCpuXml();
-	private Cpu cpu = new Cpu();
-	private Cpu cpuCreated = null;
-	private Tree tree;
+	private Cpu cpu = new Cpu(),cpuCreated = null;
+	private Tree tree,cpuAttributes;
 	private Text configInfoText = null;
+	private String didePath = dideHelper.getDIDEPath(),currentAttributeId = null;
 	private MenuItem newGroupItem,newCpuItem,deleteItem,reviseItem;
 	private IWorkbenchWindow window = PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow();
-	DideHelper dideHelper = new DideHelper();
-
+	
 	public Cpu getCpuCreated() {
 		return cpuCreated;
 	}
@@ -157,12 +153,6 @@ public class CpuMainWiazrdPage extends WizardPage{
         tree.setMenu(menu);
     }
 	
-	long toUnsigned(long s) {
-
-		return s & 0xFFFFFFFF;
-
-	}
-
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
@@ -218,7 +208,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 		Text projectTypeDesc;
 		String extraString = "右键可添加Cpu和子目录 :";
 		String QAQ = "\tIDE分级目录的形式管理操作系统支持的众多Cpu，本界面用于管理Cpu的分类,\n包括添加Cpu和分组,手动拖拽即可移动分组";
-		String descTitle = "分组/Cpu描述";
 
 		Label extraLabel = new Label(infoArea,SWT.NULL);
 		extraLabel.setText(extraString);
@@ -237,194 +226,42 @@ public class CpuMainWiazrdPage extends WizardPage{
 		Composite sourceTreeCpt = new Composite(contentCpt, SWT.NULL);
 		tree = new Tree(sourceTreeCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		tree.setLayoutData(new GridData(GridData.FILL_BOTH));
-		tree.setSize(200, 260);
+		tree.setSize(200, 360);
 		initPopup();
 		
 		Composite sashForm = new Composite(contentCpt, SWT.NULL);
 		sashForm.setLayout(new RowLayout());
 		configInfoText = new Text(sashForm, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
 		configInfoText.setEditable(false);
-		configInfoText.setLayoutData(new RowData(350,250));
-
-		newGroupItem.addSelectionListener(new SelectionListener() {
-			
+		configInfoText.setLayoutData(new RowData(350,350));
+		configInfoText.setText("选中子目录或者Cpu即可显示相应的配置信息");
+		newGroupItem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				List<String> configs = null;
-				cpu = new Cpu();
-				TreeItem[] items = tree.getSelection();
-				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
-				if(items.length>0) {
-					File curFile = new File(curFilePath);//当前选中文件
-					File xmlParentFile = getXmlFile(curFile);	
-					if(xmlParentFile!=null) {
-						try {
-							rcx.unitCpu(cpu,xmlParentFile);
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}					
-					}
-					traverseParents(curFile);		
-					configs = getConfigs(cpu,false);
-				}
-				NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"group");
-				if (dialog.open() == Window.OK) {
-					String newFileName = dialog.getGroupName();
-					final TreeItem root = items[0];
-					root.removeAll();
-					File file = (File) root.getData();
-					File[] files = file.listFiles();// 返回File对象（文件夹与文件）的数组d
-					// 采用文件夹目录过滤器来判断当前路径是否为文件夹，返回File对象（文件夹）的数组
-
-					if (files != null) {
-						for (int i = 0; i < files.length; i++) {
-							
-							// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-							if (files[i].isDirectory()) {
-								boolean isNeed = containsXml(files[i]);
-								if(isNeed) {
-									TreeItem item = new TreeItem(root, 0);
-									item.setText(files[i].getName());
-									item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
-									// 叶子节点对应的数值为相应文件夹的File对象
-									item.setData(files[i]);
-									new TreeItem(item, 0);
-									if (files[i].getName().equals(newFileName)) {
-										tree.select(item);
-									}
-								}
-							}
-						}
-					}
-				}
-
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
+				handleNewClick("group");
 			}
 		});
 
-		newCpuItem.addSelectionListener(new SelectionListener() {
-			
+		newCpuItem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				List<String> configs = null;
-				cpu = new Cpu();
-				TreeItem[] items = tree.getSelection();
-				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
-				
-				if(items.length>0) {
-					File curFile = new File(curFilePath);//当前选中文件
-					File xmlParentFile = getXmlFile(curFile);	
-					if(xmlParentFile!=null) {
-						try {
-							rcx.unitCpu(cpu,xmlParentFile);
-						}catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}					
-					}
-					traverseParents(curFile);		
-					configs = getConfigs(cpu,true);
-				}
-				
-				NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"cpu");
-				if (dialog.open() == Window.OK) {
-					String newFileName = dialog.getGroupName();
-					cpuCreated = dialog.getCpuCreated();
-					final TreeItem root = items[0];
-					root.removeAll();
-					File file = (File) root.getData();
-					File[] files = file.listFiles();// 返回File对象（文件夹与文件）的数组d
-					// 采用文件夹目录过滤器来判断当前路径是否为文件夹，返回File对象（文件夹）的数组
-
-					if (files != null) {
-						for (int i = 0; i < files.length; i++) {
-							// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-							if (files[i].isDirectory()) {
-								boolean isNeed = containsXml(files[i]);
-								if(isNeed) {
-									TreeItem item = new TreeItem(root, 0);
-									item.setText(files[i].getName());
-									item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
-									// 叶子节点对应的数值为相应文件夹的File对象
-									item.setData(files[i]);
-									new TreeItem(item, 0);
-									if (files[i].getName().equals(newFileName)) {
-										tree.select(item);
-									}	
-								}							
-							}
-						}
-					}
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
+				handleNewClick("cpu");
 			}
 		});
 		
-		reviseItem.addSelectionListener(new SelectionListener() {
-			
+		reviseItem.addSelectionListener(new SelectionAdapter() {
+
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				List<String> configs = null;
-				cpu = new Cpu();
-				TreeItem[] items = tree.getSelection();
-				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
-				String tag = "cpu";
-				
-				if(items.length>0) {
-					File curFile = new File(curFilePath);//当前选中文件
-					File xmlParentFile = getXmlFile(curFile);	
-					boolean exiteDirectory= isExiteDirectory(curFile);
-					if(exiteDirectory) {
-						tag = "group";
-					}
-					if(xmlParentFile!=null) {
-						if(xmlParentFile.getName().contains("group")) {
-							tag = "group";
-						}
-						try {
-							rcx.unitCpu(cpu,xmlParentFile);
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}					
-					}
-					traverseParents(curFile);		
-					configs = getConfigs(cpu,false);
-				}
-				
-				NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"revise_"+tag);
-//				ResetConfigurationDialog dialog = new ResetConfigurationDialog(getShell(),configs,cpu,curFilePath,isGroup);
-				if (dialog.open() == Window.OK) {
-					TreeItem parentItem = items[0].getParentItem();
-					parentItem.removeAll();
-					new TreeItem(parentItem, 0);
-					parentItem.setExpanded(false);
-				}
+				handleReviceCpu();
 			}
 			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
 		});
 
-		deleteItem.addSelectionListener(new SelectionListener() {
-			
+		deleteItem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
@@ -440,15 +277,151 @@ public class CpuMainWiazrdPage extends WizardPage{
 					items[0].dispose();
 	        	}
 			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
+		});
+
+		initTree();
+		handleTreeDrag();
+		
+		tree.addListener(SWT.Expand, new Listener() {
+			public void handleEvent(final Event event) {
+				final TreeItem root = (TreeItem) event.item;
+				TreeItem[] items = root.getItems();
+				for (int i = 0; i < items.length; i++) {
+					if (items[i].getData() != null)
+						return;
+					items[i].dispose();
+				}
+				File file = (File) root.getData();
+				File[] files = file.listFiles();
+				if (files == null)
+					return;
+				for (int i = 0; i < files.length; i++) {
+					if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {
+						boolean toExpand = false;
+						if(files[i].isDirectory()) {
+							boolean isNeed =  containsXml(files[i]);
+							if(isNeed) {
+								toExpand = true;
+							}
+						}
+						if (toExpand) {
+
+							// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
+							if (files[i].isDirectory() && files[i].getName() != "include"
+									&& files[i].getName() != "src") {
+								TreeItem item = new TreeItem(root, 0);
+								item.setText(files[i].getName());
+								boolean configed = isCpu(files[i]);
+								if (configed) {
+									item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
+									item.setExpanded(false);
+								}else {
+									item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+									new TreeItem(item, 0);
+								}
+								// 叶子节点对应的数值为相应文件夹的File对象
+								item.setData(files[i]);						
+							}
+						}
+						
+					}
+				}
 			}
 		});
 
-		File file = new File(eclipsePath + "djysrc\\bsp");
+		tree.addListener(SWT.MouseDown, new Listener() {
+			public void handleEvent(Event event) {
+				Point point = new Point(event.x, event.y);
+				TreeItem item = tree.getItem(point);
+				if(item != null) {
+					displayCpuDetails(item);
+				}
+			}
+		});
+		
+		tree.addListener(SWT.MouseDoubleClick, new Listener() {
+			
+			@Override
+			public void handleEvent(Event event) {
+				// TODO Auto-generated method stub
+				handleReviceCpu();
+			}
+		});
+		
+		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(infoArea);
+		scrolledComposite.setMinHeight(point.y);
+		
+		scrolledComposite.setExpandHorizontal(true);
+	    scrolledComposite.setExpandVertical(true);
+	    
+		setErrorMessage(null);
+		setMessage(null);
+		setControl(composite);
+		Dialog.applyDialogFont(composite);
+	}
+	
+	protected void handleNewClick(String tag) {
+		// TODO Auto-generated method stub
+		List<String> configs = null;
+		cpu = new Cpu();
+		TreeItem[] items = tree.getSelection();
+		String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+		if(items.length>0) {
+			File curFile = new File(curFilePath);//当前选中文件
+			File xmlParentFile = getXmlFile(curFile);	
+			if(xmlParentFile!=null) {
+				try {
+					rcx.unitCpu(cpu,xmlParentFile);
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}					
+			}
+			traverseParents(curFile);		
+			configs = getConfigs(cpu,false);
+		}
+		
+		NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,tag);
+		if (dialog.open() == Window.OK) {
+			String newFileName = dialog.getGroupName();
+			final TreeItem root = items[0];
+			root.removeAll();
+			File file = (File) root.getData();
+			File[] files = file.listFiles();// 返回File对象（文件夹与文件）的数组d
+			// 采用文件夹目录过滤器来判断当前路径是否为文件夹，返回File对象（文件夹）的数组
+
+			if (files != null) {
+				for (int i = 0; i < files.length; i++) {
+					// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
+					if (files[i].isDirectory()) {
+						boolean isNeed = containsXml(files[i]);
+						if(isNeed) {
+							TreeItem item = new TreeItem(root, 0);
+							item.setText(files[i].getName());
+							if(tag.equals("cpu")) {
+								item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
+							}else {
+								item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+							}
+							
+							// 叶子节点对应的数值为相应文件夹的File对象
+							item.setData(files[i]);
+							new TreeItem(item, 0);
+							if (files[i].getName().equals(newFileName)) {
+								tree.select(item);
+								displayCpuDetails(item);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void initTree() {
+		// TODO Auto-generated method stub
+		File file = new File(didePath + "djysrc\\bsp");
 		File[] roots = file.listFiles();
 		for (int i = 0; i < roots.length; i++) {
 			// TreeItem root = new TreeItem(tree, 0);
@@ -484,7 +457,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 				break;
 			}
 		}
+	}
 
+	private void handleTreeDrag() {
+		// TODO Auto-generated method stub
 		// 定义拖放源对象
 		DragSource dragSource = new DragSource(tree, DND.DROP_MOVE | DND.DROP_COPY);
 		// 设置传输的数据为文本型String类型
@@ -495,7 +471,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 			@Override
 			public void dragStart(DragSourceEvent event) {
 				// TODO Auto-generated method stub
-				System.out.println("dragStart");
 				if (tree.getSelectionCount() == 0)
 					event.doit = false;
 			}
@@ -507,7 +482,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 				if (TextTransfer.getInstance().isSupportedType(event.dataType)) {
 					event.data = tree.getSelection()[0].getText(0);
 					fileItem = tree.getSelection()[0];
-					System.out.println(fileItem);
 				}
 			}
 
@@ -538,43 +512,45 @@ public class CpuMainWiazrdPage extends WizardPage{
 					return;
 				// 首先获得目标对象中拖拽的树节点
 				TreeItem eventItem = (TreeItem) event.item;
-				if (fileItem.getText().equals("Test File Manager"))
-					return;
 
 				if (TextTransfer.getInstance().isSupportedType(event.currentDataType)) {
 					// 获得数据源设置的字符串
 					String s = (String) event.data;
-					// 在tmss位置插入一个节点				
+					// 在tmss位置插入一个节点
 					File srcFile = new File(fileItem.getData().toString());
-					File destFile = new File(eventItem.getData().toString()+"\\"+s);
-					String isDropable =  isFileDropable(srcFile,new File(eventItem.getData().toString()));
-					if(isDropable == null) {
-						if (eventItem.getParentItem() == null)
-							tmssItem = new TreeItem(eventItem, SWT.NONE);
-						else
-							tmssItem = new TreeItem(eventItem, SWT.NONE);
+					File destFile = new File(eventItem.getData().toString() + "\\" + s);
+					String isDropable = isFileDropable(srcFile, new File(eventItem.getData().toString()));
+					if (isDropable == null) {
+						tmssItem = new TreeItem(eventItem, SWT.NONE);
+						boolean configed = isCpu(srcFile);
+						if (configed) {
+							tmssItem.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
+							tmssItem.setExpanded(false);
+						} else {
+							tmssItem.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+							new TreeItem(tmssItem, 0);
+						}
 
 						tmssItem.setText(s);
+						tmssItem.setData(destFile);
 						try {
 							copyFolder(srcFile, destFile);
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						
+
 						DeleteFolder dlf = new DeleteFolder();
 						dlf.deleteFolder(fileItem.getData().toString());
 						// 删除原来的节点
 						if (tree != null) {
 							fileItem.dispose();
 						}
-					}else {
-						IWorkbenchWindow window = PlatformUI.getWorkbench()
-    							.getActiveWorkbenchWindow();
-						MessageDialog.openError(window.getShell(), "提示",
-								isDropable);
+					} else {
+						IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+						MessageDialog.openError(window.getShell(), "提示", isDropable);
 					}
-					
+
 				}
 			}
 
@@ -587,8 +563,8 @@ public class CpuMainWiazrdPage extends WizardPage{
 			@Override
 			public void dragOperationChanged(DropTargetEvent event) {
 				// TODO Auto-generated method stub
-				 if (event.detail == DND.DROP_DEFAULT)
-				     event.detail = DND.DROP_COPY;
+				if (event.detail == DND.DROP_DEFAULT)
+					event.detail = DND.DROP_COPY;
 			}
 
 			@Override
@@ -600,193 +576,77 @@ public class CpuMainWiazrdPage extends WizardPage{
 			@Override
 			public void dragEnter(DropTargetEvent event) {
 				// TODO Auto-generated method stub
-				  if (event.detail == DND.DROP_DEFAULT)
-					     event.detail = DND.DROP_COPY;
+				if (event.detail == DND.DROP_DEFAULT)
+					event.detail = DND.DROP_COPY;
 			}
 		});
-		
-		tree.addListener(SWT.Expand, new Listener() {
-			public void handleEvent(final Event event) {
-				final TreeItem root = (TreeItem) event.item;
-				TreeItem[] items = root.getItems();
-				for (int i = 0; i < items.length; i++) {
-					if (items[i].getData() != null)
-						return;
-					items[i].dispose();
-				}
-				File file = (File) root.getData();
-				File[] files = file.listFiles();
-				if (files == null)
-					return;
-				for (int i = 0; i < files.length; i++) {
-					if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {
-						boolean toExpand = false;
-						if(files[i].isDirectory()) {
-							boolean isNeed =  containsXml(files[i]);
-							if(isNeed) {
-								toExpand = true;
-							}
-						}
-						if (toExpand) {
-
-							// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-							if (files[i].isDirectory() && files[i].getName() != "include"
-									&& files[i].getName() != "src") {
-								TreeItem item = new TreeItem(root, 0);
-								item.setText(files[i].getName());
-								boolean configed = false;
-								File[] cfiles = files[i].listFiles();
-								for (int j = 0; j < cfiles.length; j++) {
-									if (cfiles[j].getName().endsWith(".xml") && !cfiles[j].getName().contains("group")) {
-										configed = true;
-										break;
-									}
-								}
-								if (configed) {
-									item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
-									item.setExpanded(false);
-								}else {
-									item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
-									new TreeItem(item, 0);
-								}
-								// 叶子节点对应的数值为相应文件夹的File对象
-								item.setData(files[i]);						
-							}
-						}
-						
-					}
-				}
-			}
-		});
-
-		tree.addListener(SWT.MouseDown, new Listener() {
-			public void handleEvent(Event event) {
-				String descTitleChang = null;
-				Point point = new Point(event.x, event.y);
-				TreeItem item = tree.getItem(point);
-				if(item != null) {
-					if(item.getText().equals("Djyos")) {
-						deleteItem.setEnabled(false);
-						reviseItem.setEnabled(false);
-					}else {
-						deleteItem.setEnabled(true);
-						reviseItem.setEnabled(true);
-					}
-				}
 				
-				if ((item != null) && (item.getData() != null)) {
-					File file = new File(item.getData().toString()); 
-					if(item.getText().equals("Djyos")) {
-						descTitleChang = descTitle;
-					}
-
-//					if(getXmlFile(file)==null) {
-//						reviseItem.setEnabled(false);
-//					}else {
-//						reviseItem.setEnabled(true);
-//					}
-					if(file.isDirectory()) {
-						newGroupItem.setEnabled(true);
-						newCpuItem.setEnabled(true);
-						File[] files = file.listFiles();
-						boolean configed = false;
-						for(int i=0;i<files.length;i++) {
-							if(files[i].getName().endsWith(".xml")) {
-//								configBtn.setEnabled(true);
-								configed = true;
-								descTitleChang="分组("+item.getText()+")描述";
-								if(! files[i].getName().contains("group")) {
-									newGroupItem.setEnabled(false);
-									newCpuItem.setEnabled(false);
-									descTitleChang="Cpu("+item.getText()+")描述";
-								}
-								break;
-							}
-						}
-						if(!configed) {
-//							configBtn.setEnabled(false);
-						}
-						
-						String descContent = "";
-						descContent = traverseParents(file,descContent);
-						
-						//显示当前选中分组/Cpu的配置信息
-						if(descTitleChang!=null) {
-							configInfoText.setText(descContent);
-						}	
-
-					} else {
-//						addCpuBtn.setEnabled(false);
-						newCpuItem.setEnabled(false);
-					}
-				}
-				
-			}
-
-		});
-		
-		tree.addListener(SWT.MouseDoubleClick, new Listener() {
-			
-			@Override
-			public void handleEvent(Event event) {
-				// TODO Auto-generated method stub
-				List<String> configs = null;
-				cpu = new Cpu();
-				TreeItem[] items = tree.getSelection();
-				String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
-				String tag = "cpu";
-				
-				if(items.length>0) {
-					File curFile = new File(curFilePath);//当前选中文件
-					File xmlParentFile = getXmlFile(curFile);	
-					if(xmlParentFile!=null) {
-						if(xmlParentFile.getName().contains("group")) {
-							tag = "group";
-						}
-						try {
-							rcx.unitCpu(cpu,xmlParentFile);
-						} catch (Exception e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}					
-					}
-					traverseParents(curFile);		
-					configs = getConfigs(cpu,false);
-				}
-				
-				NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"revise_"+tag);
-				if (dialog.open() == Window.OK) {
-					TreeItem parentItem = items[0].getParentItem();
-					parentItem.removeAll();
-					new TreeItem(parentItem, 0);
-					parentItem.setExpanded(false);
-				}
-			}
-		});
-		
-		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(infoArea);
-		scrolledComposite.setMinHeight(point.y);
-		
-		scrolledComposite.setExpandHorizontal(true);
-	    scrolledComposite.setExpandVertical(true);
-	    
-		setErrorMessage(null);
-		setMessage(null);
-		setControl(composite);
-		Dialog.applyDialogFont(composite);
 	}
-	
-	protected String isFileDropable(File srcFile, File destFile) {
+
+	protected void handleReviceCpu() {
+		// TODO Auto-generated method stub
+		List<String> configs = null;
+		cpu = new Cpu();
+		TreeItem[] items = tree.getSelection();
+		String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+		String tag = "cpu";
+		
+		if(items.length>0) {
+			File curFile = new File(curFilePath);//当前选中文件
+			File xmlParentFile = getXmlFile(curFile);	
+			boolean exiteDirectory= isExiteDirectory(curFile);
+			if(exiteDirectory) {
+				tag = "group";
+			}
+			if(xmlParentFile!=null) {
+				if(xmlParentFile.getName().contains("group")) {
+					tag = "group";
+				}
+				try {
+					rcx.unitCpu(cpu,xmlParentFile);
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}					
+			}
+			traverseParents(curFile);		
+			configs = getConfigs(cpu,false);
+		}
+		
+		NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"revise_"+tag);
+		if (dialog.open() == Window.OK) {
+			TreeItem parentItem = items[0].getParentItem();
+			String reviseName = dialog.getGroupName();
+			items[0].dispose();
+			TreeItem item = new TreeItem(parentItem,SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL,0);
+			item.setText(reviseName);			
+			if(tag.endsWith("cpu")) {
+				item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
+				item.setExpanded(false);
+			}else {
+				item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+				new TreeItem(item, 0);
+			}
+			item.setData(new File(parentItem.getData().toString()+"/"+reviseName));
+			tree.select(item);
+			displayCpuDetails(item);
+		}
+	}
+
+	private String isFileDropable(File srcFile, File destFile) {
 		// TODO Auto-generated method stub
 		File tempSrcFile = new File(srcFile.getPath());
 		File tempDestFile = new File(destFile.getPath());
-		while(!tempSrcFile.getName().equals("cpudrv")) {		
-			tempSrcFile = tempSrcFile.getParentFile();
-			if(tempSrcFile.getName().equals(destFile.getName())) {
-				return "子目录不可托拉到父目录！";
-			}
+		
+		if (tempSrcFile.getName().equals(destFile.getName())) {
+			return "不可拖拉到自身目录下！";
 		}
+//		while(!tempSrcFile.getName().equals("cpudrv")) {		
+		File parentSrcFile = tempSrcFile.getParentFile();
+		if (parentSrcFile.getName().equals(destFile.getName())) {
+			return "该目录下已经存在["+tempSrcFile.getName()+"]！";
+		}
+//		}
 		
 		tempSrcFile = new File(srcFile.getPath());
 		tempDestFile = new File(destFile.getPath());
@@ -890,7 +750,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 						}else {
 							descContent += "Cpu  ["+curFile.getName()+"]配置：";
 						}
-						
+						descContent += "\n内核个数" + "： "+cpu.getCoreNum();
 						for (int i = 0; i < cpu.getCoreNum(); i++) {
 							Core core = cpu.getCores().get(i);
 							descContent += "\n内核" + (i + 1) + "：";
@@ -980,6 +840,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 		}
 		return file;
 	}
+	
 	private boolean isExiteDirectory(File parentFile) {
 		File file =null;
 		File[] files = parentFile.listFiles();
@@ -991,16 +852,75 @@ public class CpuMainWiazrdPage extends WizardPage{
 		return false;
 	}
 	
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
-	}
-
 	@Override
 	public IWizardPage getNextPage() {
 		// TODO Auto-generated method stub
 		return super.getNextPage();
 	}
 
+	long toUnsigned(long s) {
+
+		return s & 0xFFFFFFFF;
+
+	}
+
+	private boolean isCpu(File file){
+		File[] cfiles = file.listFiles();
+		for (int j = 0; j < cfiles.length; j++) {
+			if (cfiles[j].getName().endsWith(".xml") && !cfiles[j].getName().contains("group")) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	protected void displayCpuDetails(TreeItem item) {
+		String descTitleChang = null;
+		if(item.getText().equals("Djyos")) {
+			deleteItem.setEnabled(false);
+			reviseItem.setEnabled(false);
+			configInfoText.setText("选中子目录或者Cpu即可显示相应的配置信息");
+		}else {
+			deleteItem.setEnabled(true);
+			reviseItem.setEnabled(true);
+			if (item.getData() != null) {
+				File file = new File(item.getData().toString()); 
+				if(item.getText().equals("Djyos")) {
+					descTitleChang = descTitle;
+				}
+
+				if(file.isDirectory()) {
+					newGroupItem.setEnabled(true);
+					newCpuItem.setEnabled(true);
+					File[] files = file.listFiles();
+					boolean configed = false;
+					for(int i=0;i<files.length;i++) {
+						if(files[i].getName().endsWith(".xml")) {
+							configed = true;
+							descTitleChang="分组("+item.getText()+")描述";
+							if(! files[i].getName().contains("group")) {
+								newGroupItem.setEnabled(false);
+								newCpuItem.setEnabled(false);
+								descTitleChang="Cpu("+item.getText()+")描述";
+							}
+							break;
+						}
+					}
+					
+					String descContent = "";
+					descContent = traverseParents(file,descContent);
+					
+					//显示当前选中分组/Cpu的配置信息
+					if(descTitleChang!=null) {
+						configInfoText.setText(descContent);
+					}	
+
+				} else {
+					newCpuItem.setEnabled(false);
+				}
+			}
+		}
+	}
+	
+	private	String descTitle = "分组/Cpu描述";
 }
