@@ -44,6 +44,7 @@ import org.eclipse.cdt.managedbuilder.macros.IBuildMacroProvider;
 import org.eclipse.cdt.utils.CommandLineUtil;
 import org.eclipse.cdt.utils.EFSExtensionManager;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -153,6 +154,8 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 			} catch (IOException e) {
 				ManagedBuilderCorePlugin.log(e);
 			}
+			//刷新当前工程
+			project.refreshLocal(IResource.DEPTH_INFINITE, null);
 			monitor.done();
 		}
 		return isClean;

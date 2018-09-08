@@ -121,10 +121,10 @@
             commandId="org.eclipse.ui.file.closeAll"
             sequence="M1+M2+F4"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration" />
-      <!--key
+      <key
             commandId="org.eclipse.ui.file.save"
             sequence="M1+S"
-            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration" /-->
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration" />
       <key
             commandId="org.eclipse.ui.file.saveAll"
             sequence="M1+M2+S"
@@ -576,10 +576,10 @@
             commandId="org.eclipse.ui.file.closeAll"
             sequence="CTRL+X CTRL+C"
             schemeId="org.eclipse.ui.emacsAcceleratorConfiguration" />
-      <!--key
+      <key
             commandId="org.eclipse.ui.file.save"
             sequence="CTRL+X CTRL+S"
-            schemeId="org.eclipse.ui.emacsAcceleratorConfiguration" /-->
+            schemeId="org.eclipse.ui.emacsAcceleratorConfiguration" />
       <key
             commandId="org.eclipse.ui.file.saveAll"
             sequence="CTRL+X S"

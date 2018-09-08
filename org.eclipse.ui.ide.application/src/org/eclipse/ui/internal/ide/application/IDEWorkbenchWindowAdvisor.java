@@ -374,7 +374,6 @@ public class IDEWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		if (title == null) {
 			title = ""; //$NON-NLS-1$
 		}
-		title = "DIDE Platfrom"; //$NON-NLS-1$
 		if (currentPage != null) {
 			if (activeEditor != null) {
 				lastEditorTitleTooltip = activeEditor.getTitleToolTip();

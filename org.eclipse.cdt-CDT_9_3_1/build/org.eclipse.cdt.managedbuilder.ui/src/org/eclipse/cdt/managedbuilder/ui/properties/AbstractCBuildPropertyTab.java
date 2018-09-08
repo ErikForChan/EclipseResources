@@ -46,6 +46,7 @@ public abstract class AbstractCBuildPropertyTab extends AbstractCPropertyTab {
 	public IConfiguration getCfg() {
 		return getCfg(getResDesc().getConfiguration());
 	}
+	
 	public static IConfiguration getCfg(ICConfigurationDescription cfgd) {
 		if (cfgd instanceof ICMultiConfigDescription) {
 			ICConfigurationDescription[] cfds = (ICConfigurationDescription[])((ICMultiConfigDescription)cfgd).getItems();

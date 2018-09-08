@@ -11,6 +11,10 @@
  *******************************************************************************/
 package org.eclipse.cdt.ui.actions;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.SortedSet;
@@ -20,6 +24,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.ITextSelection;
@@ -54,6 +59,38 @@ public class ChangeBuildConfigActionBase {
 	 */
 	protected HashSet<IProject> fProjects = new HashSet<IProject>();
 	
+	private boolean toHiddenLibos(File didePrefsFile) {
+		// TODO Auto-generated method stub
+		BufferedReader br = null;  
+        String line = null;  
+        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
+        try {            
+            br = new BufferedReader(new FileReader(didePrefsFile));              
+            while ((line = br.readLine()) != null) {  
+                StringBuffer buf = new StringBuffer();  
+                //修改内容核心代码
+                if (line.startsWith("HIDDEN_LIBOS_COMPILER")) {  
+                	String[] infos = line.split("=");
+                	if(infos[1].trim().equals("false")) {
+                		return false;
+                	}
+                    break;
+                }
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } finally {  
+            if (br != null) {  
+                try {  
+                    br.close();  
+                } catch (IOException e) {  
+                    br = null;  
+                }  
+            }  
+        }  
+		return true;
+	}
+	
 	/**
 	 * Fills the menu with build configurations which are common for all selected projects
 	 * @param menu The menu to fill
@@ -69,16 +106,37 @@ public class ChangeBuildConfigActionBase {
 		SortedSet<String> configNames = new TreeSet<String>();
 		String sCurrentConfig = null;
 		boolean bCurrentConfig = true;
+		
+		/*
+		 * 判断当前的库编译选项是否要隐藏
+		 */
+		String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
+		String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+		String didePrefsPath = didePath+"IDE/configuration/.settings/com.djyos.ui.prefs";
+		File didePrefsFile = new File(didePrefsPath);
+		boolean hidden = false;
+		if(didePrefsFile.exists()) {
+			hidden = toHiddenLibos(didePrefsFile);
+		}
+		
 		for (IProject prj : fProjects) {
 			ICConfigurationDescription[] cfgDescs = getCfgs(prj);
-			// libos_demo_o0 libos_demo_o2 Iboot
 			String sActiveConfig = null;
 			// Store names and detect active configuration
 			for (ICConfigurationDescription cfgDesc : cfgDescs) {
 				String s = cfgDesc.getName();
-				//if (!configNames.contains(s) && !s.equals("Iboot") && !s.equals("libos_demo_o0") && !s.equals("libos_demo_o2"))
-				if (!configNames.contains(s)) 
-					configNames.add(s);
+				/*
+				 * 如果hidden为true，则隐藏库的编译选项
+				 */
+				if(hidden) {
+					if (!configNames.contains(s) && !s.contains("libos"))
+						configNames.add(s);
+				}else {
+					if (!configNames.contains(s)) 
+						configNames.add(s);
+				}
+//				if (!configNames.contains(s)) //源代码
+//					configNames.add(s);
 				if (cfgDesc.isActive())
 					sActiveConfig = s;
 			}

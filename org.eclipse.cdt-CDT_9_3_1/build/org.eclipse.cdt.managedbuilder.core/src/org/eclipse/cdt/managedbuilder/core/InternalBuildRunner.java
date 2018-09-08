@@ -36,6 +36,7 @@ import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
 import org.eclipse.cdt.managedbuilder.internal.core.ManagedMakeMessages;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.BuildStatus;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.runtime.CoreException;
@@ -188,6 +189,8 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 			} catch (IOException e) {
 				ManagedBuilderCorePlugin.log(e);
 			}
+			//刷新当前工程
+			project.refreshLocal(IResource.DEPTH_INFINITE, null);
 			monitor.done();
 		}
 

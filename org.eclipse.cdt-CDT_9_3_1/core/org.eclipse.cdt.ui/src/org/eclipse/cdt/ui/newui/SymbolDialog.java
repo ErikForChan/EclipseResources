@@ -73,7 +73,8 @@ public class SymbolDialog extends AbstractPropertyDialog {
 			@Override
 			public void modifyText(ModifyEvent e) {
 				setButtons();
-			}});
+			}
+		});
 
 		Label l2 = new Label(c, SWT.NONE);
 		l2.setText(Messages.SymbolDialog_1);

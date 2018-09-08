@@ -13,9 +13,15 @@ package org.eclipse.jface.wizard;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.window.Window;
+
+import java.io.File;
+import java.util.List;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.TreeItem;
 
 /**
  * An abstract base implementation of a wizard page.
@@ -243,12 +249,12 @@ public abstract class WizardPage extends DialogPage implements IWizardPage {
      * if this is the current page.
      */
     @Override
-	public void setErrorMessage(String newMessage) {
-        super.setErrorMessage(newMessage);
-        if (isCurrentPage()) {
-            getContainer().updateMessage();
-        }
-    }
+ 	public void setErrorMessage(String newMessage) {
+         super.setErrorMessage(newMessage);
+         if (isCurrentPage()) {
+             getContainer().updateMessage();
+         }
+     }
 
     /**
      * The <code>WizardPage</code> implementation of this method

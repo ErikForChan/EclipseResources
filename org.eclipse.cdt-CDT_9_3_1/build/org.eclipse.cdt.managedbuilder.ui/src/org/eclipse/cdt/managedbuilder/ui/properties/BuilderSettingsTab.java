@@ -300,7 +300,7 @@ public class BuilderSettingsTab extends AbstractCBuildPropertyTab {
 		String makeArgs = icfg.getBuildArguments();
 
 		if (!makeCommand.isEmpty() && makeArgs != null) {
-			return makeCommand + " SHELL=cmd.exe " + makeArgs; //$NON-NLS-1$
+			return makeCommand + " " + makeArgs; //$NON-NLS-1$
 		}
 		return EMPTY_STR;
 	}

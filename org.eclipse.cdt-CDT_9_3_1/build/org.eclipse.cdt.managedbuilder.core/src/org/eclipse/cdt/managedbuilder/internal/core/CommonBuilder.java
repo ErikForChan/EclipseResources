@@ -747,15 +747,15 @@ public class CommonBuilder extends ACBuilder {
 		/*
 		 * New
 		 */
-		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
-		Configuration configuration = (Configuration) bInfo.getConfiguration();		
-		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
-		if (configuration.getName().startsWith("libos") || configuration.getName().startsWith("libOS")) {
-			if (!folder.exists()) {
-				configuration.enableInternalBuilder(true);
-				builder = configuration.getEditableBuilder();
-				bInfo = getCfgBuildInfo(builder, true);
-			}  
+//		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
+//		Configuration configuration = (Configuration) bInfo.getConfiguration();		
+//		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
+//		if (configuration.getName().startsWith("libos") || configuration.getName().startsWith("libOS")) {
+//			if (!folder.exists()) {
+//				configuration.enableInternalBuilder(true);
+//				builder = configuration.getEditableBuilder();
+//				bInfo = getCfgBuildInfo(builder, true);
+//			}  
 //			else {
 //				Boolean makefileExist = false;
 //				IPath path = folder.getLocation();
@@ -772,7 +772,7 @@ public class CommonBuilder extends ACBuilder {
 //					bInfo = getCfgBuildInfo(builder, true);
 //				}
 //			}
-		}
+//		}
 		
 		/*
 		 * New
