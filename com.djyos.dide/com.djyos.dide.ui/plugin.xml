@@ -10,6 +10,16 @@
 		        schemeId="org.eclipse.ui.defaultAcceleratorConfiguration" />
 	</extension>
 -->	
+
+	 <extension
+         point="org.eclipse.ui.preferencePages">
+          <page
+            name="DJYOS"
+            class="com.djyos.dide.ui.perference.DjyosPerference"
+            id="com.djyos.dide.ui.preferencePages.Djyos">
+      </page>
+	</extension>
+	
 	 <extension
 	         point="org.eclipse.ui.commands">
 	          <category

@@ -9,6 +9,11 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -49,6 +54,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
+import org.tmatesoft.svn.core.SVNException;
 
 import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
@@ -58,7 +64,9 @@ import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-
+import com.djyos.dide.ui.wizards.djyosProject.tools.SendEmail;
+import com.djyos.dide.ui.wizards.djyosProject.CreateHardWareDesc;
+import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 
 public class BoardMainWizard extends WizardPage{
@@ -71,6 +79,7 @@ public class BoardMainWizard extends WizardPage{
 	private Composite infoArea;
 	private List<Board> boardsList;
 	private Board boardCreated;
+	final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 	private IWorkbenchWindow window = PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow();
 	DideHelper dideHelper = new DideHelper();
@@ -91,7 +100,6 @@ public class BoardMainWizard extends WizardPage{
 			MessageDialog.openInformation(window.getShell(), "提示",
 					"Djyos源码不存在，请重启Eclipse根据提示下载");
 		}
-		// TODO Auto-generated constructor stubsuper(pageName);
 		setPageComplete(true);
 	}
 
@@ -147,7 +155,7 @@ public class BoardMainWizard extends WizardPage{
 		Composite contentCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout contentLayout = new GridLayout();
 		contentLayout.numColumns = 2;
-		contentCpt.setLayout(contentLayout);
+		contentCpt.setLayout(contentLayout); 
 		contentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
 		createBoardTree(contentCpt);
@@ -166,6 +174,18 @@ public class BoardMainWizard extends WizardPage{
 		scrolledComposite.setMinHeight(point.y);
 		scrolledComposite.setExpandHorizontal(true);
 	    scrolledComposite.setExpandVertical(true);
+	    
+//	    try {
+//			List<String> infos = dideHelper.getLogs();
+////			SendEmail email = new SendEmail();
+////			email.send();
+////			for(String s:infos) {
+////				System.out.println("s：\n   "+s);
+////			}
+//		} catch (SVNException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 	    
 		setErrorMessage(null);
 		setMessage(null);
@@ -201,7 +221,6 @@ public class BoardMainWizard extends WizardPage{
 			@Override
 			public void dragFinished(DragSourceEvent event) {
 				// TODO Auto-generated method stub
-				System.out.println("dragFinished");
 			}
 		});
 
@@ -241,7 +260,7 @@ public class BoardMainWizard extends WizardPage{
 						tmssItem.setText(s);
 						tmssItem.setData(destFile);
 						try {
-							copyFolder(srcFile, destFile);
+							dideHelper.copyFolder(srcFile, destFile);
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -314,10 +333,6 @@ public class BoardMainWizard extends WizardPage{
 		return null;
 	}
 	
-	public Board getBoard() {
-		return boardCreated;
-	}
-	
 	private void initPopup() {
 		// TODO Auto-generated method stub
 		Menu menu = new Menu(tree);
@@ -368,7 +383,7 @@ public class BoardMainWizard extends WizardPage{
 			}
 		});
 		
-		deleteItem.addSelectionListener(new SelectionListener() {
+		deleteItem.addSelectionListener(new SelectionAdapter() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -376,18 +391,43 @@ public class BoardMainWizard extends WizardPage{
 				TreeItem[] items = tree.getSelection();
 	        	boolean isSure = MessageDialog.openQuestion(window.getShell(), "提示",
 	        			"您确认要删除板件["+items[0].getText()+"]吗?");
-	        	if(isSure) {      		
-					String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+	        	if(isSure) {   
+	        		String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
 					DeleteFolder dlf = new DeleteFolder();
 					dlf.deleteFolder(curFilePath);
 					items[0].dispose();
+//	        		IProject[] projects = workspace.getRoot().getProjects();
+//	        		List<IProject> impactedProjects = new ArrayList<IProject>();
+//	        		String message = "以下工程用到该板件：\n";
+//					for(IProject project:projects) {
+//						ReadHardWareDesc rhwd = new ReadHardWareDesc();
+//						File hardWardInfoFile = new File(project.getLocation().toString()+"/data/hardware_info.xml");
+//						List<String> hardwares;
+//						if(hardWardInfoFile.exists()) {
+//							hardwares = rhwd.getHardWares(hardWardInfoFile);
+//							if(hardwares.get(0).equals(items[0].getText())) {
+//								impactedProjects.add(project);
+//								message += project.getName()+"\n";
+//							}
+//						}
+//					}
+//					message += "是否删除？";
+//					boolean toDelete = MessageDialog.openQuestion(window.getShell(), "提示",message);
+//					if(toDelete) {
+//						String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+//						DeleteFolder dlf = new DeleteFolder();
+//						dlf.deleteFolder(curFilePath);
+//						items[0].dispose();
+//						for(IProject project:impactedProjects) {
+//							try {
+//								project.delete(true, true, new NullProgressMonitor());
+//							} catch (CoreException e1) {
+//								// TODO Auto-generated catch block
+//								e1.printStackTrace();
+//							}
+//						}
+//					}
 	        	}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
 			}
 		});
 		tree.setMenu(menu);
@@ -469,19 +509,35 @@ public class BoardMainWizard extends WizardPage{
 		// TODO Auto-generated method stub
 		TreeItem[] items = tree.getSelection();
 		if(items.length>0) {
-			String itemName = items[0].getText().trim();//获取当前选中文件的路径
+			String itemName = items[0].getText().trim();
 			TreeItem parentItem = items[0].getParentItem();
 			if(!itemName.contains("板件")) {
 				Board board = getBoardByName(itemName);
 				NewOrReviseBoard dialog = new NewOrReviseBoard(infoArea.getShell(),false,board);
 				if(dialog.open() == Window.OK) {
-					String reviseName = dialog.lastBoardName;
+					String reviseBoardName = dialog.lastBoardName;
+					//扫描工作空间中所有用得到此板件的工程，并修改它们的板件名
+//					IProject[] projects = workspace.getRoot().getProjects();
+//					for(IProject project:projects) {
+//						ReadHardWareDesc rhwd = new ReadHardWareDesc();
+//						File hardWardInfoFile = new File(project.getLocation().toString()+"/data/hardware_info.xml");
+//						List<String> hardwares;
+//						if(hardWardInfoFile.exists()) {
+//							hardwares = rhwd.getHardWares(hardWardInfoFile);
+//							if(hardwares.get(0).equals(itemName)) {
+//								hardWardInfoFile.delete();
+//								CreateHardWareDesc chwd = new CreateHardWareDesc();
+//								chwd.createHardWareXml(reviseBoardName, hardwares.get(1), hardWardInfoFile);
+//							}
+//						}
+//					}
+					
 					items[0].dispose();
 					TreeItem item = new TreeItem(parentItem,SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL,0);
-					item.setText(reviseName);			
+					item.setText(reviseBoardName);			
 					item.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
 					item.setExpanded(false);
-					item.setData(new File(parentItem.getData().toString()+"/"+reviseName));
+					item.setData(new File(parentItem.getData().toString()+"/"+reviseBoardName));
 					tree.select(item);
 					displayBoardDetails(item);
 				};
@@ -558,32 +614,7 @@ public class BoardMainWizard extends WizardPage{
 		}
 		return null;
 	}
-	
-	private void copyFolder(File src, File dest) throws IOException {  
-	    if (src.isDirectory()) {  
-	        if (!dest.exists()) {  
-	            dest.mkdir();  
-	        }  
-	        String files[] = src.list();  
-	        for (String file : files) {  
-	            File srcFile = new File(src, file);  
-	            File destFile = new File(dest, file);  
-	            // 递归复制  
-	            copyFolder(srcFile, destFile);  
-	        }  
-	    } else {  
-	        InputStream in = new FileInputStream(src);  
-	        OutputStream out = new FileOutputStream(dest);  
-	  
-	        byte[] buffer = new byte[1024];  
-	  
-	        int length;  
-	          
-	        while ((length = in.read(buffer)) > 0) {  
-	            out.write(buffer, 0, length);  
-	        }  
-	        in.close();  
-	        out.close();  
-	    }  
-	}  
+	public Board getBoard() {
+		return boardCreated;
+	}
 }

@@ -53,6 +53,8 @@ import com.djyos.dide.ui.wizards.board.Board;
 import com.djyos.dide.ui.wizards.djyosProject.SelectBoardDialog;
 import com.djyos.dide.ui.wizards.djyosProject.SelectCoreDialog;
 import com.djyos.dide.ui.wizards.djyosProject.SelectCpuDialog;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 import org.eclipse.cdt.internal.ui.ICHelpContextIds;
@@ -65,26 +67,37 @@ import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
 
 public class GetBoardDialog extends StatusDialog {
 
-	private Text boardSelectField;
-	private Text boardCreateField;
+	private Text boardSelectField,boardDetailsDesc, MCUNameField, coreSelectFiled;
 	private StringDialogField[] fDialogFields = new StringDialogField[2];
-	private ComboDialogField[] fComboDialogFields = new ComboDialogField[2];
-	private static Button[] radioBtns = new Button[2];
-	private int selectIndex = 0;
 	private String boardName = "";
+	String boardModuleTrimPath = "";
 	private Board boardSelected;
 	private Core coreSelected;
 	private List<Cpu> boardCpusList = new ArrayList<Cpu>();
 	List<Chip> chips = null; 
 	List<Component> components = null;
 	private Cpu selectCpu;
-	String boardModuleTrimPath = "";
 	Cpu defaultCpu;
 	private Composite content, baordDescCpt;
-	private Text boardDetailsDesc, MCUNameField, coreSelectFiled;
-	private Button importMCUBtn;
-	private Button selectCoreBtn;
+	private Button importMCUBtn,selectCoreBtn;
+	private DideHelper dideHelper = new DideHelper();
 
+	public String getBoardName() {
+		return boardName;
+	}
+
+	public Cpu getSelectCpu() {
+		return selectCpu;
+	}
+
+	public Board getSelectBoard() {
+		return boardSelected;
+	}
+	
+	public Core getSelectCore() {
+		return coreSelected;
+	}
+	
 	private class CompilerImportBoardAdapter implements IDialogFieldListener {
 		@Override
 		public void dialogFieldChanged(DialogField field) {
@@ -105,46 +118,15 @@ public class GetBoardDialog extends StatusDialog {
 		updateStatus(status);
 	}
 
-	public String getBoardName() {
-		return boardName;
-	}
-
-	public Cpu getSelectCpu() {
-		return selectCpu;
-	}
-
-	public Board getSelectBoard() {
-		return boardSelected;
-	}
-	
-	public Core getSelectCore() {
-		return coreSelected;
-	}
-
-	private String[] BoardDetailsComboLabels = { "Architecture", "Family" };
-
-	private String[] BoardDetailsTextLabels = { "CPU", "内核时钟" };
-
-	private String[] Architectures = { "armv4", "armv5", "armv6", "armv7", "armv7-m", "armv7e-m" };
-
-	private String[] Families = { "cortex-m0", "cortex-m3", "cortex-m4", "cortex-m7" };
-
 	public List<String> getBoards() {
 		List<String> boards = new ArrayList<String>();
-		String newBoardPath = getEclipsePath() + "djysrc/bsp/boarddrv";
+		String newBoardPath = dideHelper.getDIDEPath() + "djysrc/bsp/boarddrv";
 		File boardSrc = new File(newBoardPath);
 		String files[] = boardSrc.list();
 		for (String file : files) {
 			boards.add(file);
 		}
 		return boards;
-	}
-
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,
-				(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
-		return eclipsePath;
 	}
 
 	private Listener coreModifyListener = e -> {
@@ -158,8 +140,8 @@ public class GetBoardDialog extends StatusDialog {
 			}
 			String coreDesc = "";
 			if(coreSelected!=null) {
-				String arch = coreSelected.getArch();
-				String family = coreSelected.getFamily();
+				String arch = coreSelected.getArch().getArchitecture();
+				String family = coreSelected.getArch().getFamily();
 				String fpuType = coreSelected.getFpuType();
 				String resetAddr = coreSelected.getResetAddr();
 				String memoryString = "";
@@ -256,68 +238,6 @@ public class GetBoardDialog extends StatusDialog {
 		
 	}
 
-	private void copyFolder(File src, File dest) throws IOException {
-		if (src.isDirectory()) {
-			if (!dest.exists()) {
-				dest.mkdir();
-			}
-			String files[] = src.list();
-			for (String file : files) {
-				File srcFile = new File(src, file);
-				File destFile = new File(dest, file);
-				// 递归复制
-				copyFolder(srcFile, destFile);
-			}
-		} else {
-			InputStream in = new FileInputStream(src);
-			OutputStream out = new FileOutputStream(dest);
-
-			byte[] buffer = new byte[1024];
-
-			int length;
-
-			while ((length = in.read(buffer)) > 0) {
-				out.write(buffer, 0, length);
-			}
-			in.close();
-			out.close();
-		}
-	}
-
-	private void copyFileToFolder(File src, File dest, String boardName) throws IOException {
-		if (src.isDirectory()) {
-			if (!dest.exists()) {
-				dest.mkdir();
-				dest.renameTo(
-						new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))
-								+ "\\" + boardName));
-				dest = new File(dest.getAbsolutePath().substring(0, dest.getAbsolutePath().lastIndexOf("\\"))
-						+ "\\" + boardName);
-			}
-			String files[] = src.list();
-			for (String file : files) {
-				File srcFile = new File(src, file);
-				File destFile = new File(dest, file);
-//				System.out.println(destFile.getName());
-				// 递归复制
-				copyFileToFolder(srcFile, destFile, boardName);
-			}
-		} else {
-			InputStream in = new FileInputStream(src);
-			OutputStream out = new FileOutputStream(dest);
-
-			byte[] buffer = new byte[1024];
-
-			int length;
-
-			while ((length = in.read(buffer)) > 0) {
-				out.write(buffer, 0, length);
-			}
-			in.close();
-			out.close();
-		}
-	}
-
 	public GetBoardDialog(Shell parent) {
 		super(parent);
 		setTitle("板件选择");
@@ -333,7 +253,7 @@ public class GetBoardDialog extends StatusDialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
-		String tipText = "板件模板会陆续添加.";
+//		String tipText = "板件模板会陆续添加.";
 		CompilerImportBoardAdapter adapter = new CompilerImportBoardAdapter();
 		Composite composite = (Composite) super.createDialogArea(parent);
 		composite.setSize(500, 500);
@@ -341,11 +261,11 @@ public class GetBoardDialog extends StatusDialog {
 		layout.marginTop = 5;
 		layout.numColumns = 1;
 		layout.marginLeft = 5;
-		Composite tipCpt = new Composite(composite, SWT.NONE);
-		tipCpt.setLayout(layout);
-		tipCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		Label tipLabel = new Label(tipCpt, SWT.NONE);
-		tipLabel.setText(tipText);
+//		Composite tipCpt = new Composite(composite, SWT.NONE);
+//		tipCpt.setLayout(layout);
+//		tipCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+//		Label tipLabel = new Label(tipCpt, SWT.NONE);
+//		tipLabel.setText(tipText);
 //		tipLabel.setForeground(tipCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
 
 		content = new Composite(composite, SWT.NONE);
@@ -384,7 +304,6 @@ public class GetBoardDialog extends StatusDialog {
 			}
 
 		});
-//		MCUNameField.addListener(SWT.Modify, cpuModifyListener);
 		
 		Label CoreLabel = new Label(content, SWT.NONE);
 		CoreLabel.setLayoutData(new GridData(GridData.BEGINNING));
@@ -403,19 +322,16 @@ public class GetBoardDialog extends StatusDialog {
 		});
 		coreSelectFiled.addListener(SWT.Modify, coreModifyListener);
 
-
 		fDialogFields[1] = new StringDialogField();
 		fDialogFields[1].setLabelText(BoardDetailsTextLabels[1] + ":");
 		fDialogFields[1].getLabelControl(content).setLayoutData(new GridData(GridData.BEGINNING));
 		fDialogFields[1].getTextControl(content).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		fDialogFields[1].getTextControl(content).addListener(SWT.Modify, clkModifyListener);
-//		fDialogFields[1].getTextControl(content).setEnabled(false);
 		ControlFactory.createLabel(content, "MHz");
 
 		baordDescCpt = new Composite(composite, SWT.NONE);
 		GridLayout gl = new GridLayout();
 		gl.numColumns = 1;
-//		gl.marginTop = 10;
 		gl.marginLeft = 10;
 		baordDescCpt.setLayout(gl);
 		baordDescCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -457,7 +373,6 @@ public class GetBoardDialog extends StatusDialog {
 
 	protected void handleChooseButtonPressed() {
 		SelectCpuDialog dialog = new SelectCpuDialog(getShell(), boardCpusList);
-//		ChooseMCUDialog dialog = new ChooseMCUDialog(getShell());
 		if (dialog.open() == Window.OK) {
 			selectCpu = dialog.getSelectCpu();
 			MCUNameField.setText(selectCpu.getCpuName());
@@ -522,4 +437,6 @@ public class GetBoardDialog extends StatusDialog {
 		super.configureShell(shell);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(shell, ICHelpContextIds.TODO_TASK_INPUT_DIALOG);
 	}
+	
+	private String[] BoardDetailsTextLabels = { "CPU", "内核时钟" };
 }

@@ -1,20 +1,49 @@
 package com.djyos.dide.ui.arch;
 
 public class Arch {
-	private String type;
-	private String serial;
+	private String serie;
+	private String architecture;
 	private String family;
-	public String getType() {
-		return type;
+	private String march;
+	private String mcpu;
+	private String fpuType;
+	private String archPath;
+	
+	public Arch() {
+		super();
 	}
-	public void setType(String type) {
-		this.type = type;
+
+	public Arch(String serie, String architecture, String family, String march, String mcpu, String fpuType) {
+		super();
+		this.serie = serie;
+		this.architecture = architecture;
+		this.family = family;
+		this.march = march;
+		this.mcpu = mcpu;
+		this.fpuType = fpuType;
 	}
-	public String getSerial() {
-		return serial;
+	
+	public String getArchPath() {
+		return archPath;
 	}
-	public void setSerial(String serial) {
-		this.serial = serial;
+
+	public void setArchPath(String archPath) {
+		this.archPath = archPath;
+	}
+
+	public String getSerie() {
+		return serie;
+	}
+
+	public void setSerie(String serie) {
+		this.serie = serie;
+	}
+
+	public String getArchitecture() {
+		return architecture;
+	}
+	public void setArchitecture(String architecture) {
+		this.architecture = architecture;
 	}
 	public String getFamily() {
 		return family;
@@ -22,14 +51,23 @@ public class Arch {
 	public void setFamily(String family) {
 		this.family = family;
 	}
-	public Arch(String type, String serial, String family) {
-		super();
-		this.type = type;
-		this.serial = serial;
-		this.family = family;
+	public String getMarch() {
+		return march;
 	}
-	public Arch() {
-		super();
+	public void setMarch(String march) {
+		this.march = march;
+	}
+	public String getMcpu() {
+		return mcpu;
+	}
+	public void setMcpu(String mcpu) {
+		this.mcpu = mcpu;
+	}
+	public String getFpuType() {
+		return fpuType;
+	}
+	public void setFpuType(String fpuType) {
+		this.fpuType = fpuType;
 	}
 	
 }

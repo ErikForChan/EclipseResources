@@ -47,7 +47,6 @@ public class SaveFileHandler extends SaveHandler{
 		// TODO Auto-generated method stub
 		super.execute(event);
 		IWorkbenchPart activePart = HandlerUtil.getActivePart(event);
-//		String fileName = LegacyActionTools.escapeMnemonics(activePart.getTitle()); //save的文件名
 		if(activePart.getTitleToolTip().contains("libos")) {
 			String infos[] = activePart.getTitleToolTip().split("libos");
 			String filePath  = srcLocation + infos[1];

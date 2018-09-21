@@ -3,7 +3,6 @@ package com.djyos.dide.ui.djyproperties;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -234,7 +233,6 @@ public class ComponentCfgPage extends PropertyPage {
 				setInitComponents(ibootCompontents, ibootCompontentsInit, ibootCmpntChecks);
 			}
 			
-
 			Control[] controls = folder.getChildren();
 			Tree coreTree = (Tree) controls[0];
 			TreeItem[] coreItems = coreTree.getItems();
@@ -337,7 +335,6 @@ public class ComponentCfgPage extends PropertyPage {
 		return expandParas;
 	}
 	
-	
 	private void initHeaderConfigure(Component component, List<String> pjCgfs){
 		String[] parametersDefined = component.getConfigure().split("\n");
 		String newConfig = "",tag = null;
@@ -373,7 +370,6 @@ public class ComponentCfgPage extends PropertyPage {
 	}
 	
 	//初始化当前组件的Configure
-	
 	private void initConfiguration(Component component, boolean isApp) {
 		// TODO Auto-generated method stub
 		String compName = component.getName();
@@ -1015,7 +1011,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		
 		try {
-			resetExclude(compontents, compontentsInit, true, conds, project);
+			resetExclude(compontents, compontentsInit, isApp, conds, project);
 		} catch (Exception e) {
 			// TODO: handle exception
 			MessageDialog.openError(window.getShell(), "提示", "为"+(isApp?"app":"iboot")+"链接组件失败！");
@@ -1064,7 +1060,7 @@ public class ComponentCfgPage extends PropertyPage {
 				}
 			}
 			if (ibootExist) {
-				boolean isOK = handleCheckAndExclude(ibootCompontents,ibootCompontentsInit,project,conds,true);
+				boolean isOK = handleCheckAndExclude(ibootCompontents,ibootCompontentsInit,project,conds,false);
 				if(!isOK) {
 					return false;
 				}
@@ -1217,8 +1213,6 @@ public class ComponentCfgPage extends PropertyPage {
 	//重置文件排除
 	private void resetExclude(List<Component> components, List<Component> componentsInit, boolean isApp,
 			ICConfigurationDescription[] conds, IProject project) {
-		// TODO Auto-generated method stub
-		// appCompontents,ibootCompontents
 		String srcLocation = dideHelper.getDIDEPath() + "djysrc";
 		List<String> excludes = new ArrayList<String>();	
 		for (int i = 0; i < components.size(); i++) {
@@ -1241,6 +1235,7 @@ public class ComponentCfgPage extends PropertyPage {
 						if (conds[j].getName().contains("libos_App")) {
 							List<IFolder> includeFolders = new ArrayList<IFolder>();
 							linkHelper.getFolders(ifolder, includeFolders);
+//							System.out.println("comp:  "+comp.getName()+"    isSelect:"+comp.isSelect());
 							if (comp.isSelect()) {
 								for (int k = includeFolders.size() - 1; k >= 0; k--) {
 									linkHelper.setExclude(includeFolders.get(k), conds[j], false);
@@ -1619,7 +1614,6 @@ public class ComponentCfgPage extends PropertyPage {
 						}
 					}
 					curComp.setSelect(true);
-					System.out.println("curComp1.getName(): "+curComp.getName());
 					Control[] controls = folder.getChildren();
 					for (Control c : controls) {
 						Tree tempTree = (Tree) c;
@@ -2367,8 +2361,8 @@ public class ComponentCfgPage extends PropertyPage {
 			if (compontentsCheckedSort.get(i).getTarget().equals(ConfigureTarget.HEADER.getName())) {
 				if (compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
 					defineInit += "//*******************************  Configure " 
-															+ compontentsCheckedSort.get(i).getName()
-															+ "  ******************************************//\n";
+								+ compontentsCheckedSort.get(i).getName()
+								+ "  ******************************************//\n";
 					String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
 					for (int j = 0; j < configures.length; j++) {
 						if (configures[j].contains("#define")) {
@@ -2400,16 +2394,7 @@ public class ComponentCfgPage extends PropertyPage {
 		defineInit += "//******************************* Core Clock ******************************************//\n";
 		defineInit += coreConfigure;
 		defineInit += "\n\n#endif";
-
-		FileWriter writer;
-		try {
-			writer = new FileWriter(file);
-			writer.write(defineInit);
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		dideHelper.writeFile(file, defineInit);
 	}
 	
 	//创建initPrj.c文件
@@ -2439,26 +2424,33 @@ public class ComponentCfgPage extends PropertyPage {
 		// TODO Auto-generated method stub
 		String content = "", firstInit = "\tuint16_t evtt_main;\n\n", lastInit = "", moduleInit = "",
 				gpioInit = "", djyMain = "", shellInit = "";
+		String earlyCode = "",mediumCode = "",laterCode = "";
 		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n" + "#include \"stdint.h\"\n" + "#include \"stddef.h\"\n"
-				+ "#include \"cpu_peri.h\"\n" + "extern ptu32_t djy_main(void);\n";
+		initHead += "#include \"project_config.h\"\n" 
+					+ "#include \"stdint.h\"\n" 
+					+ "#include \"stddef.h\"\n"
+					+ "#include \"cpu_peri.h\"\n" 
+					+ "extern ptu32_t djy_main(void);\n";
+
 		for (int i = 0; i < typeCompontentsChecked.size(); i++) {
-			List<String> dependents = typeCompontentsChecked.get(i).getDependents();
-			List<String> weakDependents = typeCompontentsChecked.get(i).getWeakDependents();
-			for (int j = 0; j < typeCompontentsChecked.size(); j++) {
-				if (!typeCheckedSort.contains(typeCompontentsChecked.get(j))) {
-					if (dependents.contains(typeCompontentsChecked.get(j).getName())) {
-						typeCheckedSort.add(typeCompontentsChecked.get(j));
-					} else if (weakDependents.contains(typeCompontentsChecked.get(j).getName())) {
-						typeCheckedSort.add(typeCompontentsChecked.get(j));
-					}
-				}
-			}
+			handleDependents(typeCompontentsChecked.get(i),typeCompontentsChecked,typeCheckedSort);
+//			for (int j = 0; j < typeCompontentsCheckedCopy.size(); j++) {
+//				if (!typeCheckedSort.contains(typeCompontentsCheckedCopy.get(j))) {
+//					if (dependents.contains(typeCompontentsCheckedCopy.get(j).getName())) {
+//						System.out.println("typeCompontentsCheckedCopy:  "+typeCompontentsCheckedCopy.get(j).getName());
+//						typeCheckedSort.add(typeCompontentsCheckedCopy.get(j));
+//					} else if (weakDependents.contains(typeCompontentsCheckedCopy.get(j).getName())) {
+//						typeCheckedSort.add(typeCompontentsCheckedCopy.get(j));
+//					}
+//				}
+//			}
 			if (!typeCheckedSort.contains(typeCompontentsChecked.get(i))) {
 				typeCheckedSort.add(typeCompontentsChecked.get(i));
 			}
 		}
+		
 		for (int i = 0; i < typeCheckedSort.size(); i++) {
+			System.out.println("typeCheckedSort:   "+typeCheckedSort.get(i).getName());
 			String grade = typeCheckedSort.get(i).getGrade();
 			String code = typeCheckedSort.get(i).getCode();
 			List<String> dependents = typeCheckedSort.get(i).getDependents();
@@ -2507,35 +2499,72 @@ public class ComponentCfgPage extends PropertyPage {
 
 			String componentName = typeCheckedSort.get(i).getName();
 
-			if (grade != null && code != null) {
-				if (grade.equals("main")) {// 初始化时机为main
-					djyMain += codeStrings + "\n";
-				} else if (grade.equals("init")) {// 初始化时机为init
-					if (dependents.contains("cpu_peri_gpio")) {
-						gpioInit += codeStrings + "\n";
-					} else if (componentName.equals("heap")) {
-						lastInit += evttMain + codeStrings + "\n";
-					} else if (componentName.equals("shell")) {
-						shellInit += codeStrings + "\n";
-					} else {
-						moduleInit += codeStrings + "\n";
+//			if (grade != null && code != null) {
+//				if (grade.equals("main")) {// 初始化时机为main
+//					djyMain += codeStrings + "\n";
+//				} else if (grade.equals("init")) {// 初始化时机为init
+//					if (dependents.contains("cpu_peri_gpio")) { 
+//						gpioInit += codeStrings + "\n";
+//					} else if (componentName.equals("heap")) {
+//						lastInit += evttMain + codeStrings + "\n";
+//					} else if (componentName.equals("shell")) {
+//						shellInit += codeStrings + "\n";
+//					} else {
+//						moduleInit += codeStrings + "\n";
+//					}
+//				}
+//			}
+			
+			if (grade != null && code != null && !codeStrings.trim().equals("")) {
+				if (dependents.contains("cpu_peri_gpio")) {
+					gpioInit += codeStrings + "\n";
+				} else if (componentName.equals("heap")) {
+					lastInit += evttMain + codeStrings + "\n";
+				} else if (componentName.equals("shell")) {
+					shellInit += codeStrings + "\n";
+				} else {
+					if (grade.equals("early")) {
+						earlyCode += codeStrings + "\n";
+					} else if (grade.equals("medium")) {
+						mediumCode += codeStrings + "\n";
+					} else if (grade.equals("later")) {
+						laterCode += codeStrings + "\n";
 					}
 				}
 			}
+			
 		}
 		lastInit += "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
-				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
+				  + "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
 		content += initHead;
 		content += "\n" + djyStart + djyMain + djyEnd;
-		content += initStart + firstInit + gpioInit + shellInit + moduleInit + lastInit + initEnd;
-		FileWriter writer;
-		try {
-			writer = new FileWriter(file);
-			writer.write(content);
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+//		System.out.println("earlyCode:  "+earlyCode);
+//		content += initStart + firstInit + gpioInit + shellInit + moduleInit + lastInit + initEnd;
+		content += initStart + firstInit + gpioInit + shellInit + earlyCode + mediumCode + laterCode + lastInit + initEnd;
+		dideHelper.writeFile(file, content);
+	}
+
+	private void handleDependents(Component component, List<Component> typeCompontentsChecked, List<Component> typeCheckedSort) {
+		// TODO Auto-generated method stub
+		List<String> dependents = component.getDependents();
+		List<String> weakDependents = component.getWeakDependents();
+		
+		for(String dep:dependents) {
+			for (int j = 0; j < typeCompontentsChecked.size(); j++) {
+				Component c = typeCompontentsChecked.get(j);
+				if(dep.equals(c.getName())) {
+					if (!typeCheckedSort.contains(c)) {
+						if(c.getDependents().contains(component.getName())) {
+							typeCheckedSort.add(c);
+						}
+						handleDependents(c,typeCompontentsChecked,typeCheckedSort);
+						if (!typeCheckedSort.contains(c)) {
+							typeCheckedSort.add(c);
+						}
+					}
+					break;
+				}
+			}
 		}
 	}
 

@@ -44,6 +44,7 @@ import com.djyos.dide.ui.wizards.board.Board;
 import com.djyos.dide.ui.wizards.board.BoardWizard;
 import com.djyos.dide.ui.wizards.board.ReadBoardXml;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 
 public class SelectBoardDialog extends StatusDialog{
 
@@ -58,33 +59,25 @@ public class SelectBoardDialog extends StatusDialog{
 	private List<Board> boards = new ArrayList<Board>();
 	private List<Board> boardsFiltered;
 	private Board boardSelected = null;
+	private TreeItem t1,t2;
+	private DideHelper dideHelper = new DideHelper();
 	
 	public Board getSelectBoard() {
 		return boardSelected;
 	}
 	
 	private  Listener searchModifyListener = e -> {
-		//setLocationForSelection();
 		String keyword = boardEditText.getText().trim();
 		List<Board> boardsFiltered = getBoardsFiltered(boards,keyword);
 		boardTree.removeAll();
-		for(int i=0;i<boardsFiltered.size();i++) {
-			TreeItem t = new TreeItem(boardTree, SWT.NONE);
-			t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
-			t.setText(boardsFiltered.get(i).getBoardName());
-		}
+		initBoardTree(boardsFiltered);
 	};
 	
 	private  Listener cpuModifyListener = e -> {
-		//setLocationForSelection();
 		String keyword = cpuEditText.getText().trim();
 		List<Board> boardsFiltered = getBoardsFilteredByCpu(boards,keyword);
 		boardTree.removeAll();
-		for(int i=0;i<boardsFiltered.size();i++) {
-			TreeItem t = new TreeItem(boardTree, SWT.NONE);
-			t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
-			t.setText(boardsFiltered.get(i).getBoardName());
-		}
+		initBoardTree(boardsFiltered);
 	};
 	
 	public List<Board> getBoardsFiltered(List<Board> boards,String keyWord){
@@ -119,26 +112,17 @@ public class SelectBoardDialog extends StatusDialog{
 		
 	}
 	
-//	public SelectBoardDialog(Shell parent) {
-//		super(parent);
-//		// TODO Auto-generated constructor stub
-//		setTitle("选择板件");
-//		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );	
-//	}
-	
 	public SelectBoardDialog(Shell parent,String sCpu) {
 		super(parent);
 		// TODO Auto-generated constructor stub
-//		curCpuName = sCpu;
 		setTitle("选择板件");
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
 	}
-	
 
 	@Override
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
-		return new Point(500,500);
+		return new Point(560,600);
 	}
 	
 	@Override
@@ -172,7 +156,7 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTreeCpt.setLayout(new GridLayout());
 		
 		createTreeForBoards(boardTreeCpt);
-		boardTree.setSize(180, 200);
+		boardTree.setSize(220, 260);
 		Button newBoradBtn = new Button(boardTreeCpt,SWT.PUSH);
 		newBoradBtn.setText("新建板件");
 		newBoradBtn.setBackground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
@@ -189,40 +173,17 @@ public class SelectBoardDialog extends StatusDialog{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				IAction action = getAction("com.djyos.dide.ui.wizards.NewDWizard2");
+				IAction action = dideHelper.getAction("com.djyos.dide.ui.wizards.NewDWizard2");
 				action.run();	
+				ReadBoardXml rbx = new ReadBoardXml();
+				boards = rbx.getAllBoards();
 				boardTree.removeAll();
-				for(int i=0;i<boards.size();i++) {
-					TreeItem t = new TreeItem(boardTree, SWT.NONE);
-					t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
-					t.setText(boards.get(i).getBoardName());
-				}
-
+				initBoardTree(boards);
 				super.widgetSelected(e);
 			}
 			
 		});
 		return super.createDialogArea(parent);
-	}
-	
-	/*
-	 * Returns the action for the given wizard id, or null if not found.
-	 */
-	private IAction getAction(String id) {
-		// Keep a cache, rather than creating a new action each time,
-		// so that image caching in ActionContributionItem works.
-		IAction action = null;
-		IWizardDescriptor wizardDesc = WorkbenchPlugin.getDefault().getNewWizardRegistry().findWizard(id);
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		if (wizardDesc != null) {
-			action = new NewWizardShortcutAction(window, wizardDesc);
-			IConfigurationElement element = Adapters.adapt(wizardDesc, IConfigurationElement.class);
-			if (element != null) {
-				window.getExtensionTracker().registerObject(element.getDeclaringExtension(), action,
-						IExtensionTracker.REF_WEAK);
-			}
-		}
-		return action;
 	}
 
 	protected void okPressed() {
@@ -246,60 +207,24 @@ public class SelectBoardDialog extends StatusDialog{
 		boardTree = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		boardTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		boardTree.setHeaderVisible(true);
-		List<String> paths = new ArrayList<String>();
-		String userBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\user";
-		String demoBoardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\demo";
-//		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv\\demo";
-//		String boardFilePath = getEclipsePath()+"djysrc\\bsp\\boarddrv";
-		paths.add(userBoardFilePath);
-		paths.add(demoBoardFilePath);
-		
-
-		for(int i=0;i<paths.size();i++) {
-			File boardFile = new File(paths.get(i));
-			File[] files = boardFile.listFiles();
-			for(int j=0;j<files.length;j++){
-					File file = files[j];
-					if(file.isDirectory()) {
-						File[] mfiles = file.listFiles();
-						for(int k=0;k<mfiles.length;k++) {
-							if(mfiles[k].getName().endsWith(".xml")) {
-								try {
-									Board board = rbx.getBoard(mfiles[k]);
-									boards.add(board);
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								break;
-							}
-						}
-					}
-			}
-		}
-		
+		boards = rbx.getAllBoards();
 		boardsFiltered = boards;
-		for(int i=0;i<boards.size();i++) {
-			TreeItem t = new TreeItem(boardTree, SWT.NONE);
-			t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
-			t.setText(boards.get(i).getBoardName());
-		}
-		
+		initBoardTree(boards);
 		boardTree.addListener(SWT.MouseDoubleClick, new Listener() {
 			
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
-//				Point point = new Point(event.x, event.y);
-//				TreeItem item = boardTree.getItem(point);
-//				String boardName = item.getText();
-//				for (int i = 0; i < boardsFiltered.size(); i++) {
-//					if (boardsFiltered.get(i).getBoardName().equals(boardName)) {
-//						boardSelected = boardsFiltered.get(i);
-//						break;
-//					}
-//				}
-				okPressed();
+				Point point = new Point(event.x, event.y);
+				TreeItem item = boardTree.getItem(point);
+				if(item != null) {
+					String itemText = item.getText();
+					if(itemText.contains("板件")) {
+						
+					}else {
+						okPressed();
+					}
+				}
 			}
 		});
 
@@ -311,34 +236,38 @@ public class SelectBoardDialog extends StatusDialog{
 				
 				TreeItem[] items = boardTree.getSelection();
 				if (items.length > 0) {
-					String selectBoardName = items[0].getText();
 					detailsDesc = "";
-					for(int i=0;i<boards.size();i++) {
-						if(boards.get(i).getBoardName().equals(selectBoardName)) {
-							Board board = boards.get(i);
-							List<OnBoardCpu> cpus = board.getOnBoardCpus();
-							for(int j=0;j<cpus.size();j++) {
-								OnBoardCpu cpu = cpus.get(j);
-								String chipString = "";
-								if( cpu.getChips().size()>0) {
-									for(int k=0;k<cpu.getChips().size();k++) {
-										chipString+= ((k!=0?"，":"")+cpu.getChips().get(k).getChipName());
+					String selectBoardName = items[0].getText();
+					if (selectBoardName.contains("板件")) {
+						detailsDesc += "选中板件即可显示选中的板件配置信息";
+					} else {
+						for(int i=0;i<boards.size();i++) {
+							if(boards.get(i).getBoardName().equals(selectBoardName)) {
+								Board board = boards.get(i);
+								List<OnBoardCpu> cpus = board.getOnBoardCpus();
+								for(int j=0;j<cpus.size();j++) {
+									OnBoardCpu cpu = cpus.get(j);
+									String chipString = "";
+									if( cpu.getChips().size()>0) {
+										for(int k=0;k<cpu.getChips().size();k++) {
+											chipString+= ((k!=0?"，":"")+cpu.getChips().get(k).getChipName());
+										}
 									}
+									
+									String peripheralString = "";
+									for(int k=0;k<cpu.getPeripherals().size();k++) {
+										peripheralString+= ((k!=0?"，":"")+cpu.getPeripherals().get(k).getName());
+									}
+									detailsDesc+="Cpu"+(j+1)+": "+cpu.getCpuName()
+									+"\n主晶振频率: "+cpu.getMianClk()
+									+"\nRtc钟频率: "+cpu.getRtcClk()
+									+"\n芯片: "+chipString
+									+"\n外设: "+peripheralString
+									+"\n\n";
 								}
 								
-								String peripheralString = "";
-								for(int k=0;k<cpu.getPeripherals().size();k++) {
-									peripheralString+= ((k!=0?"，":"")+cpu.getPeripherals().get(k).getName());
-								}
-								detailsDesc+="Cpu"+(j+1)+": "+cpu.getCpuName()
-								+"\n主晶振频率: "+cpu.getMianClk()
-								+"\nRtc钟频率: "+cpu.getRtcClk()
-								+"\n芯片: "+chipString
-								+"\n外设: "+peripheralString
-								+"\n\n";
+								break;
 							}
-							
-							break;
 						}
 					}
 					detailsField.setText(detailsDesc);
@@ -353,16 +282,37 @@ public class SelectBoardDialog extends StatusDialog{
 		});
 		final TreeColumn columnBoards = new TreeColumn(boardTree, SWT.NONE);
 		columnBoards.setText("板件列表");
-		columnBoards.setWidth(160);
+		columnBoards.setWidth(200);
 		columnBoards.setResizable(false);
-		columnBoards.setToolTipText("Board");
+		columnBoards.setToolTipText("所有板件");
+		columnBoards.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
 	}
-	
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
+
+	private void initBoardTree(List<Board> boards) {
+		// TODO Auto-generated method stub
+		t2 = new TreeItem(boardTree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		t2.setData(dideHelper.getUserBoardFilePath());
+		t2.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+		t2.setText("用户板件");
+		
+		t1 = new TreeItem(boardTree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		t1.setData(dideHelper.getDemoBoardFilePath());
+		t1.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+		t1.setText("Djyos板件");		
+		
+		for(int i=0;i<boards.size();i++) {
+			TreeItem t;
+			if(boards.get(i).getBoardPath().contains("demo")) {
+				 t = new TreeItem(t1, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			}else{
+				 t = new TreeItem(t2, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			}
+			t.setData(boards.get(i).getBoardPath());
+			t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
+			t.setText(boards.get(i).getBoardName());
+		}
+		t1.setExpanded(true);
+		t2.setExpanded(true);
 	}
-	
 	
 }

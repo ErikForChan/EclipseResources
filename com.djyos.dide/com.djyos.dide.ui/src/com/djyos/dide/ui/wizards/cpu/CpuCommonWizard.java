@@ -36,8 +36,8 @@ public class CpuCommonWizard extends BasicNewResourceWizard{
 	private String wz_title;
 	private String wz_desc;
 	private String didePath = new DideHelper().getDIDEPath();
-	LinkHelper linkHelper = new LinkHelper();
-	String srcLocation = didePath+"djysrc";
+	private LinkHelper linkHelper = new LinkHelper();
+	private String srcLocation = didePath+"djysrc";
 	
 	public CpuCommonWizard(String title, String desc) {
 		// TODO Auto-generated constructor stub

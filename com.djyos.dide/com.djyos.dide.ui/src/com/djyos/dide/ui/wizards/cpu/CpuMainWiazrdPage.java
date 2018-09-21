@@ -66,6 +66,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
+import org.tmatesoft.svn.core.SVNException;
 import org.xml.sax.SAXException;
 
 import com.djyos.dide.ui.wizards.cpu.NewGroupOrCpuDialog;
@@ -73,6 +74,7 @@ import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.SendEmail;
 
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.IWizardItemsListListener;
@@ -86,7 +88,7 @@ import org.eclipse.cdt.internal.ui.newui.Messages;
 
 public class CpuMainWiazrdPage extends WizardPage{
 
-	DideHelper dideHelper = new DideHelper();
+	private DideHelper dideHelper = new DideHelper();
 	public static final IPath ICONS_PATH= new Path("$nl$/icons"); //$NON-NLS-1$
 	public static TreeItem fileItem = null,tmssItem = null;
 	private static String currentAttributeIdGlobal = null;
@@ -124,13 +126,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 		// TODO Auto-generated constructor stub
 		setPageComplete(true);
 	}	
-	
-	private String getDIDEPath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,
-				(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
-		return eclipsePath;
-	}
 
 	public void initPopup(){
         Menu menu=new Menu(tree);
@@ -156,37 +151,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
-//		String command="arm-none-eabi-objdump.exe -h F:\\djyos\\atomic.o";  
-//	    String line = null;  
-//	    StringBuilder sb = new StringBuilder();  
-//	    Runtime runtime = Runtime.getRuntime();  
-//	    try {  
-//	    Process process = runtime.exec(command);  
-//	    BufferedReader  bufferedReader = new BufferedReader  
-//	            (new InputStreamReader(process.getInputStream()));  
-//	        while ((line = bufferedReader.readLine()) != null) {  
-//	            sb.append(line + "\n");  
-//	            System.out.println(line);  
-//	        }  
-//	    } catch (IOException e) {  
-//	        // TODO 自动生成的 catch 块  
-//	        e.printStackTrace();  
-//	    }  
-
-//		long a = Integer.parseInt("1");
-//		long b = Long.parseLong("0xFFFFFFFF".substring(2), 16);
-//		long c = Integer.parseInt("-1");; //0xFFFFFFFF
-//		if(a>b) {
-//			System.out.println("a= "+toUnsigned(a));
-//			System.out.println("b= "+toUnsigned(b));
-//			System.out.println("c= "+toUnsigned(c));
-//			System.out.println("a>b");
-//		}else {
-//			System.out.println("a= "+toUnsigned(a));
-//			System.out.println("b= "+toUnsigned(b));
-//			System.out.println("c= "+toUnsigned(c));
-//			System.out.println("b>a");
-//		}
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -299,7 +263,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 					if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {
 						boolean toExpand = false;
 						if(files[i].isDirectory()) {
-							boolean isNeed =  containsXml(files[i]);
+							boolean isNeed =  dideHelper.containsXml(files[i]);
 							if(isNeed) {
 								toExpand = true;
 							}
@@ -344,7 +308,13 @@ public class CpuMainWiazrdPage extends WizardPage{
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
-				handleReviceCpu();
+				Point point = new Point(event.x, event.y);
+				TreeItem item = tree.getItem(point);
+				if(item != null) {
+					if(!item.getText().endsWith("Djyos")) {
+						handleReviceCpu();
+					}
+				}
 			}
 		});
 		
@@ -369,7 +339,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 		String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
 		if(items.length>0) {
 			File curFile = new File(curFilePath);//当前选中文件
-			File xmlParentFile = getXmlFile(curFile);	
+			File xmlParentFile = dideHelper.getXmlFile(curFile);	
 			if(xmlParentFile!=null) {
 				try {
 					rcx.unitCpu(cpu,xmlParentFile);
@@ -395,7 +365,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				for (int i = 0; i < files.length; i++) {
 					// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
 					if (files[i].isDirectory()) {
-						boolean isNeed = containsXml(files[i]);
+						boolean isNeed = dideHelper.containsXml(files[i]);
 						if(isNeed) {
 							TreeItem item = new TreeItem(root, 0);
 							item.setText(files[i].getName());
@@ -424,7 +394,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 		File file = new File(didePath + "djysrc\\bsp");
 		File[] roots = file.listFiles();
 		for (int i = 0; i < roots.length; i++) {
-			// TreeItem root = new TreeItem(tree, 0);
 			if (roots[i].getName().equals("cpudrv")) {
 				TreeItem root = new TreeItem(tree, 0);
 				root.setText("Djyos");
@@ -436,7 +405,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 					if ((files[j].isHidden() == false)) {// 判断当前路径是否为隐藏文件与文件夹
 						boolean toExpand = false;
 						if(files[j].isDirectory()) {
-							boolean isNeed =  containsXml(files[j]);
+							boolean isNeed =  dideHelper.containsXml(files[j]);
 							if(isNeed) {
 								toExpand = true;
 							}
@@ -534,7 +503,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 						tmssItem.setText(s);
 						tmssItem.setData(destFile);
 						try {
-							copyFolder(srcFile, destFile);
+							dideHelper.copyFolder(srcFile, destFile);
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -593,7 +562,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 		
 		if(items.length>0) {
 			File curFile = new File(curFilePath);//当前选中文件
-			File xmlParentFile = getXmlFile(curFile);	
+			File xmlParentFile = dideHelper.getXmlFile(curFile);	
 			boolean exiteDirectory= isExiteDirectory(curFile);
 			if(exiteDirectory) {
 				tag = "group";
@@ -641,12 +610,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 		if (tempSrcFile.getName().equals(destFile.getName())) {
 			return "不可拖拉到自身目录下！";
 		}
-//		while(!tempSrcFile.getName().equals("cpudrv")) {		
 		File parentSrcFile = tempSrcFile.getParentFile();
 		if (parentSrcFile.getName().equals(destFile.getName())) {
 			return "该目录下已经存在["+tempSrcFile.getName()+"]！";
 		}
-//		}
 		
 		tempSrcFile = new File(srcFile.getPath());
 		tempDestFile = new File(destFile.getPath());
@@ -667,22 +634,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 		return null;
 	}
 
-	private boolean containsXml(File file) {
-		File[] files = file.listFiles();
-		for(File f:files) {
-			if(f.isDirectory()) {
-				if(containsXml(f)) {
-					return true;
-				}
-			}else {
-				if(f.getName().endsWith(".xml")) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	
 	protected List<String> getConfigs(Cpu cpu2,boolean isCpu) {
 		// TODO Auto-generated method stub
 		List<String> cons = new ArrayList<String>();
@@ -725,9 +676,11 @@ public class CpuMainWiazrdPage extends WizardPage{
 		if(!curFile.getName().contains("cpudrv")) {
 			File parentFile = curFile.getParentFile();
 			if(!parentFile.getName().contains("cpudrv")){
-				File xmlFile = getXmlFile(parentFile);
+				File xmlFile = dideHelper.getXmlFile(parentFile);
 				try {
-					rcx.unitCpu(cpu,xmlFile);
+					if(xmlFile != null) {
+						rcx.unitCpu(cpu,xmlFile);
+					}
 				}catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -739,7 +692,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 	
 	private String traverseParents(File curFile,String descContent) {
 		if (!curFile.getName().contains("cpudrv")) {
-			File xmlFile = getXmlFile(curFile);
+			File xmlFile = dideHelper.getXmlFile(curFile);
 			if(xmlFile != null) {
 				try {
 					Cpu cpu = rcx.getCpuInfos(xmlFile);
@@ -754,14 +707,14 @@ public class CpuMainWiazrdPage extends WizardPage{
 						for (int i = 0; i < cpu.getCoreNum(); i++) {
 							Core core = cpu.getCores().get(i);
 							descContent += "\n内核" + (i + 1) + "：";
-							if (core.getType() != null) {
-								descContent += core.getType();
+							if (core.getArch().getSerie() != null) {
+								descContent += core.getArch().getSerie();
 							}
-							if (core.getArch() != null) {
-								descContent += "，架构：" + core.getArch();
+							if (core.getArch().getArchitecture() != null) {
+								descContent += "，架构：" + core.getArch().getArchitecture();
 							}
-							if (core.getFamily() != null) {
-								descContent += "，家族：" + core.getFamily();
+							if (core.getArch().getFamily() != null) {
+								descContent += "，家族：" + core.getArch().getFamily();
 							}
 							if (core.getFpuType() != null) {
 								descContent += "\n\t浮点：" + core.getFpuType();
@@ -799,48 +752,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 		return descContent;
 	}
 	
-	/*
-	 * 拷贝工程到另外一个目录
-	 */
-	private void copyFolder(File src, File dest) throws IOException {  
-	    if (src.isDirectory()) {  
-	        if (!dest.exists()) {  
-	            dest.mkdir();  
-	        }  
-	        String files[] = src.list();  
-	        for (String file : files) {  
-	            File srcFile = new File(src, file);  
-	            File destFile = new File(dest, file);  
-	            // 递归复制  
-	            copyFolder(srcFile, destFile);  
-	        }  
-	    } else {  
-	        InputStream in = new FileInputStream(src);  
-	        OutputStream out = new FileOutputStream(dest);  
-	  
-	        byte[] buffer = new byte[1024];  
-	  
-	        int length;  
-	          
-	        while ((length = in.read(buffer)) > 0) {  
-	            out.write(buffer, 0, length);  
-	        }  
-	        in.close();  
-	        out.close();  
-	    }  
-	}  
-		
-	private File getXmlFile(File parentFile) {
-		File file =null;
-		File[] files = parentFile.listFiles();
-		for(int i=0;i<files.length;i++){
-			if(files[i].getName().endsWith(".xml")) {
-				file = files[i];
-			}
-		}
-		return file;
-	}
-	
 	private boolean isExiteDirectory(File parentFile) {
 		File file =null;
 		File[] files = parentFile.listFiles();
@@ -856,12 +767,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 	public IWizardPage getNextPage() {
 		// TODO Auto-generated method stub
 		return super.getNextPage();
-	}
-
-	long toUnsigned(long s) {
-
-		return s & 0xFFFFFFFF;
-
 	}
 
 	private boolean isCpu(File file){

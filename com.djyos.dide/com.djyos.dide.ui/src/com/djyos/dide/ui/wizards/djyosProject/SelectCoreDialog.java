@@ -118,9 +118,9 @@ public class SelectCoreDialog extends StatusDialog{
 					for (int j = 0; j < cores.size(); j++) {
 						Core core = cores.get(j);
 						if(coreName.contains(String.valueOf(j+1))) {
-							String type = core.getType();
-							String arch = core.getArch();
-							String family = core.getFamily();
+							String type = core.getArch().getSerie();;
+							String arch = core.getArch().getArchitecture();
+							String family = core.getArch().getFamily();
 							String fpuType = core.getFpuType();
 							String resetAddr = core.getResetAddr();
 							String memoryString = "";
@@ -155,11 +155,5 @@ public class SelectCoreDialog extends StatusDialog{
 		columnCpus.setWidth(140);
 		columnCpus.setResizable(false);
 		columnCpus.setToolTipText("Cpu");
-	}
-	
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
 	}
 }

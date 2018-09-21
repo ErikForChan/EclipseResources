@@ -14,12 +14,17 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import com.djyos.dide.ui.wizards.component.Component;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class CreateCheckXml {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-
+	private DideHelper dideHelper = new DideHelper();
 	public void createCheck(List<Component> cmpnts, File file) {
 		factory.setIgnoringElementContentWhitespace(false);
     	DocumentBuilder builder;
@@ -47,6 +52,7 @@ public class CreateCheckXml {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
 		}             
     	
 	}

@@ -10,85 +10,48 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.TreeItem;
 
 import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 
 import com.djyos.dide.ui.wizards.board.Board;
 import com.djyos.dide.ui.wizards.component.Component;
+import com.djyos.dide.ui.wizards.cpu.Cpu;
+import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 
 public class ReadComponent {
-	private String fullPath = Platform.getInstallLocation().getURL().toString();
-	private String eclipsePath = fullPath.substring(6,
-			(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
 	private List<Component> components = new ArrayList<Component>();
-	private List<String> componentPaths = new ArrayList<String>();
-	private String deapPath = null;
+	private DideHelper dideHelper = new DideHelper();
+	private String didePath = dideHelper.getDIDEPath();
 
-	private String getCpuSrcPath(String cpuName) {
-		String sourcePath = eclipsePath + "djysrc/bsp/cpudrv";
-		File sourceFile = new File(sourcePath);
-		File[] files = sourceFile.listFiles();
-		String path = null;
-		for (File file : files) {// cpudrv下的所有文件 Atmel stm32
-			if (file.isDirectory()) {
-				getDeapPath(file, cpuName);
-				if (deapPath != null) {
-					path = deapPath + "/../src";
-					break;
-				}
-			}
-
-		}
-		return path;
-	}
-
-	public String getDeapPath(File sourceFile, String cpuName) {
-		File[] files = sourceFile.listFiles();
-		String path = null;
-		for (File file : files) {
-			if (file.isDirectory()) {
-				if (file.getName().equals(cpuName)) {
-					deapPath = file.getPath();
-					break;
-				} else if (!file.getName().equals("include") && !file.getName().equals("src")) {
-					getDeapPath(file, cpuName);// 如果为目录，则继续扫描该目录
-				}
+	private void getCpuSrcPath(File cpuFolder, List<String> cpuSrcPaths) {
+		File[] files = cpuFolder.listFiles();
+		for(File f:files) {
+			if(f.getName().equals("src")) {
+				cpuSrcPaths.add(f.getPath());
+				break;
 			}
 		}
-		return deapPath;
+		if(!cpuFolder.getParentFile().getName().equals("cpudrv")) {
+			getCpuSrcPath(cpuFolder.getParentFile(),cpuSrcPaths);
+		}
 	}
 
 	// 遍历组件及其子组件
 	private void traverFiles(File file) {
 		if(!file.getName().equals("include")) {
-			File[] files = file.listFiles();
-			List<File> allFiles = new ArrayList<File>();
-			List<File> pureFiles = new ArrayList<File>();
-			List<File> folderFiles = new ArrayList<File>();
-
-			for (File f : files) {
-				if(f.isDirectory()) {
-					folderFiles.add(f);
-				}else if(f.isFile() && (f.getName().endsWith(".c") || f.getName().endsWith(".h"))) {
-					pureFiles.add(f);
-				}
-			}
 			
-			allFiles.addAll(folderFiles);
-			allFiles.addAll(pureFiles);
-					
+			List<File> allFiles = dideHelper.sortFileAndFolder(file);
 			boolean hExist = false;
-			
+			File hFile = null;
 			for (File f : allFiles) {
 				if (f.getName().endsWith(".h") && f.getName().contains("component_config")) {
 					hExist = true;
-					try {
-						getComponent(f);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					hFile = f;
 					break;
 				}
 			}
@@ -96,7 +59,6 @@ public class ReadComponent {
 			if (!hExist) {
 				if (!file.getPath().contains("third")) {
 					for (File f : allFiles) {
-						System.out.println("file2:   "+f.getName());
 						if (f.isDirectory()) {
 							traverFiles(f);
 						} else if (f.getName().endsWith(".c")) {
@@ -123,27 +85,34 @@ public class ReadComponent {
 						}
 					}
 				}
+				try {
+					getComponent(hFile);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		
 		}	
 	}
+	
+	private Cpu getCpuByBoard(OnBoardCpu onBoardCpu) {
+		ReadCpuXml rcx = new ReadCpuXml();
+		List<Cpu> cpusList =  rcx.getAllCpus();
+		for(int i=0;i<cpusList.size();i++) {
+			if(cpusList.get(i).getCpuName().equals(onBoardCpu.getCpuName())) {
+				return cpusList.get(i);
+			}
+		}
+		return null;
+	}
 
 	public List<Component> getComponents(OnBoardCpu onBoardCpu,Board board) {
-		String componentPath = eclipsePath+"djysrc/component";
-		String libcPath = eclipsePath+"djysrc/libc";
-		String djyosPath = eclipsePath+"djysrc/djyos";
-		String thirdPath = eclipsePath+"djysrc/third";
-		String loaderPath = eclipsePath+"djysrc/loader";
-		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
-		String userPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+board.getBoardName();
-		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
-		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
-		componentPaths.add(componentPath);
-		componentPaths.add(djyosPath);
-		componentPaths.add(demoPath);
-		componentPaths.add(userPath);
-		componentPaths.add(loaderPath);
-		componentPaths.add(thirdPath);
+		ComponentRefer cRefer = new ComponentRefer();
+		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
+		String libcPath = didePath+"djysrc/libc";
+		String chipPath = didePath + "djysrc/bsp/chipdrv";
+		
 		for (int i = 0; i < componentPaths.size(); i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			if (sourceFile.exists()) {
@@ -168,15 +137,18 @@ public class ReadComponent {
 		}
 		
 		traverFiles(new File(libcPath));
-		
 		// 板载cpu的芯片、cpu的src目录
 		List<Chip> chips = onBoardCpu.getChips();
 		List<String> chipNames = new ArrayList<String>();
-		String cpuSrcPath = getCpuSrcPath(onBoardCpu.getCpuName());
+		
+		Cpu cpu = getCpuByBoard(onBoardCpu);
+		List<String> cpuSrcPaths = new ArrayList<String>();
+		File cpuFolder = new File(cpu.getParentPath());
+		getCpuSrcPath(cpuFolder,cpuSrcPaths);
+		
 		for(int i=0;i<chips.size();i++) {
 			chipNames.add(chips.get(i).getChipName());
 		}
-		
 		if(chips.size()>0) {
 			File chipFile = new File(chipPath);
 			if(chipFile.exists()) {
@@ -190,48 +162,24 @@ public class ReadComponent {
 			
 		}
 		
-		traverParentSrc(cpuSrcPath);
+		for(String path:cpuSrcPaths) {
+			traverParentSrc(path);
+		}
+		
 		return components;
 	}
 	
 	public List<Component> getAllComponents(OnBoardCpu onBoardCpu,Board board) {
-		String componentPath = eclipsePath+"djysrc/component";
-		String libcPath = eclipsePath+"djysrc/libc";
-		String djyosPath = eclipsePath+"djysrc/djyos";
-		String thirdPath = eclipsePath+"djysrc/third";
-		String loaderPath = eclipsePath+"djysrc/loader";
-		String demoPath = eclipsePath+"djysrc/bsp/boarddrv/demo/"+board.getBoardName();
-		String userPath = eclipsePath+"djysrc/bsp/boarddrv/user/"+board.getBoardName();
-		String chipPath = eclipsePath + "djysrc/bsp/chipdrv";
-		String cpuPath = eclipsePath + "djysrc/bsp/cpudrv";
-		componentPaths.add(componentPath);
-		componentPaths.add(djyosPath);
-		componentPaths.add(demoPath);
-		componentPaths.add(userPath);
+		ComponentRefer cRefer = new ComponentRefer();
+		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
+		String libcPath = didePath+"djysrc/libc";
+		String chipPath = didePath + "djysrc/bsp/chipdrv";
 		componentPaths.add(chipPath);
-		componentPaths.add(loaderPath);
-		componentPaths.add(thirdPath);
 		for (int i = 0; i < componentPaths.size(); i++) {
-			File sourceFile = new File(componentPaths.get(i));//component,djyos,third...
+			File sourceFile = new File(componentPaths.get(i));
 			if (sourceFile.exists()) {
-				File[] files = sourceFile.listFiles();
-				List<File> allFiles = new ArrayList<File>();
-				List<File> pureFiles = new ArrayList<File>();
-				List<File> folderFiles = new ArrayList<File>();
-
-				for (File f : files) {
-					if(f.isDirectory()) {
-						folderFiles.add(f);
-					}else if(f.isFile() && (f.getName().endsWith(".c") || f.getName().endsWith(".h"))) {
-						pureFiles.add(f);
-					}
-				}
-				
-				allFiles.addAll(folderFiles);
-				allFiles.addAll(pureFiles);
-				
+				List<File> allFiles = dideHelper.sortFileAndFolder(sourceFile);
 				for (File file : allFiles) {
-					System.out.println("file1:   "+file.getName());
 					if (file.isDirectory()) {
 						traverFiles(file);
 					} else {
@@ -251,10 +199,14 @@ public class ReadComponent {
 		}
 		
 		traverFiles(new File(libcPath));
-		
 		// cpu的src目录
-		String cpuSrcPath = getCpuSrcPath(onBoardCpu.getCpuName());
-		traverParentSrc(cpuSrcPath);
+		Cpu cpu = getCpuByBoard(onBoardCpu);
+		List<String> cpuSrcPaths = new ArrayList<String>();
+		File cpuFolder = new File(cpu.getParentPath());
+		getCpuSrcPath(cpuFolder,cpuSrcPaths);
+		for(String path:cpuSrcPaths) {
+			traverParentSrc(path);
+		}
 		return components;
 	}
 	
@@ -279,11 +231,6 @@ public class ReadComponent {
 				}
 			}
 			
-		}
-		String parentSrcPath = cpuSrcPath+"/../../src";
-		File parentSrcFile = new File(parentSrcPath);
-		if(parentSrcFile.exists()) {
-			traverParentSrc(parentSrcPath);
 		}
 	}
 
@@ -385,14 +332,10 @@ public class ReadComponent {
 					targetLine = allStrings.get(i);
 				}
 			}
-			
 			String[] tInfos = targetLine.split("=");
 			String[] rights = tInfos[1].split("//");
 			String targetString = rights[0].trim();
 			newComponent.setTarget(targetString);			
-			
-//			System.out.println("infos:  " + iStart+"  "+iStop+"  "+dStart+"  "+dStop+"  "+cStart+"  "+cStop+"  "+eStart+"  "+eStop);
-			
 			for(int i=iStart+1;i<iStop;i++) {
 				String initCode = allStrings.get(i).trim().replaceFirst("//", "");
 				if(!initCode.equals("")) {
@@ -437,44 +380,48 @@ public class ReadComponent {
 				
 				String[] infos = describe.split("//");
 				if(infos.length>1 && infos[1].trim().contains(":")) {
-					String menbers[] = infos[1].trim().split(":");
-					if (menbers[0].trim().equals("component name")) {
-						newComponent.setName(menbers[1].trim().replace("\"", ""));
-						if(infos.length>2) {
-							newComponent.setAnnotation(infos[2].trim());
+					String members[] = infos[1].trim().split(":");
+					if(!members[1].contains("/") || members[1].split("//").length>1) {
+						if (members[0].trim().equals("component name")) {
+							newComponent.setName(members[1].trim().replace("\"", ""));
+							if (infos.length > 2) {
+								newComponent.setAnnotation(infos[2].trim());
+							}
+						}else if (members[0].trim().equals("parent")) {
+							newComponent.setParent(members[1].trim().replace("\"", ""));
+						}else if (members[0].trim().equals("attribute")) {
+							newComponent.setAttribute(members[1].trim());
+						}else if (members[0].trim().equals("select")) {
+							newComponent.setSelectable(members[1].trim());
+						}else if (members[0].trim().equals("init time")) { //init time
+							newComponent.setGrade(members[1].trim());
+						}else if (members[0].trim().equals("dependence")) {
+							String[] deps = members[1].split(",");
+							for(int i=0;i<deps.length;i++) {
+								String name = deps[i].trim().replace("\"", "");
+								if (!name.equals("none")) {
+									newComponent.getDependents().add(name);
+								}
+							}					
+						}else if (members[0].trim().equals("weakdependence")) {		
+							String[] deps = members[1].split(",");
+							for(int i=0;i<deps.length;i++) {
+								String name = deps[i].trim().replace("\"", "");
+								if (!name.equals("none")) {
+									newComponent.getWeakDependents().add(name);
+								}
+							}		
+						}else if (members[0].trim().equals("mutex")) {
+							String[] deps = members[1].split(",");
+							for(int i=0;i<deps.length;i++) {
+								String name = deps[i].trim().replace("\"", "");
+								if (!name.equals("none")) {
+									newComponent.getMutexs().add(name);
+								}
+							}	
 						}
-					}else if (menbers[0].trim().equals("parent")) {
-						newComponent.setParent(menbers[1].trim().replace("\"", ""));
-					}else if (menbers[0].trim().equals("attribute")) {
-						newComponent.setAttribute(menbers[1].trim());
-					}else if (menbers[0].trim().equals("select")) {
-						newComponent.setSelectable(menbers[1].trim());
-					}else if (menbers[0].trim().equals("grade")) {
-						newComponent.setGrade(menbers[1].trim());
-					}else if (menbers[0].trim().equals("dependence")) {
-						String[] deps = menbers[1].split(",");
-						for(int i=0;i<deps.length;i++) {
-							String name = deps[i].trim().replace("\"", "");
-							if (!name.equals("none")) {
-								newComponent.getDependents().add(name);
-							}
-						}					
-					}else if (menbers[0].trim().equals("weakdependence")) {		
-						String[] deps = menbers[1].split(",");
-						for(int i=0;i<deps.length;i++) {
-							String name = deps[i].trim().replace("\"", "");
-							if (!name.equals("none")) {
-								newComponent.getWeakDependents().add(name);
-							}
-						}		
-					}else if (menbers[0].trim().equals("mutex")) {
-						String[] deps = menbers[1].split(",");
-						for(int i=0;i<deps.length;i++) {
-							String name = deps[i].trim().replace("\"", "");
-							if (!name.equals("none")) {
-								newComponent.getMutexs().add(name);
-							}
-						}	
+					}else {
+						dideHelper.showErrorMessage("组件描述文件 "+file.getName()+" 的%$#@describe格式描述有误：/");
 					}
 				}			
 			}

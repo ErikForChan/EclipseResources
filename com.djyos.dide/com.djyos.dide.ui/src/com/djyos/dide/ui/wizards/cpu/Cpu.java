@@ -49,7 +49,7 @@ public class Cpu {
 		this.cores = cores;
 	}
 
-	public Cpu(String cpuName, String parentPath, List<Core> cores) {
+	public Cpu(String cpuName,String parentPath, List<Core> cores) {
 		super();
 		this.cpuName = cpuName;
 		this.parentPath = parentPath;

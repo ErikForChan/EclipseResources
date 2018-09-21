@@ -50,7 +50,9 @@ import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 
 public class GitHandler {
-	//https://git.coding.net/djyos/source.git  https://gitee.com/djyos/source.git https://github.com/ErikForChan/Arraylist_link.git
+	//https://git.coding.net/djyos/source.git  
+	//https://gitee.com/djyos/source.git
+	//https://github.com/ErikForChan/Arraylist_link.git
 	DeleteFolder df = new DeleteFolder();
 	DideHelper dideHelper = new DideHelper();
 	String djysrcPath= dideHelper.getDjyosSrcPath();

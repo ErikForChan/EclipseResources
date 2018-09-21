@@ -19,14 +19,15 @@ import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardMemory;
 import com.djyos.dide.ui.wizards.component.Component;
-
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 import com.djyos.dide.ui.wizards.board.Board;
 
 public class ReadBoardXml {
 	private static DocumentBuilderFactory dbFactory = null;
 	private static DocumentBuilder db = null;
 	private static Document document = null;
-	private static Board board = null;
+	private DideHelper dideHelper = new DideHelper();
+	
 	static {
 		try {
 			dbFactory = DocumentBuilderFactory.newInstance();
@@ -36,18 +37,11 @@ public class ReadBoardXml {
 		}
 	}
 	
-	private String getDIDEPath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,
-				(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
-		return eclipsePath;
-	}
-
 	public List<Board> getAllBoards() {
 		List<Board> boards = new ArrayList<Board>();
 		List<String> paths = new ArrayList<String>();
-		String userBoardFilePath = getDIDEPath() + "djysrc\\bsp\\boarddrv\\user";
-		String demoBoardFilePath = getDIDEPath() + "djysrc\\bsp\\boarddrv\\demo";
+		String userBoardFilePath = dideHelper.getUserBoardFilePath();
+		String demoBoardFilePath = dideHelper.getDemoBoardFilePath();
 		paths.add(userBoardFilePath);
 		paths.add(demoBoardFilePath);
 		for (int i = 0; i < paths.size(); i++) {

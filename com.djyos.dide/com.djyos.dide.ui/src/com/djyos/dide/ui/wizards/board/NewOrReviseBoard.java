@@ -55,7 +55,6 @@ import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardMemory;
 import com.djyos.dide.ui.wizards.component.Component;
 import com.djyos.dide.ui.wizards.component.ReadComponent;
-import com.djyos.dide.ui.wizards.component.ReadComponentXml;
 import com.djyos.dide.ui.wizards.cpu.Cpu;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
@@ -76,7 +75,7 @@ public class NewOrReviseBoard extends StatusDialog{
 	private Chip newChip;
 	private Text boardNameField, mainClkField, rtcClkField, addrField, sizeField;
 	private TabFolder folder;
-	private Combo interfaceCombo, memoryTypeCombo;
+	private Combo memoryTypeCombo;
 	private Label mainClkLabel;
 	private Button rtcClkBtn,addBtn,deleteBtn;
 	private Board boardInit;
@@ -87,7 +86,6 @@ public class NewOrReviseBoard extends StatusDialog{
 	private List<Chip> chipsList = null, chipsOn = null;
 	private List<OnBoardMemory> memorys = new ArrayList<OnBoardMemory>();
 	private List<Component> thePeripherals;// 点击板载cpu时用到的临时所有外设
-	private ReadComponentXml rcx = new ReadComponentXml();
 	private Composite boardAttributesCpt;
 	private Group ConfigurationGroup;
 	private	DideHelper dideHelper = new DideHelper();	
@@ -98,35 +96,7 @@ public class NewOrReviseBoard extends StatusDialog{
 	private List<Board> getBoards(){
 		ReadBoardXml rbx = new ReadBoardXml();
 		List<String> paths = new ArrayList<String>();
-		List<Board> boards = new ArrayList<Board>();
-		String userBoardFilePath = dideHelper.getUserBoardFilePath();
-		String demoBoardFilePath = dideHelper.getDemoBoardFilePath();
-		paths.add(userBoardFilePath);
-		paths.add(demoBoardFilePath);
-
-		for(int i=0;i<paths.size();i++) {
-			File boardFile = new File(paths.get(i));
-			File[] files = boardFile.listFiles();
-			for(int j=0;j<files.length;j++){
-					File file = files[j];
-					if(file.isDirectory()) {
-						File[] mfiles = file.listFiles();
-						for(int k=0;k<mfiles.length;k++) {
-							if(mfiles[k].getName().endsWith(".xml")) {
-								try {
-									Board board = rbx.getBoard(mfiles[k]);
-									boards.add(board);
-								} catch (Exception e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								break;
-							}
-						}
-					}
-			}
-		}
-		
+		List<Board> boards = rbx.getAllBoards();
 		return boards;
 	}
 	
@@ -210,7 +180,6 @@ public class NewOrReviseBoard extends StatusDialog{
 		GridLayout layout = new GridLayout();
 		composite.setLayout(layout);
 		createDynamicGroup(composite);
-
 		return super.createDialogArea(parent);
 	}
 
@@ -1150,7 +1119,7 @@ public class NewOrReviseBoard extends StatusDialog{
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				IAction action = getAction("org.eclipse.cdt.ui.wizards.NewCWizard4");
+				IAction action = dideHelper.getAction("org.eclipse.cdt.ui.wizards.NewCWizard4");
 				action.run();	
 				cpuArhives.removeAll();
 				ReadCpuXml rcx = new ReadCpuXml();
@@ -1196,7 +1165,6 @@ public class NewOrReviseBoard extends StatusDialog{
 		boardAttributesCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout layoutAttributes = new GridLayout();
 		layoutAttributes.numColumns = 3;
-//		layoutAttributes.marginLeft = 20;
 		boardAttributesCpt.setLayout(layoutAttributes);
 		
 		createTreeForCpus(boardAttributesCpt);
@@ -1514,14 +1482,14 @@ public class NewOrReviseBoard extends StatusDialog{
 								for(int j=0;j<cpu.getCores().size();j++) {
 									Core core = cpu.getCores().get(j);
 									descContent+="内核"+(j+1)+": ";
-									if(core.getType()!=null) {
-										descContent+="\n类型: "+core.getType();
+									if(core.getArch().getSerie()!=null) {
+										descContent+="\n类型: "+core.getArch().getSerie();
 									}
-									if(core.getArch()!=null) {
-										descContent+="\n架构: "+core.getArch();
+									if(core.getArch().getArchitecture()!=null) {
+										descContent+="\n架构: "+core.getArch().getArchitecture();
 									}
-									if(core.getFamily()!=null) {
-										descContent+="\n家族: "+core.getFamily();
+									if(core.getArch().getFamily()!=null) {
+										descContent+="\n家族: "+core.getArch().getFamily();
 									}
 									if(core.getFpuType()!=null) {
 										descContent+="\n浮点: "+core.getFpuType();
@@ -1641,21 +1609,4 @@ public class NewOrReviseBoard extends StatusDialog{
 			getCpuSrcPaths(cpuFile.getParentFile(),cpuSrcPaths);
 		}		
 	}
-
-	private IAction getAction(String id) {
-		// Keep a cache, rather than creating a new action each time,
-		// so that image caching in ActionContributionItem works.
-		IAction action = null;
-		IWizardDescriptor wizardDesc = WorkbenchPlugin.getDefault().getNewWizardRegistry().findWizard(id);
-		if (wizardDesc != null) {
-			action = new NewWizardShortcutAction(window, wizardDesc);
-			IConfigurationElement element = Adapters.adapt(wizardDesc, IConfigurationElement.class);
-			if (element != null) {
-				window.getExtensionTracker().registerObject(element.getDeclaringExtension(), action,
-						IExtensionTracker.REF_WEAK);
-			}
-		}
-		return action;
-	}
-	
 }

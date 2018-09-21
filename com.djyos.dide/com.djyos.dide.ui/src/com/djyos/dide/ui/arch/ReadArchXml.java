@@ -19,7 +19,30 @@ public class ReadArchXml {
 	private static Document document = null;
 	DideHelper dideHelper = new DideHelper();
 	
-	public Arch getArch(File file){
+	public Arch getMutiplyFileArch(File file,Arch arch) {
+		arch = getSingleFileArch(file,arch);
+		File parentFile = file.getParentFile();
+		if(!parentFile.getParentFile().getName().equals("arch")) {
+			File archfile = getChildArchFile(parentFile.getParentFile());
+			if(archfile != null) {
+				arch = getMutiplyFileArch(archfile,arch);
+			}
+		}
+		return arch;
+	}
+	
+	private File getChildArchFile(File parentFile) {
+		// TODO Auto-generated method stub
+		File[] files = parentFile.listFiles();
+		for(File f:files) {
+			if(f.getName().startsWith("arch") && f.getName().endsWith(".xml")) {
+				return f;
+			}
+		}
+		return null;
+	}
+
+	public Arch getSingleFileArch(File file, Arch arch){
 		
 		dbFactory = DocumentBuilderFactory.newInstance();
 		try {
@@ -29,25 +52,59 @@ public class ReadArchXml {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		Arch arch = new Arch();
-		NodeList archList = document.getElementsByTagName("Arch");
+		if(file.getName().equals("arch.xml")) {
+			arch.setArchPath(file.getPath());
+		}
+		NodeList archList = document.getElementsByTagName("arch");
 		if(archList.getLength() > 0) {
-			NodeList cList = archList.item(0).getChildNodes();
-			for(int i=0;i<cList.getLength();i++) {
-				Node node = cList.item(i);  
+			NodeList list = archList.item(0).getChildNodes();
+			for(int i=0;i<list.getLength();i++) {
+				Node node = list.item(i);  
 				if(node.getNodeType() == Node.ELEMENT_NODE) {
 					String nodeName = node.getNodeName();
 					String content = node.getFirstChild().getTextContent();
 					switch(nodeName) {
-					case "type":
-						arch.setType(content);
+					case "serie":
+						arch.setSerie(content);
 						break;
-					case "serial":
-						arch.setSerial(content);
+					case "architecture":
+						arch.setArchitecture(content);
 						break;
 					case "family":
 						arch.setFamily(content);
+						break;
+					case "compile-option":
+						NodeList list1 = node.getChildNodes();
+						for(int j=0;j<list1.getLength();j++) {
+							Node cNode = list1.item(j);  
+							if(cNode.getNodeType() == Node.ELEMENT_NODE) {
+								String cNodeName = cNode.getNodeName();
+								String cContent = cNode.getFirstChild().getTextContent();
+								switch(cNodeName) {
+									case "march":
+										arch.setMarch(cContent);
+										break;
+									case "mcpu":
+										arch.setMcpu(cContent);
+										break;
+								}
+							}
+						}
+						break;
+					case "vendor-option":
+						NodeList list2 = node.getChildNodes();
+						for(int j=0;j<list2.getLength();j++) {
+							Node cNode = list2.item(j);  
+							if(cNode.getNodeType() == Node.ELEMENT_NODE) {
+								String cNodeName = cNode.getNodeName();
+								String cContent = cNode.getFirstChild().getTextContent();
+								switch(cNodeName) {
+									case "fpu-type":
+										arch.setFpuType(cContent);
+										break;
+								}
+							}
+						}
 						break;
 					}
 				}

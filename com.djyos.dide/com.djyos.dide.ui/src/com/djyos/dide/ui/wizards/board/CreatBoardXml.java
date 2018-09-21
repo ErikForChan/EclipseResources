@@ -21,12 +21,12 @@ import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardMemory;
 import com.djyos.dide.ui.wizards.component.Component;
-
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 import com.djyos.dide.ui.wizards.board.Board;
 
 public class CreatBoardXml {
 	 DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
-	 
+	 private DideHelper dideHelper = new DideHelper();
      public void creatBoardXml(Board board,File file) {
         try {
         	factory.setIgnoringElementContentWhitespace(false);
@@ -111,6 +111,7 @@ public class CreatBoardXml {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
 		}
      }
 }

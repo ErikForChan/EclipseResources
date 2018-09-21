@@ -24,7 +24,7 @@ public class CreateCpuInfo {
 	private String didePath = new DideHelper().getDIDEPath();
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	String srcLocation = didePath+"djysrc";
-	
+	private DideHelper dideHelper = new DideHelper();
 	public void createCpuInfo(File file,List<Cpu> cpus) {
 		
 		DocumentBuilder builder;
@@ -53,6 +53,7 @@ public class CreateCpuInfo {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
 		}             
 		
 	}

@@ -15,13 +15,13 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.djyos.dide.ui.wizards.cpu.Cpu;
-
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 import com.djyos.dide.ui.wizards.board.Board;
 
 public class CreateHardWareDesc {
-	
+	private DideHelper dideHelper = new DideHelper();
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	public void createHardWareXml(Board board,Cpu cpu,File file){
+	public void createHardWareXml(String boardName,String cpuName,File file){
 		try {
 			factory.setIgnoringElementContentWhitespace(false);
 	    	DocumentBuilder builder = factory.newDocumentBuilder();             
@@ -29,9 +29,9 @@ public class CreateHardWareDesc {
 	    	Element hardwareElement = document.createElement("hardware");
 	    	
 	    	Element baordElement = document.createElement("baord");
-	    	baordElement.setTextContent(board.getBoardName());
+	    	baordElement.setTextContent(boardName);
 	    	Element cpuElement = document.createElement("cpu");
-	    	cpuElement.setTextContent(cpu.getCpuName());
+	    	cpuElement.setTextContent(cpuName);
 	    	
 	    	hardwareElement.appendChild(baordElement);
 	    	hardwareElement.appendChild(cpuElement);
@@ -49,6 +49,8 @@ public class CreateHardWareDesc {
 	    	
 		} catch (Exception e) {
 			// TODO: handle exception
+			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
 		}
 		
 	}

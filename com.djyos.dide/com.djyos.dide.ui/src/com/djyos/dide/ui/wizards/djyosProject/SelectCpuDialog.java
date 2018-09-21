@@ -35,12 +35,10 @@ import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
 public class SelectCpuDialog extends StatusDialog{
 
 	private String detailsDesc = null;
-	private Text detailsField;
+	private Text detailsField,cpuEditText;
 	private Label cpuSearchLabel;
-	private Text cpuEditText;
 	private Tree cpuTree;
-	private List<Cpu> cpus = new ArrayList<Cpu>();
-	private List<Cpu> cpusFiltered;
+	private List<Cpu> cpus = new ArrayList<Cpu>(),cpusFiltered;
 	private Cpu cpuSelected;
 	
 	public Cpu getSelectCpu() {
@@ -52,7 +50,6 @@ public class SelectCpuDialog extends StatusDialog{
 		cpus = boardCpusList;
 		setTitle("—°‘ÒCpu");
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -148,8 +145,8 @@ public class SelectCpuDialog extends StatusDialog{
 							List<Core> cores = cpu.getCores();
 							for(int j=0;j<cores.size();j++) {
 								Core core = cores.get(j);
-								String arch = core.getArch();
-								String family = core.getFamily();
+								String arch = core.getArch().getArchitecture();
+								String family = core.getArch().getFamily();
 								String fpuType = core.getFpuType();
 								String resetAddr = core.getResetAddr();
 								String memoryString = "";
@@ -189,12 +186,6 @@ public class SelectCpuDialog extends StatusDialog{
 		columnCpus.setWidth(140);
 		columnCpus.setResizable(false);
 		columnCpus.setToolTipText("Cpu");
-	}
-	
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
 	}
 
 }

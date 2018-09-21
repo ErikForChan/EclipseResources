@@ -50,14 +50,13 @@ import com.djyos.dide.ui.wizards.board.ReadBoardXml;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 
 public class DjyosGeneralPage extends PropertyPage{
-	private OnBoardCpu onBoardCpu = null;
 	private Board sBoard = null;
 	private List<Cpu> cpusList = null;
-	private Button showGitUpdateButton;
 	private Button hiddenLibosButton;
-	boolean showUpdate,hiddenLibos;
+	boolean hiddenLibos;
+	private IProject  project;
 	DideHelper dideHelper = new DideHelper();
-	String dideGitPrefsPath = dideHelper.getDIDEPath()+"IDE/configuration/.settings/com.djyos.ui.prefs";
+	String didePjPrefsPath;
 	
 	private boolean targetIsTrue(File dideGitPrefsFile, String target) {
 		// TODO Auto-generated method stub
@@ -123,11 +122,11 @@ public class DjyosGeneralPage extends PropertyPage{
         	bufAll.append(target+"="+isTrue+"\n");
         }
         didePrefsFile.delete();
-        fillGitPrefsFile(didePrefsFile,bufAll.toString());
+        fillDidePrefsFile(didePrefsFile,bufAll.toString());
         
 	}
 	
-	private void fillGitPrefsFile(File dideGitPrefsFile, String content) {
+	private void fillDidePrefsFile(File dideGitPrefsFile, String content) {
 		// TODO Auto-generated method stub
 		try {
 			dideGitPrefsFile.createNewFile();
@@ -146,12 +145,6 @@ public class DjyosGeneralPage extends PropertyPage{
 		}
 	}
 	
-	private String getDIDEPath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
-	}
-	
 	private IProject getProject(){
 		Object	element	= getElement();
 		IProject project	= null;
@@ -167,13 +160,12 @@ public class DjyosGeneralPage extends PropertyPage{
 	@Override
 	public boolean performOk() {
 		// TODO Auto-generated method stub
-		boolean noticeMe = showGitUpdateButton.getSelection();
 		boolean hiddenLibosOption = hiddenLibosButton.getSelection();
 		IRunnableWithProgress runnable = new IRunnableWithProgress() {
 			@Override
 			public void run(IProgressMonitor monitor) {
 				monitor.beginTask("保存设置...", 10);	
-				handleOK(monitor,noticeMe,hiddenLibosOption);
+				handleOK(monitor,hiddenLibosOption);
 				monitor.worked(10);
 				monitor.done();
 				monitor.setTaskName("完成");
@@ -190,17 +182,16 @@ public class DjyosGeneralPage extends PropertyPage{
 		return true;
 	}
 
-	protected void handleOK(IProgressMonitor monitor, boolean noticeMe, boolean hiddenLibosOption) {
+	protected void handleOK(IProgressMonitor monitor, boolean hiddenLibosOption) {
 		// TODO Auto-generated method stub
-		File didePrefsFile = new File(dideGitPrefsPath);
-		if(!didePrefsFile.exists()) {
-			fillGitPrefsFile(didePrefsFile,"SHOW_GIT_UPDATE_DIALOG="+noticeMe);
-		}else {
-			if (showUpdate!=noticeMe) {
-				setDjyosUiPrefs(didePrefsFile,noticeMe,"SHOW_GIT_UPDATE_DIALOG");
-			}
+		File didePrefsFile = new File(didePjPrefsPath);
+		if(didePrefsFile.exists()) {
 			if (hiddenLibos!=hiddenLibosOption) {
 				setDjyosUiPrefs(didePrefsFile,hiddenLibosOption,"HIDDEN_LIBOS_COMPILER");
+			}
+		}else {
+			if (hiddenLibos!=hiddenLibosOption) {
+				fillDidePrefsFile(didePrefsFile,"HIDDEN_LIBOS_COMPILER="+hiddenLibosOption);
 			}
 		}
 	}
@@ -208,21 +199,18 @@ public class DjyosGeneralPage extends PropertyPage{
 	@Override
 	protected Control createContents(Composite parent) {
 		// TODO Auto-generated method stub
-		File dideGitPrefsFile = new File(dideGitPrefsPath);
+		project = getProject();
+		didePjPrefsPath = project.getLocation().toString()+"/.settings/com.djyos.ui.prefs";
+		File didePrefsFile = new File(didePjPrefsPath);
 		
-		if(dideGitPrefsFile.exists()) {
-			showUpdate = targetIsTrue(dideGitPrefsFile,"SHOW_GIT_UPDATE_DIALOG");
-			hiddenLibos = targetIsTrue(dideGitPrefsFile,"HIDDEN_LIBOS_COMPILER");
+		if(didePrefsFile.exists()) {
+			hiddenLibos = targetIsTrue(didePrefsFile,"HIDDEN_LIBOS_COMPILER");
 		}else {
-			showUpdate = true;
-			hiddenLibos = true;
+			hiddenLibos = false;
 		}
-		showGitUpdateButton = new Button(parent,SWT.CHECK);
-		showGitUpdateButton.setText("Show prompt when Djyos Resource is updatable");
-		showGitUpdateButton.setSelection(showUpdate);
 		
 		hiddenLibosButton = new Button(parent,SWT.CHECK);
-		hiddenLibosButton.setText("Hidden libos compiler options for projects in workspace");
+		hiddenLibosButton.setText("隐藏本工程的Libos编译选项");
 		hiddenLibosButton.setSelection(hiddenLibos);
 		
 		Group descGroup = ControlFactory.createGroup(parent, "硬件描述", 1);
@@ -245,9 +233,9 @@ public class DjyosGeneralPage extends PropertyPage{
 						List<Core> cores = cpu.getCores();
 						for(int j=0;j<cores.size();j++) {
 							infos+="\n\t\t内核"+(j+1)+"：";
-							infos+="\n\t\t\t类型："+cores.get(j).getType();
-							infos+="\n\t\t\t架构："+cores.get(j).getArch();
-							infos+="\n\t\t\t家族："+cores.get(j).getFamily();
+							infos+="\n\t\t\t类型："+cores.get(j).getArch().getSerie();
+							infos+="\n\t\t\t架构："+cores.get(j).getArch().getArchitecture();
+							infos+="\n\t\t\t家族："+cores.get(j).getArch().getFamily();
 							infos+="\n\t\t\t浮点："+cores.get(j).getFpuType();
 							List<CoreMemory> coreMemorys = cores.get(j).getMemorys();
 							infos+="\n\t\t\t片内内存：";
@@ -310,9 +298,9 @@ public class DjyosGeneralPage extends PropertyPage{
 					List<Core> cores = cpu.getCores();
 					for(int j=0;j<cores.size();j++) {
 						infos+="\n\t\t内核"+(j+1)+"：";
-						infos+="\n\t\t\t类型："+cores.get(j).getType();
-						infos+="\n\t\t\t架构："+cores.get(j).getArch();
-						infos+="\n\t\t\t家族："+cores.get(j).getFamily();
+						infos+="\n\t\t\t类型："+cores.get(j).getArch().getSerie();
+						infos+="\n\t\t\t架构："+cores.get(j).getArch().getArchitecture();
+						infos+="\n\t\t\t家族："+cores.get(j).getArch().getFamily();
 						infos+="\n\t\t\t浮点："+cores.get(j).getFpuType();
 						List<CoreMemory> coreMemorys = cores.get(j).getMemorys();
 						infos+="\n\t\t\t片内内存：";
@@ -368,84 +356,15 @@ public class DjyosGeneralPage extends PropertyPage{
 	}
 	
 	private void getBoardAndCpu() {
-		IProject project = getProject();
 		String srcPath = project.getLocation().toString()+"/src";
 		File hardWardInfoFile = new File(srcPath+"/../"+"data/hardware_info.xml");
 		ReadHardWareDesc rhwd = new ReadHardWareDesc();
 		List<String> hardwares = rhwd.getHardWares(hardWardInfoFile);
 		String cpuName=hardwares.get(1);
 		String boardName=hardwares.get(0);
-//		IFile pfile = project.getFile(".project");
-//		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
-//		factory.setIgnoringElementContentWhitespace(true);    
-//		Document doc = null;
-//		DocumentBuilder db;
-//		try {
-//			db = factory.newDocumentBuilder();
-//			doc = db.parse(pfile.getLocation().toFile());
-//		} catch (Exception e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		
-//		// 获取根节点
-//        Element root = doc.getDocumentElement();
-//        NodeList linkList = doc.getElementsByTagName("link");
-//        boolean boardGet = false;
-//        boolean cpuGet = false;
-//        for(int i=0;i<linkList.getLength();i++) {
-//        	Node node = linkList.item(i);
-//        	NodeList cList = node.getChildNodes();
-//			for (int j = 1; j < cList.getLength(); j += 2) {
-//				org.w3c.dom.Node cNode = cList.item(j);
-//				String nodeName = cNode.getNodeName();
-//				String linkContent = cNode.getTextContent();		
-//				//节点名字为name
-//				if(nodeName.equals("name")) {
-//					if(linkContent.contains("src/libos/bsp/boarddrv/")) {												
-//						boardName = linkContent.replaceAll("src/libos/bsp/boarddrv/", "");
-//						boardGet = true;
-//					}else if(linkContent.contains("src/libos/bsp/cpudrv/")) {							
-//						cpuName = linkContent.replaceAll("src/libos/bsp/cpudrv/", "");
-//						cpuGet = true;	
-//					}
-//					break;
-//				}  	        	
-//			}      
-//			if(boardGet && cpuGet){
-//				break;
-//			}
-//        }
-		
-		
 
 		ReadBoardXml rbx = new ReadBoardXml();
-		List<Board> boards = new ArrayList<Board>();
-		List<String> paths = new ArrayList<String>();	
-		String userBoardFilePath = getDIDEPath()+"djysrc\\bsp\\boarddrv\\user";
-		String demoBoardFilePath = getDIDEPath()+"djysrc\\bsp\\boarddrv\\demo";
-		paths.add(userBoardFilePath);
-		paths.add(demoBoardFilePath);
-		for(int i=0;i<paths.size();i++) {
-			File boardFile = new File(paths.get(i));
-			File[] files = boardFile.listFiles();
-			for(int j=0;j<files.length;j++){
-					File file = files[j];
-					File[] mfiles = file.listFiles();
-					for(int k=0;k<mfiles.length;k++) {
-						if(mfiles[k].getName().endsWith(".xml")) {
-							try {
-								Board board = rbx.getBoard(mfiles[k]);
-								boards.add(board);
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							break;
-						}
-					}
-			}
-		}
+		List<Board> boards = rbx.getAllBoards();
 		
 		for(int i=0;i<boards.size();i++) {
 			if(boards.get(i).getBoardName().equals(boardName)) {
@@ -458,7 +377,7 @@ public class DjyosGeneralPage extends PropertyPage{
 			List<OnBoardCpu> onBoardCpus = sBoard.getOnBoardCpus();
 			for(int i=0;i<onBoardCpus.size();i++) {
 				if(onBoardCpus.get(i).getCpuName().equals(cpuName)) {
-					onBoardCpu = onBoardCpus.get(i);
+					onBoardCpus.get(i);
 					break;
 				}
 			}
@@ -466,12 +385,10 @@ public class DjyosGeneralPage extends PropertyPage{
 		
 	}
 
-	
 	@Override
 	public boolean isDjyos() {
 		// TODO Auto-generated method stub
 		return true;
 	}
 	
-		
 }

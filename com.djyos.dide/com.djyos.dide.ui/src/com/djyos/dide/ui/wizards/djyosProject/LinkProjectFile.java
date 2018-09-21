@@ -18,15 +18,14 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+
 
 public class LinkProjectFile {
 	DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance(); 
-	private String eclipsePath = getEclipsePath();
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
-	}
+	private DideHelper dideHelper = new DideHelper();
+	private String didePath = dideHelper.getDIDEPath();
+	
 	public void addLink(IFile file,String objectName,String objectPath,String tag) {
 		 factory.setIgnoringElementContentWhitespace(false);
 		 DocumentBuilder builder;
@@ -40,7 +39,7 @@ public class LinkProjectFile {
 			Node typeNode = document.createElement("type");
 			typeNode.setTextContent("2");
 			Node locationURINode = document.createElement("locationURI");
-			String DJYOS_SRC_LOCARION = eclipsePath+"djysrc";
+			String DJYOS_SRC_LOCARION = didePath+"djysrc";
 			if(tag.equals("third") || tag.equals("component") || tag.equals("djyos")) {
 				objectPath = objectPath.substring(DJYOS_SRC_LOCARION.length()+1, objectPath.length());
 				nameNode.setTextContent("src/libos/"+tag+"/"+objectName);

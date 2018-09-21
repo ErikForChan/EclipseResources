@@ -22,30 +22,18 @@ public class GetNonCompFiles {
 	private String deapPath = null;
 	private List<File> excludeCompFiles = new ArrayList<File>();
 	private List<String> componentPaths = new ArrayList<String>();
+	ComponentRefer cRefer = new ComponentRefer();
 
 	// 遍历组件及其子组件
 	private void traverFiles(File file) {
 		if (!file.getName().equals("include")  && !file.getName().equals("startup")) {
-			File[] files = file.listFiles();
-			List<File> allFiles = new ArrayList<File>();
-			List<File> pureFiles = new ArrayList<File>();
-			List<File> folderFiles = new ArrayList<File>();
-
-			for (File f : files) {
-				if (f.isDirectory()) {
-					folderFiles.add(f);
-				} else if (f.isFile() && (f.getName().endsWith(".c") || f.getName().endsWith(".h"))) {
-					pureFiles.add(f);
-				}
-			}
-			allFiles.addAll(folderFiles);
-			allFiles.addAll(pureFiles);
-
+			
+			List<File> allFiles = dideHelper.sortFileAndFolder(file);
 			boolean hExist = false;
 			for (File f : allFiles) {
 				if (f.getName().endsWith(".h") && f.getName().contains("component_config")) {
 					hExist = true;
-					if (!isComponent(f)) {
+					if (!cRefer.isComponent(f)) {
 						excludeCompFiles.add(file);
 					}
 					break;
@@ -57,7 +45,7 @@ public class GetNonCompFiles {
 					List<File> excludeFiles = new ArrayList<File>();
 					for (File f : allFiles) {
 						if (f.getName().endsWith(".c")) {
-							if (isComponent(f)) {
+							if (cRefer.isComponent(f)) {
 								haveComp = true;
 							}
 						}
@@ -83,7 +71,7 @@ public class GetNonCompFiles {
 				if (f.isDirectory()) {
 					isComp = haveChildComp(f);
 				} else {
-					if (isComponent(f)) {
+					if (cRefer.isComponent(f)) {
 						isComp = true;
 					}
 				}
@@ -96,18 +84,9 @@ public class GetNonCompFiles {
 	}
 
 	public List<File> getExcludeCompFiles(OnBoardCpu onBoardCpu, Board board) {
-		String componentPath = didePath + "djysrc/component";
-		String djyosPath = didePath + "djysrc/djyos";
-		String thirdPath = didePath + "djysrc/third";
-		String demoPath = didePath + "djysrc/bsp/boarddrv/demo/" + board.getBoardName();
-		String userPath = didePath + "djysrc/bsp/boarddrv/user/" + board.getBoardName();
+		ComponentRefer cRefer = new ComponentRefer();
+		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
 		String chipPath = didePath + "djysrc/bsp/chipdrv";
-		String cpuPath = didePath + "djysrc/bsp/cpudrv";
-		componentPaths.add(componentPath);
-		componentPaths.add(djyosPath);
-		componentPaths.add(demoPath);
-		componentPaths.add(userPath);
-		componentPaths.add(thirdPath);
 		for (int i = 0; i < componentPaths.size(); i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			if (sourceFile.exists()) {
@@ -119,7 +98,7 @@ public class GetNonCompFiles {
 						if (!file.getPath().contains("third")) {
 							if (file.getName().endsWith(".c")) {
 								try {
-									if (!isComponent(file)) {
+									if (!cRefer.isComponent(file)) {
 										excludeCompFiles.add(file);
 									}
 								} catch (Exception e) {
@@ -186,43 +165,6 @@ public class GetNonCompFiles {
 			}
 		}
 		return deapPath;
-	}
-
-	public boolean isComponent(File file) {
-		FileReader reader = null;
-		List<String> allStrings = new ArrayList<String>();
-		try {
-			reader = new FileReader(file.getPath());
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		BufferedReader br = new BufferedReader(reader);
-		String str = null;
-		boolean start = false, stop = false;
-		try {
-			while ((str = br.readLine()) != null) {
-				if (str.contains("@#$%component configure")) {
-					start = true;
-				}
-				if (start && !stop) {
-					allStrings.add(str);
-				}
-				if (str.contains("@#$%component end configure")) {
-					stop = true;
-					break;
-				}
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		if (allStrings.size() != 0) {
-			return true;
-		}
-
-		return false;
 	}
 
 }

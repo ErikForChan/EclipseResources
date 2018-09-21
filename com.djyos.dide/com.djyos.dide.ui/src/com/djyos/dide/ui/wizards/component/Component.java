@@ -3,8 +3,6 @@ package com.djyos.dide.ui.wizards.component;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.djyos.dide.ui.wizards.component.InitInfo;
-
 public class Component {
 	private String name;
 	private String annotation;
@@ -22,7 +20,6 @@ public class Component {
 	private List<String> mutexs = new ArrayList<String>();
 	private List<String> excludes = new ArrayList<String>();
 	private List<String> includes = new ArrayList<String>();
-	private InitInfo init;
 	private String parentPath;//.h/.c¸¸Ä¿Â¼
 	private String target;
 	
@@ -136,14 +133,6 @@ public class Component {
 
 	public void setGrade(String grade) {
 		this.grade = grade;
-	}
-
-	public InitInfo getInit() {
-		return init;
-	}
-
-	public void setInit(InitInfo init) {
-		this.init = init;
 	}
 	
 	public List<String> getDependents() {

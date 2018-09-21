@@ -1,13 +1,17 @@
 package com.djyos.dide.ui.wizards.cpu;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -16,7 +20,12 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.ILog;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.swt.SWT;
@@ -33,6 +42,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
@@ -44,18 +54,22 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.IOConsole;
+import org.eclipse.ui.console.IOConsoleInputStream;
+import org.eclipse.ui.console.MessageConsole;
+import org.eclipse.ui.console.MessageConsoleStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
 import com.djyos.dide.ui.arch.Arch;
 import com.djyos.dide.ui.arch.ReadArchXml;
 import com.djyos.dide.ui.wizards.cpu.Cpu;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
-
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
-
 import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 
@@ -70,26 +84,17 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	private Cpu newCpu = new Cpu(),parentCpu = new Cpu(),curCpu = new Cpu(),revisingCpu = new Cpu();
 	private Core newCore = new Core();
 	private Text groupNameField;
-	private String curPath = null,groupName,cpuName,eclipsePath = getEclipsePath(),cpuTag = null,newConfig = null;
-	private boolean haveCore = false;
-	private List<String> configsList = new ArrayList<String>(),configsOn = new ArrayList<String>(),attributes = new ArrayList<String>(),firewareLibs = new ArrayList<String>();
+	private String curPath = null,groupName,cpuName,cpuTag = null;
+	private List<String> attributes = new ArrayList<String>(),firewareLibs = new ArrayList<String>();
 	private Combo numCombo1,numCombo2,numCombo3,numCombo4;
 	private Label memorySizeLabel,memoryAddrLabel,memoryTypeLabel;
 	private String tempName = null;
 	private DideHelper dideHelper = new DideHelper();
 	private List<TreeItem> archItems;
+	private File configFile;
 	private String didePath = dideHelper.getDIDEPath();
 	private IWorkbenchWindow window = PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow();
-	
-	/*
-	 * 获取当前Eclipse的路径
-	 */
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
-	}
 	
 	private void setMemoryCpt(boolean isEnable){	
 		memoryTypeLabel.setEnabled(isEnable);
@@ -126,8 +131,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			parentCpu.setCoreNum(cpu.getCoreNum());
 			parentCpu.setCores(cpu.getCores());
 			curCpu = parentCpu;
-			haveCore = true;
-			
 			newCpu = new Cpu();
 			newCpu.setCoreNum(cpu.getCoreNum());
 			for(int i=0;i<cpu.getCoreNum();i++) {
@@ -153,7 +156,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			}
 			ReadCpuXml rcx = new ReadCpuXml();
 			File curFile = new File(curPath);
-			File configFile = getXmlFile(curFile);
+			configFile = dideHelper.getXmlFile(curFile);
 			try {
 				if(configFile != null) {
 					revisingCpu = rcx.unitCpu(revisingCpu, configFile);
@@ -168,17 +171,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
 	}
 
-	private File getXmlFile(File parentFile) {
-		File file =null;
-		File[] files = parentFile.listFiles();
-		for(int i=0;i<files.length;i++){
-			if(files[i].getName().endsWith(".xml")) {
-				file = files[i];
-			}
-		}
-		return file;
-	}
-	
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
@@ -213,7 +205,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		Composite cpuGroupCpt = new Composite(composite, SWT.NULL);
 		GridLayout layoutAttributes = new GridLayout();
 		layoutAttributes.numColumns = 2;
-		layoutAttributes.marginHeight = 5;
 		cpuGroupCpt.setLayout(layoutAttributes);
 		cpuGroupCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
@@ -223,23 +214,29 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		cpuGroupTree.setHeaderVisible(true);
 		final TreeColumn columnGroupList = new TreeColumn(cpuGroupTree, SWT.NONE);
 		columnGroupList.setText("Cpu配置项");
-		columnGroupList.setWidth(90);
+		columnGroupList.setWidth(140);
 		columnGroupList.setResizable(false);
 		columnGroupList.setToolTipText("Cpu Attributes");
-		cpuGroupTree.setSize(120, 250);
+		columnGroupList.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
+		cpuGroupTree.setSize(150, 250);
 		List<String> cons = new ArrayList<String>();
 		cons.add("内核个数");
 		cons.add("复位配置");
-		cons.add("浮点配置");
+		//如果当前的内核个数不为0，且当前cpu内核的浮点不为空，则添加浮点配置项
+		if(curCpu.getCores().size()>0) {
+			boolean fpNeed = dideHelper.isFputypeuNeed(curCpu.getCores().get(0));
+			if(fpNeed) {
+				cons.add("浮点配置");
+			}
+		}
+		
 		cons.add("内核配置");
 		cons.add("存储配置");
 //		cons.add("固件库");
 		//之前是attributes
 		for(int i=0;i<cons.size();i++) {
-			configsList.add(cons.get(i));
 			TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
 			t.setText(cons.get(i));
-//			t.setBackground(color);
 			if(! attributes.contains(cons.get(i))) {
 				t.setImage(DPluginImages.CFG_DONE_VIEW.createImage());
 			}
@@ -304,9 +301,74 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			}
 		});
 		
+//	    PrintStream out = System.out;  
+//        PrintStream ps = null;
+//		try {
+//			ps = new PrintStream("G:/log.txt");
+//		} catch (FileNotFoundException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}  
+
+//        System.setOut(ps);  
+//        System.setOut(out);  
+//        System.out.println("程序运行完毕，请查看日志");  
+//        
+//        File f = new File("G:/outfile.txt");
+//		if (!f.exists()) {
+//			try {
+//				f.createNewFile();
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//		}
+//        FileOutputStream fileOutputStream = null;
+//		try {
+//			fileOutputStream = new FileOutputStream(f);
+//		} catch (FileNotFoundException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		PrintStream printStream = new PrintStream(fileOutputStream);
+//		System.setOut(printStream);
+//		
+//        MessageConsoleStream  console1 = this.createConsole("MyConsole1"); 
+//        console1.println("Hello, I'm out from MyConsole1");s
+//        ResourcesPlugin.getPlugin().get
+//		for (int i = 0; i <= 10; i++) {
+//			System.out.println("do something....");
+//		}
+        
+//	    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+//	    IConsole[] consoles = manager.getConsoles();
+//	    InputStream fInput = null;
+//		try {
+//			fInput = new FileInputStream(f);
+//		} catch (FileNotFoundException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		MessageConsole console = ((MessageConsole) consoles[0]);
+//	    ((IOConsole) consoles[0]).setInputStream(fInput);
+//	    MessageConsoleStream cs = console.newMessageStream();
+//	    conInSteam.toString();
+//	    System.out.println("msg:  "+conInSteam.toString());  
 		return super.createDialogArea(parent);
 	}
 	
+	 public MessageConsoleStream createConsole(String consoleName) { 
+	       MessageConsole console = new MessageConsole(consoleName,null);
+	       //新增、显示console
+	       IConsoleManager manager = (IConsoleManager) ConsolePlugin.getDefault().getConsoleManager();
+	       manager.addConsoles(new IConsole[]{console});
+	       manager.showConsoleView (console);
+	       //返回console流
+	       MessageConsoleStream cs = console.newMessageStream();
+	       cs.setColor(Display.getDefault().getSystemColor(SWT.COLOR_BLUE));       
+	       return cs;
+	   }
+
 	protected void creatFirmwareLibContent(Group contentGroup2) {
 		// TODO Auto-generated method stub
 		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
@@ -323,7 +385,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		nameLabel.setText("固件库选择: ");
 		Combo firmwareCombo = new Combo(configContent,SWT.READ_ONLY);
 		
-		File firewareFile = new File(eclipsePath+"djysrc\\third\\firmware");
+		File firewareFile = new File(dideHelper.getDIDEPath()+"djysrc\\third\\firmware");
 		File[] files = firewareFile.listFiles();
 		for(int i=0;i<files.length;i++) {
 			firewareLibs.add(files[i].getName());
@@ -527,12 +589,12 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		coreConfigCpt.setLayout(coreLayout);
 		coreConfigCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
-		Label abiLabel = new Label(coreConfigCpt,SWT.NONE);
-		abiLabel.setText("Float ABI： ");
-		Combo abiCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
-		String[] abis = {"Toolchain default","Library(soft)","FP instructions(hard)","Library with FP(softfp)"};
-		abiCombo.setItems(abis);
-		abiCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+//		Label abiLabel = new Label(coreConfigCpt,SWT.NONE);
+//		abiLabel.setText("Float ABI： ");
+//		Combo abiCombo = new Combo(coreConfigCpt,SWT.READ_ONLY);
+//		String[] abis = {"Toolchain default","Library(soft)","FP instructions(hard)","Library with FP(softfp)"};
+//		abiCombo.setItems(abis);
+//		abiCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		
 		Label fpuTypeLabel = new Label(coreConfigCpt,SWT.NONE);
 		fpuTypeLabel.setText("FPU Type： ");
@@ -543,14 +605,14 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		//内核个数为0时
 		if (curCpu.getCores().size() == 0) {
 			coreSelectCpt.setVisible(false);
-			if(newCore.getFloatABI()!=null) {
-				for(int i=0;i<abis.length;i++) {
-					if(newCore.getFloatABI().equals(abis[i])) {
-						abiCombo.select(i);
-						break;
-					}
-				}
-			}
+//			if(newCore.getFloatABI()!=null) {
+//				for(int i=0;i<abis.length;i++) {
+//					if(newCore.getFloatABI().equals(abis[i])) {
+//						abiCombo.select(i);
+//						break;
+//					}
+//				}
+//			}
 			if(newCore.getFpuType()!=null) {
 				if(newCore.getFloatABI().equals("Library(soft)")) {
 					fpuTypeCombo.select(0);
@@ -572,12 +634,12 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			
 			numCombo.select(0);
 			if(cores.get(0).getFloatABI()!=null) {
-				for(int i=0;i<abis.length;i++) {
-					if(abis[i].contains(cores.get(0).getFloatABI())) {
-						abiCombo.select(i);
-						break;
-					}
-				}
+//				for(int i=0;i<abis.length;i++) {
+//					if(abis[i].contains(cores.get(0).getFloatABI())) {
+//						abiCombo.select(i);
+//						break;
+//					}
+//				}
 				if(cores.get(0).getFpuType()!=null) {
 					if(cores.get(0).getFloatABI().equals("Library(soft)")) {
 						fpuTypeCombo.select(0);
@@ -603,15 +665,15 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				int selectIndex = numCombo.getSelectionIndex();
 				String floatABI = curCpu.getCores().get(selectIndex).getFloatABI();
 				String fpuType = curCpu.getCores().get(selectIndex).getFpuType();				
-				if(floatABI!=null) {
-					for(int i=0;i<abis.length;i++) {
-						if(abis[i].contains(floatABI)) {
-							abiCombo.select(i);
-						}
-					}
-				}else {
-					abiCombo.deselectAll();
-				}
+//				if(floatABI!=null) {
+//					for(int i=0;i<abis.length;i++) {
+//						if(abis[i].contains(floatABI)) {
+//							abiCombo.select(i);
+//						}
+//					}
+//				}else {
+//					abiCombo.deselectAll();
+//				}
 				if(fpuType!=null) {
 					for(int i=0;i<fpuTypes.length;i++) {
 						if(fpuTypes[i].contains(fpuType) ) {
@@ -629,80 +691,80 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				
 			}
 		});
-		//Float ABI复选框选择事件
-		abiCombo.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				String floatABI = abiCombo.getText();
-				int selectIndex = numCombo.getSelectionIndex();
-				if(curCpu.getCores().size()!=0) {
-					
-					if(floatABI.contains("hard")) {
-						newCpu.getCores().get(selectIndex).setFloatABI("hard");
-						if(tempName!=null) {
-							revisingCpu.getCores().get(selectIndex).setFloatABI("hard");
-						}
-						
-						curCpu.getCores().get(selectIndex).setFloatABI("hard");
-					}else if(floatABI.contains("softfp")) {
-						newCpu.getCores().get(selectIndex).setFloatABI("softfp");
-						if(tempName!=null) {
-							revisingCpu.getCores().get(selectIndex).setFloatABI("softfp");
-						}
-						
-						curCpu.getCores().get(selectIndex).setFloatABI("softfp");
-					}else if(floatABI.contains("soft")) {
-						newCpu.getCores().get(selectIndex).setFloatABI("soft");
-						if(tempName!=null) {
-							revisingCpu.getCores().get(selectIndex).setFloatABI("soft");
-						}
-						
-						curCpu.getCores().get(selectIndex).setFloatABI("soft");
-					}else{
-						newCpu.getCores().get(selectIndex).setFloatABI("default");
-						if(tempName!=null) {
-							revisingCpu.getCores().get(selectIndex).setFloatABI("default");
-						}
-						
-						curCpu.getCores().get(selectIndex).setFloatABI("default");
-					}
-				}else {
-					if(floatABI.contains("hard")) {
-						newCore.setFloatABI("hard");
-					}else if(floatABI.contains("softfp")) {
-						newCore.setFloatABI("softfp");
-					}else if(floatABI.contains("soft")) {
-						newCore.setFloatABI("soft");
-					}else{
-						newCore.setFloatABI("default");
-					}
-				}
-				if(floatABI.equals("Library(soft)")) {
-					fpuTypeCombo.select(0);
-					fpuTypeCombo.setEnabled(false);
-					if(curCpu.getCores().size()!=0) {
-						newCpu.getCores().get(selectIndex).setFpuType("default");
-						if(tempName!=null) {
-							revisingCpu.getCores().get(selectIndex).setFpuType("default");
-						}					
-						curCpu.getCores().get(selectIndex).setFpuType("default");
-					}else {
-						newCore.setFpuType("default");
-					}
-				}else {
-					fpuTypeCombo.setEnabled(true);
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-		//fpuTypeCombo福安选矿选择事件
+//		//Float ABI复选框选择事件
+//		abiCombo.addSelectionListener(new SelectionListener() {
+//			
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				String floatABI = abiCombo.getText();
+//				int selectIndex = numCombo.getSelectionIndex();
+//				if(curCpu.getCores().size()!=0) {
+//					
+//					if(floatABI.contains("hard")) {
+//						newCpu.getCores().get(selectIndex).setFloatABI("hard");
+//						if(tempName!=null) {
+//							revisingCpu.getCores().get(selectIndex).setFloatABI("hard");
+//						}
+//						
+//						curCpu.getCores().get(selectIndex).setFloatABI("hard");
+//					}else if(floatABI.contains("softfp")) {
+//						newCpu.getCores().get(selectIndex).setFloatABI("softfp");
+//						if(tempName!=null) {
+//							revisingCpu.getCores().get(selectIndex).setFloatABI("softfp");
+//						}
+//						
+//						curCpu.getCores().get(selectIndex).setFloatABI("softfp");
+//					}else if(floatABI.contains("soft")) {
+//						newCpu.getCores().get(selectIndex).setFloatABI("soft");
+//						if(tempName!=null) {
+//							revisingCpu.getCores().get(selectIndex).setFloatABI("soft");
+//						}
+//						
+//						curCpu.getCores().get(selectIndex).setFloatABI("soft");
+//					}else{
+//						newCpu.getCores().get(selectIndex).setFloatABI("default");
+//						if(tempName!=null) {
+//							revisingCpu.getCores().get(selectIndex).setFloatABI("default");
+//						}
+//						
+//						curCpu.getCores().get(selectIndex).setFloatABI("default");
+//					}
+//				}else {
+//					if(floatABI.contains("hard")) {
+//						newCore.setFloatABI("hard");
+//					}else if(floatABI.contains("softfp")) {
+//						newCore.setFloatABI("softfp");
+//					}else if(floatABI.contains("soft")) {
+//						newCore.setFloatABI("soft");
+//					}else{
+//						newCore.setFloatABI("default");
+//					}
+//				}
+//				if(floatABI.equals("Library(soft)")) {
+//					fpuTypeCombo.select(0);
+//					fpuTypeCombo.setEnabled(false);
+//					if(curCpu.getCores().size()!=0) {
+//						newCpu.getCores().get(selectIndex).setFpuType("default");
+//						if(tempName!=null) {
+//							revisingCpu.getCores().get(selectIndex).setFpuType("default");
+//						}					
+//						curCpu.getCores().get(selectIndex).setFpuType("default");
+//					}else {
+//						newCore.setFpuType("default");
+//					}
+//				}else {
+//					fpuTypeCombo.setEnabled(true);
+//				}
+//			}
+//			
+//			@Override
+//			public void widgetDefaultSelected(SelectionEvent e) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//		});
+//		//fpuTypeCombo福安选矿选择事件
 		fpuTypeCombo.addSelectionListener(new SelectionListener() {
 			
 			@Override
@@ -1339,10 +1401,10 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 
 	protected void resetArchTree(Core core) {
 		// TODO Auto-generated method stub
-		if(core.getType()!=null) {	
+		if(core.getArch().getSerie()!=null) {	
 			TreeItem[] typeItems = archTree.getItems();
 			for(TreeItem item:typeItems) {
-				if(item.getText().trim().equals(core.getType())) {
+				if(item.getText().trim().equals(core.getArch().getSerie())) {
 					travelItem(item,core);
 					break;
 				}
@@ -1354,7 +1416,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		// TODO Auto-generated method stub
 		TreeItem[] items = item.getItems();
 		for(TreeItem ti:items) {
-			if(ti.getText().trim().equals(core.getFamily())) {
+			if(ti.getText().trim().equals(core.getArch().getFamily())) {
 				setParentItemExpand(ti);
 				if(!ti.getGrayed()) {
 					ti.setChecked(true);
@@ -1388,11 +1450,12 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		columnArch.setWidth(200);
 		columnArch.setResizable(false);
 		columnArch.setToolTipText("请选择蓝色图标的一项");
+		columnArch.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
 		
 		File file = new File(didePath + "djysrc/bsp/arch");
 		File[] typeFiles = file.listFiles();
 		for (int i = 0; i < typeFiles.length; i++) {
-			if(containsXml(typeFiles[i])) {
+			if(dideHelper.containsXml(typeFiles[i])) {
 				TreeItem type = new TreeItem(archTree, SWT.NONE);
 				type.setText(typeFiles[i].getName());
 				type.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
@@ -1421,27 +1484,63 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 								t.setChecked(false);
 							}
 						}
+						
+						//获取当前的Arch对象
 						ReadArchXml rax = new ReadArchXml();
 						File xmlFile = new File(item.getData().toString());
-						Arch arch = rax.getArch(xmlFile);
-						if (newCpu.getCores().size() != 0) {
-							int selectIndex = numCombo4.getSelectionIndex();
-							newCpu.getCores().get(selectIndex).setType(arch.getType());
-							newCpu.getCores().get(selectIndex).setArch(arch.getSerial());
-							newCpu.getCores().get(selectIndex).setFamily(arch.getFamily());
-							if (tempName != null) {
-								revisingCpu.getCores().get(selectIndex).setType(arch.getType());
-								revisingCpu.getCores().get(selectIndex).setArch(arch.getSerial());
-								revisingCpu.getCores().get(selectIndex).setFamily(arch.getFamily());
-							}
+						Arch arch = new Arch();
+						arch = rax.getMutiplyFileArch(xmlFile,arch);
+//						System.out.println(arch.getArchitecture()+"  "+arch.getFamily()+"  "+arch.getFpuType()
+//						+"\n"+arch.getMarch()+"  "+arch.getMcpu()+"  "+arch.getSerie());
+						try {
+							if (newCpu.getCores().size() != 0) {
+								int selectIndex = numCombo4.getSelectionIndex();
+								newCpu.getCores().get(selectIndex).getArch().setSerie(arch.getSerie());
+								newCpu.getCores().get(selectIndex).getArch().setArchitecture(arch.getArchitecture());
+								newCpu.getCores().get(selectIndex).getArch().setFamily(arch.getFamily());
+								if (tempName != null) {
+									revisingCpu.getCores().get(selectIndex).getArch().setSerie(arch.getSerie());
+									revisingCpu.getCores().get(selectIndex).getArch().setArchitecture(arch.getArchitecture());
+									revisingCpu.getCores().get(selectIndex).getArch().setFamily(arch.getFamily());
+								}
 
-							curCpu.getCores().get(selectIndex).setType(arch.getType());
-							curCpu.getCores().get(selectIndex).setArch(arch.getSerial());
-							curCpu.getCores().get(selectIndex).setFamily(arch.getFamily());
-						} else {
-							newCore.setType(arch.getType());
-							newCore.setArch(arch.getSerial());
-							newCore.setFamily(arch.getFamily());
+								curCpu.getCores().get(selectIndex).getArch().setSerie(arch.getSerie());
+								curCpu.getCores().get(selectIndex).getArch().setArchitecture(arch.getArchitecture());
+								curCpu.getCores().get(selectIndex).getArch().setFamily(arch.getFamily());
+							} else {
+								newCore.getArch().setSerie(arch.getSerie());
+								newCore.getArch().setArchitecture(arch.getArchitecture());
+								newCore.getArch().setFamily(arch.getFamily());
+							}
+						} catch (Exception e2) {
+							// TODO: handle exception
+							MessageDialog.openInformation(window.getShell(),
+									"提示",xmlFile.getName() + "或者其父目录的描述文件配置错误");
+						}
+						
+						TreeItem[] items = cpuGroupTree.getItems();
+						if(arch.getFpuType()!=null) {
+							boolean containsFloate = false;
+							for(TreeItem t:items) {
+								if(t.getText().equals("浮点配置")) {
+									containsFloate = true;
+									break;
+								}
+							}
+							if(!containsFloate) {
+								TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
+								t.setText("浮点配置");
+								if(! attributes.contains("浮点配置")) {
+									t.setImage(DPluginImages.CFG_DONE_VIEW.createImage());
+								}
+							}
+						}else {
+							for(TreeItem t:items) {
+								if(t.getText().equals("浮点配置")) {
+									t.dispose();
+									break;
+								}
+							}
 						}
 					}
 				}
@@ -1466,7 +1565,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {
 				boolean toExpand = false;
 				if(files[i].isDirectory()) {
-					boolean isNeed =  containsXml(files[i]);
+					boolean isNeed =  dideHelper.containsXml(files[i]);
 					if(isNeed) {
 						toExpand = true;
 					}
@@ -1620,7 +1719,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	@Override
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
-		return new Point(520,550);
+		return new Point(570,560);
 	}
 	
 	public Cpu getCpuCreated() {
@@ -1629,7 +1728,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	
 	private boolean handleGroupOK() {
 		groupName = groupNameField.getText();
-		String completeName = "";
+//		String completeName = "";
 		if (groupName.trim().equals("")) {
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			MessageDialog.openError(window.getShell(), "提示", "请填写子目录名称");
@@ -1656,14 +1755,19 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					if (!newGroupFile.exists()) {
 						newGroupFile.mkdir();
 					}
-					getGroupNames(newGroupFile, names);
-					for (int i = names.size() - 1; i >= 0; i--) {
-						completeName += names.get(i);
+//					getGroupNames(newGroupFile, names);
+//					for (int i = names.size() - 1; i >= 0; i--) {
+//						completeName += names.get(i);
+//					}
+					xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + groupName + ".xml");
+					
+					File[] files = newGroupFile.listFiles();
+					for(File f:files) {
+						if(f.getName().endsWith(".xml") && f.getName().startsWith("cpu_group")) {
+							f.delete();
+						}
 					}
-					xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + completeName + ".xml");
-					if (xmlFile.exists()) {
-						xmlFile.delete();
-					}
+					
 					try {
 						xmlFile.createNewFile();
 					} catch (IOException e) {
@@ -1683,30 +1787,35 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				oldGroupFile = new File(curPath);
 				newGroupFile = new File(curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + groupName);
 				// 改名前
-				getGroupNames(oldGroupFile, names);
+//				getGroupNames(oldGroupFile, names);
 				// DeleteFolder(oldGroupFile.getPath());
 				// if(!newGroupFile.exists()) {
 				// newGroupFile.mkdir();
 				// }
-				for (int i = names.size() - 1; i >= 0; i--) {
-					completeName += names.get(i);
-				}
-				xmlFile = new File(oldGroupFile.getPath() + "/cpu_group_" + completeName + ".xml");
-				if (xmlFile.exists()) {
-					xmlFile.delete();
+//				for (int i = names.size() - 1; i >= 0; i--) {
+//					completeName += names.get(i);
+//				}
+//				xmlFile = new File(oldGroupFile.getPath() + "/cpu_group_" + groupName + ".xml");
+//				if (xmlFile.exists()) {
+//					xmlFile.delete();
+//				}
+				
+				File[] oldFiles = oldGroupFile.listFiles();
+				for(File f:oldFiles) {
+					if(f.getName().endsWith(".xml") && f.getName().startsWith("cpu_group")) {
+						f.delete();
+					}
 				}
 
 				oldGroupFile.renameTo(newGroupFile);
-				names = new ArrayList<String>();
-				completeName = "";
-				getGroupNames(newGroupFile, names);
-				for (int i = names.size() - 1; i >= 0; i--) {
-					completeName += names.get(i);
-				}
-				xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + completeName + ".xml");
-				if (xmlFile.exists()) {
-					xmlFile.delete();
-				}
+//				names = new ArrayList<String>();
+//				completeName = "";
+//				getGroupNames(newGroupFile, names);
+//				for (int i = names.size() - 1; i >= 0; i--) {
+//					completeName += names.get(i);
+//				}
+				xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + groupName + ".xml");
+				
 				try {
 					xmlFile.createNewFile();
 				} catch (IOException e) {
@@ -1724,7 +1833,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 	}
 	
 	private boolean handleCpuOK() {
-		List<String> cpuPieceNames = null;
 		groupName = groupNameField.getText();
 		cpuName = groupNameField.getText();
 		if(cpuName.trim().equals("")) {
@@ -1755,11 +1863,13 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					if(! newCpuFile.exists()) {
 						newCpuFile.mkdir();
 					}
-					System.out.println("cpuName： "+cpuName);
-					xmlFile = new File(newCpuFile.getPath()+"/cpu_"+cpuName+".xml");
-					if(xmlFile.exists()) {
-						xmlFile.delete();
+					File[] files = newCpuFile.listFiles();
+					for(File f:files) {
+						if(f.getName().endsWith(".xml") && f.getName().startsWith("cpu_")) {
+							f.delete();
+						}
 					}
+					xmlFile = new File(newCpuFile.getPath()+"/cpu_"+cpuName+".xml");
 					try {
 						xmlFile.createNewFile();
 					} catch (IOException e) {
@@ -1780,6 +1890,13 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				xmlFile = new File(oldCpuFile.getPath()+"/cpu_"+tempName+".xml");
 				if(xmlFile.exists()) {
 					xmlFile.delete();
+				}
+				
+				File[] files = oldCpuFile.listFiles();
+				for(File f:files) {
+					if(f.getName().endsWith(".xml") && f.getName().startsWith("cpu_")) {
+						f.delete();
+					}
 				}
 				
 				oldCpuFile.renameTo(newCpuFile);
@@ -1809,11 +1926,16 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					isOK = false;
 					errorMsg = "请填写完整内核"+(i+1)+"的复位地址！";
 				}
-				if (cores.get(i).getFloatABI() == null || cores.get(i).getFpuType() == null) {
-					isOK = false;
-					errorMsg = "请填写完整内核"+(i+1)+"的浮点配置！";
+				
+				boolean fpNeed = dideHelper.isFputypeuNeed(cores.get(i));
+				if(fpNeed) {
+					if (cores.get(i).getFpuType() == null) {
+						isOK = false;
+						errorMsg = "请填写完整内核" + (i + 1) + "的浮点配置！";
+					}
 				}
-				if (cores.get(i).getType() == null || cores.get(i).getArch() == null || cores.get(i).getFamily() == null) {
+				
+				if (cores.get(i).getArch().getSerie() == null || cores.get(i).getArch().getArchitecture() == null || cores.get(i).getArch().getFamily() == null) {
 					isOK = false;
 					errorMsg = "请填写完整内核"+(i+1)+"的内核配置！";
 				}
@@ -1876,183 +1998,19 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				core.setAttribute("id", String.valueOf(i+1));
 				
 				Core curCore = cpu.getCores().get(i);
-				if(curCore.getType() != null){
+				if(curCore.getArch().getSerie() != null){
 					Element type = document.createElement("type");
-					type.setTextContent(curCore.getType());
+					type.setTextContent(curCore.getArch().getSerie());
 					core.appendChild(type);
 				}
-				if(curCore.getArch()!=null) {
+				if(curCore.getArch().getArchitecture()!=null) {
 					Element arch = document.createElement("arch");
-					arch.setTextContent(curCore.getArch());
+					arch.setTextContent(curCore.getArch().getArchitecture());
 					core.appendChild(arch);
 				}
-				if(curCore.getFamily()!=null) {
+				if(curCore.getArch().getFamily()!=null) {
 					Element family = document.createElement("family");
-					family.setTextContent(curCore.getFamily());
-					core.appendChild(family);
-				}
-				if(curCore.getFloatABI()!=null) {
-					Element floatABI = document.createElement("floatABI");
-					floatABI.setTextContent(curCore.getFloatABI());
-					core.appendChild(floatABI);
-				}
-				if(curCore.getFpuType()!=null) {
-					Element fpuType = document.createElement("fpuType");
-					fpuType.setTextContent(curCore.getFpuType());
-					core.appendChild(fpuType);
-				}
-				if(curCore.getResetAddr()!=null) {
-					Element resetAddr = document.createElement("resetAddr");
-					resetAddr.setTextContent(curCore.getResetAddr());
-					core.appendChild(resetAddr);
-				}
-				if(curCore.getMemorys().size()!=0) {
-					
-					for(int j=0;j<curCore.getMemorys().size();j++) {
-						CoreMemory curMemory = curCore.getMemorys().get(j);
-						Element memory = document.createElement("memory");
-						Element type = document.createElement("type");
-						type.setTextContent(curMemory.getType());
-						memory.appendChild(type);
-						Element startAddr = document.createElement("startAddr");
-						startAddr.setTextContent(curMemory.getStartAddr());
-						memory.appendChild(startAddr);
-						Element size = document.createElement("size");
-						size.setTextContent(String.valueOf(curMemory.getSize()));
-						memory.appendChild(size);
-						core.appendChild(memory);
-					}
-					
-				}
-				
-				cpuElement.appendChild(core);
-			}
-			
-			document.appendChild(cpuElement);
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
-			transformer.setOutputProperty("encoding", "UTF-8");
-			StringWriter writer = new StringWriter();
-			transformer.transform(new DOMSource(document), new StreamResult(writer));
-			transformer.transform(new DOMSource(document), new StreamResult(file));
-			writer.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
-
-	private void createPublicXml(Core core,File file) {
-		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
-		try {
-			factory.setIgnoringElementContentWhitespace(false);
-        	DocumentBuilder builder = factory.newDocumentBuilder();             
-        	Document document = builder.newDocument();
-		
-			Element cpuElement = document.createElement("cpu");
-			if(core.getType() != null){
-				Element type = document.createElement("type");
-				type.setTextContent(core.getType());
-				cpuElement.appendChild(type);
-			}
-			if (core.getArch() != null) {
-				Element arch = document.createElement("arch");
-				arch.setTextContent(core.getArch());
-				cpuElement.appendChild(arch);
-			}
-			if (core.getFamily() != null) {
-				Element family = document.createElement("family");
-				family.setTextContent(core.getFamily());
-				cpuElement.appendChild(family);
-			}
-			if(core.getFloatABI()!=null) {
-				Element floatABI = document.createElement("floatABI");
-				floatABI.setTextContent(core.getFloatABI());
-				cpuElement.appendChild(floatABI);
-			}
-			if (core.getFpuType() != null) {
-				Element fpuType = document.createElement("fpuType");
-				fpuType.setTextContent(core.getFpuType());
-				cpuElement.appendChild(fpuType);
-			}
-			if (core.getResetAddr() != null) {
-				Element resetAddr = document.createElement("resetAddr");
-				resetAddr.setTextContent(core.getResetAddr());
-				cpuElement.appendChild(resetAddr);
-			}
-			if (core.getMemorys().size() != 0) {
-				
-				for (int j = 0; j < core.getMemorys().size(); j++) {
-					CoreMemory curMemory = core.getMemorys().get(j);
-					Element memory = document.createElement("memory");
-					Element type = document.createElement("type");
-					type.setTextContent(curMemory.getType());
-					memory.appendChild(type);
-					Element startAddr = document.createElement("startAddr");
-					startAddr.setTextContent(curMemory.getStartAddr());
-					memory.appendChild(startAddr);
-					Element size = document.createElement("size");
-					String memorySize = curMemory.getSize();
-					if(!memorySize.contains("k")) {
-						memorySize+="k";
-					}
-					size.setTextContent(memorySize);
-					memory.appendChild(size);
-					cpuElement.appendChild(memory);
-				}
-				
-			}
-
-			document.appendChild(cpuElement);
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
-			transformer.setOutputProperty("encoding", "UTF-8");
-			StringWriter writer = new StringWriter();
-			transformer.transform(new DOMSource(document), new StreamResult(writer));
-			transformer.transform(new DOMSource(document), new StreamResult(file));
-			writer.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}	
-
-	private boolean createNewCpuXml(Cpu cpu,File file,String completeName) {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		try { 
-			factory.setIgnoringElementContentWhitespace(false);
-        	DocumentBuilder builder = factory.newDocumentBuilder();             
-        	Document document = builder.newDocument();
-        	
-			Element cpuElement = document.createElement("cpu");
-			
-			Element cpuName = document.createElement("cpuName");
-			cpuName.setTextContent(completeName);
-			cpuElement.appendChild(cpuName);
-			
-			for(int i=0;i<cpu.getCores().size();i++) {
-				Element core = document.createElement("core");
-				core.setAttribute("id", String.valueOf(i+1));
-				
-				Core curCore = cpu.getCores().get(i);
-				if(curCore.getType() != null){
-					Element type = document.createElement("type");
-					type.setTextContent(curCore.getType());
-					core.appendChild(type);
-				}
-				if(curCore.getArch()!=null) {
-					Element arch = document.createElement("arch");
-					arch.setTextContent(curCore.getArch());
-					core.appendChild(arch);
-				}
-				if(curCore.getFamily()!=null) {
-					Element family = document.createElement("family");
-					family.setTextContent(curCore.getFamily());
+					family.setTextContent(curCore.getArch().getFamily());
 					core.appendChild(family);
 				}
 				if(curCore.getFloatABI()!=null) {
@@ -2109,24 +2067,179 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
+		}
+		
+	}
+
+	private void createPublicXml(Core core,File file) {
+		DocumentBuilderFactory factory =  DocumentBuilderFactory.newInstance();  
+		try {
+			factory.setIgnoringElementContentWhitespace(false);
+        	DocumentBuilder builder = factory.newDocumentBuilder();             
+        	Document document = builder.newDocument();
+		
+			Element cpuElement = document.createElement("cpu");
+			if(core.getArch().getSerie() != null){
+				Element type = document.createElement("type");
+				type.setTextContent(core.getArch().getSerie());
+				cpuElement.appendChild(type);
+			}
+			if (core.getArch().getArchitecture() != null) {
+				Element arch = document.createElement("arch");
+				arch.setTextContent(core.getArch().getArchitecture());
+				cpuElement.appendChild(arch);
+			}
+			if (core.getArch().getFamily() != null) {
+				Element family = document.createElement("family");
+				family.setTextContent(core.getArch().getFamily());
+				cpuElement.appendChild(family);
+			}
+			if(core.getFloatABI()!=null) {
+				Element floatABI = document.createElement("floatABI");
+				floatABI.setTextContent(core.getFloatABI());
+				cpuElement.appendChild(floatABI);
+			}
+			if (core.getFpuType() != null) {
+				Element fpuType = document.createElement("fpuType");
+				fpuType.setTextContent(core.getFpuType());
+				cpuElement.appendChild(fpuType);
+			}
+			if (core.getResetAddr() != null) {
+				Element resetAddr = document.createElement("resetAddr");
+				resetAddr.setTextContent(core.getResetAddr());
+				cpuElement.appendChild(resetAddr);
+			}
+			if (core.getMemorys().size() != 0) {
+				
+				for (int j = 0; j < core.getMemorys().size(); j++) {
+					CoreMemory curMemory = core.getMemorys().get(j);
+					Element memory = document.createElement("memory");
+					Element type = document.createElement("type");
+					type.setTextContent(curMemory.getType());
+					memory.appendChild(type);
+					Element startAddr = document.createElement("startAddr");
+					startAddr.setTextContent(curMemory.getStartAddr());
+					memory.appendChild(startAddr);
+					Element size = document.createElement("size");
+					String memorySize = curMemory.getSize();
+					if(!memorySize.contains("k")) {
+						memorySize+="k";
+					}
+					size.setTextContent(memorySize);
+					memory.appendChild(size);
+					cpuElement.appendChild(memory);
+				}
+				
+			}
+
+			document.appendChild(cpuElement);
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
+			transformer.setOutputProperty("encoding", "UTF-8");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(writer));
+			transformer.transform(new DOMSource(document), new StreamResult(file));
+			writer.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
+		}
+	}	
+
+	private boolean createNewCpuXml(Cpu cpu,File file,String completeName) {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		try { 
+			factory.setIgnoringElementContentWhitespace(false);
+        	DocumentBuilder builder = factory.newDocumentBuilder();             
+        	Document document = builder.newDocument();
+        	
+			Element cpuElement = document.createElement("cpu");
+			
+			Element cpuName = document.createElement("cpuName");
+			cpuName.setTextContent(completeName);
+			cpuElement.appendChild(cpuName);
+			
+			for(int i=0;i<cpu.getCores().size();i++) {
+				Element core = document.createElement("core");
+				core.setAttribute("id", String.valueOf(i+1));
+				
+				Core curCore = cpu.getCores().get(i);
+				if(curCore.getArch().getSerie() != null){
+					Element type = document.createElement("type");
+					type.setTextContent(curCore.getArch().getSerie());
+					core.appendChild(type);
+				}
+				if(curCore.getArch().getArchitecture()!=null) {
+					Element arch = document.createElement("arch");
+					arch.setTextContent(curCore.getArch().getArchitecture());
+					core.appendChild(arch);
+				}
+				if(curCore.getArch().getFamily()!=null) {
+					Element family = document.createElement("family");
+					family.setTextContent(curCore.getArch().getFamily());
+					core.appendChild(family);
+				}
+				if(curCore.getFloatABI()!=null) {
+					Element floatABI = document.createElement("floatABI");
+					floatABI.setTextContent(curCore.getFloatABI());
+					core.appendChild(floatABI);
+				}
+				if(curCore.getFpuType()!=null) {
+					Element fpuType = document.createElement("fpuType");
+					fpuType.setTextContent(curCore.getFpuType());
+					core.appendChild(fpuType);
+				}
+				if(curCore.getResetAddr()!=null) {
+					Element resetAddr = document.createElement("resetAddr");
+					resetAddr.setTextContent(curCore.getResetAddr());
+					core.appendChild(resetAddr);
+				}
+				if(curCore.getMemorys().size()!=0) {
+					
+					for(int j=0;j<curCore.getMemorys().size();j++) {
+						CoreMemory curMemory = curCore.getMemorys().get(j);
+						Element memory = document.createElement("memory");
+						Element type = document.createElement("type");
+						type.setTextContent(curMemory.getType());
+						memory.appendChild(type);
+						Element startAddr = document.createElement("startAddr");
+						startAddr.setTextContent(curMemory.getStartAddr());
+						memory.appendChild(startAddr);
+						Element size = document.createElement("size");
+						String memorySize = curMemory.getSize();
+						if(!memorySize.contains("k")) {
+							memorySize+="k";
+						}
+						size.setTextContent(memorySize);
+						memory.appendChild(size);
+						core.appendChild(memory);
+					}
+					
+				}
+				
+				cpuElement.appendChild(core);
+			}
+			
+			document.appendChild(cpuElement);
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
+			transformer.setOutputProperty("encoding", "UTF-8");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(writer));
+			transformer.transform(new DOMSource(document), new StreamResult(file));
+			writer.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
 		}
 		return true;
 	}
 
-	private boolean containsXml(File file) {
-		File[] files = file.listFiles();
-		for(File f:files) {
-			if(f.isDirectory()) {
-				if(containsXml(f)) {
-					return true;
-				}
-			}else {
-				if(f.getName().endsWith(".xml")) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	
 }

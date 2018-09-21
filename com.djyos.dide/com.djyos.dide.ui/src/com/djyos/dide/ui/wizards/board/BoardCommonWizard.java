@@ -33,20 +33,11 @@ import org.eclipse.cdt.ui.CUIPlugin;
 public class BoardCommonWizard extends BasicNewResourceWizard{
 
 	protected  BoardMainWizard fMainPage = new BoardMainWizard("New Board");
-	private String wz_title;
-	private String wz_desc;
-	private String eclipsePath = getEclipsePath();
+	private String wz_title, wz_desc;
+	LinkHelper linkHelper = new LinkHelper();
+	DideHelper dideHelper = new DideHelper();
 	private IWorkbenchWindow window = PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow();
-	
-	/*
-	 * 获取当前Eclipse的路径
-	 */
-	public String getEclipsePath() {
-		String fullPath = Platform.getInstallLocation().getURL().toString();
-		String eclipsePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		return eclipsePath;
-	}
 	
 	public BoardCommonWizard(String title, String desc) {
 		// TODO Auto-generated constructor stub
@@ -86,10 +77,6 @@ public class BoardCommonWizard extends BasicNewResourceWizard{
 		// TODO Auto-generated method stub
 		return false;
 	}
-
-
-	LinkHelper linkHelper = new LinkHelper();
-	DideHelper dideHelper = new DideHelper();
 	 
 	@Override
 	public boolean performFinish() {

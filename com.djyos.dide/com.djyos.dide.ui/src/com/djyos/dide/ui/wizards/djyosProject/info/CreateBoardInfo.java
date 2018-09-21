@@ -16,11 +16,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.djyos.dide.ui.wizards.board.Board;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 
 public class CreateBoardInfo {
 	
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	
+	private DideHelper dideHelper = new DideHelper();
 	public void createBoardInfo(File file,List<Board> boards) {
 		
 		DocumentBuilder builder;
@@ -48,6 +49,7 @@ public class CreateBoardInfo {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
 		}             
 		
 	}
