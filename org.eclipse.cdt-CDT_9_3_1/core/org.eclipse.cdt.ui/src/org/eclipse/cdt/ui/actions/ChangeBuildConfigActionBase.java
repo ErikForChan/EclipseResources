@@ -110,18 +110,17 @@ public class ChangeBuildConfigActionBase {
 		/*
 		 * 判断当前的库编译选项是否要隐藏
 		 */
-		String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
-		String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-		String didePrefsPath = didePath+"IDE/configuration/.settings/com.djyos.ui.prefs";
-		File didePrefsFile = new File(didePrefsPath);
-		boolean hidden = false;
-		if(didePrefsFile.exists()) {
-			hidden = toHiddenLibos(didePrefsFile);
-		}
 		
 		for (IProject prj : fProjects) {
 			ICConfigurationDescription[] cfgDescs = getCfgs(prj);
 			String sActiveConfig = null;
+			
+			String didePrefsPath = prj.getLocation().toString()+"/.settings/com.djyos.ui.prefs";
+			File didePrefsFile = new File(didePrefsPath);
+			boolean hidden = false;
+			if(didePrefsFile.exists()) {
+				hidden = toHiddenLibos(didePrefsFile);
+			}
 			// Store names and detect active configuration
 			for (ICConfigurationDescription cfgDesc : cfgDescs) {
 				String s = cfgDesc.getName();

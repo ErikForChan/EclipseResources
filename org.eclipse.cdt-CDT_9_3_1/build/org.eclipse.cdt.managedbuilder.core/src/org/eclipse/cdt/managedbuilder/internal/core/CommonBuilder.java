@@ -52,11 +52,13 @@ import org.eclipse.cdt.managedbuilder.internal.buildmodel.IBuildModelBuilder;
 import org.eclipse.cdt.managedbuilder.internal.buildmodel.IConfigurationBuildState;
 import org.eclipse.cdt.managedbuilder.internal.buildmodel.IProjectBuildState;
 import org.eclipse.cdt.managedbuilder.internal.buildmodel.StepBuilder;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.CfgBuildInfo;
 import org.eclipse.cdt.managedbuilder.macros.BuildMacroException;
 import org.eclipse.cdt.managedbuilder.macros.IBuildMacroProvider;
 import org.eclipse.cdt.managedbuilder.makegen.IManagedBuilderMakefileGenerator;
 import org.eclipse.cdt.managedbuilder.makegen.IManagedBuilderMakefileGenerator2;
 import org.eclipse.cdt.newmake.core.IMakeBuilderInfo;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -747,9 +749,110 @@ public class CommonBuilder extends ACBuilder {
 		/*
 		 * New
 		 */
-//		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
-//		Configuration configuration = (Configuration) bInfo.getConfiguration();		
-//		IFolder folder = bInfo.getProject().getFolder(configuration.getName());
+		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
+		Configuration configuration = (Configuration) bInfo.getConfiguration();		
+		IProject project = bInfo.getProject();
+		String cfgName = configuration.getName();
+		
+		boolean toContinue = true;
+		boolean aExist = false;
+		if (!(cfgName.startsWith("libos") || cfgName.startsWith("libOS"))) {
+			String[] members = cfgName.split("_");
+			String commonString = members[members.length-2]+"_"+members[members.length-1];
+			IFolder folder = project.getFolder("libos_"+commonString);
+			if (!folder.exists()) {
+				 aExist = false;
+			}else {
+				IFile file = folder.getFile("libos_"+commonString+".a");
+				if(file.exists()) {
+					aExist = true;
+				}else {
+					 aExist = false;
+				}
+			}
+			
+			if(!aExist) {
+				toContinue= false;
+				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
+				IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+				for (IConfiguration cfg : cfgs) {
+					if(cfg.getName().equals("libos_"+commonString)) {
+						IBuilder mybuilder = cfg.getEditableBuilder();
+						CfgBuildInfo binfo = new CfgBuildInfo(mybuilder, true);
+						build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
+						break;
+					}
+				}
+			}
+		}
+		
+		if(toContinue) {
+			BuildStatus status = new BuildStatus(builder);
+
+			if (!shouldBuild(kind, builder)) {
+				return false;
+			}
+			
+//			if (kind == IncrementalProjectBuilder.AUTO_BUILD) {
+//				IResourceDelta delta = getDelta(getProject());
+//				if (delta != null) {
+//					IResource res = delta.getResource();
+//					if (res != null) {
+//						bPerformBuild = res.getProject().equals(getProject());
+//					}
+//				} else {
+//					bPerformBuild = false;
+//				}
+//			}
+
+			if (status.isBuild()) {
+				IConfiguration cfg = bInfo.getConfiguration();
+
+				if(!builder.isCustomBuilder()){
+					Set<String> set = fBuildSet.getCfgIdSet(bInfo.getProject(), true);
+					if(VERBOSE)
+						outputTrace(bInfo.getProject().getName(), "set: adding cfg " + cfg.getName() + " ( id=" + cfg.getId() + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					set.add(cfg.getId());
+				}
+
+				if(status.isManagedBuildOn()){
+					status = performPrebuildGeneration(kind, bInfo, status, monitor);
+				}
+
+				if(status.isBuild()){
+					try {
+					boolean isClean = builder.getBuildRunner().invokeBuild(
+							kind,
+							bInfo.getProject(),
+							bInfo.getConfiguration(),
+							builder,
+							bInfo.getConsole(),
+							this,
+							this,
+							monitor);
+						if (isClean) {
+							forgetLastBuiltState();
+							cfg.setRebuildState(true);
+						} else {
+							if(status.isManagedBuildOn()){
+								performPostbuildGeneration(kind, bInfo, status, monitor);
+							}
+							cfg.setRebuildState(false);
+						}
+						clean = isClean;
+					} catch(CoreException e){
+						cfg.setRebuildState(true);
+						throw e;
+					}
+					
+					PropertyManager.getInstance().serialize(cfg);
+				} else if(status.getConsoleMessagesList().size() != 0) {
+					emitMessage(bInfo, concatMessages(status.getConsoleMessagesList()));
+				}
+			}
+			checkCancel(monitor);
+		}
+		
 //		if (configuration.getName().startsWith("libos") || configuration.getName().startsWith("libOS")) {
 //			if (!folder.exists()) {
 //				configuration.enableInternalBuilder(true);
@@ -778,70 +881,6 @@ public class CommonBuilder extends ACBuilder {
 		 * New
 		 */
 		
-		BuildStatus status = new BuildStatus(builder);
-
-		if (!shouldBuild(kind, builder)) {
-			return false;
-		}
-		
-//		if (kind == IncrementalProjectBuilder.AUTO_BUILD) {
-//			IResourceDelta delta = getDelta(getProject());
-//			if (delta != null) {
-//				IResource res = delta.getResource();
-//				if (res != null) {
-//					bPerformBuild = res.getProject().equals(getProject());
-//				}
-//			} else {
-//				bPerformBuild = false;
-//			}
-//		}
-
-		if (status.isBuild()) {
-			IConfiguration cfg = bInfo.getConfiguration();
-
-			if(!builder.isCustomBuilder()){
-				Set<String> set = fBuildSet.getCfgIdSet(bInfo.getProject(), true);
-				if(VERBOSE)
-					outputTrace(bInfo.getProject().getName(), "set: adding cfg " + cfg.getName() + " ( id=" + cfg.getId() + ")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				set.add(cfg.getId());
-			}
-
-			if(status.isManagedBuildOn()){
-				status = performPrebuildGeneration(kind, bInfo, status, monitor);
-			}
-
-			if(status.isBuild()){
-				try {
-				boolean isClean = builder.getBuildRunner().invokeBuild(
-						kind,
-						bInfo.getProject(),
-						bInfo.getConfiguration(),
-						builder,
-						bInfo.getConsole(),
-						this,
-						this,
-						monitor);
-					if (isClean) {
-						forgetLastBuiltState();
-						cfg.setRebuildState(true);
-					} else {
-						if(status.isManagedBuildOn()){
-							performPostbuildGeneration(kind, bInfo, status, monitor);
-						}
-						cfg.setRebuildState(false);
-					}
-					clean = isClean;
-				} catch(CoreException e){
-					cfg.setRebuildState(true);
-					throw e;
-				}
-				
-				PropertyManager.getInstance().serialize(cfg);
-			} else if(status.getConsoleMessagesList().size() != 0) {
-				emitMessage(bInfo, concatMessages(status.getConsoleMessagesList()));
-			}
-		}
-		checkCancel(monitor);
 		return clean;
 	}
 
