@@ -1,10 +1,12 @@
 package com.djyos.dide.ui.wizards.board;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.debug.internal.ui.views.console.ConsoleMessages;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
@@ -42,6 +45,7 @@ import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -53,6 +57,15 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.IOConsoleOutputStream;
+import org.eclipse.ui.console.IPatternMatchListener;
+import org.eclipse.ui.console.MessageConsole;
+import org.eclipse.ui.console.MessageConsoleStream;
+import org.eclipse.ui.console.PatternMatchEvent;
+import org.eclipse.ui.console.TextConsole;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.tmatesoft.svn.core.SVNException;
 
@@ -65,11 +78,12 @@ import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 import com.djyos.dide.ui.wizards.djyosProject.tools.SendEmail;
+import com.ibm.icu.text.MessageFormat;
 import com.djyos.dide.ui.wizards.djyosProject.CreateHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 
-public class BoardMainWizard extends WizardPage{
+public class BoardMainWizard extends WizardPage {
 	
 	private Tree tree;
 	private Text configInfoText = null;
@@ -102,10 +116,23 @@ public class BoardMainWizard extends WizardPage{
 		}
 		setPageComplete(true);
 	}
+	
+	public MessageConsoleStream createConsole(String consoleName) {
+		MessageConsole console = new MessageConsole(consoleName, null);
+		// 新增、显示console
+		IConsoleManager manager = (IConsoleManager) ConsolePlugin.getDefault().getConsoleManager();
+		manager.addConsoles(new IConsole[] { console });
+		manager.showConsoleView(console);
+		// 返回console流
+		MessageConsoleStream cs = console.newMessageStream();
+		cs.setColor(Display.getDefault().getSystemColor(SWT.COLOR_BLUE));
+		return cs;
+	}
 
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
+      
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -169,12 +196,36 @@ public class BoardMainWizard extends WizardPage{
 		configInfoText.setLayoutData(new RowData(350,350));
 		configInfoText.setText("选中板件即可显示选中的板件配置信息");
 
+//		MessageConsoleStream console1 = this.createConsole("MyConsole1");
+//		console1.println("Hello, I'm out from MyConsole1");
+//		String fileLoc = null;
+//		File outputFile= new File("G:/out.text");
+//		if(outputFile.exists()) {
+//			outputFile.delete();
+//		}
+//		outputFile.createNewFile();
+//		fileLoc = outputFile.getAbsolutePath();
+//
+//	    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+//	    IConsole[] consoles = manager.getConsoles();
+//		MessageConsole console = ((MessageConsole) consoles[0]);
+//		String message = MessageFormat.format(ConsoleMessages.ProcessConsole_1, new Object[] { fileLoc });
+//        addPatternMatchListener(new ConsoleLogFilePatternMatcher(fileLoc));
+//        if (message != null) {
+//			try (IOConsoleOutputStream stream = console.newOutputStream()) {
+//                stream.write(message);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+        
 		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		scrolledComposite.setContent(infoArea);
 		scrolledComposite.setMinHeight(point.y);
 		scrolledComposite.setExpandHorizontal(true);
 	    scrolledComposite.setExpandVertical(true);
 	    
+//	    System.setOut(null);
 //	    try {
 //			List<String> infos = dideHelper.getLogs();
 ////			SendEmail email = new SendEmail();
@@ -186,13 +237,18 @@ public class BoardMainWizard extends WizardPage{
 //			// TODO Auto-generated catch block
 //			e1.printStackTrace();
 //		}
-	    
+
+
+		// Printing the read line
+//		System.out.println(name);
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
 		Dialog.applyDialogFont(composite);
 	}
 	
+	
+
 	private void handleTreeDrag() {
 		// TODO Auto-generated method stub
 		// 定义拖放源对象

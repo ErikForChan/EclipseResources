@@ -2,7 +2,9 @@ package com.djyos.dide.ui.wizards.djyosProject;
 
 import java.awt.Color;
 import java.awt.Desktop;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -104,7 +106,6 @@ public class DjyosMainWizardPage extends WizardPage {
 	public String ldsHead = "",ldsDesc = "",
 				  boardModuleTrimPath,projectPath,boardName,initialProjectFieldValue;
 	DideHelper dideHelper = new DideHelper();
-	// Widgets
 	private static IntegerFieldEditor fIbootSize;
 	private static Composite ibootComposite;
 
@@ -300,11 +301,47 @@ public class DjyosMainWizardPage extends WizardPage {
             			selectedCore = dialog.getSelectCore();
             			fBoardNameField.setText(boardName);
             			boardModuleTrimPath = dialog.boardModuleTrimPath;
+            			File mldsFile = new File(selectedBoard.getBoardPath()+"/lds/memory.lds");
+            			String ibootSize = readIbootSize(mldsFile,"IbootSize");
+            			if(ibootSize!=null) {
+            				fIbootSize.getTextControl(ibootComposite).setText(ibootSize);
+            			}
+            			
         			}
         		}
             }
         });  
 		
+	}
+	
+	private String readIbootSize(File file,String target) {
+		BufferedReader br = null;  
+        String line = null;  
+        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
+        try {            
+            br = new BufferedReader(new FileReader(file));              
+            while ((line = br.readLine()) != null) {  
+                StringBuffer buf = new StringBuffer();  
+                //修改内容核心代码
+                if (line.startsWith(target)) {  
+                	String[] infos = line.split(";|；");
+//                	System.out.println("infos[0]: "+infos[0]);
+//                	System.out.println("size: "+infos[0].split("=")[1].trim().replaceFirst("k|K", ""));
+                	return infos[0].split("=")[1].trim().replaceFirst("k|K", "");
+                }
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } finally {  
+            if (br != null) {  
+                try {  
+                    br.close();  
+                } catch (IOException e) {  
+                    br = null;  
+                }  
+            }  
+        }
+		return null;  
 	}
 	
 	private IAction getAction(String id) {
@@ -520,7 +557,7 @@ public class DjyosMainWizardPage extends WizardPage {
 						boolean valid = validatePageBefore();
 			    		setPageComplete(valid);
 					}else {
-						fIbootSize.getTextControl(ibootComposite).setEnabled(true);
+//						fIbootSize.getTextControl(ibootComposite).setEnabled(true);
 					}
 					
 				}
@@ -554,7 +591,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
 		ControlFactory.createLabel(group1, "K");
 		fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify, ibootSizeModifyListener);
-
+		fIbootSize.getTextControl(ibootComposite).setEnabled(false);
 	}
 
 	@Override
@@ -585,7 +622,7 @@ public class DjyosMainWizardPage extends WizardPage {
 			nmWizard.addedComptCfg = true;
 		} else {
 			if (clickedNext) {
-				nmWizard.importProject(projectPath);
+				nmWizard.importProject(projectPath,selectedBoard,haveApp(),haveIboot());
 				nmWizard.clickedMianNext = true;
 			}
 		}
@@ -656,12 +693,12 @@ public class DjyosMainWizardPage extends WizardPage {
 		IWorkspace workspace = IDEWorkbenchPlugin.getPluginWorkspace();
 		String projectFieldContents = getProjectNameFieldValue();
 		
-		String ibootSize = fIbootSize.getTextControl(ibootComposite).getText();
-		if(getTemplateIndex() != 3) {
-			if(ibootSize.equals("")) {
-				return false;
-			}
-		}
+//		String ibootSize = fIbootSize.getTextControl(ibootComposite).getText();
+//		if(getTemplateIndex() != 3) {
+//			if(ibootSize.equals("")) {
+//				return false;
+//			}
+//		}
 		
 		if (projectFieldContents.equals("")) { //$NON-NLS-1$
 			setErrorMessage(null);

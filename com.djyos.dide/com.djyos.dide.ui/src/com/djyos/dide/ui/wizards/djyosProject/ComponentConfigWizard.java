@@ -249,8 +249,11 @@ public class ComponentConfigWizard extends WizardPage {
 				gpioInit = "", djyMain = "", shellInit = "";
 		String earlyCode = "",mediumCode = "",laterCode = "";
 		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n" + "#include \"stdint.h\"\n" + "#include \"stddef.h\"\n"
-				+ "#include \"cpu_peri.h\"\n" + "extern ptu32_t djy_main(void);\n";
+		initHead += "#include \"project_config.h\"\n" 
+				 + "#include \"stdint.h\"\n" 
+				 + "#include \"stddef.h\"\n"
+				 + "#include \"cpu_peri.h\"\n" 
+				 + "extern ptu32_t djy_main(void);\n";
 		File file = new File(projectLocation + "/src/" + (isApp ? "app" : "iboot") + "/initPrj.c");
 		if (file.exists()) {
 			file.delete();
@@ -262,6 +265,7 @@ public class ComponentConfigWizard extends WizardPage {
 			e.printStackTrace();
 		}
 		for (int i = 0; i < typeCompontentsChecked.size(); i++) {
+//			System.out.println("typeCheckedNew:    "+typeCompontentsChecked.get(i).getName()+"\n");
 			handleDependents(typeCompontentsChecked.get(i),typeCompontentsChecked,typeCheckedSort);
 //			List<String> dependents = typeCompontentsChecked.get(i).getDependents();
 //			List<String> weakDependents = typeCompontentsChecked.get(i).getWeakDependents();
@@ -279,6 +283,7 @@ public class ComponentConfigWizard extends WizardPage {
 			}
 		}
 		for (int i = 0; i < typeCheckedSort.size(); i++) {
+//			System.out.println("typeCheckedSortNew:    "+typeCheckedSort.get(i).getName()+"\n");
 			String grade = typeCheckedSort.get(i).getGrade();
 			String code = typeCheckedSort.get(i).getCode();
 			List<String> dependents = typeCheckedSort.get(i).getDependents();
@@ -342,22 +347,22 @@ public class ComponentConfigWizard extends WizardPage {
 //			}
 			
 			if (grade != null && code != null && !codeStrings.trim().equals("")) {
-			if (dependents.contains("cpu_peri_gpio")) {
-				gpioInit += codeStrings + "\n";
-			} else if (componentName.equals("heap")) {
-				lastInit += evttMain + codeStrings + "\n";
-			} else if (componentName.equals("shell")) {
-				shellInit += codeStrings + "\n";
-			} else {
-				if (grade.equals("early")) {
-					earlyCode += codeStrings + "\n";
-				} else if (grade.equals("medium")) {
-					mediumCode += codeStrings + "\n";
-				} else if (grade.equals("later")) {
-					laterCode += codeStrings + "\n";
+				if (dependents.contains("cpu_peri_gpio")) {
+					gpioInit += codeStrings + "\n";
+				} else if (componentName.equals("heap")) {
+					lastInit += evttMain + codeStrings + "\n";
+				} else if (componentName.equals("shell")) {
+					shellInit += codeStrings + "\n";
+				} else {
+					if (grade.equals("early")) {
+						earlyCode += codeStrings + "\n";
+					} else if (grade.equals("medium")) {
+						mediumCode += codeStrings + "\n";
+					} else if (grade.equals("later")) {
+						laterCode += codeStrings + "\n";
+					}
 				}
 			}
-		}
 			
 		}
 		lastInit += "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
@@ -366,7 +371,10 @@ public class ComponentConfigWizard extends WizardPage {
 		content += initHead;
 		content += "\n" + djyStart + djyMain + djyEnd;
 //		content += initStart + firstInit + gpioInit + shellInit + moduleInit + lastInit + initEnd;
-		content += initStart + firstInit + gpioInit + shellInit + earlyCode + mediumCode + laterCode + lastInit + initEnd;
+		content += initStart + firstInit + gpioInit + shellInit + 
+				"\t//-------------------early-------------------------//\n"+ earlyCode +
+				"\t//-------------------medium-------------------------//\n"+ mediumCode + 
+				"\t//-------------------later-------------------------//\n"+ laterCode + lastInit + initEnd;
 		dideHelper.writeFile(file, content);
 		
 		// 生成component_check.xml文件
@@ -390,7 +398,6 @@ public class ComponentConfigWizard extends WizardPage {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("checkFile:   "+checkFile.getPath());
 		ccx.createCheck(curCompontents, checkFile);
 	}
 	

@@ -354,14 +354,6 @@ public class GitHandler {
 							public void run() {
 								boolean gotoUpdate = false;
 								IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-//								try {
-//									gotoUpdate = MessageDialog.openQuestion(window.getShell(),
-//											new String(tips[0].getBytes(), "GBK"),
-//											new String(tips[1].getBytes(), "GBK"));
-//								} catch (UnsupportedEncodingException e2) {
-//									// TODO Auto-generated catch block
-//									e2.printStackTrace();
-//								}
 								GitUpdateInfoDialog dialog = new GitUpdateInfoDialog(window.getShell(),"Update Djyos Resource");
 								if (dialog.open()) {
 									
@@ -432,15 +424,6 @@ public class GitHandler {
 							if(!djysrcFile.exists()) {
 								djysrcFile.mkdirs();
 							}
-//							GitCloneWizard wizard;
-							// if (presetURI == null)
-							// wizard = new GitCloneWizard();
-							// else
-//							wizard = new GitCloneWizard(remotePath);
-//							wizard.setShowProjectImport(true);
-//							WizardDialog dlg = new WizardDialog(window.getShell(), wizard);
-//							dlg.setHelpAvailable(true);
-//							dlg.open();
 							cloneRepository(remotePath,djysrcPath);
 						}
 					}

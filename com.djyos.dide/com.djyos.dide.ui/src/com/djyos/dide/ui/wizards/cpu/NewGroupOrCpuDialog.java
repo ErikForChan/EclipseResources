@@ -54,13 +54,6 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.IOConsole;
-import org.eclipse.ui.console.IOConsoleInputStream;
-import org.eclipse.ui.console.MessageConsole;
-import org.eclipse.ui.console.MessageConsoleStream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import com.djyos.dide.ui.arch.Arch;
@@ -301,74 +294,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 			}
 		});
 		
-//	    PrintStream out = System.out;  
-//        PrintStream ps = null;
-//		try {
-//			ps = new PrintStream("G:/log.txt");
-//		} catch (FileNotFoundException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}  
-
-//        System.setOut(ps);  
-//        System.setOut(out);  
-//        System.out.println("程序运行完毕，请查看日志");  
-//        
-//        File f = new File("G:/outfile.txt");
-//		if (!f.exists()) {
-//			try {
-//				f.createNewFile();
-//			} catch (IOException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//		}
-//        FileOutputStream fileOutputStream = null;
-//		try {
-//			fileOutputStream = new FileOutputStream(f);
-//		} catch (FileNotFoundException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		PrintStream printStream = new PrintStream(fileOutputStream);
-//		System.setOut(printStream);
-//		
-//        MessageConsoleStream  console1 = this.createConsole("MyConsole1"); 
-//        console1.println("Hello, I'm out from MyConsole1");s
-//        ResourcesPlugin.getPlugin().get
-//		for (int i = 0; i <= 10; i++) {
-//			System.out.println("do something....");
-//		}
-        
-//	    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-//	    IConsole[] consoles = manager.getConsoles();
-//	    InputStream fInput = null;
-//		try {
-//			fInput = new FileInputStream(f);
-//		} catch (FileNotFoundException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		MessageConsole console = ((MessageConsole) consoles[0]);
-//	    ((IOConsole) consoles[0]).setInputStream(fInput);
-//	    MessageConsoleStream cs = console.newMessageStream();
-//	    conInSteam.toString();
-//	    System.out.println("msg:  "+conInSteam.toString());  
 		return super.createDialogArea(parent);
 	}
 	
-	 public MessageConsoleStream createConsole(String consoleName) { 
-	       MessageConsole console = new MessageConsole(consoleName,null);
-	       //新增、显示console
-	       IConsoleManager manager = (IConsoleManager) ConsolePlugin.getDefault().getConsoleManager();
-	       manager.addConsoles(new IConsole[]{console});
-	       manager.showConsoleView (console);
-	       //返回console流
-	       MessageConsoleStream cs = console.newMessageStream();
-	       cs.setColor(Display.getDefault().getSystemColor(SWT.COLOR_BLUE));       
-	       return cs;
-	   }
-
 	protected void creatFirmwareLibContent(Group contentGroup2) {
 		// TODO Auto-generated method stub
 		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL
@@ -1447,7 +1375,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		
 		final TreeColumn columnArch = new TreeColumn(archTree, SWT.NONE);
 		columnArch.setText("Arch列表");
-		columnArch.setWidth(200);
+		columnArch.setWidth(280);
 		columnArch.setResizable(false);
 		columnArch.setToolTipText("请选择蓝色图标的一项");
 		columnArch.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());

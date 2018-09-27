@@ -1,5 +1,9 @@
 package com.djyos.dide.ui.wizards.djyosProject.tools;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,7 +36,9 @@ public class SendEmail {
     //发件人账户密码
     public static String senderPassword = "sunri@2017";
 
-	public void send() {
+    private static DideHelper dideHelper = new DideHelper();
+    
+	public void send(String errMsg) {
 		//1、连接邮件服务器的参数配置
         Properties props = new Properties();
         //设置用户的认证方式
@@ -48,7 +54,7 @@ public class SendEmail {
         //3、创建邮件的实例对象
         Message msg;
 		try {
-			msg = getMimeMessage(session);
+			msg = getMimeMessage(session,errMsg);
 			 //4、根据session对象获取邮件传输对象Transport
 	        Transport transport = session.getTransport();
 	        //设置发件人的账户名和密码
@@ -70,11 +76,12 @@ public class SendEmail {
 	 /**
      * 获得创建一封邮件的实例对象
      * @param session
+	 * @param errMsg 
      * @return
      * @throws MessagingException
      * @throws AddressException
      */
-    public static MimeMessage getMimeMessage(Session session) throws Exception{
+    public static MimeMessage getMimeMessage(Session session, String errMsg) throws Exception{
     	List<String> fileList = new ArrayList<String>();
     	fileList.add("F:\\djysdk\\svn库维护规则.txt");
     	fileList.add("F:\\djysdk\\源码维护人列表.txt");
@@ -94,16 +101,16 @@ public class SendEmail {
         msg.setSubject("服务器编译结果自动发送","UTF-8");
         //设置邮件正文
         BodyPart bp = new MimeBodyPart(); 
-        bp.setContent("编译结果！", "text/html;charset=utf-8");
+        bp.setContent("以下工程编译出错: \n"+errMsg, "text/html;charset=utf-8");
         mp.addBodyPart(bp);
-        
-        for(String s:fileList) {
-        	bp = new MimeBodyPart();
-        	FileDataSource fds = new FileDataSource(s); 
-            bp.setDataHandler(new DataHandler(fds)); 
-            bp.setFileName(MimeUtility.encodeText(fds.getName(), "UTF-8", "B"));
-            mp.addBodyPart(bp);
-        }
+        System.out.println("以下工程编译出错: " + errMsg);
+//        for(String s:fileList) {
+//        	bp = new MimeBodyPart();
+//        	FileDataSource fds = new FileDataSource(s); 
+//            bp.setDataHandler(new DataHandler(fds)); 
+//            bp.setFileName(MimeUtility.encodeText(fds.getName(), "UTF-8", "B"));
+//            mp.addBodyPart(bp);
+//        }
         
         msg.setContent(mp);
        // msg.setContent("简单的纯文本邮件！", "text/html;charset=UTF-8");

@@ -160,8 +160,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 		return templateName;
 	}
 	
-
-	public void importProject(String projectPath) {
+	public void importProject(String projectPath, Board selectedBoard, boolean haveApp, boolean haveIboot) {
 		
 		String projectName = fMainPage.getProjectName();//用户填写的工程名
 		String templateName = getTemplateName();//用户选择的模板
@@ -179,6 +178,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			destFile.mkdir();
 			try {
 				dideHelper.copyFolder(srcFile,destFile);
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -212,13 +212,33 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 			projectExist = false;
 			createdProject = true;
 			
+			File destLdsFile = new File(destPath+"/src/lds");
+			if(!destLdsFile.exists()) {
+				destLdsFile.mkdirs();
+			}
+			try {
+				if(haveApp && haveIboot) {
+					dideHelper.copyFolder(new File(selectedBoard.getBoardPath()+"/lds"), new File(destPath+"/src/lds"));
+				}else if(haveApp) {
+					dideHelper.copyFolder(new File(selectedBoard.getBoardPath()+"/lds/debug.lds"), new File(destPath+"/src/lds/debug.lds"));
+					dideHelper.copyFolder(new File(selectedBoard.getBoardPath()+"/lds/memory.lds"), new File(destPath+"/src/lds/memory.lds"));
+					dideHelper.copyFolder(new File(selectedBoard.getBoardPath()+"/lds/release.lds"), new File(destPath+"/src/lds/release.lds"));
+				}else if(haveIboot) {
+					dideHelper.copyFolder(new File(selectedBoard.getBoardPath()+"/lds/iboot.lds"), new File(destPath+"/src/lds/iboot.lds"));
+					dideHelper.copyFolder(new File(selectedBoard.getBoardPath()+"/lds/memory.lds"), new File(destPath+"/src/lds/memory.lds"));
+				}
+				
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+			
 		}else {
 			projectExist = true;
 			fMainPage.setErrorMessage("Project is aready existed");
 		}		
 			
 	}
-	
 	
 	private void setFoldersToExclude(File parentFolder, ICConfigurationDescription[] conds, IProject project) {
 		// TODO Auto-generated method stub
@@ -1156,15 +1176,16 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard
 						dideHelper.showErrorMessage("配置App初始化文件错误："+e.getMessage());
 					}
 				}
-				monitor.worked(2);
+//				monitor.worked(2);
 				
 				//根据MemoryMap配置的内容添加memory.lds文件
-				monitor.setTaskName("配置lds文件...");
-				try {
-					getMemoryToLds(ldsHead,ldsDesc,projectName,sourcePath);
-				} catch (Exception e) {
-					dideHelper.showErrorMessage("lds配置错误："+e.getMessage());
-				}
+//				monitor.setTaskName("配置lds文件...");
+//				try {
+//					dideHelper.copyFolder(src, dest);
+////					getMemoryToLds(ldsHead,ldsDesc,projectName,sourcePath);
+//				} catch (Exception e) {
+//					dideHelper.showErrorMessage("lds配置错误："+e.getMessage());
+//				}
 				monitor.worked(6);
 				
 				//处理工程的链接

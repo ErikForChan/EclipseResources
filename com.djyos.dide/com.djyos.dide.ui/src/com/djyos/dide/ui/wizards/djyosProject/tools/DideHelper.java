@@ -103,6 +103,14 @@ public class DideHelper {
 	}
 	
 	public void writeFile(File file,String content){
+		if(!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		FileWriter writer;
 		try {
 			writer = new FileWriter(file);

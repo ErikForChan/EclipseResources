@@ -2338,7 +2338,6 @@ public class ComponentCfgPage extends PropertyPage {
 		return realComptName;
 	}
 
-	//创建projectconfigure.h文件
 	public void creatProjectConfiure(File file, String coreConfigure, boolean isApp) {
 		List<Component> compontentsCheckedSort = null;
 		if (isApp) {
@@ -2433,6 +2432,7 @@ public class ComponentCfgPage extends PropertyPage {
 					+ "extern ptu32_t djy_main(void);\n";
 
 		for (int i = 0; i < typeCompontentsChecked.size(); i++) {
+//			System.out.println("typeCheckedRevice:    "+typeCompontentsChecked.get(i).getName()+"\n");
 			handleDependents(typeCompontentsChecked.get(i),typeCompontentsChecked,typeCheckedSort);
 //			for (int j = 0; j < typeCompontentsCheckedCopy.size(); j++) {
 //				if (!typeCheckedSort.contains(typeCompontentsCheckedCopy.get(j))) {
@@ -2450,7 +2450,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		
 		for (int i = 0; i < typeCheckedSort.size(); i++) {
-			System.out.println("typeCheckedSort:   "+typeCheckedSort.get(i).getName());
+//			System.out.println("typeCheckedSortRevice:    "+typeCheckedSort.get(i).getName()+"\n");
 			String grade = typeCheckedSort.get(i).getGrade();
 			String code = typeCheckedSort.get(i).getCode();
 			List<String> dependents = typeCheckedSort.get(i).getDependents();
@@ -2466,7 +2466,6 @@ public class ComponentCfgPage extends PropertyPage {
 				}
 				String[] members = parameter.split("\\s+");
 				if (parameter.contains("#define") && tag.equals("obj_para")) {
-					System.out.println("members[1]:   "+members[1]);
 					paraNames.add(members[1]);
 				}
 			}
@@ -2540,7 +2539,10 @@ public class ComponentCfgPage extends PropertyPage {
 		content += "\n" + djyStart + djyMain + djyEnd;
 //		System.out.println("earlyCode:  "+earlyCode);
 //		content += initStart + firstInit + gpioInit + shellInit + moduleInit + lastInit + initEnd;
-		content += initStart + firstInit + gpioInit + shellInit + earlyCode + mediumCode + laterCode + lastInit + initEnd;
+		content += initStart + firstInit + gpioInit + shellInit + 
+				"\t//-------------------early-------------------------//\n"+ earlyCode +
+				"\t//-------------------medium-------------------------//\n"+ mediumCode + 
+				"\t//-------------------later-------------------------//\n"+ laterCode + lastInit + initEnd;
 		dideHelper.writeFile(file, content);
 	}
 
@@ -2598,7 +2600,6 @@ public class ComponentCfgPage extends PropertyPage {
 		return false;
 	}
 
-	
 	@Override
 	public boolean isDjyos() {
 		// TODO Auto-generated method stub
@@ -2613,7 +2614,6 @@ public class ComponentCfgPage extends PropertyPage {
 	}
 	
 	//获取当前工程
-	
 	private IProject getProject() {
 		Object element = getElement();
 		IProject project = null;
