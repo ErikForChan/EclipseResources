@@ -1226,7 +1226,7 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 
 		// Get the clean command from the build model
 		buffer.append("RM := "); //$NON-NLS-1$
-
+		
 		// support macros in the clean command
 		String cleanCommand = config.getCleanCommand();
 
@@ -1242,6 +1242,9 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 
 		buffer.append(NEWLINE);
 
+		//添加自己的变量
+		buffer.append("rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))\n\n");
+		
 		// Now add the source providers
 		buffer.append(COMMENT_SYMBOL).append(WHITESPACE).append(ManagedMakeMessages.getResourceString(SRC_LISTS)).append(NEWLINE);
 		buffer.append("-include sources.mk").append(NEWLINE); //$NON-NLS-1$

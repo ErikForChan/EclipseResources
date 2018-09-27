@@ -12,6 +12,10 @@
  *******************************************************************************/
 package org.eclipse.cdt.managedbuilder.core;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -39,10 +43,14 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.cdt.managedbuilder.internal.core.Configuration;
@@ -172,6 +180,12 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 				CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
 				buildRunnerHelper.printLine("正在切换到External Builder，请等候...");	
 				cb.build(kind, bInfo, monitor);		
+			}else {
+				String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
+				String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+				File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
+				String errMsg = project.getName()+"->"+cfgName+"\n";
+				setErrorFile(errorFile,errMsg);
 			}
 			/*New
 			 * after Interalbuilder build successthen invoke Externalbuilder
@@ -196,4 +210,54 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 
 		return false;
 	}
+	
+	private void setErrorFile(File errorFile, String errMsg) {
+		// TODO Auto-generated method stub
+		BufferedReader br = null;  
+        String line = null;  
+        boolean targetExist = false;
+        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
+        try {            
+            br = new BufferedReader(new FileReader(errorFile));              
+            while ((line = br.readLine()) != null) {  
+                StringBuffer buf = new StringBuffer();  
+                bufAll.append(line+"\n");            
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } finally {  
+            if (br != null) {  
+                try {  
+                    br.close();  
+                } catch (IOException e) {  
+                    br = null;  
+                }  
+            }  
+        }  
+        bufAll.append(errMsg+"\n");
+        errorFile.delete();
+        writeFile(errorFile,bufAll.toString());
+        
+	}
+	
+	public void writeFile(File file,String content){
+		if(!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		FileWriter writer;
+		try {
+			writer = new FileWriter(file);
+			writer.write(content);
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 }

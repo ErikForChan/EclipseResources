@@ -756,35 +756,35 @@ public class CommonBuilder extends ACBuilder {
 		
 		boolean toContinue = true;
 		boolean aExist = false;
-		if (!(cfgName.startsWith("libos") || cfgName.startsWith("libOS"))) {
-			String[] members = cfgName.split("_");
-			String commonString = members[members.length-2]+"_"+members[members.length-1];
-			IFolder folder = project.getFolder("libos_"+commonString);
-			if (!folder.exists()) {
-				 aExist = false;
-			}else {
-				IFile file = folder.getFile("libos_"+commonString+".a");
-				if(file.exists()) {
-					aExist = true;
-				}else {
-					 aExist = false;
-				}
-			}
-			
-			if(!aExist) {
-				toContinue= false;
-				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
-				IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
-				for (IConfiguration cfg : cfgs) {
-					if(cfg.getName().equals("libos_"+commonString)) {
-						IBuilder mybuilder = cfg.getEditableBuilder();
-						CfgBuildInfo binfo = new CfgBuildInfo(mybuilder, true);
-						build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
-						break;
-					}
-				}
-			}
-		}
+//		if (!(cfgName.startsWith("libos") || cfgName.startsWith("libOS"))) {
+//			String[] members = cfgName.split("_");
+//			String commonString = members[members.length-2]+"_"+members[members.length-1];
+//			IFolder folder = project.getFolder("libos_"+commonString);
+//			if (!folder.exists()) {
+//				 aExist = false;
+//			}else {
+//				IFile file = folder.getFile("libos_"+commonString+".a");
+//				if(file.exists()) {
+//					aExist = true;
+//				}else {
+//					 aExist = false;
+//				}
+//			}
+//			
+//			if(!aExist) {
+//				toContinue= false;
+//				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
+//				IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+//				for (IConfiguration cfg : cfgs) {
+//					if(cfg.getName().equals("libos_"+commonString)) {
+//						IBuilder mybuilder = cfg.getEditableBuilder();
+//						CfgBuildInfo binfo = new CfgBuildInfo(mybuilder, true);
+//						build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
+//						break;
+//					}
+//				}
+//			}
+//		}
 		
 		if(toContinue) {
 			BuildStatus status = new BuildStatus(builder);
@@ -968,9 +968,9 @@ public class CommonBuilder extends ACBuilder {
 			return buildStatus;
 
 //		if(needToChangeBuilder) {
-//			buildStatus.setRebuild();
+			buildStatus.setRebuild();
 //		}else {
-			buildStatus = performCleanning(kind, bInfo, buildStatus, monitor);
+//			buildStatus = performCleanning(kind, bInfo, buildStatus, monitor);
 //		}
 		
 		IManagedBuilderMakefileGenerator generator = builder.getBuildFileGenerator();
