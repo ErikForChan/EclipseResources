@@ -20,6 +20,8 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.egit.ui;bundle-version="4.8.0",
  org.tmatesoft.svnkit;bundle-version="1.9.1",
  com.sun.mail.javax.mail;bundle-version="1.4.7",
- org.eclipse.ui.console;bundle-version="3.7.0"
+ org.apache.commons.lang3;bundle-version="3.8.1",
+ org.eclipse.cdt.managedbuilder.ui;bundle-version="9.1.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Import-Package: org.eclipse.debug.internal.ui.views.console
+Import-Package: org.eclipse.cdt.managedbuilder.internal.ui.commands,
+ org.eclipse.debug.internal.ui.views.console

@@ -1,21 +1,12 @@
 package com.djyos.dide.ui.startup;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
-import org.eclipse.cdt.core.settings.model.ICLanguageSetting;
-import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
-import org.eclipse.cdt.core.settings.model.ICResourceDescription;
-import org.eclipse.cdt.core.settings.model.ICSettingEntry;
-import org.eclipse.cdt.core.settings.model.util.CDataUtil;
 import org.eclipse.cdt.managedbuilder.core.IBuilder;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
 import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
@@ -23,9 +14,8 @@ import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.BuildStatus;
 import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.CfgBuildInfo;
-import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.cdt.managedbuilder.internal.ui.commands.BuildConfigurationsJob;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -43,19 +33,20 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.ui.internal.ide.actions.BuildUtilities;
 
-import com.djyos.dide.ui.wizards.component.CmpntCheck;
 import com.djyos.dide.ui.wizards.component.ComponentRefer;
-import com.djyos.dide.ui.wizards.component.ReadCheckXml;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 import com.djyos.dide.ui.wizards.djyosProject.tools.LinkHelper;
 
+@SuppressWarnings("restriction")
 public class FileHandler implements IResourceChangeListener{
 
 	List<String> allStrings = new ArrayList<String>();
 	private String didePath = new DideHelper().getDIDEPath();
 	LinkHelper linkHelper = new LinkHelper();
 	ComponentRefer cRefer = new ComponentRefer();
+	DideHelper dideHelper = new DideHelper();
 	
 	@Override
 	public void resourceChanged(IResourceChangeEvent event) {
@@ -70,15 +61,27 @@ public class FileHandler implements IResourceChangeListener{
 						switch (delta.getKind()) {
 						case IResourceDelta.ADDED:
 							// handle added resource
-//							if(resource.getName().equals(".project")) {
-//								IProject project = resource.getProject();
-//								File hardWardInfoFile = new File(project.getLocation().toString()+"/data/hardware_info.xml");
-//								if(hardWardInfoFile.exists()) {
-//									HandleProjectImport projectListener = new HandleProjectImport(); 
-//									projectListener.handleProjectElemExculde(project);
-//									createBuild(project);
-//								}
-//							}
+							IProject project = resource.getProject();
+							File stup_complie_file = new File(dideHelper.getDIDEPath()+"auto_complier.txt");
+							if(resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
+								if(stup_complie_file.exists()) {
+									String libCfgName = resource.getName().replace(".a", "");
+									String commonName = libCfgName.replace("libos", "");
+									String targetName = project.getName()+commonName;
+									buildTarget(project,targetName);
+								}
+							}
+							
+							// if(resource.getName().equals(".project")) {
+							// IProject project = resource.getProject();
+							// File hardWardInfoFile = new
+							// File(project.getLocation().toString()+"/data/hardware_info.xml");
+							// if(hardWardInfoFile.exists()) {
+							// HandleProjectImport projectListener = new HandleProjectImport();
+							// projectListener.handleProjectElemExculde(project);
+							// createBuild(project);
+							// }
+							// }
 							break;
 						case IResourceDelta.REMOVED:
 							// handle removed resource
@@ -99,6 +102,29 @@ public class FileHandler implements IResourceChangeListener{
 		}
 	}
 	
+	@SuppressWarnings("restriction")
+	protected void buildTarget(IProject project, String targetName) {
+		// TODO Auto-generated method stub
+		CommonBuilder cb = new CommonBuilder();
+		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
+		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
+		ICConfigurationDescription[] conds = local_prjd.getConfigurations();
+		
+		for (ICConfigurationDescription cfg : conds) {
+			if(cfg.getName().equals(targetName)) {
+				
+				ICConfigurationDescription[] cfgds = new ICConfigurationDescription[1];
+				cfgds[0] = cfg;
+				
+				BuildUtilities.saveEditors(null);
+				Job buildJob =
+						new BuildConfigurationsJob(cfgds, 0, IncrementalProjectBuilder.INCREMENTAL_BUILD);
+				buildJob.schedule();
+			}
+		}
+	}
+
 	@SuppressWarnings("restriction")
 	public boolean createBuild(IProject project) {
 		CommonBuilder cb = new CommonBuilder();

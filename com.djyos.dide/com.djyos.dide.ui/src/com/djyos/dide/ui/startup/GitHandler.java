@@ -332,75 +332,84 @@ public class GitHandler {
 	
     public void remindUpdate() {
     	boolean isNeedUpdate = false;
-    	boolean hasGitProject = false;
+    	boolean hasDjysrc = false;
+    	boolean gitFileExist = false;
 		File file = new File(djysrcPath);
+		File gitFile = new File(djysrcPath+"/.git");
 		if (file.exists()) {
-			hasGitProject = true;
-			isNeedUpdate = checkUpdate(djysrcPath);
-			String dideGitPrefsPath = dideHelper.getDIDEPath()+"IDE/configuration/.settings/com.djyos.ui.prefs";
-			File dideGitPrefsFile = new File(dideGitPrefsPath);
-			boolean showUpdate;
-			if(dideGitPrefsFile.exists()) {
-				showUpdate = showGitUpdate(dideGitPrefsFile);
-			}else {
-				showUpdate = true;
-			}
-			
-			if (isNeedUpdate && showUpdate) {
-				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						
-						PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-							public void run() {
-								boolean gotoUpdate = false;
-								IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-								GitUpdateInfoDialog dialog = new GitUpdateInfoDialog(window.getShell(),"Update Djyos Resource");
-								if (dialog.open()) {
-									
-									boolean noticeMe = dialog.allowNoticeMe();
-									String content = "SHOW_GIT_UPDATE_DIALOG="+noticeMe;								
-									if(!dideGitPrefsFile.exists()) {
-										fillGitPrefsFile(dideGitPrefsFile,content);
-									}else {
-										setGitPrefs(dideGitPrefsFile,noticeMe);
-									}
-									
-									// 更新本地代码
-									boolean finishUpdate = false;
-									try {
-										finishUpdate = updateCode(djysrcPath);
-									} catch (Exception e1) {
-										// TODO Auto-generated catch block
-										e1.printStackTrace();
-									}
-									try {
-										if(finishUpdate) {
-											PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-												public void run() {
-													IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-													MessageDialog.openInformation(window.getShell(),
-															"提示","更新成功");
-											}
-											});
+			hasDjysrc = true;
+			if(gitFile.exists()) {
+				gitFileExist = true;
+				isNeedUpdate = checkUpdate(djysrcPath);
+				String dideGitPrefsPath = dideHelper.getDIDEPath()+"IDE/configuration/.settings/com.djyos.ui.prefs";
+				File dideGitPrefsFile = new File(dideGitPrefsPath);
+				boolean showUpdate;
+				if(dideGitPrefsFile.exists()) {
+					showUpdate = showGitUpdate(dideGitPrefsFile);
+				}else {
+					showUpdate = true;
+				}
+				
+				if (isNeedUpdate && showUpdate) {
+					PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							
+							PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+								public void run() {
+									boolean gotoUpdate = false;
+									IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+									GitUpdateInfoDialog dialog = new GitUpdateInfoDialog(window.getShell(),"Update Djyos Resource");
+									if (dialog.open()) {
+										
+										boolean noticeMe = dialog.allowNoticeMe();
+										String content = "SHOW_GIT_UPDATE_DIALOG="+noticeMe;								
+										if(!dideGitPrefsFile.exists()) {
+											fillGitPrefsFile(dideGitPrefsFile,content);
+										}else {
+											setGitPrefs(dideGitPrefsFile,noticeMe);
 										}
-										workspace.getRoot().refreshLocal(IResource.DEPTH_INFINITE, null);
-									} catch (CoreException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
+										
+										// 更新本地代码
+										boolean finishUpdate = false;
+										try {
+											finishUpdate = updateCode(djysrcPath);
+										} catch (Exception e1) {
+											// TODO Auto-generated catch block
+											e1.printStackTrace();
+										}
+										try {
+											if(finishUpdate) {
+												PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+													public void run() {
+														IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+														MessageDialog.openInformation(window.getShell(),
+																"提示","更新成功");
+												}
+												});
+											}
+											workspace.getRoot().refreshLocal(IResource.DEPTH_INFINITE, null);
+										} catch (CoreException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}
 									}
-								}
+							}
+
+							});				
 						}
+					});
 
-						});				
-					}
-				});
-
+				}
+				deleteDir(compareFile);
 			}
-			deleteDir(compareFile);
 		}
     	
 		//如果没有git源码，则下载Git源码
-		if (!hasGitProject) {
+		if (!gitFileExist) {
+			String promptInfo = "DIDE中还未有Djyos的Git源码，是否自动下载源码？";
+			if(!hasDjysrc) {
+				promptInfo = "DIDE中还未有Djyos源码，是否自动下载源码？";
+			}
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				public void run() {
 					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();

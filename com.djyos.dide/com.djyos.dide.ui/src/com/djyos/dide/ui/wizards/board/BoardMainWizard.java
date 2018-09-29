@@ -57,15 +57,6 @@ import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.IOConsoleOutputStream;
-import org.eclipse.ui.console.IPatternMatchListener;
-import org.eclipse.ui.console.MessageConsole;
-import org.eclipse.ui.console.MessageConsoleStream;
-import org.eclipse.ui.console.PatternMatchEvent;
-import org.eclipse.ui.console.TextConsole;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.tmatesoft.svn.core.SVNException;
 
@@ -117,18 +108,6 @@ public class BoardMainWizard extends WizardPage {
 		setPageComplete(true);
 	}
 	
-	public MessageConsoleStream createConsole(String consoleName) {
-		MessageConsole console = new MessageConsole(consoleName, null);
-		// 新增、显示console
-		IConsoleManager manager = (IConsoleManager) ConsolePlugin.getDefault().getConsoleManager();
-		manager.addConsoles(new IConsole[] { console });
-		manager.showConsoleView(console);
-		// 返回console流
-		MessageConsoleStream cs = console.newMessageStream();
-		cs.setColor(Display.getDefault().getSystemColor(SWT.COLOR_BLUE));
-		return cs;
-	}
-
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub

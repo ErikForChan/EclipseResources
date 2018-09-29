@@ -22,9 +22,8 @@ import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 
 public class ConfigurationHandler{
 	
-	String pattern = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(call rwildcard,./,*.o)" + 
-			"";
-	
+//	String pattern = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(call rwildcard,./,*.o)";
+	String pattern = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(addsuffix *.o,$(subst \\,/,$(dir $(subst $(dir $(shell for /r  %%i in (*makefile) do @echo %%i)),./,$(dir $(shell for /r  %%i in (*subdir.mk) do @echo %%i))))))";
 	public void handlerConfiguration(){
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		setBuildingToAuto(workspace);
