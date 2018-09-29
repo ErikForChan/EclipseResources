@@ -968,9 +968,9 @@ public class CommonBuilder extends ACBuilder {
 			return buildStatus;
 
 //		if(needToChangeBuilder) {
-			buildStatus.setRebuild();
+//			buildStatus.setRebuild();
 //		}else {
-//			buildStatus = performCleanning(kind, bInfo, buildStatus, monitor);
+			buildStatus = performCleanning(kind, bInfo, buildStatus, monitor);
 //		}
 		
 		IManagedBuilderMakefileGenerator generator = builder.getBuildFileGenerator();

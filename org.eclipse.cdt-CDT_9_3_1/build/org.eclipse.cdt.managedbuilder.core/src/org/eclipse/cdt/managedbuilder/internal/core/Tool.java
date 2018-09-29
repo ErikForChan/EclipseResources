@@ -98,7 +98,7 @@ import org.osgi.framework.Version;
  */
 public class Tool extends HoldsOptions implements ITool, IOptionCategory, IMatchKeyProvider<Tool>, IRealBuildObjectAssociation {
 
-	public static final String DEFAULT_PATTERN = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(call rwildcard,./,*.o)"; //$NON-NLS-1$
+	public static final String DEFAULT_PATTERN = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(addsuffix *.o,$(subst \\,/,$(dir $(subst $(dir $(shell for /r  %%i in (*makefile) do @echo %%i)),./,$(dir $(shell for /r  %%i in (*subdir.mk) do @echo %%i))))))"; //$NON-NLS-1$
 //	public static final String DEFAULT_PATTERN = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}"; //$NON-NLS-1$
 //	public static final String DEFAULT_PATTERN = "for /r  %%i in (*.o) do ${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} %%i && @echo ${OUTPUT} add %%i"; //$NON-NLS-1$
 	public static final String DEFAULT_CBS_PATTERN = "${COMMAND}"; //$NON-NLS-1$

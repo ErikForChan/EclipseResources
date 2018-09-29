@@ -72,7 +72,6 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 	public boolean invokeBuild(int kind, IProject project, IConfiguration configuration,
 			IBuilder builder, IConsole console, IMarkerGenerator markerGenerator,
 			IncrementalProjectBuilder projectBuilder, IProgressMonitor monitor) throws CoreException {
-
 		BuildRunnerHelper buildRunnerHelper = new BuildRunnerHelper(project);
 
 		try {
@@ -183,9 +182,15 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 			}else {
 				String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
 				String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-				File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
-				String errMsg = project.getName()+"->"+cfgName+"\n";
-				setErrorFile(errorFile,errMsg);
+				File stup_complie_file = new File(didePath+"auto_complier.txt");
+//				File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
+				if(stup_complie_file.exists()) {
+					String errMsg = project.getName()+"->"+cfgName+"\n";
+					SendErrorEmail email = new SendErrorEmail();
+					email.send(errMsg);
+				}
+				
+//				setErrorFile(errorFile,errMsg);
 			}
 			/*New
 			 * after Interalbuilder build success¡Athen invoke Externalbuilder

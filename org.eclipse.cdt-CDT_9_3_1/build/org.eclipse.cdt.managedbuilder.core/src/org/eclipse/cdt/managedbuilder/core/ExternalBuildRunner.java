@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.cdt.managedbuilder.core;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
 
@@ -139,6 +141,17 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 
 				if (state != ICommandLauncher.ILLEGAL_COMMAND) {
 					buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
+				}else {
+					String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
+					String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+//					File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
+					File stup_complie_file = new File(didePath+"auto_complier.txt");
+					if(stup_complie_file.exists()) {
+						String errMsg = project.getName()+"->"+cfgName+"\n";
+						SendErrorEmail email = new SendErrorEmail();
+						email.send(errMsg);
+					}
+					
 				}
 			} else {
 				String msg = ManagedMakeMessages.getFormattedString("ManagedMakeBuilder.message.undefined.build.command", builder.getId()); //$NON-NLS-1$
