@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<template type="TargetTempl" version="1.0" supplier="c-sky.com" revision="1.0" author="Liujirang"
+		copyright="Copyright (c) 2008-2015 HangZhou C-Sky Microsystem Ltd. All rights reserved. This program and the accompanying materials are made available under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v10.html"
+		id="ck802-l" label="Simple Project" description="SOC Template"
+		 help="help.html">
+
+     <!-- create folder -->
+	<process type="org.eclipse.cdt.core.CreateFolder">
+		<simple name="projectName" value="$(projectName)"/>
+		<simple name="path" value="Src"/>
+	</process>
+
+	<process type="org.eclipse.cdt.core.CreateFolder">
+		<simple name="projectName" value="$(projectName)"/>
+		<simple name="path" value="CSI_DRIVER"/>
+	</process>
+
+	<process type="org.eclipse.cdt.core.CreateFolder">
+		<simple name="projectName" value="$(projectName)"/>
+		<simple name="path" value="CSI_DRIVER/Include"/>
+	</process>
+
+	<process type="org.eclipse.cdt.core.CreateFolder">
+		<simple name="projectName" value="$(projectName)"/>
+		<simple name="path" value="CSI_DRIVER/Driver"/>
+	</process>
+
+	<process type="org.eclipse.cdt.core.CreateFolder">
+		<simple name="projectName" value="$(projectName)"/>
+		<simple name="path" value="CSI_DRIVER/Driver/Include"/>
+	</process>
+
+	<process type="org.eclipse.cdt.core.CreateFolder">
+		<simple name="projectName" value="$(projectName)"/>
+		<simple name="path" value="CSI_CORE"/>
+	</process>
+
+
+     <!-- copy file -->
+     <process type="org.eclipse.cdt.core.Copy">
+        <complex-array name="files">
+            <element>
+                <simple name="source" value="Src/main.c"/>
+                <simple name="target" value="$(projectlocation)/Src/main.c"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/VERSION"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/VERSION"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/startup_PHOBOS.S"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/startup_PHOBOS.S"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Include/system_PHOBOS.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Include/system_PHOBOS.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Include/PHOBOS.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Include/PHOBOS.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Include/CSIDRV_UART.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Include/CSIDRV_UART.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Include/CSIDRV_timer.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Include/CSIDRV_timer.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Include/CSIDRV_SHA.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Include/CSIDRV_SHA.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Include/CSIDRV_I2C.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Include/CSIDRV_I2C.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Include/CSIDRV_Common.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Include/CSIDRV_Common.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/system_PHOBOS.c"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/system_PHOBOS.c"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/PHOBOS_UART.c"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/PHOBOS_UART.c"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/PHOBOS_timer.c"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/PHOBOS_timer.c"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/PHOBOS_SHA.c"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/PHOBOS_SHA.c"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/PHOBOS_I2C.c"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/PHOBOS_I2C.c"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/PHOBOS_GPIO.c"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/PHOBOS_GPIO.c"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/Include/PHOBOS_UART.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/Include/PHOBOS_UART.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/Include/PHOBOS_timer.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/Include/PHOBOS_timer.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/Include/PHOBOS_SHA.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/Include/PHOBOS_SHA.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/Include/PHOBOS_I2C.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/Include/PHOBOS_I2C.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_DRIVER/Driver/Include/PHOBOS_GPIO.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_DRIVER/Driver/Include/PHOBOS_GPIO.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_CORE/VERSION"/>
+                <simple name="target" value="$(projectlocation)/CSI_CORE/VERSION"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_CORE/CSI_GCC.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_CORE/CSI_GCC.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+            <element>
+                <simple name="source" value="CSI_CORE/CSICORE_CK802.h"/>
+                <simple name="target" value="$(projectlocation)/CSI_CORE/CSICORE_CK802.h"/>
+                <simple name="replaceable" value="false"/>
+            </element>
+        </complex-array>
+     </process>
+
+     <!-- add files -->
+     <process type="org.eclipse.cdt.core.AddFiles">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="files">
+            <element>
+                <simple name="source" value="CSI_DRIVER/gcc_csky.ld"/>
+                <simple name="target" value="CSI_DRIVER/gcc_csky.ld"/>
+                <simple name="replaceable" value="true"/>
+            </element>
+        </complex-array>
+     </process>
+
+     <!-- set option value -->
+    <process type="org.eclipse.cdt.managedbuilder.core.AppendToMBSStringListOptionValues">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*include.paths"/>
+                <simple-array name="values">
+                   <element value="&quot;${workspace_loc:/${ProjName}/CSI_DRIVER\Include}&quot;"/>
+                </simple-array>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+    <process type="org.eclipse.cdt.managedbuilder.core.AppendToMBSStringListOptionValues">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*include.paths"/>
+                <simple-array name="values">
+                   <element value="&quot;${workspace_loc:/${ProjName}/CSI_DRIVER\Driver\Include}&quot;"/>
+                </simple-array>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+    <process type="org.eclipse.cdt.managedbuilder.core.AppendToMBSStringListOptionValues">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*include.paths"/>
+                <simple-array name="values">
+                   <element value="&quot;${workspace_loc:/${ProjName}/CSI_CORE}&quot;"/>
+                </simple-array>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+    <process type="org.eclipse.cdt.managedbuilder.core.SetMBSStringOptionValue">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value="ckcoregcc.cpp.compiler.option.other.other"/>
+                <simple name="value" value="-c $(CPPCompilerFlags)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+    <process type="org.eclipse.cdt.managedbuilder.core.SetMBSStringOptionValue">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value="ckcoregcc.c.compiler.option.other.other"/>
+                <simple name="value" value="-c $(CCompilerFlags)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+
+     <process type="org.eclipse.cdt.managedbuilder.core.SetMBSStringOptionValue">
+        <simple name="projectName" value="$(projectName)"/>      
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*linkfile"/>
+                <simple name="value" value="$(LinkFile)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+
+     <process type="org.eclipse.cdt.managedbuilder.core.SetMBSStringOptionValue">
+        <simple name="projectName" value="$(projectName)"/>      
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*cputype"/>
+                <simple name="value" value="$(CpuType)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+    
+    <process type="org.eclipse.cdt.managedbuilder.core.SetMBSBooleanOptionValue">
+        <simple name="projectName" value="$(projectName)"/>      
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*isBigEndian"/>
+                <simple name="value" value="$(BigEndian)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>    
+    <process type="org.eclipse.cdt.managedbuilder.core.SetMBSBooleanOptionValue">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*isHardFloat"/>
+                <simple name="value" value="$(HardFloat)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+    <process type="org.eclipse.cdt.managedbuilder.core.SetMBSBooleanOptionValue">
+        <simple name="projectName" value="$(projectName)"/>
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*isEnhancedLRW"/>
+                <simple name="value" value="$(EnhancedLRW)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>
+    <process type="org.eclipse.cdt.managedbuilder.core.SetMBSStringOptionValue">
+        <simple name="projectName" value="$(projectName)"/>      
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*release.option.optimization.level"/>
+                <simple name="value" value="$(ReleaseOptimizationLevel)"/>
+                <simple name="path" value=""/>
+            </element>
+        </complex-array>
+    </process>	
+    <process type="org.eclipse.cdt.managedbuilder.core.AppendToMBSStringListOptionValues">
+        <simple name="projectName" value="$(projectName)"/>      
+        <complex-array name="resourcePaths">
+            <element>
+                <simple name="id" value=".*preprocessor.def"/>
+                <simple-array name="values">
+				   <element value = "CONFIG_CKCPU_MMU=$(ValueMMU)"/>
+                </simple-array>
+                <simple name="path" value=""/>
+            </element>
+            <element>
+                <simple name="id" value=".*def.symbols"/>
+                <simple-array name="values">
+				   <element value = "CONFIG_CKCPU_MMU=$(ValueMMU)"/>
+                </simple-array>
+                <simple name="path" value=""/>
+            </element>			
+        </complex-array>
+    </process>   
+
+</template>
+
