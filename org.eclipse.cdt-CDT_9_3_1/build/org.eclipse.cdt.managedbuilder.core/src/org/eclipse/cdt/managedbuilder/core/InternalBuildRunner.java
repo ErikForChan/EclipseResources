@@ -185,9 +185,17 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 				File stup_complie_file = new File(didePath+"auto_complier.txt");
 //				File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
 				if(stup_complie_file.exists()) {
-					String errMsg = project.getName()+"->"+cfgName+"\n";
-					SendErrorEmail email = new SendErrorEmail();
-					email.send(errMsg);
+					File errorFolder = new File(didePath+"errFolder");
+					if(!errorFolder.exists()) {
+						errorFolder.mkdir();
+					}
+					File errorFile = new File(didePath+"errFolder/"+project.getName()+"->"+cfgName+".txt");
+					if(!errorFile.exists()) {
+						errorFile.createNewFile();
+					}
+//					String errMsg = project.getName()+"->"+cfgName+"\n";
+//					SendErrorEmail email = new SendErrorEmail();
+//					email.send(errMsg);
 				}
 				
 //				setErrorFile(errorFile,errMsg);

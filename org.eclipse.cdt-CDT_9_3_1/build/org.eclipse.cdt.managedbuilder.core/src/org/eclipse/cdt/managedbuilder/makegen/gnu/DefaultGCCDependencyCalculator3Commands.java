@@ -216,6 +216,9 @@ public class DefaultGCCDependencyCalculator3Commands implements
 
 		// Get what we need to create the dependency generation command
 		String inputExtension = source.getFileExtension();
+		if(inputExtension.equals("S")||inputExtension.equals("s")) {
+			return null;
+		}
 		String outputExtension = tool.getOutputExtension(inputExtension);
 
 		// Calculate the dependency rule

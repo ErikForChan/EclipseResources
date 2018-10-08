@@ -1224,6 +1224,16 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 		buffer.append("-include " + ROOT + SEPARATOR + MAKEFILE_INIT).append(NEWLINE); //$NON-NLS-1$
 		buffer.append(NEWLINE);
 
+		//新增
+		buffer.append("define loop\n" + 
+				"$(eval do=$(wordlist 1, ${1}, ${2}))\\\n" + 
+				"$(if $(word 1, $(do)),\\\n" + 
+				"	$(eval last=$(subst $(do),,${2}))\\\n" + 
+				"	$(info ar -r $(do))\\\n" + 
+				"	$(shell ${3} $(do))\\\n" + 
+				"	$(call loop, ${1}, $(last), ${3}),$(info ***** $(strip ${3}) finished *****))\n" + 
+				"endef\n"); //$NON-NLS-1$
+		
 		// Get the clean command from the build model
 		buffer.append("RM := "); //$NON-NLS-1$
 		
@@ -1242,8 +1252,8 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 
 		buffer.append(NEWLINE);
 
-		//添加自己的变量
-		buffer.append("rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))\n\n");
+//		//添加自己的变量
+//		buffer.append("rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))\n\n");
 		
 		// Now add the source providers
 		buffer.append(COMMENT_SYMBOL).append(WHITESPACE).append(ManagedMakeMessages.getResourceString(SRC_LISTS)).append(NEWLINE);
@@ -1592,7 +1602,8 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 
 		// Always add a clean target
 		buffer.append("clean:").append(NEWLINE); //$NON-NLS-1$
-		buffer.append(TAB).append("-$(RM)").append(WHITESPACE); //$NON-NLS-1$
+		//buffer.append(TAB).append("-$(RM)").append(WHITESPACE); //$NON-NLS-1$
+		buffer.append(TAB).append("$(call loop, 50,");
 		for (Entry<String, List<IPath>> entry : buildOutVars.entrySet()) {
 			String macroName = entry.getKey();
 			buffer.append("$(").append(macroName).append(')'); //$NON-NLS-1$
@@ -1600,7 +1611,7 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 		String outputPrefix = EMPTY_STRING;
 		if (targetTool != null) {
 			outputPrefix = targetTool.getOutputPrefix();
-		}
+		}		
 		String completeBuildTargetName = outputPrefix + buildTargetName;
 		if (buildTargetExt.length() > 0) {
 			completeBuildTargetName = completeBuildTargetName + DOT + buildTargetExt;
@@ -1610,10 +1621,35 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 		} else {
 			buffer.append(WHITESPACE).append(completeBuildTargetName);
 		}
+		buffer.append(",rm.exe -f)");		
 		buffer.append(NEWLINE);
 		buffer.append(TAB).append(DASH).append(AT).append(ECHO_BLANK_LINE).append(NEWLINE);
 
 		return buffer;
+		
+//		buffer.append("clean:").append(NEWLINE); //$NON-NLS-1$
+//		buffer.append(TAB).append("-$(RM)").append(WHITESPACE); //$NON-NLS-1$
+//		for (Entry<String, List<IPath>> entry : buildOutVars.entrySet()) {
+//			String macroName = entry.getKey();
+//			buffer.append("$(").append(macroName).append(')'); //$NON-NLS-1$
+//		}
+//		String outputPrefix = EMPTY_STRING;
+//		if (targetTool != null) {
+//			outputPrefix = targetTool.getOutputPrefix();
+//		}
+//		String completeBuildTargetName = outputPrefix + buildTargetName;
+//		if (buildTargetExt.length() > 0) {
+//			completeBuildTargetName = completeBuildTargetName + DOT + buildTargetExt;
+//		}
+//		if (completeBuildTargetName.contains(" ")) { //$NON-NLS-1$
+//			buffer.append(WHITESPACE).append('"').append(completeBuildTargetName).append('"');
+//		} else {
+//			buffer.append(WHITESPACE).append(completeBuildTargetName);
+//		}
+//		buffer.append(NEWLINE);
+//		buffer.append(TAB).append(DASH).append(AT).append(ECHO_BLANK_LINE).append(NEWLINE);
+//
+//		return buffer;
 	}
 
 	/**
