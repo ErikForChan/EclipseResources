@@ -153,11 +153,35 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 			} finally {
 				epm.deDuplicate();
 			}
-	
+			
+			//1 ERROR  0 yes
+			if (status == ParallelBuilder.STATUS_ERROR || status == ParallelBuilder.STATUS_INVALID) {
+				String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
+				String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+				File stup_complie_file = new File(didePath+"auto_complier.txt");
+				if(stup_complie_file.exists()) {
+//					File errorFolder = new File(didePath+"errFolder");
+//					if(!errorFolder.exists()) {
+//						errorFolder.mkdir();
+//					}
+//					File errorFile = new File(didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
+//					System.out.println("errorFile:  "+didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
+//					if(!errorFile.exists()) {
+//						errorFile.createNewFile();
+//					}
+					File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
+					String errMsg = project.getName()+"->"+cfgName+"， \n";
+					setErrorFile(errorFile,errMsg);
+//					SendErrorEmail email = new SendErrorEmail();
+//					email.send(errMsg); 
+				}
+			}
+			
+			System.out.println("Internal state:   "+status);
 			bsMngr.setProjectBuildState(project, pBS);
 			buildRunnerHelper.close();
 //			buildRunnerHelper.goodbye();
-
+			
 			if (status != ICommandLauncher.ILLEGAL_COMMAND) {
 				buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
 			}else {
@@ -179,26 +203,6 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 				CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
 				buildRunnerHelper.printLine("正在切换到External Builder，请等候...");	
 				cb.build(kind, bInfo, monitor);		
-			}else {
-				String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
-				String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-				File stup_complie_file = new File(didePath+"auto_complier.txt");
-//				File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
-				if(stup_complie_file.exists()) {
-					File errorFolder = new File(didePath+"errFolder");
-					if(!errorFolder.exists()) {
-						errorFolder.mkdir();
-					}
-					File errorFile = new File(didePath+"errFolder/"+project.getName()+"->"+cfgName+".txt");
-					if(!errorFile.exists()) {
-						errorFile.createNewFile();
-					}
-//					String errMsg = project.getName()+"->"+cfgName+"\n";
-//					SendErrorEmail email = new SendErrorEmail();
-//					email.send(errMsg);
-				}
-				
-//				setErrorFile(errorFile,errMsg);
 			}
 			/*New
 			 * after Interalbuilder build successthen invoke Externalbuilder
@@ -254,13 +258,14 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 	}
 	
 	public void writeFile(File file,String content){
-		if(!file.exists()) {
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		if(file.exists()) {
+			file.delete();
+		}
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		FileWriter writer;
 		try {

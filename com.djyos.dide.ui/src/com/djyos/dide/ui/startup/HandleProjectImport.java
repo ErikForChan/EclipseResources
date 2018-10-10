@@ -5,10 +5,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICFolderDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionPreferences;
+import org.eclipse.cdt.core.settings.model.ICProjectDescriptionWorkspacePreferences;
 import org.eclipse.cdt.core.settings.model.ICResourceDescription;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
@@ -42,6 +46,7 @@ import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 public class HandleProjectImport{
 
@@ -76,6 +81,12 @@ public class HandleProjectImport{
 		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
 		if(local_prjd!=null) {
 			
+			ICProjectDescriptionManager prjDescMgr = CCorePlugin.getDefault().getProjectDescriptionManager();
+			ICProjectDescriptionWorkspacePreferences prefs = prjDescMgr
+					.getProjectDescriptionWorkspacePreferences(true);
+			prefs.setConfigurationRelations(ICProjectDescriptionPreferences.CONFIGS_LINK_SETTINGS_AND_ACTIVE);
+			prjDescMgr.setProjectDescriptionWorkspacePreferences(prefs, false, new NullProgressMonitor());
+			
 			ICConfigurationDescription[] conds = local_prjd.getConfigurations();	//获取工程的所有Configuration	
 			File compInfoFile = new File(project.getLocation().toString()+"/data/hardwares/component_infos.xml");
 			File cpuInfoFile = new File(project.getLocation().toString()+"/data/hardwares/cpu_infos.xml");
@@ -107,8 +118,6 @@ public class HandleProjectImport{
 //					System.out.println("getBoardName：  "+sBoard.getBoardName());
 					List<OnBoardCpu> onBoardCpus = sBoard.getOnBoardCpus();
 					for (int i = 0; i < onBoardCpus.size(); i++) {
-//						System.out.println("getCpuName：  "+onBoardCpus.get(i).getCpuName());
-//						System.out.println("cpuName：  "+cpuName);
 						if (onBoardCpus.get(i).getCpuName().equals(cpuName)) {
 							onBoardCpu = onBoardCpus.get(i);
 							break;
@@ -124,6 +133,7 @@ public class HandleProjectImport{
 							String relativePath = componentPath.replace(srcLocation, "");
 							String compPath = relativePath+"/"+fileName;
 							if(!compPaths.contains(compPath)) {
+								System.out.println("noSelect:   "+relativePath);
 //								System.out.println("compPath:   "+compPath);
 //								if(fileName.endsWith(".c")) {
 //									IFile ifile = project.getFile("src/libos"+compPath);
@@ -146,9 +156,9 @@ public class HandleProjectImport{
 						//排除不是組建的文件
 						List<File> excludeCompFiles = gecf.getNonCompFiles(onBoardCpu, sBoard);
 						for(File f:excludeCompFiles) {
-							System.out.println("f.getName():   "+f.getName());
+//							System.out.println("f.getName():   "+f.getName());
 							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-							System.out.println("relativePath:   "+relativePath);
+							System.out.println("excludeCompFiles:   "+relativePath);
 							if(f.isDirectory()) {
 								IFolder ifolder = project.getFolder("src/libos"+relativePath);
 								for (int j = 0; j < conds.length; j++) {
@@ -169,10 +179,11 @@ public class HandleProjectImport{
 				//处理板件
 				if(boardInfoFile.exists()) {
 					List<String> boardNames = readBoardsInfo.getBoardsInfo(boardInfoFile);
-					//排除新增的板件
+					//排除新增的板件 修改为:排除不是本工程的板件
 					for(Board board:boards) {
-						if(!boardNames.contains(board.getBoardName())) {
-							System.out.println("ExcludeBoard:   "+board.getBoardName());
+//						if(!boardNames.contains(board.getBoardName())) {
+						if(!boardName.equals(board.getBoardName())) {
+//							System.out.println("ExcludeBoard:   "+board.getBoardName());
 							String boardPath = board.getBoardPath().replace("\\", "/");
 							String relativePath = boardPath.replace(srcLocation, "");
 							IFolder ifolder = project.getFolder("src/libos"+relativePath);
@@ -207,20 +218,21 @@ public class HandleProjectImport{
 				List<Cpu> allCpus = rcx.getAllCpus();
 				if(cpuInfoFile.exists()) {
 					List<String> cpuNames = readCpusInfo.getCpusInfo(cpuInfoFile);
+					//修改为:排除不是本工程的Cpu
 					for(Cpu cpu:allCpus) {
-						if(!cpuNames.contains(cpu.getCpuName())) {
+						if(!cpuName.equals(cpu.getCpuName())) {
 							String cpuPath =  cpu.getParentPath().replace("\\", "/");
 							File cpuFolder = new File(cpuPath);
 							List<IFolder> folders = new ArrayList<IFolder>();
 							getFolders(project,folders,cpuFolder,cpuName);
-							for(IFolder folder:folders) {
+							for(IFolder folder:folders) {//srm32f7123,f7,stm32
 								for (int j = 0; j < conds.length; j++) {
 									linkHelper.setExclude(folder, conds[j], true);
 								}
 							}
 						}
 					}
-					
+					//排除不是Cpu的文件夹
 					GetNonCpuFiles gncf = new GetNonCpuFiles();
 					List<File> excludeCpuFiles = gncf.getNonCpus();
 					for(File f:excludeCpuFiles) {
@@ -230,6 +242,24 @@ public class HandleProjectImport{
 							linkHelper.setExclude(ifolder, conds[j], true);
 						}
 					}
+					//打开本工程的Cpu
+					for(Cpu cpu:allCpus) {
+						if(cpuName.equals(cpu.getCpuName())) {
+							String cpuPath =  cpu.getParentPath().replace("\\", "/");
+							File cpuFolder = new File(cpuPath);
+							List<IFolder> folders = new ArrayList<IFolder>();
+							getFolders(project,folders,cpuFolder,cpuName);//stm32f7123,f7,stm32
+							for(int i=folders.size()-1;i>=0;i--) {//stm32,f7,stm32f7123
+								System.out.println("folders.get(i):  "+folders.get(i).getName());
+								for (int j = 0; j < conds.length; j++) {
+									if(conds[j].getName().startsWith("libos")) {
+										linkHelper.setExclude(folders.get(i), conds[j], false);
+									}
+								}
+							}
+						}
+					}
+					
 				}
 				createNewFile(cpuInfoFile);
 				createCpuInfo.createCpuInfo(cpuInfoFile, allCpus);
@@ -323,22 +353,22 @@ public class HandleProjectImport{
 		IFolder folder = project.getFolder("src/libos"+relativePath);
 		folders.add(folder);
 		File parentFile = file.getParentFile();
-		if(!parentFile.getName().equals("cpudrv") && !toInclude(parentFile,cpuName)) {
+		if(!parentFile.getName().equals("cpudrv")) {
 			getFolders(project,folders,parentFile,cpuName);
 		}
 		
 	}
 
-	private boolean toInclude(File parentFile, String cpuName) {
-		// TODO Auto-generated method stub
-		File[] files = parentFile.listFiles();
-		for(File f:files) {
-			if(f.getName().equals(cpuName)) {
-				return true;
-			}
-		}
-		return false;
-	}
+//	private boolean toInclude(File parentFile, String cpuName) {
+//		// TODO Auto-generated method stub
+//		File[] files = parentFile.listFiles();
+//		for(File f:files) {
+//			if(f.getName().equals(cpuName)) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 
 
 }

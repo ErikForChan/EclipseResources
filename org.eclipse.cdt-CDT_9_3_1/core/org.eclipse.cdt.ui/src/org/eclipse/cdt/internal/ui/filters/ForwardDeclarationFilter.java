@@ -40,7 +40,7 @@ public class ForwardDeclarationFilter extends ViewerFilter {
 			final ICElement celem= (ICElement) element;
 			String elemName = celem.getPath().toString();
 			System.out.println("elemName:  "+elemName);
-			if(elemName.contains("libos")) {
+			if(elemName.equals("libos")) {
 				return false;
 			}
 			ICElement tu= celem;

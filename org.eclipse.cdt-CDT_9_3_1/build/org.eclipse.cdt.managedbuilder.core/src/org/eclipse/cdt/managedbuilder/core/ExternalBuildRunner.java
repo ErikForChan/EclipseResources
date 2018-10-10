@@ -13,7 +13,10 @@
  *******************************************************************************/
 package org.eclipse.cdt.managedbuilder.core;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -136,31 +139,19 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 				} finally {
 					epm.deDuplicate();
 				}
+				System.out.println("External state:   "+state);//0 ERROR 0 yes
+//				if (state != ICommandLauncher.OK) {
+//					System.out.println("state != ICommandLauncher.OK");
+//					
+//				}
+				
 				buildRunnerHelper.close();
 				buildRunnerHelper.goodbye();
-
+			
 				if (state != ICommandLauncher.ILLEGAL_COMMAND) {
 					buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
-				}else {
-					String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
-					String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
-//					File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
-					File stup_complie_file = new File(didePath+"auto_complier.txt");
-					if(stup_complie_file.exists()) {
-						File errorFolder = new File(didePath+"errFolder");
-						if(!errorFolder.exists()) {
-							errorFolder.mkdir();
-						}
-						File errorFile = new File(didePath+"errFolder/"+project.getName()+"->"+cfgName+".txt");
-						if(!errorFile.exists()) {
-							errorFile.createNewFile();
-						}
-//						String errMsg = project.getName()+"->"+cfgName+"\n";
-//						SendErrorEmail email = new SendErrorEmail();
-//						email.send(errMsg);
-					}
-					
 				}
+		
 			} else {
 				String msg = ManagedMakeMessages.getFormattedString("ManagedMakeBuilder.message.undefined.build.command", builder.getId()); //$NON-NLS-1$
 				throw new CoreException(new Status(IStatus.ERROR, ManagedBuilderCorePlugin.PLUGIN_ID, msg, new Exception()));
@@ -177,9 +168,90 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 			}
 			//刷新当前工程
 			project.refreshLocal(IResource.DEPTH_INFINITE, null);
+			
+			if(configuration.getName().startsWith(project.getName()) ) {
+				String cfgName = configuration.getName();
+				System.out.println("configuration.getName():  "+cfgName);
+				String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
+				String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+				File stup_complie_file = new File(didePath+"auto_complier.txt");
+				if(stup_complie_file.exists()) {
+//					File errorFolder = new File(didePath+"errFolder");
+//					if(!errorFolder.exists()) {
+//						errorFolder.mkdir();
+//					}
+//					System.out.println("errorFile:  "+didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
+//					File errorFile = new File(didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
+//					if(!errorFile.exists()) {
+//						errorFile.createNewFile();
+//					}
+					String projectLocation = project.getLocation().toString().replace("\\", "/");
+					File elfFile = new File(projectLocation+"/"+cfgName+"/"+cfgName+".elf");
+					System.out.println("elfFile.getPath():  "+elfFile.getPath());
+					if(!elfFile.exists()) {
+						File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
+						System.out.println("errorFile");
+						String errMsg = project.getName()+"->"+cfgName+"， \n";
+						setErrorFile(errorFile,errMsg);
+					}
+					
+//					SendErrorEmail email = new SendErrorEmail();
+//					email.send(errMsg);
+				}
+			}
 			monitor.done();
 		}
 		return isClean;
+	}
+	
+	private void setErrorFile(File errorFile, String errMsg) {
+		// TODO Auto-generated method stub
+		BufferedReader br = null;  
+        String line = null;  
+        boolean targetExist = false;
+        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
+        try {            
+            br = new BufferedReader(new FileReader(errorFile));              
+            while ((line = br.readLine()) != null) {  
+                StringBuffer buf = new StringBuffer();  
+                bufAll.append(line+"\n");            
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } finally {  
+            if (br != null) {  
+                try {  
+                    br.close();  
+                } catch (IOException e) {  
+                    br = null;  
+                }  
+            }  
+        }  
+        bufAll.append(errMsg+"\n");
+        errorFile.delete();
+        writeFile(errorFile,bufAll.toString());
+        
+	}
+
+	public void writeFile(File file,String content){
+		if(file.exists()) {
+			file.delete();
+		}
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		FileWriter writer;
+		try {
+			writer = new FileWriter(file);
+			writer.write(content);
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private String[] getCommandArguments(IBuilder builder, String[] targets) {

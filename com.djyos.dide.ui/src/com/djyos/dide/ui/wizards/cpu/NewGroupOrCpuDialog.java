@@ -1315,7 +1315,6 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 				Core core = cores.get(index);
 				resetArchTree(core);
 			}
-			
 		});
 		
 		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
@@ -1345,8 +1344,8 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 		TreeItem[] items = item.getItems();
 		for(TreeItem ti:items) {
 			if(ti.getText().trim().equals(core.getArch().getFamily())) {
-				setParentItemExpand(ti);
 				if(!ti.getGrayed()) {
+					setParentItemExpand(ti);
 					ti.setChecked(true);
 				}
 			}else {
@@ -1418,8 +1417,9 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 						File xmlFile = new File(item.getData().toString());
 						Arch arch = new Arch();
 						arch = rax.getMutiplyFileArch(xmlFile,arch);
-//						System.out.println(arch.getArchitecture()+"  "+arch.getFamily()+"  "+arch.getFpuType()
-//						+"\n"+arch.getMarch()+"  "+arch.getMcpu()+"  "+arch.getSerie());
+						System.out.println("item.getData().toString()):  "+item.getData().toString());
+						System.out.println(arch.getArchitecture()+"  "+arch.getFamily()+"  "+arch.getFpuType()
+						+"\n"+arch.getMarch()+"  "+arch.getMcpu()+"  "+arch.getSerie());
 						try {
 							if (newCpu.getCores().size() != 0) {
 								int selectIndex = numCombo4.getSelectionIndex();
@@ -1863,7 +1863,7 @@ public class NewGroupOrCpuDialog extends StatusDialog{
 					}
 				}
 				
-				if (cores.get(i).getArch().getSerie() == null || cores.get(i).getArch().getArchitecture() == null || cores.get(i).getArch().getFamily() == null) {
+				if (cores.get(i).getArch().getFamily() == null) {
 					isOK = false;
 					errorMsg = "请填写完整内核"+(i+1)+"的内核配置！";
 				}

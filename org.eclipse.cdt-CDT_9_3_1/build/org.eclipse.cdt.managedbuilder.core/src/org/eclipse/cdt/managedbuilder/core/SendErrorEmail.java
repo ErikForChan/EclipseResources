@@ -4,29 +4,51 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Properties;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.activation.FileDataSource;
-//import javax.mail.Authenticator;
 //import javax.mail.BodyPart;
 //import javax.mail.Message;
-//import javax.mail.Multipart;
-//import javax.mail.PasswordAuthentication;
 //import javax.mail.Session;
 //import javax.mail.Transport;
 //import javax.mail.internet.InternetAddress;
 //import javax.mail.internet.MimeBodyPart;
 //import javax.mail.internet.MimeMessage;
 //import javax.mail.internet.MimeMultipart;
-//import javax.mail.internet.MimeUtility;
+
+import org.eclipse.core.runtime.Platform;
 
 public class SendErrorEmail {
-	
+//	
+//	private String getMail(File file, String target) {
+//		// TODO Auto-generated method stub
+//		BufferedReader br = null;  
+//        String line = null;  
+//        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
+//        try {            
+//            br = new BufferedReader(new FileReader(file));              
+//            while ((line = br.readLine()) != null) {  
+//                StringBuffer buf = new StringBuffer();  
+//                //修改内容核心代码
+//                if (line.startsWith(target)) {  
+//                	String[] infos = line.split("="); //$NON-NLS-1$
+//                	return infos[1].trim();
+//                }
+//            }  
+//        } catch (Exception e) {  
+//            e.printStackTrace();  
+//        } finally {  
+//            if (br != null) {  
+//                try {  
+//                    br.close();  
+//                } catch (IOException e) {  
+//                    br = null;  
+//                }  
+//            }  
+//        }  
+//		return null;
+//	}
+//	
 //	//发件人地址
 //    public static String senderAddress = "chenjm@sznari.com";
 //    //收件人地址
@@ -37,14 +59,25 @@ public class SendErrorEmail {
 //    public static String senderPassword = "sunri@2017";
 //
 //	public void send(String errMsg) {
+//		
+//		String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
+//		String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
+//		File stup_complie_file = new File(didePath+"auto_complier.txt"); //$NON-NLS-1$
+//		if(stup_complie_file.exists()) {
+//			senderAddress = getMail(stup_complie_file,"SENDER"); //$NON-NLS-1$
+//			recipientAddress = getMail(stup_complie_file,"RECEIVER"); //$NON-NLS-1$
+//			senderAccount = getMail(stup_complie_file,"SENDER"); //$NON-NLS-1$
+//			senderPassword = getMail(stup_complie_file,"SENDER_PWD"); //$NON-NLS-1$
+//		}
+//		
 //		//1、连接邮件服务器的参数配置
 //        Properties props = new Properties();
 //        //设置用户的认证方式
-//        props.setProperty("mail.smtp.auth", "true");
+//        props.setProperty("mail.smtp.auth", "true"); //$NON-NLS-1$ //$NON-NLS-2$
 //        //设置传输协议
-//        props.setProperty("mail.transport.protocol", "smtp");
+//        props.setProperty("mail.transport.protocol", "smtp");//$NON-NLS-1$ //$NON-NLS-2$
 //        //设置发件人的SMTP服务器地址
-//        props.setProperty("mail.smtp.host", "mail.sznari.com");
+//        props.setProperty("mail.smtp.host", "mail.sznari.com");//$NON-NLS-1$ //$NON-NLS-2$
 //        //2、创建定义整个应用程序所需的环境信息的 Session 对象
 //        Session session = Session.getInstance(props);
 //        //设置调试信息在控制台打印出来
@@ -80,9 +113,9 @@ public class SendErrorEmail {
 //     * @throws AddressException
 //     */
 //    public static MimeMessage getMimeMessage(Session session, String errMsg) throws Exception{
-//    	List<String> fileList = new ArrayList<String>();
-//    	fileList.add("F:\\djysdk\\svn库维护规则.txt");
-//    	fileList.add("F:\\djysdk\\源码维护人列表.txt");
+////    	List<String> fileList = new ArrayList<String>();
+////    	fileList.add("F:\\djysdk\\svn库维护规则.txt");
+////    	fileList.add("F:\\djysdk\\源码维护人列表.txt");
 //        //创建一封邮件的实例对象
 //        MimeMessage msg = new MimeMessage(session);
 //        MimeMultipart mp = new MimeMultipart();
@@ -96,10 +129,10 @@ public class SendErrorEmail {
 //         */
 //        msg.setRecipient(MimeMessage.RecipientType.TO,new InternetAddress(recipientAddress));
 //        //设置邮件主题
-//        msg.setSubject("服务器编译结果自动发送: "+errMsg,"UTF-8");
+//        msg.setSubject("服务器自动发送: "+errMsg,"UTF-8");//$NON-NLS-1$ //$NON-NLS-2$
 //        //设置邮件正文
 //        BodyPart bp = new MimeBodyPart(); 
-//        bp.setContent("target编译出错: \n"+errMsg, "text/html;charset=utf-8");
+//        bp.setContent("target编译出错: \n"+errMsg, "text/html;charset=utf-8");//$NON-NLS-1$ //$NON-NLS-2$
 //        mp.addBodyPart(bp);
 ////        for(String s:fileList) {
 ////        	bp = new MimeBodyPart();

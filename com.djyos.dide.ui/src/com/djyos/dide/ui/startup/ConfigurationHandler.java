@@ -22,9 +22,9 @@ import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 
 public class ConfigurationHandler{
 	
-	String pattern = "$(call loop, 50, ${INPUTS}, ${COMMAND} ${FLAGS} ${OUTPUT})";
+//	String pattern = "$(call loop, 50, ${INPUTS}, ${COMMAND} ${FLAGS} ${OUTPUT})";
 //	String pattern = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(call rwildcard,./,*.o)";
-//	String pattern = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(addsuffix *.o,$(subst \\,/,$(dir $(subst $(dir $(shell for /r  %%i in (*makefile) do @echo %%i)),./,$(dir $(shell for /r  %%i in (*subdir.mk) do @echo %%i))))))";
+	String pattern = "${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} $(addsuffix *.o,$(subst \\,/,$(dir $(subst $(dir $(shell for /r  %%i in (*makefile) do @echo %%i)),./,$(dir $(shell for /r  %%i in (*subdir.mk) do @echo %%i))))))";
 	public void handlerConfiguration(){
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		setBuildingToAuto(workspace);
@@ -55,13 +55,15 @@ public class ConfigurationHandler{
 						IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(cfgDesc);
 						
 						String toolChainName = cfg.getToolChain().getName();
-						if(toolChainName.indexOf("CSky")!=-1||toolChainName.indexOf("CKcore")!=-1) {
-							cfg.setBuildCommand("make");						
+						if( toolChainName.indexOf("CKcore")!=-1) {
+							cfg.setBuildCommand("make");	
+							cfg.setBuildArguments("SHELL=bash.exe"+" "+cfg.getBuildArguments().replaceAll("SHELL=cmd.exe", "").replaceAll("SHELL=bash.exe", "").trim());
 						}else {
-							cfg.setBuildCommand("${cross_make}");						
+							cfg.setBuildCommand("${cross_make}");	
+							cfg.setBuildArguments("SHELL=cmd.exe"+" "+cfg.getBuildArguments().replaceAll("SHELL=cmd.exe", "").trim());
                         }
-						 cfg.setBuildArguments("SHELL=cmd.exe"+" "+cfg.getBuildArguments().replaceAll("SHELL=cmd.exe", "").trim());						
-						if (!s.contains("libos")||toolChainName.indexOf("CSky")!=-1||toolChainName.indexOf("CKcore")!=-1) {
+												
+						if (!s.contains("libos") || toolChainName.indexOf("CSky")!=-1 || toolChainName.indexOf("CKcore")!=-1) {
 							str = "make " + s + ".bin && elf_to_bin.exe " + s + ".elf " + s + ".bin && ren " + s + ".bin new"
 									+ s + ".bin";
 							cfg.setPostbuildStep(str);

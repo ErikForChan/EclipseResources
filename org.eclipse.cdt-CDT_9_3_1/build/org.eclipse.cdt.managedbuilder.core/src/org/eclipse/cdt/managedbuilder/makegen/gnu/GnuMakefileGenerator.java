@@ -1229,7 +1229,7 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 				"$(eval do=$(wordlist 1, ${1}, ${2}))\\\n" + 
 				"$(if $(word 1, $(do)),\\\n" + 
 				"	$(eval last=$(subst $(do),,${2}))\\\n" + 
-				"	$(info ar -r $(do))\\\n" + 
+				"	$(info $(strip ${3}) $(do))\\\n" + 
 				"	$(shell ${3} $(do))\\\n" + 
 				"	$(call loop, ${1}, $(last), ${3}),$(info ***** $(strip ${3}) finished *****))\n" + 
 				"endef\n"); //$NON-NLS-1$

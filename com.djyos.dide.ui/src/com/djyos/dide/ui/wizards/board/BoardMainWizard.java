@@ -67,7 +67,6 @@ import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.djyosProject.tools.SendEmail;
 import com.ibm.icu.text.MessageFormat;
 import com.djyos.dide.ui.wizards.djyosProject.CreateHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;

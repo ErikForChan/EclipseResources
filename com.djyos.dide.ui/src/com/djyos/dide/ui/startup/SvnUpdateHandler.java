@@ -9,8 +9,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
@@ -41,7 +39,6 @@ public class SvnUpdateHandler {
 	private DideHelper dideHelper = new DideHelper();
 	final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 	IProject[] projects = workspace.getRoot().getProjects();
-	private Lock lock = new ReentrantLock(); // 注意这个地方
 	IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace().getRuleFactory();
 	
 	public void visitSvn() {
@@ -60,7 +57,7 @@ public class SvnUpdateHandler {
 			@SuppressWarnings("deprecation")
 			@Override
 			public void run() {
-				// TODO Auto-generated method stub
+				//TODO Auto-generated method stub
 				String url = "https://xiangmuzuserver/svn/硬件组开发库/platform_soft/djyos/trunk";
 		        String name = "chenjm@sznari.com";
 		        String password = "sunri@2017";
@@ -86,8 +83,8 @@ public class SvnUpdateHandler {
 					entryNum++;
 					if (entryNum == logEntries.size()) {
 						long svnVersion = logEntry.getRevision();
-						Long preSvnVersion = (long) 0;
-//						Long preSvnVersion = getSvnVersion(svnVerFile);
+//						Long preSvnVersion = (long) 0;
+						Long preSvnVersion = getSvnVersion(svnVerFile);
 						System.out.println("---------------------------------------------");
 						System.out.println("revision: " + logEntry.getRevision());
 						System.out.println("author: " + logEntry.getAuthor());
@@ -96,16 +93,19 @@ public class SvnUpdateHandler {
 						
 						if (preSvnVersion != svnVersion) {
 							File errorFile = new File(dideHelper.getDIDEPath()+"IDE/configuration/errorResult.txt");
-							if (!errorFile.exists()) {
-								try {
-									errorFile.createNewFile();
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
+							if (errorFile.exists()) {
+								errorFile.delete();
 							}
+							try {
+								errorFile.createNewFile();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							
 							String author = logEntry.getAuthor();
 							String logMsg = logEntry.getMessage();
+							Job buildJob = null;
 						 	if (projects.length != 0) {
 								// Setup the global build console.
 								CUIPlugin.getDefault().startGlobalConsole();
@@ -117,6 +117,11 @@ public class SvnUpdateHandler {
 										ArrayList<ICConfigurationDescription> libcfgdList=new ArrayList<ICConfigurationDescription>();
 										for(ICConfigurationDescription cfgd : cfgds) {
 											if(cfgd.getName().startsWith("libos")) {
+//												ICConfigurationDescription[] cfgs = new ICConfigurationDescription[1];
+//												cfgs[0] = cfgd;
+//												buildJob =
+//														new BuildTarget(cfgs, 0, IncrementalProjectBuilder.INCREMENTAL_BUILD);
+//												buildJob.schedule();
 												libcfgdList.add(cfgd);
 											}
 										}
@@ -124,8 +129,7 @@ public class SvnUpdateHandler {
 										if (cfgds != null && cfgds.length > 0) {
 											// Save all dirty editors.
 											BuildUtilities.saveEditors(null);
-
-											Job buildJob =
+											buildJob =
 													new BuildTarget(libcfgdList.toArray(libosCfgds), 0, IncrementalProjectBuilder.INCREMENTAL_BUILD);
 											buildJob.schedule();
 										}
@@ -134,11 +138,37 @@ public class SvnUpdateHandler {
 							}
 						 	
 							setSvnVersion(svnVerFile, svnVersion);
-//							String errMsg = getFileContent(errorFile);
-//							if(!errMsg.trim().equals("")) {
-//								SendEmail email = new SendEmail();
-//								email.send(errMsg);
-//							}
+							
+							if(buildJob != null) {
+								Job job = buildJob;
+								Timer t = new Timer(true);
+								t.schedule(new TimerTask() {
+
+									@Override
+									public void run() {
+										// TODO Auto-generated method stub
+										if(job.getState() == Job.RUNNING) {
+											System.out.println("----------Job.RUNNING");
+										}else if(job.getState() == Job.WAITING) {
+											System.out.println("----------Job.WAITING");
+										}else if(job.getState() == Job.SLEEPING) {
+											System.out.println("----------Job.SLEEPING");
+										}else if(job.getState() == Job.NONE) {
+											System.out.println("----------Job.NONE");
+											String errMsg = getFileContent(errorFile);
+											if(!errMsg.trim().equals("")) {
+												SendEmail email = new SendEmail();
+												email.send(errMsg);
+												t.cancel();
+											}
+										}
+									}
+								}, 0, 10 * 1000);
+//								buildJob =
+//										new BuildTarget(null, 0, 0, true);
+//								buildJob.schedule();
+
+							}
 						}
 					}
 				}

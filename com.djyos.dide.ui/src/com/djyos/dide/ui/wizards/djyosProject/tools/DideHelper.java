@@ -87,8 +87,8 @@ public class DideHelper {
 		File archSourceFile = new File(getDjyosSrcPath() + "/bsp/arch");
 		List<File> archXmlFiles = getArchXmlFiles(archSourceFile, new ArrayList<File>());
 		for (File f : archXmlFiles) {
-			if (curArch.getMcpu() != null) {
-				if (f.getParentFile().getName().equals(curArch.getMcpu())) {
+			if (curArch.getFamily() != null) {
+				if (f.getParentFile().getName().equals(curArch.getFamily())) {
 					ReadArchXml rax = new ReadArchXml();
 					Arch arch = new Arch();
 					arch = rax.getMutiplyFileArch(f, arch);

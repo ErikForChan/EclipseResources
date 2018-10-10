@@ -63,25 +63,25 @@ public class FileHandler implements IResourceChangeListener{
 							// handle added resource
 							IProject project = resource.getProject();
 							File stup_complie_file = new File(dideHelper.getDIDEPath()+"auto_complier.txt");
-							if(resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
-								if(stup_complie_file.exists()) {
+							
+							if (stup_complie_file.exists()) {
+								if (resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
 									String libCfgName = resource.getName().replace(".a", "");
 									String commonName = libCfgName.replace("libos", "");
-									String targetName = project.getName()+commonName;
-									buildTarget(project,targetName);
+									String targetName = project.getName() + commonName;
+									buildTarget(project, targetName);
 								}
 							}
 							
-							// if(resource.getName().equals(".project")) {
-							// IProject project = resource.getProject();
-							// File hardWardInfoFile = new
-							// File(project.getLocation().toString()+"/data/hardware_info.xml");
-							// if(hardWardInfoFile.exists()) {
-							// HandleProjectImport projectListener = new HandleProjectImport();
-							// projectListener.handleProjectElemExculde(project);
-							// createBuild(project);
-							// }
-							// }
+							if (resource.getName().equals(".project")) {
+								File hardWardInfoFile = new File(
+										project.getLocation().toString() + "/data/hardware_info.xml");
+								if (hardWardInfoFile.exists()) {
+									HandleProjectImport projectListener = new HandleProjectImport();
+									projectListener.handleProjectElemExculde(project);
+//									createBuild(project);
+								}
+							}
 							break;
 						case IResourceDelta.REMOVED:
 							// handle removed resource

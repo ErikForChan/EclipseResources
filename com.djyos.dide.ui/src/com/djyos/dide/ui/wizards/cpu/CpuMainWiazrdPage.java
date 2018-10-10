@@ -73,7 +73,6 @@ import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.djyosProject.tools.SendEmail;
 
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.wizards.IWizardItemsListListener;
@@ -85,23 +84,22 @@ import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 import org.eclipse.cdt.internal.ui.newui.Messages;
 
-public class CpuMainWiazrdPage extends WizardPage{
+public class CpuMainWiazrdPage extends WizardPage {
 
 	private DideHelper dideHelper = new DideHelper();
-	public static final IPath ICONS_PATH= new Path("$nl$/icons"); //$NON-NLS-1$
-	public static TreeItem fileItem = null,tmssItem = null;
+	public static final IPath ICONS_PATH = new Path("$nl$/icons"); //$NON-NLS-1$
+	public static TreeItem fileItem = null, tmssItem = null;
 	private static String currentAttributeIdGlobal = null;
 	private static final int[] DEFAULT_ENTRIES_SASH_WEIGHTS = new int[] { 10, 30 };
 	private Combo[] pathCombos = new Combo[6];
 	private ReadCpuXml rcx = new ReadCpuXml();
-	private Cpu cpu = new Cpu(),cpuCreated = null;
-	private Tree tree,cpuAttributes;
+	private Cpu cpu = new Cpu(), cpuCreated = null;
+	private Tree tree, cpuAttributes;
 	private Text configInfoText = null;
-	private String didePath = dideHelper.getDIDEPath(),currentAttributeId = null;
-	private MenuItem newGroupItem,newCpuItem,deleteItem,reviseItem;
-	private IWorkbenchWindow window = PlatformUI.getWorkbench()
-			.getActiveWorkbenchWindow();
-	
+	private String didePath = dideHelper.getDIDEPath(), currentAttributeId = null;
+	private MenuItem newGroupItem, newCpuItem, deleteItem, reviseItem;
+	private IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+
 	public Cpu getCpuCreated() {
 		return cpuCreated;
 	}
@@ -110,43 +108,42 @@ public class CpuMainWiazrdPage extends WizardPage{
 		super(pageName);
 		boolean djysrcExist = true;
 		File djysrcFile = new File(dideHelper.getDjyosSrcPath());
-		if(djysrcFile.exists()) {
+		if (djysrcFile.exists()) {
 			File[] files = djysrcFile.listFiles();
-			if(files.length<2) {
+			if (files.length < 2) {
 				djysrcExist = false;
 			}
-		}else {
+		} else {
 			djysrcExist = false;
 		}
-		if(!djysrcExist) {
-			MessageDialog.openInformation(window.getShell(), "提示",
-					"Djyos源码不存在，请重启Eclipse根据提示下载");
+		if (!djysrcExist) {
+			MessageDialog.openInformation(window.getShell(), "提示", "Djyos源码不存在，请重启Eclipse根据提示下载");
 		}
 		// TODO Auto-generated constructor stub
 		setPageComplete(true);
-	}	
+	}
 
-	public void initPopup(){
-        Menu menu=new Menu(tree);
-        newGroupItem=new MenuItem(menu,SWT.PUSH);
-        newGroupItem.setText("新建子目录");
-        newGroupItem.setImage(DPluginImages.DESC_GROUP_VIEW.createImage());
-        
-        newCpuItem=new MenuItem(menu,SWT.PUSH);
-        newCpuItem.setText("新建CPU");
-        newCpuItem.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
-        
-        reviseItem=new MenuItem(menu,SWT.PUSH);
-        reviseItem.setText("修改配置");
-        reviseItem.setImage(DPluginImages.CPU_REVISE_VIEW.createImage());
-        
-        deleteItem=new MenuItem(menu,SWT.PUSH);
-        deleteItem.setText("删除");
-        deleteItem.setImage(DPluginImages.CFG_DELETE_OBJ.createImage());
+	public void initPopup() {
+		Menu menu = new Menu(tree);
+		newGroupItem = new MenuItem(menu, SWT.PUSH);
+		newGroupItem.setText("新建子目录");
+		newGroupItem.setImage(DPluginImages.DESC_GROUP_VIEW.createImage());
 
-        tree.setMenu(menu);
-    }
-	
+		newCpuItem = new MenuItem(menu, SWT.PUSH);
+		newCpuItem.setText("新建CPU");
+		newCpuItem.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
+
+		reviseItem = new MenuItem(menu, SWT.PUSH);
+		reviseItem.setText("修改配置");
+		reviseItem.setImage(DPluginImages.CPU_REVISE_VIEW.createImage());
+
+		deleteItem = new MenuItem(menu, SWT.PUSH);
+		deleteItem.setText("删除");
+		deleteItem.setImage(DPluginImages.CFG_DELETE_OBJ.createImage());
+
+		tree.setMenu(menu);
+	}
+
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
@@ -155,11 +152,10 @@ public class CpuMainWiazrdPage extends WizardPage{
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		initializeDialogUnits(parent);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
-		
-		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL
-                | SWT.H_SCROLL);
+
+		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL | SWT.H_SCROLL);
 		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-		
+
 		Composite infoArea = new Composite(scrolledComposite, SWT.NONE);
 		GridLayout infoLayout = new GridLayout();
 		infoLayout.numColumns = 1;
@@ -172,31 +168,31 @@ public class CpuMainWiazrdPage extends WizardPage{
 		String extraString = "右键可添加Cpu和子目录 :";
 		String QAQ = "\tIDE分级目录的形式管理操作系统支持的众多Cpu，本界面用于管理Cpu的分类,\n包括添加Cpu和分组,手动拖拽即可移动分组";
 
-		Label extraLabel = new Label(infoArea,SWT.NULL);
+		Label extraLabel = new Label(infoArea, SWT.NULL);
 		extraLabel.setText(extraString);
 		extraLabel.setForeground(infoArea.getDisplay().getSystemColor(SWT.COLOR_RED));
 		FontData newFontData = extraLabel.getFont().getFontData()[0];
 		newFontData.setStyle(SWT.ITALIC | SWT.BOLD);
 		newFontData.setHeight(8);
-		extraLabel.setFont(new Font(infoArea.getDisplay(),newFontData));
-		
+		extraLabel.setFont(new Font(infoArea.getDisplay(), newFontData));
+
 		Composite contentCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout contentLayout = new GridLayout();
 		contentLayout.numColumns = 2;
 		contentCpt.setLayout(contentLayout);
 		contentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-		
+
 		Composite sourceTreeCpt = new Composite(contentCpt, SWT.NULL);
 		tree = new Tree(sourceTreeCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		tree.setLayoutData(new GridData(GridData.FILL_BOTH));
 		tree.setSize(200, 360);
 		initPopup();
-		
+
 		Composite sashForm = new Composite(contentCpt, SWT.NULL);
 		sashForm.setLayout(new RowLayout());
 		configInfoText = new Text(sashForm, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
 		configInfoText.setEditable(false);
-		configInfoText.setLayoutData(new RowData(350,350));
+		configInfoText.setLayoutData(new RowData(350, 350));
 		configInfoText.setText("选中子目录或者Cpu即可显示相应的配置信息");
 		newGroupItem.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -213,7 +209,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				handleNewClick("cpu");
 			}
 		});
-		
+
 		reviseItem.addSelectionListener(new SelectionAdapter() {
 
 			@Override
@@ -221,7 +217,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 				// TODO Auto-generated method stub
 				handleReviceCpu();
 			}
-			
+
 		});
 
 		deleteItem.addSelectionListener(new SelectionAdapter() {
@@ -229,22 +225,21 @@ public class CpuMainWiazrdPage extends WizardPage{
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				TreeItem[] items = tree.getSelection();
-				IWorkbenchWindow window = PlatformUI.getWorkbench()
-	    				.getActiveWorkbenchWindow();
-	        	boolean isSure = MessageDialog.openQuestion(window.getShell(), "提示",
-	        			"您确认要删除["+items[0].getText()+"]吗?");
-	        	if(isSure) {      		
-					String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+				boolean isSure = MessageDialog.openQuestion(window.getShell(), "提示",
+						"您确认要删除[" + items[0].getText() + "]吗?");
+				if (isSure) {
+					String curFilePath = items[0].getData().toString();// 获取当前选中文件的路径
 					DeleteFolder dlf = new DeleteFolder();
 					dlf.deleteFolder(curFilePath);
 					items[0].dispose();
-	        	}
+				}
 			}
 		});
 
 		initTree();
 		handleTreeDrag();
-		
+
 		tree.addListener(SWT.Expand, new Listener() {
 			public void handleEvent(final Event event) {
 				final TreeItem root = (TreeItem) event.item;
@@ -261,9 +256,9 @@ public class CpuMainWiazrdPage extends WizardPage{
 				for (int i = 0; i < files.length; i++) {
 					if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {
 						boolean toExpand = false;
-						if(files[i].isDirectory()) {
-							boolean isNeed =  dideHelper.containsXml(files[i]);
-							if(isNeed) {
+						if (files[i].isDirectory()) {
+							boolean isNeed = dideHelper.containsXml(files[i]);
+							if (isNeed) {
 								toExpand = true;
 							}
 						}
@@ -278,15 +273,15 @@ public class CpuMainWiazrdPage extends WizardPage{
 								if (configed) {
 									item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
 									item.setExpanded(false);
-								}else {
+								} else {
 									item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
 									new TreeItem(item, 0);
 								}
 								// 叶子节点对应的数值为相应文件夹的File对象
-								item.setData(files[i]);						
+								item.setData(files[i]);
 							}
 						}
-						
+
 					}
 				}
 			}
@@ -296,62 +291,62 @@ public class CpuMainWiazrdPage extends WizardPage{
 			public void handleEvent(Event event) {
 				Point point = new Point(event.x, event.y);
 				TreeItem item = tree.getItem(point);
-				if(item != null) {
+				if (item != null) {
 					displayCpuDetails(item);
 				}
 			}
 		});
-		
+
 		tree.addListener(SWT.MouseDoubleClick, new Listener() {
-			
+
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
 				Point point = new Point(event.x, event.y);
 				TreeItem item = tree.getItem(point);
-				if(item != null) {
-					if(!item.getText().endsWith("Djyos")) {
+				if (item != null) {
+					if (!item.getText().endsWith("Djyos")) {
 						handleReviceCpu();
 					}
 				}
 			}
 		});
-		
+
 		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		scrolledComposite.setContent(infoArea);
 		scrolledComposite.setMinHeight(point.y);
-		
+
 		scrolledComposite.setExpandHorizontal(true);
-	    scrolledComposite.setExpandVertical(true);
-	    
+		scrolledComposite.setExpandVertical(true);
+
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
 		Dialog.applyDialogFont(composite);
 	}
-	
+
 	protected void handleNewClick(String tag) {
 		// TODO Auto-generated method stub
 		List<String> configs = null;
 		cpu = new Cpu();
 		TreeItem[] items = tree.getSelection();
-		String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
-		if(items.length>0) {
-			File curFile = new File(curFilePath);//当前选中文件
-			File xmlParentFile = dideHelper.getXmlFile(curFile);	
-			if(xmlParentFile!=null) {
+		String curFilePath = items[0].getData().toString();// 获取当前选中文件的路径
+		if (items.length > 0) {
+			File curFile = new File(curFilePath);// 当前选中文件
+			File xmlParentFile = dideHelper.getXmlFile(curFile);
+			if (xmlParentFile != null) {
 				try {
-					rcx.unitCpu(cpu,xmlParentFile);
+					rcx.unitCpu(cpu, xmlParentFile);
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				}					
+				}
 			}
-			traverseParents(curFile);		
-			configs = getConfigs(cpu,false);
+			traverseParents(curFile);
+			configs = getConfigs(cpu, false);
 		}
-		
-		NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,tag);
+
+		NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(), configs, cpu, curFilePath, tag);
 		if (dialog.open() == Window.OK) {
 			String newFileName = dialog.getGroupName();
 			final TreeItem root = items[0];
@@ -365,15 +360,15 @@ public class CpuMainWiazrdPage extends WizardPage{
 					// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
 					if (files[i].isDirectory()) {
 						boolean isNeed = dideHelper.containsXml(files[i]);
-						if(isNeed) {
+						if (isNeed) {
 							TreeItem item = new TreeItem(root, 0);
 							item.setText(files[i].getName());
-							if(tag.equals("cpu")) {
+							if (tag.equals("cpu")) {
 								item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
-							}else {
+							} else {
 								item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
 							}
-							
+
 							// 叶子节点对应的数值为相应文件夹的File对象
 							item.setData(files[i]);
 							new TreeItem(item, 0);
@@ -404,22 +399,22 @@ public class CpuMainWiazrdPage extends WizardPage{
 				for (int j = 0; j < files.length; j++) {
 					if ((files[j].isHidden() == false)) {// 判断当前路径是否为隐藏文件与文件夹
 						boolean toExpand = false;
-						if(files[j].isDirectory()) {
-							boolean isNeed =  dideHelper.containsXml(files[j]);
-							if(isNeed) {
+						if (files[j].isDirectory()) {
+							boolean isNeed = dideHelper.containsXml(files[j]);
+							if (isNeed) {
 								toExpand = true;
 							}
 						}
 						if (toExpand) {
 							// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-								TreeItem item = new TreeItem(root, 0);
-								item.setText(files[j].getName());
-								item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
-								// 叶子节点对应的数值为相应文件夹的File对象
-								item.setData(files[j]);
-								new TreeItem(item, 0);
+							TreeItem item = new TreeItem(root, 0);
+							item.setText(files[j].getName());
+							item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+							// 叶子节点对应的数值为相应文件夹的File对象
+							item.setData(files[j]);
+							new TreeItem(item, 0);
 						}
-						
+
 					}
 				}
 				root.setExpanded(true);
@@ -549,7 +544,7 @@ public class CpuMainWiazrdPage extends WizardPage{
 					event.detail = DND.DROP_COPY;
 			}
 		});
-				
+
 	}
 
 	protected void handleReviceCpu() {
@@ -557,46 +552,46 @@ public class CpuMainWiazrdPage extends WizardPage{
 		List<String> configs = null;
 		cpu = new Cpu();
 		TreeItem[] items = tree.getSelection();
-		String curFilePath = items[0].getData().toString();//获取当前选中文件的路径
+		String curFilePath = items[0].getData().toString();// 获取当前选中文件的路径
 		String tag = "cpu";
-		
-		if(items.length>0) {
-			File curFile = new File(curFilePath);//当前选中文件
-			File xmlParentFile = dideHelper.getXmlFile(curFile);	
-			boolean exiteDirectory= isExiteDirectory(curFile);
-			if(exiteDirectory) {
+
+		if (items.length > 0) {
+			File curFile = new File(curFilePath);// 当前选中文件
+			File xmlParentFile = dideHelper.getXmlFile(curFile);
+			boolean exiteDirectory = isExiteDirectory(curFile);
+			if (exiteDirectory) {
 				tag = "group";
 			}
-			if(xmlParentFile!=null) {
-				if(xmlParentFile.getName().contains("group")) {
+			if (xmlParentFile != null) {
+				if (xmlParentFile.getName().contains("group")) {
 					tag = "group";
 				}
 				try {
-					rcx.unitCpu(cpu,xmlParentFile);
+					rcx.unitCpu(cpu, xmlParentFile);
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				}					
+				}
 			}
-			traverseParents(curFile);		
-			configs = getConfigs(cpu,false);
+			traverseParents(curFile);
+			configs = getConfigs(cpu, false);
 		}
-		
-		NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(),configs,cpu,curFilePath,"revise_"+tag);
+
+		NewGroupOrCpuDialog dialog = new NewGroupOrCpuDialog(getShell(), configs, cpu, curFilePath, "revise_" + tag);
 		if (dialog.open() == Window.OK) {
 			TreeItem parentItem = items[0].getParentItem();
 			String reviseName = dialog.getGroupName();
 			items[0].dispose();
-			TreeItem item = new TreeItem(parentItem,SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL,0);
-			item.setText(reviseName);			
-			if(tag.endsWith("cpu")) {
+			TreeItem item = new TreeItem(parentItem, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL, 0);
+			item.setText(reviseName);
+			if (tag.endsWith("cpu")) {
 				item.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
 				item.setExpanded(false);
-			}else {
+			} else {
 				item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
 				new TreeItem(item, 0);
 			}
-			item.setData(new File(parentItem.getData().toString()+"/"+reviseName));
+			item.setData(new File(parentItem.getData().toString() + "/" + reviseName));
 			tree.select(item);
 			displayCpuDetails(item);
 		}
@@ -606,82 +601,83 @@ public class CpuMainWiazrdPage extends WizardPage{
 		// TODO Auto-generated method stub
 		File tempSrcFile = new File(srcFile.getPath());
 		File tempDestFile = new File(destFile.getPath());
-		
+
 		if (tempSrcFile.getName().equals(destFile.getName())) {
 			return "不可拖拉到自身目录下！";
 		}
 		File parentSrcFile = tempSrcFile.getParentFile();
 		if (parentSrcFile.getName().equals(destFile.getName())) {
-			return "该目录下已经存在["+tempSrcFile.getName()+"]！";
+			return "该目录下已经存在[" + tempSrcFile.getName() + "]！";
 		}
-		
+
 		tempSrcFile = new File(srcFile.getPath());
 		tempDestFile = new File(destFile.getPath());
-		while(!tempDestFile.getName().equals("cpudrv")) {
+		while (!tempDestFile.getName().equals("cpudrv")) {
 			tempDestFile = tempDestFile.getParentFile();
-			if(tempDestFile.getName().equals(srcFile.getName())) {
+			if (tempDestFile.getName().equals(srcFile.getName())) {
 				return "父目录不可托拉到子目录！";
 			}
 		}
-		
+
 		tempDestFile = new File(destFile.getPath());
 		File[] destFiles = tempDestFile.listFiles();
-		for(File file : destFiles) {
-			if(file.getName().endsWith(".xml") && file.getName().contains("cpu_") && !file.getName().contains("group") ) {
+		for (File file : destFiles) {
+			if (file.getName().endsWith(".xml") && file.getName().contains("cpu_")
+					&& !file.getName().contains("group")) {
 				return "不可托拉到Cpu目录下！";
 			}
 		}
 		return null;
 	}
 
-	protected List<String> getConfigs(Cpu cpu2,boolean isCpu) {
+	protected List<String> getConfigs(Cpu cpu2, boolean isCpu) {
 		// TODO Auto-generated method stub
 		List<String> cons = new ArrayList<String>();
-		if(cpu2.getCores().size() == 0){
+		if (cpu2.getCores().size() == 0) {
 			cons.add("内核个数");
 			cons.add("复位配置");
 			cons.add("浮点配置");
 			cons.add("内核配置");
 			cons.add("存储配置");
-//			if(isCpu) {
-//				cons.add("存储配置");
-//			}
-		}else {
-			if(cpu2.getCoreNum() == 0) {
+			// if(isCpu) {
+			// cons.add("存储配置");
+			// }
+		} else {
+			if (cpu2.getCoreNum() == 0) {
 				cons.add("内核个数");
 			}
-			if(cpu2.getCores().get(0).getResetAddr() == null){
+			if (cpu2.getCores().get(0).getResetAddr() == null) {
 				cons.add("复位配置");
 			}
-			if(cpu2.getCores().get(0).getMemorys().size() == 0){
+			if (cpu2.getCores().get(0).getMemorys().size() == 0) {
 				cons.add("存储配置");
-//				if(isCpu) {
-//					cons.add("存储配置");
-//				}
+				// if(isCpu) {
+				// cons.add("存储配置");
+				// }
 			}
-			if(cpu2.getCores().get(0).getFpuType() == null){
+			if (cpu2.getCores().get(0).getFpuType() == null) {
 				cons.add("浮点配置");
 			}
-			if(cpu2.getCores().get(0).getArch() == null){
+			if (cpu2.getCores().get(0).getArch().getFamily() == null) {
 				cons.add("内核配置");
 			}
 		}
-//		if(cpu2.getFirmwareLib()==null) {
-//			cons.add("固件库");
-//		}
+		// if(cpu2.getFirmwareLib()==null) {
+		// cons.add("固件库");
+		// }
 		return cons;
 	}
 
 	private void traverseParents(File curFile) {
-		if(!curFile.getName().contains("cpudrv")) {
+		if (!curFile.getName().contains("cpudrv")) {
 			File parentFile = curFile.getParentFile();
-			if(!parentFile.getName().contains("cpudrv")){
+			if (!parentFile.getName().contains("cpudrv")) {
 				File xmlFile = dideHelper.getXmlFile(parentFile);
 				try {
-					if(xmlFile != null) {
-						rcx.unitCpu(cpu,xmlFile);
+					if (xmlFile != null) {
+						rcx.unitCpu(cpu, xmlFile);
 					}
-				}catch (Exception e) {
+				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -689,21 +685,21 @@ public class CpuMainWiazrdPage extends WizardPage{
 			}
 		}
 	}
-	
-	private String traverseParents(File curFile,String descContent) {
+
+	private String traverseParents(File curFile, String descContent) {
 		if (!curFile.getName().contains("cpudrv")) {
 			File xmlFile = dideHelper.getXmlFile(curFile);
-			if(xmlFile != null) {
+			if (xmlFile != null) {
 				try {
 					Cpu cpu = rcx.getCpuInfos(xmlFile);
 
 					if (cpu.getCoreNum() != 0) {
-						if(xmlFile.getName().contains("group")) {
-							descContent += "子目录["+curFile.getName()+"]配置：";
-						}else {
-							descContent += "Cpu  ["+curFile.getName()+"]配置：";
+						if (xmlFile.getName().contains("group")) {
+							descContent += "子目录[" + curFile.getName() + "]配置：";
+						} else {
+							descContent += "Cpu  [" + curFile.getName() + "]配置：";
 						}
-						descContent += "\n内核个数" + "： "+cpu.getCoreNum();
+						descContent += "\n内核个数" + "： " + cpu.getCoreNum();
 						for (int i = 0; i < cpu.getCoreNum(); i++) {
 							Core core = cpu.getCores().get(i);
 							descContent += "\n内核" + (i + 1) + "：";
@@ -722,19 +718,19 @@ public class CpuMainWiazrdPage extends WizardPage{
 							if (core.getResetAddr() != null) {
 								descContent += "\n\t复位地址：" + core.getResetAddr();
 							}
-							if(core.getMemorys().size()!=0) {
+							if (core.getMemorys().size() != 0) {
 								List<CoreMemory> memorys = core.getMemorys();
-								for(int j = 0; j < memorys.size(); j++) {
+								for (int j = 0; j < memorys.size(); j++) {
 									descContent += "\n\t内存" + (j + 1) + "：";
 									if (memorys.get(j).getType() != null) {
-										descContent +=  memorys.get(j).getType();
+										descContent += memorys.get(j).getType();
 									}
 									if (memorys.get(j).getStartAddr() != null) {
 										descContent += "，起始地址：" + memorys.get(j).getStartAddr();
 									}
 									if (memorys.get(j).getSize() != null) {
 										descContent += "，大小：" + memorys.get(j).getSize();
-									}		
+									}
 								}
 							}
 							descContent += "\n----------------------------------------------------------\n";
@@ -747,29 +743,29 @@ public class CpuMainWiazrdPage extends WizardPage{
 			}
 			File parentFile = curFile.getParentFile();
 			descContent = traverseParents(parentFile, descContent);
-			
+
 		}
 		return descContent;
 	}
-	
+
 	private boolean isExiteDirectory(File parentFile) {
-		File file =null;
+		File file = null;
 		File[] files = parentFile.listFiles();
-		for(int i=0;i<files.length;i++){
-			if(files[i].isDirectory()) {
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].isDirectory()) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	@Override
 	public IWizardPage getNextPage() {
 		// TODO Auto-generated method stub
 		return super.getNextPage();
 	}
 
-	private boolean isCpu(File file){
+	private boolean isCpu(File file) {
 		File[] cfiles = file.listFiles();
 		for (int j = 0; j < cfiles.length; j++) {
 			if (cfiles[j].getName().endsWith(".xml") && !cfiles[j].getName().contains("group")) {
@@ -778,47 +774,47 @@ public class CpuMainWiazrdPage extends WizardPage{
 		}
 		return false;
 	}
-	
+
 	protected void displayCpuDetails(TreeItem item) {
 		String descTitleChang = null;
-		if(item.getText().equals("Djyos")) {
+		if (item.getText().equals("Djyos")) {
 			deleteItem.setEnabled(false);
 			reviseItem.setEnabled(false);
 			configInfoText.setText("选中子目录或者Cpu即可显示相应的配置信息");
-		}else {
+		} else {
 			deleteItem.setEnabled(true);
 			reviseItem.setEnabled(true);
 			if (item.getData() != null) {
-				File file = new File(item.getData().toString()); 
-				if(item.getText().equals("Djyos")) {
+				File file = new File(item.getData().toString());
+				if (item.getText().equals("Djyos")) {
 					descTitleChang = descTitle;
 				}
 
-				if(file.isDirectory()) {
+				if (file.isDirectory()) {
 					newGroupItem.setEnabled(true);
 					newCpuItem.setEnabled(true);
 					File[] files = file.listFiles();
 					boolean configed = false;
-					for(int i=0;i<files.length;i++) {
-						if(files[i].getName().endsWith(".xml")) {
+					for (int i = 0; i < files.length; i++) {
+						if (files[i].getName().endsWith(".xml")) {
 							configed = true;
-							descTitleChang="分组("+item.getText()+")描述";
-							if(! files[i].getName().contains("group")) {
+							descTitleChang = "分组(" + item.getText() + ")描述";
+							if (!files[i].getName().contains("group")) {
 								newGroupItem.setEnabled(false);
 								newCpuItem.setEnabled(false);
-								descTitleChang="Cpu("+item.getText()+")描述";
+								descTitleChang = "Cpu(" + item.getText() + ")描述";
 							}
 							break;
 						}
 					}
-					
+
 					String descContent = "";
-					descContent = traverseParents(file,descContent);
-					
-					//显示当前选中分组/Cpu的配置信息
-					if(descTitleChang!=null) {
+					descContent = traverseParents(file, descContent);
+
+					// 显示当前选中分组/Cpu的配置信息
+					if (descTitleChang != null) {
 						configInfoText.setText(descContent);
-					}	
+					}
 
 				} else {
 					newCpuItem.setEnabled(false);
@@ -826,6 +822,6 @@ public class CpuMainWiazrdPage extends WizardPage{
 			}
 		}
 	}
-	
-	private	String descTitle = "分组/Cpu描述";
+
+	private String descTitle = "分组/Cpu描述";
 }

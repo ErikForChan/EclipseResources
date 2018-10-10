@@ -20,11 +20,11 @@ public class StartupHandler implements IStartup{
 		DideHelper dideHelper = new DideHelper();
 		String djysrcPath= dideHelper.getDjyosSrcPath();
 //		System.out.println("\nsje.getEnv:  "+System.getenv("Path"));
-//		FileHandler fileHandler = new FileHandler();
-//		ResourcesPlugin.getWorkspace().addResourceChangeListener(fileHandler, IResourceChangeEvent.POST_BUILD);
+		FileHandler fileHandler = new FileHandler();
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(fileHandler, IResourceChangeEvent.POST_BUILD);
 		
-		GitHandler gitHandler = new GitHandler(); 
-		gitHandler.remindUpdate();
+//		GitHandler gitHandler = new GitHandler(); 
+//		gitHandler.remindUpdate();
 		
 		File file = new File(djysrcPath);
 		if(file.exists()) {
@@ -37,9 +37,11 @@ public class StartupHandler implements IStartup{
 			folderListener.handlProjectImport();
 		}
 		
-//		System.out.println("SvnUpdateHandler:");
+		System.out.println("SvnUpdateHandler:");
 		File stup_complie_file = new File(dideHelper.getDIDEPath()+"auto_complier.txt");
 		if(stup_complie_file.exists()) {
+//			SendEmail email = new SendEmail();
+//			email.send("error.............");
 			SvnUpdateHandler svnHandler = new SvnUpdateHandler();
 			svnHandler.visitSvn();
 		}

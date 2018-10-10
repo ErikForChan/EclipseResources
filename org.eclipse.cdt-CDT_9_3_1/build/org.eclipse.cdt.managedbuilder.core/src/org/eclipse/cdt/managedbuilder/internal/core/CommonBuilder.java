@@ -756,43 +756,43 @@ public class CommonBuilder extends ACBuilder {
 		
 		boolean toContinue = true;
 		boolean aExist = false;
-		if (!(cfgName.startsWith("libos") || cfgName.startsWith("libOS"))) {
-			String[] members = cfgName.split("_");
-			String commonString = members[members.length-2]+"_"+members[members.length-1];
-			IFolder folder = project.getFolder("libos_"+commonString);
-			if (!folder.exists()) {
-				 aExist = false;
-			}else {
-				File perentFile = new File(folder.getLocation().toString());
-				File[] files = perentFile.listFiles();
-				for(File f:files) {
-					if(f.getName().contains("libos_"+commonString+".a")) {
-						aExist = true;
-						break;
-					}
-				}
-//				IFile file = folder.getFile("libos_"+commonString+".a");
-//				if(file.exists()) {
-//					aExist = true;
-//				}else {
-//					 aExist = false;
+//		if (!(cfgName.startsWith("libos") || cfgName.startsWith("libOS"))) {
+//			String[] members = cfgName.split("_");
+//			String commonString = members[members.length-2]+"_"+members[members.length-1];
+//			IFolder folder = project.getFolder("libos_"+commonString);
+//			if (!folder.exists()) {
+//				 aExist = false;
+//			}else {
+//				File perentFile = new File(folder.getLocation().toString());
+//				File[] files = perentFile.listFiles();
+//				for(File f:files) {
+//					if(f.getName().contains("libos_"+commonString+".a")) {
+//						aExist = true;
+//						break;
+//					}
 //				}
-			}
-			
-			if(!aExist) {
-				toContinue= false;
-				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
-				IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
-				for (IConfiguration cfg : cfgs) {
-					if(cfg.getName().equals("libos_"+commonString)) {
-						IBuilder mybuilder = cfg.getEditableBuilder();
-						CfgBuildInfo binfo = new CfgBuildInfo(mybuilder, true);
-						build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
-						break;
-					}
-				}
-			}
-		}
+////				IFile file = folder.getFile("libos_"+commonString+".a");
+////				if(file.exists()) {
+////					aExist = true;
+////				}else {
+////					 aExist = false;
+////				}
+//			}
+//			
+//			if(!aExist) {
+//				toContinue= false;
+//				IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
+//				IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+//				for (IConfiguration cfg : cfgs) {
+//					if(cfg.getName().equals("libos_"+commonString)) {
+//						IBuilder mybuilder = cfg.getEditableBuilder();
+//						CfgBuildInfo binfo = new CfgBuildInfo(mybuilder, true);
+//						build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
+//						break;
+//					}
+//				}
+//			}
+//		}
 		
 		if(toContinue) {
 			BuildStatus status = new BuildStatus(builder);
