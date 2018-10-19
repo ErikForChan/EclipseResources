@@ -29,9 +29,11 @@ import org.eclipse.cdt.core.settings.model.CProjectDescriptionEvent;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionListener;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
+import org.eclipse.cdt.ui.CUIPlugin;
 
 import org.eclipse.cdt.internal.ui.actions.ActionMessages;
 import org.eclipse.cdt.internal.ui.cview.BuildGroup;
+import org.eclipse.cdt.internal.ui.preferences.BuildConsolePreferencePage;
 
 /**
  * Implements a toolbar button that builds the active configuration
@@ -100,6 +102,7 @@ public class BuildActiveConfigMenuAction extends ChangeBuildConfigActionBase
 		if (actionMenuCache == null){
 			actionMenuCache = action;
 		}
+		
 		onSelectionChanged(action, selection);
 		updateBuildConfigMenuToolTip(action);
 	}
@@ -148,8 +151,15 @@ public class BuildActiveConfigMenuAction extends ChangeBuildConfigActionBase
 
 	@Override
 	public void handleEvent(CProjectDescriptionEvent event) {
+		
+		//IPreferenceStoreΩ´clearConsole…Ë÷√Œ™true
+//		if (BuildConsolePreferencePage.isClearBuildConsole()) {
+//			
+//		}
+		CUIPlugin.getDefault().getPreferenceStore().setValue("clearConsole", true);
 		if (actionMenuCache != null){
 			updateBuildConfigMenuToolTip(actionMenuCache);
 		}
+		
 	}
 }

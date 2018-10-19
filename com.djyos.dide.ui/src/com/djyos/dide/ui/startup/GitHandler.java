@@ -406,10 +406,10 @@ public class GitHandler {
     	
 		//如果没有git源码，则下载Git源码
 		if (!hasDjysrc) {
-			String promptInfo = "DIDE中还未有Djyos源码，是否自动下载源码？";
-			if(!gitFileExist) {
-				promptInfo = "DIDE中还未有Djyos的Git源码，是否自动下载源码？";
-			}
+//			String promptInfo = "DIDE中还未有Djyos源码，是否自动下载源码？";
+//			if(!gitFileExist) {
+//				promptInfo = "DIDE中还未有Djyos的Git源码，是否自动下载源码？";
+//			}
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				public void run() {
 					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();

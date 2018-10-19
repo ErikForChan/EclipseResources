@@ -104,32 +104,38 @@ public class ComponentConfigWizard extends WizardPage {
 	private List<Component> ibootCompontents = new ArrayList<Component>();
 	private List<Component> appCompontentsChecked = new ArrayList<Component>();
 	private List<Component> ibootCompontentsChecked = new ArrayList<Component>();
+	public String warningMsg = null;
 	
 	private DideHelper dideHelper = new DideHelper();
 	private LinkHelper linkHelper = new LinkHelper();
 
+	private Component createNewComponent(Component c){
+		Component component = new Component();
+		component.setName(c.getName());
+		component.setAnnotation(c.getAnnotation());
+		component.setAttribute(c.getAttribute());
+		component.setGrade(c.getGrade());
+		component.setCode(c.getCode());
+		component.setConfigure(c.getConfigure());
+		component.setLinkFolder(c.getLinkFolder());
+		component.setDependents(c.getDependents());
+		component.setMutexs(c.getMutexs());
+		component.setFileName(c.getFileName());
+		component.setSelectable(c.getSelectable());
+		component.setParent(c.getParent());
+		component.setWeakDependents(c.getWeakDependents());
+		component.setExcludes(c.getExcludes());
+		component.setIncludes(c.getIncludes());
+		component.setSelect(c.isSelect());
+		component.setParentPath(c.getParentPath());
+		component.setTarget(c.getTarget());
+		return component;
+	}
+	
 	private void initComponent(List<Component> typeCompontents, boolean isApp) {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < compontentsList.size(); i++) {
-			Component component = new Component();
-			component.setName(compontentsList.get(i).getName());
-			component.setAnnotation(compontentsList.get(i).getAnnotation());
-			component.setAttribute(compontentsList.get(i).getAttribute());
-			component.setGrade(compontentsList.get(i).getGrade());
-			component.setCode(compontentsList.get(i).getCode());
-			component.setConfigure(compontentsList.get(i).getConfigure());
-			component.setLinkFolder(compontentsList.get(i).getLinkFolder());
-			component.setDependents(compontentsList.get(i).getDependents());
-			component.setMutexs(compontentsList.get(i).getMutexs());
-			component.setFileName(compontentsList.get(i).getFileName());
-			component.setSelectable(compontentsList.get(i).getSelectable());
-			component.setParent(compontentsList.get(i).getParent());
-			component.setWeakDependents(compontentsList.get(i).getWeakDependents());
-			component.setExcludes(compontentsList.get(i).getExcludes());
-			component.setIncludes(compontentsList.get(i).getIncludes());
-			component.setSelect(compontentsList.get(i).isSelect());
-			component.setParentPath(compontentsList.get(i).getParentPath());
-			component.setTarget(compontentsList.get(i).getTarget());
+			Component component = createNewComponent(compontentsList.get(i));
 			// 当组件为必选且不需要配置时，不显示在界面上
 //			if (component.getSelectable().equals("必选") && (!component.getConfigure().contains("#define"))) {
 //				appCompontentsChecked.add(component);
@@ -144,8 +150,16 @@ public class ComponentConfigWizard extends WizardPage {
 			if (typeCompontents.get(i).getAttribute().equals("核心组件")) {
 				if(isApp) {
 					appCoreComponents.add(typeCompontents.get(i));
+					if(!appCompontentsChecked.contains(typeCompontents.get(i))) {
+//						typeCompontents.get(i).setSelect(true);
+						appCompontentsChecked.add(typeCompontents.get(i));
+					}
 				}else {
 					ibootCoreComponents.add(typeCompontents.get(i));
+					if(!ibootCompontentsChecked.contains(typeCompontents.get(i))) {
+//						typeCompontents.get(i).setSelect(true);
+						ibootCompontentsChecked.add(typeCompontents.get(i));
+					}
 				}
 			} else if (typeCompontents.get(i).getAttribute().equals("bsp组件")) {
 				if(isApp) {
@@ -194,11 +208,12 @@ public class ComponentConfigWizard extends WizardPage {
 		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
 					+ "#include \"stdint.h\"\n\n";
 		for (int i = 0; i < compontentsCheckedSort.size(); i++) {
+			Component c = compontentsCheckedSort.get(i);
 //			System.out.println("compontentsCheckedSort: "+compontentsCheckedSort.get(i).getName());
-			if(compontentsCheckedSort.get(i).getTarget().equals(ConfigureTarget.HEADER.getName())) {
-				if (compontentsCheckedSort.get(i).getConfigure().contains("#define")) {
-					defineInit += "//*******************************  Configure " + compontentsCheckedSort.get(i).getName() + "  ******************************************//\n";
-					String[] configures = compontentsCheckedSort.get(i).getConfigure().split("\n");
+			if(c.isSelect() && c.getTarget().equals(ConfigureTarget.HEADER.getName())) {
+				if (c.getConfigure().contains("#define")) {
+					defineInit += "//*******************************  Configure " + c.getName() + "  ******************************************//\n";
+					String[] configures = c.getConfigure().split("\n");
 					for (int j = 0; j < configures.length; j++) {
 						if (configures[j].contains("#define")) {
 							String pureDefine = null;
@@ -284,82 +299,84 @@ public class ComponentConfigWizard extends WizardPage {
 		}
 		for (int i = 0; i < typeCheckedSort.size(); i++) {
 //			System.out.println("typeCheckedSortNew:    "+typeCheckedSort.get(i).getName()+"\n");
-			String grade = typeCheckedSort.get(i).getGrade();
-			String code = typeCheckedSort.get(i).getCode();
-			List<String> dependents = typeCheckedSort.get(i).getDependents();
-			
-			//添加分区参数
-			String[] configures = typeCheckedSort.get(i).getConfigure().split("\n");
-			String tag = null;
-			List<String> paraNames = new ArrayList<String>();
-			for(String parameter:configures) {
-				if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
-						|| parameter.contains("%$#@select") || parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
-					tag = dideHelper.getTag(parameter, tag);
-				}
-				String[] members = parameter.split("\\s+");
-				if (parameter.contains("#define") && tag.equals("obj_para")) {
-					paraNames.add(members[1]);
-				}
-			}
-			
-			String codeStrings = "";
-			if (code != null) {
-				String[] codes = code.split("\n");
-				for (int j = 0; j < codes.length; j++) {
-					if (codes[j].contains("#include")) {
-						initHead += codes[j].trim() + "\n";
-					} else {
-						//如果函包含可变参，则将配置好的参数替换...
-						if(codes[j].contains("...") && paraNames.size()>0) {
-							String replaceParas = "";
-							for(String name:paraNames) {
-								if(name.equals(paraNames.get(paraNames.size()-1))) {
-									replaceParas += name;
-								}else {
-									replaceParas += name+", ";
-								}
-								
-							}
-							codes[j] = codes[j].replace("...", replaceParas);
-						}
-						codeStrings += "\t" + codes[j].trim() + "\n";
+			Component c = typeCheckedSort.get(i);
+			if(c.isSelect()) {
+				String grade = c.getGrade();
+				String code = c.getCode();
+				String componentName = c.getName();
+				List<String> dependents = c.getDependents();
+				
+				//添加分区参数
+				String[] configures = c.getConfigure().split("\n");
+				String tag = null;
+				List<String> paraNames = new ArrayList<String>();
+				for(String parameter:configures) {
+					if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
+							|| parameter.contains("%$#@select") || parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
+						tag = dideHelper.getTag(parameter, tag);
+					}
+					String[] members = parameter.split("\\s+");
+					if (parameter.contains("#define") && tag.equals("obj_para")) {
+						paraNames.add(members[1]);
 					}
 				}
-			}
+				
+				String codeStrings = "";
+				if (code != null) {
+					String[] codes = code.split("\n");
+					for (int j = 0; j < codes.length; j++) {
+						if (codes[j].contains("#include")) {
+							initHead += codes[j].trim() + "\n";
+						} else {
+							//如果函包含可变参，则将配置好的参数替换...
+							if(codes[j].contains("...") && paraNames.size()>0) {
+								String replaceParas = "";
+								for(String name:paraNames) {
+									if(name.equals(paraNames.get(paraNames.size()-1))) {
+										replaceParas += name;
+									}else {
+										replaceParas += name+", ";
+									}
+									
+								}
+								codes[j] = codes[j].replace("...", replaceParas);
+							}
+							codeStrings += "\t" + codes[j].trim() + "\n";
+						}
+					}
+				}
 
-			String componentName = typeCheckedSort.get(i).getName();
-
-//			if (grade != null && code != null) {
-//				if (grade.equals("main")) {// 初始化时机为main
-//					djyMain += codeStrings + "\n";
-//				} else if (grade.equals("init")) {// 初始化时机为init
-//					if (dependents.contains("cpu_peri_gpio")) {
-//						gpioInit += codeStrings + "\n";
-//					} else if (componentName.equals("heap")) {
-//						lastInit += evttMain + codeStrings + "\n";
-//					} else if (componentName.equals("shell")) {
-//						shellInit += codeStrings + "\n";
-//					} else {
-//						moduleInit += codeStrings + "\n";
+//				if (grade != null && code != null) {
+//					if (grade.equals("main")) {// 初始化时机为main
+//						djyMain += codeStrings + "\n";
+//					} else if (grade.equals("init")) {// 初始化时机为init
+//						if (dependents.contains("cpu_peri_gpio")) {
+//							gpioInit += codeStrings + "\n";
+//						} else if (componentName.equals("heap")) {
+//							lastInit += evttMain + codeStrings + "\n";
+//						} else if (componentName.equals("shell")) {
+//							shellInit += codeStrings + "\n";
+//						} else {
+//							moduleInit += codeStrings + "\n";
+//						}
 //					}
 //				}
-//			}
-			
-			if (grade != null && code != null && !codeStrings.trim().equals("")) {
-				if (dependents.contains("cpu_peri_gpio")) {
-					gpioInit += codeStrings + "\n";
-				} else if (componentName.equals("heap")) {
-					lastInit += evttMain + codeStrings + "\n";
-				} else if (componentName.equals("shell")) {
-					shellInit += codeStrings + "\n";
-				} else {
-					if (grade.equals("early")) {
-						earlyCode += codeStrings + "\n";
-					} else if (grade.equals("medium")) {
-						mediumCode += codeStrings + "\n";
-					} else if (grade.equals("later")) {
-						laterCode += codeStrings + "\n";
+				
+				if (grade != null && code != null && !codeStrings.trim().equals("")) {
+					if (dependents.contains("cpu_peri_gpio")) {
+						gpioInit += codeStrings + "\n";
+					} else if (componentName.equals("heap")) {
+						lastInit += evttMain + codeStrings + "\n";
+					} else if (componentName.equals("shell")) {
+						shellInit += codeStrings + "\n";
+					} else {
+						if (grade.equals("early")) {
+							earlyCode += codeStrings + "\n";
+						} else if (grade.equals("medium")) {
+							mediumCode += codeStrings + "\n";
+						} else if (grade.equals("later")) {
+							laterCode += codeStrings + "\n";
+						}
 					}
 				}
 			}
@@ -580,21 +597,10 @@ public class ComponentConfigWizard extends WizardPage {
 		for (int i = 0; i < parametersDefined.length; i++) {
 			String parameter = parametersDefined[i];
 
-			if (parameter.contains("%$#@num") || parameter.contains("%$#@string")
-					|| parameter.contains("%$#@enum") || parameter.contains("%$#@select")
-					|| parameter.contains("%$#@free")) {
-				if (parameter.contains("%$#@num")) {
-					tag = "int";
-				} else if (parameter.contains("%$#@string")) {
-					tag = "string";
-				} else if (parameter.contains("%$#@enum")) {
-					tag = "enum";
-				} else if (parameter.contains("%$#@select")) {
-					tag = "select";
-				} else if (parameter.contains("%$#@free")) {
-					tag = "free";
-				}
-
+			if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
+					|| parameter.contains("%$#@select") || parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
+				tag = dideHelper.getTag(parameter,tag);
+	
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("select") && !tag.equals("free")) {
@@ -623,37 +629,7 @@ public class ComponentConfigWizard extends WizardPage {
 						String maxString = rangesCopy.get(1);
 						if (tag.equals("int")) {
 							try {
-								int min;
-								long max;
-								if (minString.startsWith("0x")) {
-									min = Integer.parseInt(minString.substring(2), 16);
-								} else {
-									min = Integer.parseInt(minString);
-								}
-
-								if (maxString.startsWith("0x")) {
-									max = Long.parseLong(maxString.substring(2), 16);
-								} else {
-									max = Long.parseLong(maxString);
-								}
-
-								long curData;
-								if (members[2].startsWith("0x")) {
-									curData = Long.parseLong(members[2].substring(2), 16);
-								} else if (members[2].contains("+") || members[2].contains("-")
-										|| members[2].contains("*") || members[2].contains("/")) {
-									String pureCal = members[2].replaceAll("\\(|\\)", "");
-									if (pureCal.startsWith("-")) {
-										curData = dideHelper.toUnsigned(Long.parseLong(pureCal));
-									} else {
-										double result = Calculator.conversion(pureCal);
-										BigDecimal bd = new BigDecimal(df.format(result));
-										curData = Long.valueOf(bd.toPlainString());
-									}
-								} else {
-									curData = Integer.parseInt(members[2].replaceAll("\\(|\\)", ""));
-								}
-								if (curData < min || curData > max) {
+								if (!dideHelper.handleIntPara(minString, maxString, new ArrayList<String>(), members)) {
 									return false;
 								}
 							} catch (Exception e) {
@@ -663,14 +639,7 @@ public class ComponentConfigWizard extends WizardPage {
 							}
 						} else if (tag.equals("string")) {
 							try {
-								int min, max;
-								String value = null;
-								min = Integer.parseInt(minString);
-								max = Integer.parseInt(maxString);
-								int begin = defines[0].indexOf("\"");
-        						int end = defines[0].lastIndexOf("\"");
-        						value = defines[0].substring(begin+1, end);
-								if (value.length() < min || value.length() > max) {
+								if (!dideHelper.handleStringPara(minString, maxString, new ArrayList<String>(), members, defines)) {
 									return false;
 								}
 							} catch (Exception e) {
@@ -1258,6 +1227,7 @@ public class ComponentConfigWizard extends WizardPage {
 		tabelControls.clear();
 		checkcounter = 0;
 		int partNum = 0;
+		boolean selectExist = false;
 		String configure = componentSelect.getConfigure();
 		String[] parametersDefined = configure.split("\n");
 		String tag = null;
@@ -1267,15 +1237,20 @@ public class ComponentConfigWizard extends WizardPage {
 		Button checkBtn[] = new Button[parametersDefined.length];
 		for (int i = 0; i < parametersDefined.length; i++) {
 			isSelect[i] = false;
-			String parameter = parametersDefined[i];
-			if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
-					|| parameter.contains("%$#@select") || parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
+			String parameter = null;
+//			if(parametersDefined[i].contains("*")) {
+//				parameter = parametersDefined[i].trim().split("\\*")[0];
+//			}else {
+//				parameter = parametersDefined[i].trim();
+//			}
+			parameter = parametersDefined[i].trim();
+			if (dideHelper.isParaHead(parameter)) {
 				tag = dideHelper.getTag(parameter, tag);
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("free")) {
 					for (int j = 1; j < infos.length; j++) {
-						ranges.add(infos[j]);
+						ranges.add(infos[j].trim());
 					}
 				}
 			} else if (parameter.contains("#define") && !tag.equals("obj_para")) {
@@ -1310,6 +1285,7 @@ public class ComponentConfigWizard extends WizardPage {
 					handleObjnumPara(i,checkBtn,parameter,ranges,isSelect,componentSelect,item,members,tag);
 					partNum = Integer.parseInt(members[2]);
 				} else if (tag.equals("select")) {
+					selectExist = true;
 					handleSelectPara(i,checkBtn,parameter,ranges,isSelect,componentSelect,item,tag);
 				} else {
 					isSelect[i] = true;
@@ -1326,7 +1302,7 @@ public class ComponentConfigWizard extends WizardPage {
 						String minString = rangesCopy.get(0);
 						String maxString = rangesCopy.get(1);
 						if (tag.equals("int")) {
-							text.setText(item.getText(1).replaceAll("\\(|\\)", ""));
+							text.setText(dideHelper.getridParentheses(item.getText(1)));
 							handleIntPara(minString,maxString,members,text);			
 						}else if(tag.equals("string")) {
 							if(item.getText(1).replace("\"", "").trim().equals("")) {
@@ -1373,13 +1349,13 @@ public class ComponentConfigWizard extends WizardPage {
 									} else if (tempString.contains("+") || tempString.contains("-")
 											|| tempString.contains("*") || tempString.contains("/")) {
 										toCalculate = true;
-										String pureCal = tempString.replaceAll("\\(|\\)", "");
+										String pureCal = dideHelper.getridParentheses(tempString);
 										double result = Calculator.conversion(pureCal);
 										BigDecimal bd = new BigDecimal(df.format(result));
 										curNum = Long.valueOf(bd.toPlainString());
 									} else {
 										if (isInt) {
-											curNum = Integer.parseInt(tempString.replaceAll("\\(|\\)", ""));
+											curNum = Integer.parseInt(dideHelper.getridParentheses(tempString));
 										}
 									}
 									if (curNum < min || curNum > max) {
@@ -1436,9 +1412,13 @@ public class ComponentConfigWizard extends WizardPage {
 				isSelect[i] = true;
 			}
 		}
+		if(selectExist) {
+			checkError(componentSelect);
+		}
 		expendParas = getExpandParas(componentSelect);
 		fillParts(partNum,expendParas,componentSelect,isSelect);
 		resetConfigure(componentSelect,isSelect);
+	
 	}
 	
 	private String getRealCompName(String annoation, String[] members, List<String> paras, List<String> ranges,
@@ -1567,16 +1547,16 @@ public class ComponentConfigWizard extends WizardPage {
 			curData = Long.parseLong(members[2].substring(2), 16);
 		} else if (members[2].contains("+") || members[2].contains("-")
 				|| members[2].contains("*") || members[2].contains("/")) {
-			String pureCal = members[2].replaceAll("\\(|\\)", "");
+			String pureCal = dideHelper.getridParentheses(members[2]);
 			if (pureCal.startsWith("-")) {
 				curData = dideHelper.toUnsigned(Long.parseLong(pureCal));
-			} else {
+			} else { 
 				double result = Calculator.conversion(pureCal);
 				BigDecimal bd = new BigDecimal(df.format(result));
 				curData = Long.valueOf(bd.toPlainString());
 			}
 		} else {
-			curData = Long.parseLong(members[2].replaceAll("\\(|\\)", ""));
+			curData = Long.parseLong(dideHelper.getridParentheses(members[2]));
 		}
 		if (curData < min || curData > max) {
 			text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
@@ -1640,11 +1620,20 @@ public class ComponentConfigWizard extends WizardPage {
 							checkcounter = 0;
 						}
 					}
+					checkError(componentSelect);
 				}
 				resetConfigure(componentSelect,isSelect);
 			}
 		});
 		tabelControls.add(checkBtn[i]);
+	}
+	
+	private void checkError(Component componentSelect) {
+		if(checkcounter<1) {
+			warningMsg = componentSelect.getAttribute()+"[" + componentSelect.getName() + "]未勾选参数";
+		}else {
+			warningMsg = null;
+		}
 	}
 	
 	private void handleEnumPara(int i, boolean[] isSelect, List<String> ranges, TableItem item, Component componentSelect, String tag) {
@@ -1780,7 +1769,7 @@ public class ComponentConfigWizard extends WizardPage {
 				Text text = new Text(table, SWT.BORDER);
 				text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 				// 将文本框当前值，设置为表格中的值
-				text.setText(item.getText(1).replaceAll("\\(|\\)", ""));
+				text.setText(dideHelper.getridParentheses(item.getText(1)));
 				text.addModifyListener(new ModifyListener() {
 					
 					@Override

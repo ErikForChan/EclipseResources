@@ -18,18 +18,43 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.tools.Calculator;
+
+import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.managedbuilder.core.IBuilder;
+import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+import org.eclipse.cdt.managedbuilder.core.IManagedBuildInfo;
+import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.BuildStatus;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder.CfgBuildInfo;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceRuleFactory;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Adapters;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
+import org.eclipse.ui.internal.ide.actions.BuildUtilities;
 import org.eclipse.ui.wizards.IWizardDescriptor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -46,6 +71,7 @@ import com.djyos.dide.ui.arch.Arch;
 import com.djyos.dide.ui.arch.ReadArchXml;
 import com.djyos.dide.ui.wizards.board.Board;
 import com.djyos.dide.ui.wizards.board.ReadBoardXml;
+import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 import com.djyos.dide.ui.wizards.component.Component;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.ibm.icu.text.DecimalFormat;
@@ -57,28 +83,174 @@ public class DideHelper {
 	String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 	DecimalFormat df = new DecimalFormat("######0");
 	
+	/********* * 与编译有关的函数* * *********/
+	@SuppressWarnings("restriction")
+	public void buildTarget(IProject project, String targetName) {
+		// TODO Auto-generated method stub
+		CommonBuilder cb = new CommonBuilder();
+		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
+		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
+		ICConfigurationDescription[] conds = local_prjd.getConfigurations();
+		
+		for (ICConfigurationDescription cfg : conds) {
+			if(cfg.getName().equals(targetName)) {
+				
+				ICConfigurationDescription[] cfgds = new ICConfigurationDescription[1];
+				cfgds[0] = cfg;
+				
+				BuildUtilities.saveEditors(null);
+				Job buildJob =
+						new BuildTarget(cfgds, 0, IncrementalProjectBuilder.INCREMENTAL_BUILD);
+				buildJob.schedule();
+			}
+		}
+	}
+	
+	public boolean createBuild(IProject project) {
+		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
+		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
+		
+		for (IConfiguration cfg : cfgs) {
+			IBuilder builder = cfg.getEditableBuilder();
+			String cfgName = cfg.getName();
+			
+			if (cfgName.startsWith("libos")) {
+				File cfgFile = new File(project.getLocation().toString()+"/"+cfgName);
+				boolean compiled = false;
+				if(cfgFile.exists()) {
+					File[] files = cfgFile.listFiles();
+					for(File f:files) {
+						if(f.getName().endsWith(".a")) {
+							compiled = true;
+							break;
+						}
+					}
+				}
+				
+				if(!compiled) {
+					buildTarget(project,cfgName);
+//					CfgBuildInfo binfo = new CfgBuildInfo(builder, true);
+//					BuildStatus status = new BuildStatus(builder);
+//					status.setRebuild();
+//					IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace().getRuleFactory();
+//					final ISchedulingRule rule = ruleFactory.modifyRule(binfo.getProject());
+//					Job backgroundJob = new Job("Building "+cfgName) {
+//						@Override
+//						protected IStatus run(IProgressMonitor monitor) {
+//							// TODO Auto-generated method stub
+//							try {
+//								ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+//									@Override
+//									public void run(IProgressMonitor monitor) throws CoreException {
+//										boolean isClean = cb.build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
+//									}
+//								}, rule, IWorkspace.AVOID_UPDATE, monitor);
+//							} catch (CoreException e) {
+//								return e.getStatus();
+//							}
+//							return Status.OK_STATUS;
+//						}
+//					};
+//					backgroundJob.setRule(rule);
+//					backgroundJob.schedule();
+				}
+				}
+		}
+		try {
+			project.refreshLocal(IResource.DEPTH_INFINITE, null);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	public boolean isAutoBuildNew() {
+		return isAutoBuild("AUTO_BUILDLIBOS_NEW");
+	}
+	
+	public boolean isAutoBuildImport() {
+		return isAutoBuild("AUTO_BUILDLIBOS_IMPORT");
+	}
+	
+	private boolean isAutoBuild(String target) {
+		File didePrefsFile = new File(didePath+"IDE/configuration/.settings/com.djyos.ui.prefs");
+		return targetIsTrue(didePrefsFile,target);
+	}
+	
+	public boolean targetIsTrue(File file, String target) {
+		// TODO Auto-generated method stub
+		BufferedReader br = null;  
+        String line = null;  
+        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
+        try {            
+            br = new BufferedReader(new FileReader(file));              
+            while ((line = br.readLine()) != null) {  
+                StringBuffer buf = new StringBuffer();  
+                //修改内容核心代码
+                if (line.startsWith(target)) {  
+                	String[] infos = line.split("=");
+                	if(infos[1].trim().equals("false")) {
+                		return false;
+                	}
+                    break;
+                }
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } finally {  
+            if (br != null) {  
+                try {  
+                    br.close();  
+                } catch (IOException e) {  
+                    br = null;  
+                }  
+            }  
+        }  
+		return true;
+	}
+	
+	public void setFileContent(File file, String target, String value) {
+		// TODO Auto-generated method stub
+		BufferedReader br = null;
+		String line = null;
+//		boolean targetExist = false;
+		StringBuffer bufAll = new StringBuffer(); // 保存修改过后的所有内容，不断增加
+		try {
+			br = new BufferedReader(new FileReader(file));
+			while ((line = br.readLine()) != null) {
+				StringBuffer buf = new StringBuffer();
+				// 修改内容核心代码
+				if (line.startsWith(target)) {
+					line = target + " = " + value;
+//					targetExist = true;
+				}
+				bufAll.append(line + "\n");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					br = null;
+				}
+			}
+		}
+//		if (!targetExist) {
+//			bufAll.append(target + "=" + isTrue + "\n");
+//		}
+		file.delete();
+		writeFile(file, bufAll.toString());
+
+	}
+	
+	/********* * 与工具有关的函数* * *********/
 	//将long转成无符类型
 	public long toUnsigned(long s) {
 		return s & 0xFFFFFFFFL;
-	}
-
-	//获取当前DIDE的绝对路径
-	public String getDIDEPath() {
-		return didePath;
-	}
-	
-	public String getArchPath() {
-		return didePath+"djysrc/bsp/arch";
-	}
-	
-	//获取模板的路径
-	public String getTemplatePath() {
-		return fullPath.substring(6)+"djyosTemplate";
-	}
-	
-	//获取Djysrc的路径
-	public String getDjyosSrcPath() {
-		return didePath+"djysrc";
 	}
 	
 	public boolean isFputypeuNeed(Core core) {
@@ -102,222 +274,17 @@ public class DideHelper {
 		return false;
 	}
 	
-	public void writeFile(File file,String content){
-		if(!file.exists()) {
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+	public Board getProjectBoard(String boardName) {
+		Board sBoard = null;
+		ReadBoardXml rbx = new ReadBoardXml();
+		List<Board> boards = rbx.getAllBoards();
+		for (int i = 0; i < boards.size(); i++) {
+			if (boards.get(i).getBoardName().equals(boardName)) {
+				sBoard = boards.get(i);
+				break;
 			}
 		}
-		FileWriter writer;
-		try {
-			writer = new FileWriter(file);
-			writer.write(content);
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-//	
-//	public static List<String> getLogs() throws SVNException{
-//        /*
-//         * 对版本库进行初始化操作，使用https或http访问svn时，执行DAVRepositoryFactory.setup(); 对于通过使用svn:// 和 svn+xxx://
-//         * 访问svn时，执行SVNRepositoryFactoryImpl.setup(); 对于通过file:/// 访问svn的情况，执行 FSRepositoryFactory.setup();
-//         */
-//        String url = "https://xiangmuzuserver/svn/硬件组开发库/platform_soft/djyos/trunk";
-//        String name = "chenjm@sznari.com";
-//        String password = "sunri@2017";
-//        long startRevision = 43903;
-//        long endRevision = -1; // HEAD (the latest) revision
-// 
-//        SVNURL svnurl = SVNURL.parseURIEncoded(url); // 某目录在svn的位置，获取目录对应的URL。即版本库对应的URL地址
-//        DAVRepositoryFactory.setup(); // 初始化
-//        ISVNOptions options = SVNWCUtil.createDefaultOptions(true); // 驱动选项
-//        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name, password); // 提供认证
-// 
-//        SVNRepository repos = SVNRepositoryFactory.create(svnurl);
-//        repos.setAuthenticationManager(authManager); // 设置认证
-// 
-//        Collection logEntries = null;
-//        List<String> result = new ArrayList<String>();
-//        logEntries = repos.log(new String[] { "" }, null, startRevision, endRevision, true, true);
-//        
-//        int entryNum = 0;
-//        for (Iterator entries = logEntries.iterator(); entries.hasNext();) {
-//            SVNLogEntry logEntry = (SVNLogEntry) entries.next();
-//            entryNum++;
-//            if(entryNum == logEntries.size()) {
-//            	 System.out.println("---------------------------------------------");
-//                 System.out.println("revision: " + logEntry.getRevision());
-//                 System.out.println("author: " + logEntry.getAuthor());
-//                 System.out.println("date: " + logEntry.getDate());
-//                 System.out.println("log message: " + logEntry.getMessage());
-//            }
-// 
-////            if (logEntry.getChangedPaths().size() > 0) {
-////                System.out.println();
-////                System.out.println("changed paths:");
-////                Set changedPathsSet = logEntry.getChangedPaths().keySet();
-//// 
-////                for (Iterator changedPaths = changedPathsSet.iterator(); changedPaths.hasNext();) {
-////                    SVNLogEntryPath entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(changedPaths.next());
-////                    System.out.println(" "
-////                            + entryPath.getType()
-////                            + " "
-////                            + entryPath.getPath()
-////                            + ((entryPath.getCopyPath() != null) ? " (from " + entryPath.getCopyPath() + " revision "
-////                                    + entryPath.getCopyRevision() + ")" : ""));
-////                    result.add(entryPath.getPath());
-////                }
-////            }
-//        }
-//        // 倒序
-//        Collections.reverse(result);
-//        return result;
-//    }
-//	
-	public List<File> getArchXmlFiles(File archFile, ArrayList<File> files) {
-		// TODO Auto-generated method stub
-		if(archFile != null) {
-			File[] cFiles = archFile.listFiles();
-			for(File f:cFiles) {
-				if(f.isDirectory()) {
-					getArchXmlFiles(f,files);
-				}else {
-					if(f.getName().equals("arch.xml")) {
-						files.add(f);
-					}
-				}
-			}
-		}
-		return files;
-	}
-	
-	public boolean showErrorMessage(String message){
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-			public void run() {
-				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-				MessageDialog.openInformation(window.getShell(),
-						"提示",message);
-		}
-		});
-		return false;
-	}
-	
-	//获取用户板件的路径
-	public String getUserBoardFilePath() {
-		String userBoardPath = didePath+"djysrc/bsp/boarddrv/user";
-		File userBoardFile = new File(userBoardPath);
-		if(!userBoardFile.exists()) {
-			userBoardFile.mkdirs();
-		}
-		return userBoardPath;
-	}
-	
-	//当前目录及其子目录下是否包含xml文件
-	public boolean containsXml(File file) {
-		File[] files = file.listFiles();
-		for(File f:files) {
-			if(f.isDirectory()) {
-				if(containsXml(f)) {
-					return true;
-				}
-			}else {
-				if(f.getName().endsWith(".xml")) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	
-	//获取Djyos板件的绝对路径
-	public String getDemoBoardFilePath() {
-		String demoBoardPath = didePath+"djysrc/bsp/boarddrv/demo";
-		File demoBoardFile = new File(demoBoardPath);
-		if(!demoBoardFile.exists()) {
-			demoBoardFile.mkdirs();
-		}
-		return demoBoardPath;
-	}
-	
-	//获取用户板件的相对路径
-	public String getRelativeUserBoardFilePath() {
-		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/user/";
-	}
-	
-	//获取Djyos板件的相对路径
-	public String getRelativeDemoBoardFilePath() {
-		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/";
-	}
-	//获取某个文件夹下的xml文件
-	public File getXmlFile(File parentFile) {
-		File file =null;
-		File[] files = parentFile.listFiles();
-		for(int i=0;i<files.length;i++){
-			if(files[i].getName().endsWith(".xml")) {
-				file = files[i];
-			}
-		}
-		return file;
-	}
-	
-	//将某个文件夹下的文件按照文件夹...文件的方式排序
-	public List<File> sortFileAndFolder(File file) {
-		File[] files = file.listFiles();
-		List<File> allFiles = new ArrayList<File>();
-		List<File> pureFiles = new ArrayList<File>();
-		List<File> folderFiles = new ArrayList<File>();
-
-		for (File f : files) {
-			if(f.isDirectory()) {
-				folderFiles.add(f);
-			}else if(f.isFile() && (f.getName().endsWith(".c") || f.getName().endsWith(".h"))) {
-				pureFiles.add(f);
-			}
-		}
-		
-		allFiles.addAll(folderFiles);
-		allFiles.addAll(pureFiles);
-		
-		return allFiles;
-	}
-	
-	public void objdumpTest() {
-//		String command="arm-none-eabi-objdump.exe -h F:\\djyos\\atomic.o";  
-//	    String line = null;  
-//	    StringBuilder sb = new StringBuilder();  
-//	    Runtime runtime = Runtime.getRuntime();  
-//	    try {  
-//	    Process process = runtime.exec(command);  
-//	    BufferedReader  bufferedReader = new BufferedReader  
-//	            (new InputStreamReader(process.getInputStream()));  
-//	        while ((line = bufferedReader.readLine()) != null) {  
-//	            sb.append(line + "\n");  
-//	            System.out.println(line);  
-//	        }  
-//	    } catch (IOException e) {  
-//	        // TODO 自动生成的 catch 块  
-//	        e.printStackTrace();  
-//	    }  
-
-//		long a = Integer.parseInt("1");
-//		long b = Long.parseLong("0xFFFFFFFF".substring(2), 16);
-//		long c = Integer.parseInt("-1");; //0xFFFFFFFF
-//		if(a>b) {
-//			System.out.println("a= "+toUnsigned(a));
-//			System.out.println("b= "+toUnsigned(b));
-//			System.out.println("c= "+toUnsigned(c));
-//			System.out.println("a>b");
-//		}else {
-//			System.out.println("a= "+toUnsigned(a));
-//			System.out.println("b= "+toUnsigned(b));
-//			System.out.println("c= "+toUnsigned(c));
-//			System.out.println("b>a");
-//		}
+		return sBoard;
 	}
 	
 	//根据id获取某个action
@@ -338,7 +305,56 @@ public class DideHelper {
 		return action;
 	}
 	
-	//将src目录下的所有文件拷贝到dest目录下
+	/********* * 与路径有关的函数* * *********/
+	public String getDIDEPath() {
+		return didePath;
+	}
+	
+	public String getArchPath() {
+		return didePath+"djysrc/bsp/arch";
+	}
+	
+	//获取模板的路径
+	public String getTemplatePath() {
+		return fullPath.substring(6)+"djyosTemplate";
+	}
+	
+	// 获取Djysrc的路径
+	public String getDjyosSrcPath() {
+		return didePath + "djysrc";
+	}
+
+	// 获取用户板件的路径
+	public String getUserBoardFilePath() {
+		String userBoardPath = didePath + "djysrc/bsp/boarddrv/user";
+		File userBoardFile = new File(userBoardPath);
+		if (!userBoardFile.exists()) {
+			userBoardFile.mkdirs();
+		}
+		return userBoardPath;
+	}
+
+	// 获取Djyos板件的绝对路径
+	public String getDemoBoardFilePath() {
+		String demoBoardPath = didePath + "djysrc/bsp/boarddrv/demo";
+		File demoBoardFile = new File(demoBoardPath);
+		if (!demoBoardFile.exists()) {
+			demoBoardFile.mkdirs();
+		}
+		return demoBoardPath;
+	}
+
+	// 获取用户板件的相对路径
+	public String getRelativeUserBoardFilePath() {
+		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/user/";
+	}
+
+	// 获取Djyos板件的相对路径
+	public String getRelativeDemoBoardFilePath() {
+		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/";
+	}
+
+	/********* * 与文件操作有关的函数* * *********/
 	public void copyFolder(File src, File dest) throws IOException {  
 	    if (src.isDirectory()) {  
 	        if (!dest.exists()) {  
@@ -401,6 +417,149 @@ public class DideHelper {
 		}
 	}
 
+	public void writeFile(File file,String content){
+		if(!file.exists()) {
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		FileWriter writer;
+		try {
+			writer = new FileWriter(file);
+			writer.write(content);
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// 当前目录及其子目录下是否包含xml文件
+	public boolean containsXml(File file) {
+		File[] files = file.listFiles();
+		for (File f : files) {
+			if (f.isDirectory()) {
+				if (containsXml(f)) {
+					return true;
+				}
+			} else {
+				if (f.getName().endsWith(".xml")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public List<File> getArchXmlFiles(File archFile, ArrayList<File> files) {
+		// TODO Auto-generated method stub
+		if(archFile != null) {
+			File[] cFiles = archFile.listFiles();
+			for(File f:cFiles) {
+				if(f.isDirectory()) {
+					getArchXmlFiles(f,files);
+				}else {
+					if(f.getName().equals("arch.xml")) {
+						files.add(f);
+					}
+				}
+			}
+		}
+		return files;
+	}
+	
+	//显示错误信息
+	public boolean showErrorMessage(String message){
+		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+				MessageDialog.openInformation(window.getShell(),
+						"提示",message);
+		}
+		});
+		return false;
+	}
+	
+	/********* * 与路径有关的函数* * *********/
+	
+	//获取某个文件夹下的xml文件
+	public File getXmlFile(File parentFile) {
+		File file =null;
+		File[] files = parentFile.listFiles();
+		for(int i=0;i<files.length;i++){
+			if(files[i].getName().endsWith(".xml")) {
+				file = files[i];
+			}
+		}
+		return file;
+	}
+	
+	//将某个文件夹下的文件按照文件夹...文件的方式排序
+	
+	public List<File> sortFileAndFolder(File file) {
+		File[] files = file.listFiles();
+		List<File> allFiles = new ArrayList<File>();
+		List<File> pureFiles = new ArrayList<File>();
+		List<File> folderFiles = new ArrayList<File>();
+
+		for (File f : files) {
+			if(f.isDirectory()) {
+				folderFiles.add(f);
+			}else if(f.isFile() && (f.getName().endsWith(".c") || f.getName().endsWith(".h"))) {
+				pureFiles.add(f);
+			}
+		}
+		
+		allFiles.addAll(folderFiles);
+		allFiles.addAll(pureFiles);
+		
+		return allFiles;
+	}
+	
+	/********* * 与测试有关的函数* * *********/
+	public void objdumpTest() {
+//		String command="arm-none-eabi-objdump.exe -h F:\\djyos\\atomic.o";  
+//	    String line = null;  
+//	    StringBuilder sb = new StringBuilder();  
+//	    Runtime runtime = Runtime.getRuntime();  
+//	    try {  
+//	    Process process = runtime.exec(command);  
+//	    BufferedReader  bufferedReader = new BufferedReader  
+//	            (new InputStreamReader(process.getInputStream()));  
+//	        while ((line = bufferedReader.readLine()) != null) {  
+//	            sb.append(line + "\n");  
+//	            System.out.println(line);  
+//	        }  
+//	    } catch (IOException e) {  
+//	        // TODO 自动生成的 catch 块  
+//	        e.printStackTrace();  
+//	    }  
+
+//		long a = Integer.parseInt("1");
+//		long b = Long.parseLong("0xFFFFFFFF".substring(2), 16);
+//		long c = Integer.parseInt("-1");; //0xFFFFFFFF
+//		if(a>b) {
+//			System.out.println("a= "+toUnsigned(a));
+//			System.out.println("b= "+toUnsigned(b));
+//			System.out.println("c= "+toUnsigned(c));
+//			System.out.println("a>b");
+//		}else {
+//			System.out.println("a= "+toUnsigned(a));
+//			System.out.println("b= "+toUnsigned(b));
+//			System.out.println("c= "+toUnsigned(c));
+//			System.out.println("b>a");
+//		}
+	}
+	
+	
+	
+	/********* * 与裁剪有关的函数* * *********/
+	
+	//将src目录下的所有文件拷贝到dest目录下
+	
 	//获取当前的配置文件中与component组件有关的宏配置
 	public void getPrjCfgs(List<String> pjCgfs, File configFile, Component component) {
 		// TODO Auto-generated method stub
@@ -431,6 +590,7 @@ public class DideHelper {
 	}
 	
 	//获取此行参数的标识
+	
 	public String getTag(String parameter, String tag) {
 		// TODO Auto-generated method stub
 		if (parameter.contains("%$#@num")) {
@@ -451,6 +611,14 @@ public class DideHelper {
 		return tag;
 	}
 	
+	public boolean isParaHead(String parameter) {
+		if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
+				|| parameter.contains("%$#@select") || parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
+			return true;
+		}
+		return false;
+	}
+	
 	//检查参数是否有配置错误
 	public boolean checkParameter(Component component, Boolean isApp, IProject curProject) {
 
@@ -465,8 +633,7 @@ public class DideHelper {
 		
 		for (int i = 0; i < parametersDefined.length; i++) {
 			String parameter = parametersDefined[i];
-			if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
-					|| parameter.contains("%$#@select") || parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
+			if (isParaHead(parameter)) {
 				tag = getTag(parameter,tag);
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
@@ -517,7 +684,7 @@ public class DideHelper {
 	}
 
 	//处理String类型的参数
-	private boolean handleStringPara(String minString, String maxString, List<String> pjCgfs, String[] members, String[] defines) {
+	public boolean handleStringPara(String minString, String maxString, List<String> pjCgfs, String[] members, String[] defines) {
 		// TODO Auto-generated method stub
 		int min, max;
 		String value = null;
@@ -546,8 +713,18 @@ public class DideHelper {
 		return true;
 	}
 
+	public String getridParentheses(String data) {
+		if(data.contains("(") || data.contains(")")) {
+			data = data.replaceAll("\\(|\\)", "");
+		}
+		if(data.contains("（") || data.contains("）")) {
+			data = data.replaceAll("（","").replaceAll("）","");
+		}
+		return data;
+	}
+	
 	//处理Int类型的参数
-	private boolean handleIntPara(String minString, String maxString, List<String> pjCgfs, String[] members) {
+	public boolean handleIntPara(String minString, String maxString, List<String> pjCgfs, String[] members) {
 		// TODO Auto-generated method stub
 		int min;
 		long max,curData = -1;
@@ -569,7 +746,7 @@ public class DideHelper {
 						curData = Long.parseLong(cfgs[2].substring(2), 16);
 					} else if (cfgs[2].contains("+") || cfgs[2].contains("-")
 							|| cfgs[2].contains("*") || cfgs[2].contains("/")) {
-						String pureCal = cfgs[2].replaceAll("\\(|\\)", "");
+						String pureCal = getridParentheses(cfgs[2]);
 						if (pureCal.startsWith("-")) {
 							curData = toUnsigned(Long.parseLong(pureCal));
 						} else {
@@ -578,7 +755,7 @@ public class DideHelper {
 							curData = Long.valueOf(bd.toPlainString());
 						}
 					} else {
-						curData = Integer.parseInt(cfgs[2].replaceAll("\\(|\\)", ""));
+						curData = Integer.parseInt(getridParentheses(cfgs[2]));
 					}
 
 					break;
@@ -590,7 +767,8 @@ public class DideHelper {
 				curData = Long.parseLong(members[2].substring(2), 16);
 			} else if (members[2].contains("+") || members[2].contains("-")
 					|| members[2].contains("*") || members[2].contains("/")) {
-				String pureCal = members[2].replaceAll("\\(|\\)", "");
+				String pureCal = getridParentheses(members[2]);
+//				System.out.println("pureCal:   "+pureCal);
 				if (pureCal.startsWith("-")) {
 					curData = toUnsigned(Long.parseLong(pureCal));
 				} else {
@@ -599,7 +777,7 @@ public class DideHelper {
 					curData = Long.valueOf(bd.toPlainString());
 				}
 			} else {
-				curData = Integer.parseInt(members[2].replaceAll("\\(|\\)", ""));
+				curData = Integer.parseInt(getridParentheses(members[2]));
 			}
 		}
 

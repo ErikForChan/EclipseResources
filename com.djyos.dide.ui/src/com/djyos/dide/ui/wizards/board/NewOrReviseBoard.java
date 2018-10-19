@@ -7,11 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.runtime.Adapters;
-import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -1088,6 +1084,8 @@ public class NewOrReviseBoard extends StatusDialog{
 		GridData data = new GridData(GridData.FILL_BOTH);
 		infoArea.setLayoutData(data);
 		
+		ReadCpuXml rcx = new ReadCpuXml();
+		cpusList =  rcx.getAllCpus();
 		Composite boardNameCpt = new Composite(infoArea, SWT.NULL);
 		GridLayout layoutBoardName = new GridLayout();
 		layoutBoardName.numColumns = 2;
@@ -1122,8 +1120,6 @@ public class NewOrReviseBoard extends StatusDialog{
 				IAction action = dideHelper.getAction("org.eclipse.cdt.ui.wizards.NewCWizard4");
 				action.run();	
 				cpuArhives.removeAll();
-				ReadCpuXml rcx = new ReadCpuXml();
-				cpusList =  rcx.getAllCpus();
 				for(int i=0;i<cpusList.size();i++) {
 					TreeItem t = new TreeItem(cpuArhives, SWT.NONE);
 					t.setImage(DPluginImages.DESC_CPU_VIEW.createImage());
@@ -1265,7 +1261,7 @@ public class NewOrReviseBoard extends StatusDialog{
 					getCpuSrcPaths(new File(cpuPath),cpuSrcPaths);
 					for(String path:cpuSrcPaths) {
 						File srcFile = new File(path);
-						System.out.println("path:  "+path);
+//						System.out.println("path:  "+path);
 						ReadComponent rcx = new ReadComponent();
 						List<Component> somePeripherals = rcx.getSrcPeripherals(srcFile);
 						allPeripherals.addAll(somePeripherals);
@@ -1449,8 +1445,8 @@ public class NewOrReviseBoard extends StatusDialog{
 
 	private void createTreeForCpus(Composite parent) {
 		// TODO Auto-generated method stub
-		ReadCpuXml rcx = new ReadCpuXml();
-		cpusList =  rcx.getAllCpus();
+//		ReadCpuXml rcx = new ReadCpuXml();
+//		cpusList =  rcx.getAllCpus();
 		Composite composite = new Composite(parent, SWT.NULL);
 		
 		cpuArhives = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
@@ -1562,38 +1558,45 @@ public class NewOrReviseBoard extends StatusDialog{
 	}	
 	
 	private String getCpuPath(String cpuName) {
-		String sourcePath = didePath+"djysrc/bsp/cpudrv";
-		File sourceFile = new File(sourcePath);
-		File[] files = sourceFile.listFiles();
-		String path = null;
-		for(File file:files){//cpudrv下的所有文件 Atmel stm32
-			if(file.isDirectory()) {
-				String curPath = getDeapPath(file,cpuName,null);
-				if(curPath != null) {
-					path = curPath;
-					break;
-				};
-			}	
-		}
-		return path;
-	}
-
-	public String getDeapPath(File sourceFile,String cpuName,String path) {
-		File[] files = sourceFile.listFiles();
-		if(path == null) {//path为空时，还未扫描到相应cpu，则继续扫描
-			for (File file : files) {
-				if (file.isDirectory()) {			
-					if(file.getName().equals(cpuName)) {
-						path = file.getPath();
-						break;
-					}else if(!file.getName().equals("include") && !file.getName().equals("src")){
-						path = getDeapPath(file,cpuName,path);//如果为目录，则继续扫描该目录
-					}			
-				}
+		for(Cpu c:cpusList) {
+			if(c.getCpuName().equals(cpuName)) {
+				return c.getParentPath();
 			}
 		}
-		return path;
+//		String sourcePath = didePath+"djysrc/bsp/cpudrv";
+//		File sourceFile = new File(sourcePath);
+//		File[] files = sourceFile.listFiles();
+//		String path = null;
+//		for(File file:files){//cpudrv下的所有文件 Atmel stm32
+//			if(file.isDirectory()) {
+//				String curPath = getDeapPath(file,cpuName,null);
+//				if(curPath != null) {
+//					path = curPath;
+//					break;
+//				};
+//			}	
+//		}
+//		System.out.println("path:  "+path);
+		return null;
 	}
+
+//	public String getDeapPath(File sourceFile,String cpuName,String path) {
+//		File[] files = sourceFile.listFiles();
+//		if(path == null) {//path为空时，还未扫描到相应cpu，则继续扫描
+//			for (File file : files) {
+//				if (file.isDirectory()) {		
+////					System.out.println("file.getName():  "+file.getName());
+//					if(file.getName().equals(cpuName)) {
+//						path = file.getPath();
+//						break;
+//					}else if(!file.getName().equals("include") && !file.getName().equals("src")){
+//						path = getDeapPath(file,cpuName,path);//如果为目录，则继续扫描该目录
+//					}			
+//				}
+//			}
+//		}
+//		return path;
+//	}
 
 	protected void getCpuSrcPaths(File cpuFile, List<String> cpuSrcPaths) {
 		// TODO Auto-generated method stub

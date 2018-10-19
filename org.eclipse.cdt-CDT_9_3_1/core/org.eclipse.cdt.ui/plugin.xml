@@ -155,6 +155,14 @@
             class="org.eclipse.cdt.internal.ui.filters.ForwardDeclarationFilter"
             id="org.eclipse.cdt.internal.ui.CView.ForwardDeclarationFilter">
       </filter>
+      	<filter
+            targetId="org.eclipse.cdt.ui.CView"
+            name="hidden libos"
+            enabled="true"
+            description="hidden libos" 
+            class="org.eclipse.cdt.internal.ui.filters.LibosFilter"
+            id="org.eclipse.cdt.internal.ui.CView.LibosFilter">
+     	 </filter>
       <filter
             targetId="org.eclipse.cdt.ui.CView"
             name="%HideMacroDirective.label"

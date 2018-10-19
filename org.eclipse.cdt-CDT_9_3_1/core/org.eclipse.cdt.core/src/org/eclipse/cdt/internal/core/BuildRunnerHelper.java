@@ -591,7 +591,8 @@ public class BuildRunnerHelper implements Closeable {
 	 * Supply timestamp to prefix informational messages.
 	 */
 	@SuppressWarnings("nls")
-	private static String timestamp(long time) {
+	public
+	static String timestamp(long time) {
 		return new SimpleDateFormat("HH:mm:ss").format(new Date(time)) + " ";
 	}
 

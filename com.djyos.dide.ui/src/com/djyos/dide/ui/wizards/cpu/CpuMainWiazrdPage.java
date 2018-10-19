@@ -83,6 +83,8 @@ import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 
 import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 import org.eclipse.cdt.internal.ui.newui.Messages;
+import org.eclipse.cdt.managedbuilder.core.IToolChain;
+import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 
 public class CpuMainWiazrdPage extends WizardPage {
 
@@ -147,12 +149,21 @@ public class CpuMainWiazrdPage extends WizardPage {
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
+		
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		initializeDialogUnits(parent);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 
+		IToolChain[] r_tcs = ManagedBuildManager.getRealToolChains();
+//		IResourceInfo resourceInfo = cfg.getRootFolderInfo();
+//		IToolListModification mod = getModification(tcmmgr,resourceInfo);
+//		IFolderInfoModification foim = (IFolderInfoModification)mod;
+		for(IToolChain tc:r_tcs) {
+			System.out.println("tc.getName():  "+tc.getName());
+		}
+		
 		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL | SWT.H_SCROLL);
 		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
 

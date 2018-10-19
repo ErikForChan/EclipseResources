@@ -139,11 +139,6 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 				} finally {
 					epm.deDuplicate();
 				}
-				System.out.println("External state:   "+state);//0 ERROR 0 yes
-//				if (state != ICommandLauncher.OK) {
-//					System.out.println("state != ICommandLauncher.OK");
-//					
-//				}
 				
 				buildRunnerHelper.close();
 				buildRunnerHelper.goodbye();
@@ -171,20 +166,10 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 			
 			if(configuration.getName().startsWith(project.getName()) ) {
 				String cfgName = configuration.getName();
-				System.out.println("configuration.getName():  "+cfgName);
 				String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
 				String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 				File stup_complie_file = new File(didePath+"auto_complier.txt");
 				if(stup_complie_file.exists()) {
-//					File errorFolder = new File(didePath+"errFolder");
-//					if(!errorFolder.exists()) {
-//						errorFolder.mkdir();
-//					}
-//					System.out.println("errorFile:  "+didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
-//					File errorFile = new File(didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
-//					if(!errorFile.exists()) {
-//						errorFile.createNewFile();
-//					}
 					String projectLocation = project.getLocation().toString().replace("\\", "/");
 					File elfFile = new File(projectLocation+"/"+cfgName+"/"+cfgName+".elf");
 					System.out.println("elfFile.getPath():  "+elfFile.getPath());
@@ -194,9 +179,6 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 						String errMsg = project.getName()+"->"+cfgName+"£¬ \n";
 						setErrorFile(errorFile,errMsg);
 					}
-					
-//					SendErrorEmail email = new SendErrorEmail();
-//					email.send(errMsg);
 				}
 			}
 			monitor.done();

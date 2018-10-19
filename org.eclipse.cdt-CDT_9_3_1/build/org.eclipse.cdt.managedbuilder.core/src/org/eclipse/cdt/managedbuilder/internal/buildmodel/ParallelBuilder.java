@@ -378,7 +378,7 @@ public class ParallelBuilder {
 				// Need to schedule another process 
 				Iterator<BuildQueueElement> iter = queue.iterator();
 
-				// Iterate over build queue
+				// Iterate over build queue 改变
 				while (iter.hasNext() && cmdCount<queue.size()){
 //				while (iter.hasNext()) {
 					cmdCount++;
@@ -447,7 +447,7 @@ public class ParallelBuilder {
 				}
 			}
 			
-			// Now finally, check if we're done
+			// Now finally, check if we're done 改变
 			if (activeCount <= 0 && queue.size() == 1) 
 //			if (activeCount <= 0 && queue.size() == 0) 
 				break main_loop;

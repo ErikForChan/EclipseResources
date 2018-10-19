@@ -57,6 +57,7 @@ public class ReadArchXml {
 			String serie = getArchType(file);
 			arch.setSerie(serie);
 		}
+		System.out.println("file.getName():   "+file.getName());
 		NodeList archList = document.getElementsByTagName("arch");
 		if(archList.getLength() > 0) {
 			NodeList list = archList.item(0).getChildNodes();
@@ -75,6 +76,9 @@ public class ReadArchXml {
 //					case "family":
 //						arch.setFamily(content);
 //						break;
+					case "toolchain":
+						arch.setToolchain(content.trim());
+						break;
 					case "compile-option":
 						NodeList list1 = node.getChildNodes();
 						for(int j=0;j<list1.getLength();j++) {

@@ -196,6 +196,9 @@ public class ReadCpuXml {
 		}
 	}
 	
+
+
+	
 	private void handleNoListOneCoreNode(Core core, NodeList cList) {
 		for (int i = 0; i < cList.getLength(); i++) {
 			Node node = cList.item(i);

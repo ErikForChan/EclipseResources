@@ -33,6 +33,12 @@ public class DjyosPerference extends PreferencePage implements IWorkbenchPrefere
 	boolean showUpdate;
 	private DideHelper dideHelper = new DideHelper();
 	private Button showGitUpdateButton;
+	private Button atuo_buildlibos_new_Button;
+	private Button atuo_buildlibos_import_Button;
+	private Button noa_buildlibos__Button;
+	boolean atuo_buildlibos_new;
+	boolean atuo_buildlibos_import;
+	boolean noa_buildlibos;
 	File didePrefsFile = new File(dideHelper.getDIDEPath()+"IDE/configuration/.settings/com.djyos.ui.prefs");
 	
 	public DjyosPerference() {
@@ -41,50 +47,30 @@ public class DjyosPerference extends PreferencePage implements IWorkbenchPrefere
 		setDescription("General settings for DIDE development:");
 	}
 
-	private boolean targetIsTrue(File didePrefsFile, String target) {
-		// TODO Auto-generated method stub
-		BufferedReader br = null;  
-        String line = null;  
-        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
-        try {            
-            br = new BufferedReader(new FileReader(didePrefsFile));              
-            while ((line = br.readLine()) != null) {  
-                StringBuffer buf = new StringBuffer();  
-                //修改内容核心代码
-                if (line.startsWith(target)) {  
-                	String[] infos = line.split("=");
-                	if(infos[1].trim().equals("false")) {
-                		return false;
-                	}
-                    break;
-                }
-            }  
-        } catch (Exception e) {  
-            e.printStackTrace();  
-        } finally {  
-            if (br != null) {  
-                try {  
-                    br.close();  
-                } catch (IOException e) {  
-                    br = null;  
-                }  
-            }  
-        }  
-		return true;
-	}
-
     /**
      * The user has pressed Ok. Store/apply this page's values appropriately.
      */
     @Override
 	public boolean performOk() {
     	boolean noticeMe = showGitUpdateButton.getSelection();
+    	boolean build_new = atuo_buildlibos_new_Button.getSelection();
+    	boolean build_import = atuo_buildlibos_import_Button.getSelection();
+    	boolean build_noa = noa_buildlibos__Button.getSelection();
 		if(!didePrefsFile.exists()) {
 			fillGitPrefsFile(didePrefsFile,"SHOW_GIT_UPDATE_DIALOG="+noticeMe);
 		}else {
 			if (showUpdate!=noticeMe) {
 				setDjyosUiPrefs(didePrefsFile,noticeMe,"SHOW_GIT_UPDATE_DIALOG");
 			}
+		}
+		if(build_new != atuo_buildlibos_new) {
+			setDjyosUiPrefs(didePrefsFile,build_new,"AUTO_BUILDLIBOS_NEW");
+		}
+		if(build_import != atuo_buildlibos_import) {
+			setDjyosUiPrefs(didePrefsFile,build_import,"AUTO_BUILDLIBOS_IMPORT");
+		}
+		if(build_noa != noa_buildlibos) {
+			setDjyosUiPrefs(didePrefsFile,build_import,"NOA_BUILDLIBOS");
 		}
         return super.performOk();
     }
@@ -167,18 +153,36 @@ public class DjyosPerference extends PreferencePage implements IWorkbenchPrefere
 		GridLayout layout= new GridLayout();
 		layout.marginHeight= convertVerticalDLUsToPixels(IDialogConstants.VERTICAL_MARGIN);
 		layout.marginWidth= 0;
-		layout.verticalSpacing= convertVerticalDLUsToPixels(10);
+		layout.verticalSpacing= convertVerticalDLUsToPixels(5);
 		layout.horizontalSpacing= convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
 		composite.setLayout(layout);
 		if(didePrefsFile.exists()) {
-			showUpdate = targetIsTrue(didePrefsFile,"SHOW_GIT_UPDATE_DIALOG");
+			showUpdate = dideHelper.targetIsTrue(didePrefsFile,"SHOW_GIT_UPDATE_DIALOG");
+			atuo_buildlibos_new = dideHelper.targetIsTrue(didePrefsFile,"AUTO_BUILDLIBOS_NEW");
+			atuo_buildlibos_import = dideHelper.targetIsTrue(didePrefsFile,"AUTO_BUILDLIBOS_IMPORT");
+			noa_buildlibos = dideHelper.targetIsTrue(didePrefsFile,"NOA_BUILDLIBOS");
 		}else {
 			showUpdate = true;
+			atuo_buildlibos_new = false;
+			atuo_buildlibos_import = false;
+			noa_buildlibos = false;
 		}
 
 		showGitUpdateButton = new Button(composite,SWT.CHECK);
 		showGitUpdateButton.setText("Djyos源码有更新时提示我");
 		showGitUpdateButton.setSelection(showUpdate);
+		
+		atuo_buildlibos_new_Button = new Button(composite,SWT.CHECK);
+		atuo_buildlibos_new_Button.setText("新建工程后自动编译库");
+		atuo_buildlibos_new_Button.setSelection(atuo_buildlibos_new);
+		
+		atuo_buildlibos_import_Button = new Button(composite,SWT.CHECK);
+		atuo_buildlibos_import_Button.setText("导入工程后自动编译库");
+		atuo_buildlibos_import_Button.setSelection(atuo_buildlibos_import);
+		
+		noa_buildlibos__Button = new Button(composite,SWT.CHECK);
+		noa_buildlibos__Button.setText("编译iboot/App前，如果没有生成.o，则先自动编译库");
+		noa_buildlibos__Button.setSelection(noa_buildlibos);
 		
 		Dialog.applyDialogFont(composite);
 		return composite;

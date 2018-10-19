@@ -53,6 +53,8 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubProgressMonitor;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.eclipse.cdt.managedbuilder.internal.core.Configuration;
 
 /**
@@ -160,15 +162,6 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 				String didePath = fullPath.substring(6,(fullPath.substring(0,fullPath.length()-1)).lastIndexOf("/")+1);
 				File stup_complie_file = new File(didePath+"auto_complier.txt");
 				if(stup_complie_file.exists()) {
-//					File errorFolder = new File(didePath+"errFolder");
-//					if(!errorFolder.exists()) {
-//						errorFolder.mkdir();
-//					}
-//					File errorFile = new File(didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
-//					System.out.println("errorFile:  "+didePath+"errFolder/"+project.getName()+"_"+cfgName+".txt");
-//					if(!errorFile.exists()) {
-//						errorFile.createNewFile();
-//					}
 					File errorFile = new File(didePath+"IDE/configuration/errorResult.txt");
 					String errMsg = project.getName()+"->"+cfgName+"， \n";
 					setErrorFile(errorFile,errMsg);
@@ -177,7 +170,6 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 				}
 			}
 			
-			System.out.println("Internal state:   "+status);
 			bsMngr.setProjectBuildState(project, pBS);
 			buildRunnerHelper.close();
 //			buildRunnerHelper.goodbye();
@@ -194,13 +186,16 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 			BuildStatus buildstatus = new  BuildStatus(builder);
 			buildstatus.setRebuild();
 			
-//			cb.performPrebuildGeneration(kind,bInfo,buildstatus,monitor);
-			
 			if (status == ParallelBuilder.STATUS_OK) {
 				CommonBuilder cb = new CommonBuilder();
 				((Configuration) configuration).enableInternalBuilder(false);				
 				IBuilder myBuilder = configuration.getEditableBuilder();
 				CommonBuilder.CfgBuildInfo bInfo = cb.getCfgBuildInfo(myBuilder, true);
+				
+				//IPreferenceStore将clearConsole设置为false
+				ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.eclipse.cdt.ui");
+				preferenceStore.setValue("clearConsole", false);
+				
 				buildRunnerHelper.printLine("正在切换到External Builder，请等候...");	
 				cb.build(kind, bInfo, monitor);		
 			}

@@ -69,7 +69,7 @@ public class FileHandler implements IResourceChangeListener{
 									String libCfgName = resource.getName().replace(".a", "");
 									String commonName = libCfgName.replace("libos", "");
 									String targetName = project.getName() + commonName;
-									buildTarget(project, targetName);
+									dideHelper.buildTarget(project, targetName);
 								}
 							}
 							
@@ -77,9 +77,13 @@ public class FileHandler implements IResourceChangeListener{
 								File hardWardInfoFile = new File(
 										project.getLocation().toString() + "/data/hardware_info.xml");
 								if (hardWardInfoFile.exists()) {
+									
+									ConfigurationHandler cfgHandler=new ConfigurationHandler();
+									cfgHandler.setDefaultArchiverCmd(project);
+									
 									HandleProjectImport projectListener = new HandleProjectImport();
 									projectListener.handleProjectElemExculde(project);
-//									createBuild(project);
+//									dideHelper.createBuild(project);
 								}
 							}
 							break;
@@ -100,89 +104,6 @@ public class FileHandler implements IResourceChangeListener{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	@SuppressWarnings("restriction")
-	protected void buildTarget(IProject project, String targetName) {
-		// TODO Auto-generated method stub
-		CommonBuilder cb = new CommonBuilder();
-		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
-		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
-		final ICProjectDescription local_prjd =  CoreModel.getDefault().getProjectDescription(project);
-		ICConfigurationDescription[] conds = local_prjd.getConfigurations();
-		
-		for (ICConfigurationDescription cfg : conds) {
-			if(cfg.getName().equals(targetName)) {
-				
-				ICConfigurationDescription[] cfgds = new ICConfigurationDescription[1];
-				cfgds[0] = cfg;
-				
-				BuildUtilities.saveEditors(null);
-				Job buildJob =
-						new BuildTarget(cfgds, 0, IncrementalProjectBuilder.INCREMENTAL_BUILD);
-				buildJob.schedule();
-			}
-		}
-	}
-
-	@SuppressWarnings("restriction")
-	public boolean createBuild(IProject project) {
-		CommonBuilder cb = new CommonBuilder();
-		IManagedBuildInfo info = ManagedBuildManager.getBuildInfo(project);
-		IConfiguration[] cfgs = info.getManagedProject().getConfigurations();
-		
-		for (IConfiguration cfg : cfgs) {
-			IBuilder builder = cfg.getEditableBuilder();
-			String cfgName = cfg.getName();
-			
-			if (cfgName.startsWith("libos")) {
-				File cfgFile = new File(project.getLocation().toString()+"/"+cfgName);
-				boolean compiled = false;
-				if(cfgFile.exists()) {
-					File[] files = cfgFile.listFiles();
-					for(File f:files) {
-						if(f.getName().endsWith(".a")) {
-							compiled = true;
-							break;
-						}
-					}
-				}
-				
-				if(!compiled) {
-					CfgBuildInfo binfo = new CfgBuildInfo(builder, true);
-					BuildStatus status = new BuildStatus(builder);
-					status.setRebuild();
-					IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace().getRuleFactory();
-					final ISchedulingRule rule = ruleFactory.modifyRule(binfo.getProject());
-					Job backgroundJob = new Job("Building "+cfgName) {
-						@Override
-						protected IStatus run(IProgressMonitor monitor) {
-							// TODO Auto-generated method stub
-							try {
-								ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-									@Override
-									public void run(IProgressMonitor monitor) throws CoreException {
-										boolean isClean = cb.build(IncrementalProjectBuilder.FULL_BUILD, binfo, monitor);
-									}
-								}, rule, IWorkspace.AVOID_UPDATE, monitor);
-							} catch (CoreException e) {
-								return e.getStatus();
-							}
-							return Status.OK_STATUS;
-						}
-					};
-					backgroundJob.setRule(rule);
-					backgroundJob.schedule();
-				}
-				}
-		}
-		try {
-			project.refreshLocal(IResource.DEPTH_INFINITE, null);
-		} catch (CoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return true;
 	}
 
 }

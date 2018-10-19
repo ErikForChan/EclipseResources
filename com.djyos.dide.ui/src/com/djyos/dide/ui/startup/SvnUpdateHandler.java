@@ -175,7 +175,7 @@ public class SvnUpdateHandler {
 		       
 			}
 			
-		}, 0, 10*60*1000);
+		}, 0, 2*60*60*1000);
 	}
 	
 	private static String getFileContent(File file) {

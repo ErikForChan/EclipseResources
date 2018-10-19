@@ -11,7 +11,7 @@ public class Component {
 	private String code;
 	private String configure;
 	private String linkFolder;
-	private String fileName;//描述文件.c/.h文件名
+	private String fileName;// 描述文件.c/.h文件名
 	private String selectable;
 	private String parent;
 	private boolean isSelect = false;
@@ -20,9 +20,9 @@ public class Component {
 	private List<String> mutexs = new ArrayList<String>();
 	private List<String> excludes = new ArrayList<String>();
 	private List<String> includes = new ArrayList<String>();
-	private String parentPath;//.h/.c父目录
+	private String parentPath;// .h/.c父目录
 	private String target;
-	
+
 	public String getTarget() {
 		return target;
 	}
@@ -134,16 +134,19 @@ public class Component {
 	public void setGrade(String grade) {
 		this.grade = grade;
 	}
-	
+
 	public List<String> getDependents() {
 		return dependents;
 	}
+
 	public void setDependents(List<String> dependents) {
 		this.dependents = dependents;
 	}
+
 	public List<String> getMutexs() {
 		return mutexs;
 	}
+
 	public void setMutexs(List<String> mutexs) {
 		this.mutexs = mutexs;
 	}
@@ -164,8 +167,8 @@ public class Component {
 		this.configure = configure;
 	}
 
-	public Component(String name, String annotation, String attribute, String grade, String code,
-			String configure,List<String> dependents, List<String> mutexs) {
+	public Component(String name, String annotation, String attribute, String grade, String code, String configure,
+			List<String> dependents, List<String> mutexs) {
 		super();
 		this.name = name;
 		this.annotation = annotation;
@@ -181,5 +184,5 @@ public class Component {
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	
+
 }

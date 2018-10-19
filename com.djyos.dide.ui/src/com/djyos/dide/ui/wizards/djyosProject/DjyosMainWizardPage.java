@@ -492,8 +492,9 @@ public class DjyosMainWizardPage extends WizardPage {
 		return ldsHead;
 	}
 	
+	public String _ibootSize;
 	public String getLdsDesc() {
-		String _ibootSize = fIbootSize.getTextControl(ibootComposite).getText();
+		_ibootSize = fIbootSize.getTextControl(ibootComposite).getText();
 		//ibootSizeŒ¥ÃÓ£¨‘ÚMemory.lds≤ªÃÌº”ibootSize
 		if(! _ibootSize.equals("")) {
 			int ibootSize = Integer.parseInt(fIbootSize.getTextControl(ibootComposite).getText());
@@ -575,7 +576,7 @@ public class DjyosMainWizardPage extends WizardPage {
 						boolean valid = validatePageBefore();
 			    		setPageComplete(valid);
 					}else {
-//						fIbootSize.getTextControl(ibootComposite).setEnabled(true);
+						fIbootSize.getTextControl(ibootComposite).setEnabled(true);
 					}
 					
 				}
@@ -609,7 +610,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
 		ControlFactory.createLabel(group1, "K");
 		fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify, ibootSizeModifyListener);
-		fIbootSize.getTextControl(ibootComposite).setEnabled(false);
+//		fIbootSize.getTextControl(ibootComposite).setEnabled(false);
 	}
 
 	@Override

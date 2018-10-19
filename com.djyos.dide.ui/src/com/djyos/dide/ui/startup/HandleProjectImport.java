@@ -158,7 +158,7 @@ public class HandleProjectImport{
 						for(File f:excludeCompFiles) {
 //							System.out.println("f.getName():   "+f.getName());
 							String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-							System.out.println("excludeCompFiles:   "+relativePath);
+//							System.out.println("excludeCompFiles:   "+relativePath);
 							if(f.isDirectory()) {
 								IFolder ifolder = project.getFolder("src/libos"+relativePath);
 								for (int j = 0; j < conds.length; j++) {
@@ -275,12 +275,24 @@ public class HandleProjectImport{
 				File archSourceFile = new File(dideHelper.getDjyosSrcPath() + "/bsp/arch");
 				File[] archTypeFiles = archSourceFile.listFiles();
 				System.out.println("archType:  "+archType);
+				IFolder myArchfolder = null;
 				for(File f:archTypeFiles) {
+					String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
+					IFolder ifolder = project.getFolder("src/libos"+relativePath);
 					if(!f.getName().equals(archType) && f.isDirectory()) {
-						String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-						IFolder ifolder = project.getFolder("src/libos"+relativePath);
 						for (int j = 0; j < conds.length; j++) {
-							linkHelper.setExclude(ifolder, conds[j], true);
+							if(conds[j].getName().startsWith("libos")) {
+								linkHelper.setExclude(ifolder, conds[j], true);
+							}
+						}
+					}else if(f.getName().equals(archType) && f.isDirectory()) {
+						myArchfolder = ifolder;
+					}
+				}
+				if(myArchfolder!=null) {
+					for (int j = 0; j < conds.length; j++) {
+						if(conds[j].getName().startsWith("libos")) {
+							linkHelper.setExclude(myArchfolder, conds[j], false);
 						}
 					}
 				}
@@ -369,6 +381,5 @@ public class HandleProjectImport{
 //		}
 //		return false;
 //	}
-
 
 }

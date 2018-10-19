@@ -2797,56 +2797,59 @@ public class GnuMakefileGenerator implements IManagedBuilderMakefileGenerator2 {
 			buffer.append(TAB).append(buildCmd);
 
 			// Determine if there are any dependencies to calculate
-			if (doDepGen) {
-				// Get the dependency rule out of the generator
-				String[] depCmds = null;
-				if (oldDepGen != null) {
-					depCmds = new String[1];
-					depCmds[0] = oldDepGen.getDependencyCommand(resource, ManagedBuildManager.getBuildInfo(project));
-				} else {
-					if (depCommands != null) {
-						depCmds = depCommands.getPostToolDependencyCommands();
-					}
-				}
+//			if (doDepGen) {
+//				// Get the dependency rule out of the generator
+//				String[] depCmds = null;
+//				if (oldDepGen != null) {
+//					depCmds = new String[1];
+//					depCmds[0] = oldDepGen.getDependencyCommand(resource, ManagedBuildManager.getBuildInfo(project));
+//				} else {
+//					if (depCommands != null) {
+//						depCmds = depCommands.getPostToolDependencyCommands();
+//					}
+//				}
+//
+//				if (depCmds != null) {
+//					for (String depCmd : depCmds) {
+//		                // Resolve any macros in the dep command after it has been generated.
+//		                // Note:  do not trim the result because it will strip out necessary tab characters.
+//						buffer.append(WHITESPACE).append(LOGICAL_AND).append(WHITESPACE).append(LINEBREAK);
+//		                try {
+//							if (!needExplicitRuleForFile) {
+//								depCmd = ManagedBuildManager.getBuildMacroProvider()
+//										.resolveValueToMakefileFormat(
+//												depCmd,
+//												EMPTY_STRING,
+//												WHITESPACE,
+//												IBuildMacroProvider.CONTEXT_FILE,
+//												new FileContextData(sourceLocation,
+//														outputLocation, null,
+//														tool));
+//							}
+//
+//							else {
+//								depCmd = ManagedBuildManager.getBuildMacroProvider()
+//										.resolveValue(
+//												depCmd,
+//												EMPTY_STRING,
+//												WHITESPACE,
+//												IBuildMacroProvider.CONTEXT_FILE,
+//												new FileContextData(sourceLocation,
+//														outputLocation, null,
+//														tool));
+//							}
+//
+//						} catch (BuildMacroException e) {
+//						}
+//
+//						buffer.append(depCmd);
+//					}
+//				}
+//			}
 
-				if (depCmds != null) {
-					for (String depCmd : depCmds) {
-		                // Resolve any macros in the dep command after it has been generated.
-		                // Note:  do not trim the result because it will strip out necessary tab characters.
-						buffer.append(WHITESPACE).append(LOGICAL_AND).append(WHITESPACE).append(LINEBREAK);
-		                try {
-							if (!needExplicitRuleForFile) {
-								depCmd = ManagedBuildManager.getBuildMacroProvider()
-										.resolveValueToMakefileFormat(
-												depCmd,
-												EMPTY_STRING,
-												WHITESPACE,
-												IBuildMacroProvider.CONTEXT_FILE,
-												new FileContextData(sourceLocation,
-														outputLocation, null,
-														tool));
-							}
-
-							else {
-								depCmd = ManagedBuildManager.getBuildMacroProvider()
-										.resolveValue(
-												depCmd,
-												EMPTY_STRING,
-												WHITESPACE,
-												IBuildMacroProvider.CONTEXT_FILE,
-												new FileContextData(sourceLocation,
-														outputLocation, null,
-														tool));
-							}
-
-						} catch (BuildMacroException e) {
-						}
-
-						buffer.append(depCmd);
-					}
-				}
-			}
-
+			//ÐÂÔö
+			buffer.append(" -MMD -MP -MF\"$(@:%.o=%.d)\"");
+			
 			// Echo finished message
 			buffer.append(NEWLINE);
 			buffer.append(TAB).append(AT).append(escapedEcho(MESSAGE_FINISH_FILE + WHITESPACE + IN_MACRO));

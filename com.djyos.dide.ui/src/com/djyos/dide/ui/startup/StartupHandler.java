@@ -2,6 +2,7 @@ package com.djyos.dide.ui.startup;
 
 import java.io.File;
 
+import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.ui.IStartup;
@@ -20,11 +21,11 @@ public class StartupHandler implements IStartup{
 		DideHelper dideHelper = new DideHelper();
 		String djysrcPath= dideHelper.getDjyosSrcPath();
 //		System.out.println("\nsje.getEnv:  "+System.getenv("Path"));
-		FileHandler fileHandler = new FileHandler();
+		FileHandler fileHandler = new FileHandler();  
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(fileHandler, IResourceChangeEvent.POST_BUILD);
 		
-//		GitHandler gitHandler = new GitHandler(); 
-//		gitHandler.remindUpdate();
+		GitHandler gitHandler = new GitHandler(); 
+		gitHandler.remindUpdate();
 		
 		File file = new File(djysrcPath);
 		if(file.exists()) {

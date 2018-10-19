@@ -58,144 +58,6 @@ public class DjyosGeneralPage extends PropertyPage{
 	DideHelper dideHelper = new DideHelper();
 	String didePjPrefsPath;
 	
-	private boolean targetIsTrue(File dideGitPrefsFile, String target) {
-		// TODO Auto-generated method stub
-		BufferedReader br = null;  
-        String line = null;  
-        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
-        try {            
-            br = new BufferedReader(new FileReader(dideGitPrefsFile));              
-            while ((line = br.readLine()) != null) {  
-                StringBuffer buf = new StringBuffer();  
-                //修改内容核心代码
-                if (line.startsWith(target)) {  
-                	String[] infos = line.split("=");
-                	if(infos[1].trim().equals("false")) {
-                		return false;
-                	}
-                    break;
-                }
-            }  
-        } catch (Exception e) {  
-            e.printStackTrace();  
-        } finally {  
-            if (br != null) {  
-                try {  
-                    br.close();  
-                } catch (IOException e) {  
-                    br = null;  
-                }  
-            }  
-        }  
-		return true;
-	}
-	
-	private void setDjyosUiPrefs(File didePrefsFile, boolean isTrue, String target) {
-		// TODO Auto-generated method stub
-		BufferedReader br = null;  
-        String line = null;  
-        boolean targetExist = false;
-        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
-        try {            
-            br = new BufferedReader(new FileReader(didePrefsFile));              
-            while ((line = br.readLine()) != null) {  
-                StringBuffer buf = new StringBuffer();  
-                //修改内容核心代码
-                if (line.startsWith(target)) {  
-                	line = target+"="+isTrue;
-                	targetExist = true;
-                }
-                bufAll.append(line+"\n");            
-            }  
-        } catch (Exception e) {  
-            e.printStackTrace();  
-        } finally {  
-            if (br != null) {  
-                try {  
-                    br.close();  
-                } catch (IOException e) {  
-                    br = null;  
-                }  
-            }  
-        }  
-        if(!targetExist) {
-        	bufAll.append(target+"="+isTrue+"\n");
-        }
-        didePrefsFile.delete();
-        fillDidePrefsFile(didePrefsFile,bufAll.toString());
-        
-	}
-	
-	private void fillDidePrefsFile(File dideGitPrefsFile, String content) {
-		// TODO Auto-generated method stub
-		try {
-			dideGitPrefsFile.createNewFile();
-			FileWriter writer;
-			try {
-				writer = new FileWriter(dideGitPrefsFile);
-				writer.write(content);
-				writer.flush();
-				writer.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	private IProject getProject(){
-		Object	element	= getElement();
-		IProject project	= null;
-		
-		if (element instanceof IProject) {
-			project = (IProject) element;
-		} else if (element instanceof IAdaptable) {
-			project= ((IAdaptable)element).getAdapter(IProject.class);
-		}
-		return project;
-	}
-	
-	@Override
-	public boolean performOk() {
-		// TODO Auto-generated method stub
-		boolean hiddenLibosOption = hiddenLibosButton.getSelection();
-		IRunnableWithProgress runnable = new IRunnableWithProgress() {
-			@Override
-			public void run(IProgressMonitor monitor) {
-				monitor.beginTask("保存设置...", 10);	
-				handleOK(monitor,hiddenLibosOption);
-				monitor.worked(10);
-				monitor.done();
-				monitor.setTaskName("完成");
-			}
-		};
-		try {
-			ProgressMonitorDialog dialog = new ProgressMonitorDialog(
-					PlatformUI.getWorkbench().getDisplay().getActiveShell());
-			dialog.setCancelable(false);
-			dialog.run(true, true, runnable);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return true;
-	}
-
-	protected void handleOK(IProgressMonitor monitor, boolean hiddenLibosOption) {
-		// TODO Auto-generated method stub
-		File didePrefsFile = new File(didePjPrefsPath);
-		if(didePrefsFile.exists()) {
-			if (hiddenLibos!=hiddenLibosOption) {
-				setDjyosUiPrefs(didePrefsFile,hiddenLibosOption,"HIDDEN_LIBOS_COMPILER");
-			}
-		}else {
-			if (hiddenLibos!=hiddenLibosOption) {
-				fillDidePrefsFile(didePrefsFile,"HIDDEN_LIBOS_COMPILER="+hiddenLibosOption);
-			}
-		}
-	}
-
 	@Override
 	protected Control createContents(Composite parent) {
 		// TODO Auto-generated method stub
@@ -204,7 +66,7 @@ public class DjyosGeneralPage extends PropertyPage{
 		File didePrefsFile = new File(didePjPrefsPath);
 		
 		if(didePrefsFile.exists()) {
-			hiddenLibos = targetIsTrue(didePrefsFile,"HIDDEN_LIBOS_COMPILER");
+			hiddenLibos = dideHelper.targetIsTrue(didePrefsFile,"HIDDEN_LIBOS_COMPILER");
 		}else {
 			hiddenLibos = false;
 		}
@@ -383,6 +245,112 @@ public class DjyosGeneralPage extends PropertyPage{
 			}
 		}
 		
+	}
+	
+	private void setDjyosUiPrefs(File didePrefsFile, boolean isTrue, String target) {
+		// TODO Auto-generated method stub
+		BufferedReader br = null;  
+        String line = null;  
+        boolean targetExist = false;
+        StringBuffer bufAll = new StringBuffer();  //保存修改过后的所有内容，不断增加         
+        try {            
+            br = new BufferedReader(new FileReader(didePrefsFile));              
+            while ((line = br.readLine()) != null) {  
+                StringBuffer buf = new StringBuffer();  
+                //修改内容核心代码
+                if (line.startsWith(target)) {  
+                	line = target+"="+isTrue;
+                	targetExist = true;
+                }
+                bufAll.append(line+"\n");            
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } finally {  
+            if (br != null) {  
+                try {  
+                    br.close();  
+                } catch (IOException e) {  
+                    br = null;  
+                }  
+            }  
+        }  
+        if(!targetExist) {
+        	bufAll.append(target+"="+isTrue+"\n");
+        }
+        didePrefsFile.delete();
+        fillDidePrefsFile(didePrefsFile,bufAll.toString());
+        
+	}
+	
+	private void fillDidePrefsFile(File dideGitPrefsFile, String content) {
+		// TODO Auto-generated method stub
+		try {
+			dideGitPrefsFile.createNewFile();
+			FileWriter writer;
+			try {
+				writer = new FileWriter(dideGitPrefsFile);
+				writer.write(content);
+				writer.flush();
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private IProject getProject(){
+		Object	element	= getElement();
+		IProject project	= null;
+		
+		if (element instanceof IProject) {
+			project = (IProject) element;
+		} else if (element instanceof IAdaptable) {
+			project= ((IAdaptable)element).getAdapter(IProject.class);
+		}
+		return project;
+	}
+	
+	@Override
+	public boolean performOk() {
+		// TODO Auto-generated method stub
+		boolean hiddenLibosOption = hiddenLibosButton.getSelection();
+		IRunnableWithProgress runnable = new IRunnableWithProgress() {
+			@Override
+			public void run(IProgressMonitor monitor) {
+				monitor.beginTask("保存设置...", 10);	
+				handleOK(monitor,hiddenLibosOption);
+				monitor.worked(10);
+				monitor.done();
+				monitor.setTaskName("完成");
+			}
+		};
+		try {
+			ProgressMonitorDialog dialog = new ProgressMonitorDialog(
+					PlatformUI.getWorkbench().getDisplay().getActiveShell());
+			dialog.setCancelable(false);
+			dialog.run(true, true, runnable);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return true;
+	}
+
+	protected void handleOK(IProgressMonitor monitor, boolean hiddenLibosOption) {
+		// TODO Auto-generated method stub
+		File didePrefsFile = new File(didePjPrefsPath);
+		if(didePrefsFile.exists()) {
+			if (hiddenLibos!=hiddenLibosOption) {
+				setDjyosUiPrefs(didePrefsFile,hiddenLibosOption,"HIDDEN_LIBOS_COMPILER");
+			}
+		}else {
+			if (hiddenLibos!=hiddenLibosOption) {
+				fillDidePrefsFile(didePrefsFile,"HIDDEN_LIBOS_COMPILER="+hiddenLibosOption);
+			}
+		}
 	}
 
 	@Override

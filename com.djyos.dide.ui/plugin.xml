@@ -20,7 +20,7 @@
       </page>
 	</extension>
 	
-	 <extension
+	<extension
 	         point="org.eclipse.ui.commands">
 	          <category
 	            name="category.file.name"
@@ -33,7 +33,7 @@
 	            categoryId="com.djyos.dide.ui.category.file"
 	            id="com.djyos.dide.ui.file.save"/>
 	</extension>
-	 <extension
+	<extension
 	         point="org.eclipse.ui.propertyPages">
 	  	   <page
 	            class="com.djyos.dide.ui.djyproperties.DjyosGeneralPage"
@@ -210,10 +210,16 @@
          </enablement>
 	   </commonWizard>
 	    </navigatorContent>
+	     <commonFilter
+          activeByDefault="true"
+          class="com.djyos.dide.ui.filters.LibosFilter"
+          description="Hide Libos and Data"
+          id="org.eclipse.cdt.ui.navigator.filters.LibosFilter"
+          name="Hide Libos and Data"/>  
 	 </extension>   
 	  <extension
 	       point="org.eclipse.ui.startup">
-	    <startup
+	   			 <startup
 	          class="com.djyos.dide.ui.startup.StartupHandler">
 	    </startup>
 	 </extension>
