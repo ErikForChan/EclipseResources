@@ -16,5 +16,6 @@ Require-Bundle: org.eclipse.ui,
  org.apache.ant,
  org.eclipse.debug.core,
  org.eclipse.cdt.managedbuilder.ui,
- ilg.gnuarmeclipse.managedbuild.cross;bundle-version="2.4.1"
+ ilg.gnuarmeclipse.managedbuild.cross;bundle-version="2.4.1",
+ ilg.gnuarmeclipse.core;bundle-version="3.4.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
