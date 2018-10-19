@@ -115,6 +115,20 @@
             %DJYOSproject.desc
         </description>
      </wizard>
+      <!--wizard
+             canFinishEarly="false"
+             category="org.eclipse.cdt.ui.newDWizards"
+             class="org.eclipse.cdt.ui.wizards.CProjectWizard"
+             finalPerspective="org.eclipse.cdt.ui.CPerspective"
+             hasPages="true"
+             icon="icons/elcl16/newmngc_app.gif"
+             id="com.djyos.dide.ui.wizards.NewDWizard6"
+             name="Test"
+             project="true">
+         <description>
+            %DJYOSproject.desc
+         </description>
+      </wizard-->
  	</extension>
  	
  	 <extension
@@ -167,7 +181,30 @@
          	</or>
          </enablement>
 	   </commonWizard>
-	       <commonWizard
+	   
+	   <!--commonWizard
+	         associatedExtensionId="org.eclipse.cdt.ui.navigator.content"
+	         menuGroupId="org.eclipse.cdt.ui.newProject"
+	         type="new"
+	         wizardId="com.djyos.dide.ui.wizards.NewDWizard6">
+		 <enablement>
+		 	<or>
+	         	<with variable="activeWorkbenchWindow.activePerspective">
+                    <equals
+                          value="org.eclipse.cdt.ui.CPerspective">
+                    </equals>
+	         	</with>
+	         	<instanceof value="org.eclipse.cdt.core.model.ICElement" />	
+		        <and>
+		            <instanceof value="org.eclipse.core.resources.IProject"/>
+		            <test property="org.eclipse.core.resources.projectNature"
+		                  value="org.eclipse.cdt.core.cnature"/>
+		        </and>
+         	</or>
+         </enablement>
+	   </commonWizard-->
+	   
+	   <commonWizard
 	         associatedExtensionId="com.djyos.dide.ui.navigator.content"
 	         menuGroupId="org.eclipse.cdt.ui.newProject"
 	         type="new"
@@ -188,7 +225,8 @@
          	</or>
          </enablement>
 	   </commonWizard>
-	       <commonWizard
+	   
+	   <commonWizard
 	         associatedExtensionId="com.djyos.dide.ui.navigator.content"
 	         menuGroupId="org.eclipse.cdt.ui.newProject"
 	         type="new"
@@ -209,18 +247,19 @@
          	</or>
          </enablement>
 	   </commonWizard>
-	    </navigatorContent>
-	     <commonFilter
+	   
+	</navigatorContent>
+	<commonFilter
           activeByDefault="true"
           class="com.djyos.dide.ui.filters.LibosFilter"
           description="Hide Libos and Data"
           id="org.eclipse.cdt.ui.navigator.filters.LibosFilter"
           name="Hide Libos and Data"/>  
-	 </extension>   
-	  <extension
-	       point="org.eclipse.ui.startup">
-	   			 <startup
-	          class="com.djyos.dide.ui.startup.StartupHandler">
-	    </startup>
-	 </extension>
+</extension>   
+<extension
+	  point="org.eclipse.ui.startup">
+	  <startup
+	      class="com.djyos.dide.ui.startup.StartupHandler">
+	  </startup>
+</extension>
 </plugin>

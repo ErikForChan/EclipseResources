@@ -16,6 +16,7 @@ package org.eclipse.ui.internal.e4.compatibility;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.e4.ui.model.application.MApplication;
 import org.eclipse.e4.ui.model.application.descriptor.basic.MPartDescriptor;
@@ -72,26 +73,27 @@ public class ModeledPageLayout implements IPageLayout {
 			return Collections.emptyList();
 		}
 		ArrayList<String> result = new ArrayList<>();
-		if(tagPrefix.equals(NEW_WIZARD_TAG)) {
-			System.out.println("Label:  "+model.getLabel());
-			if(model.getLabel().contains("C/C++") ) {
+		if (tagPrefix.equals(NEW_WIZARD_TAG)) {
+			System.out.println("Label:  " + model.getLabel());
+			if (model.getLabel().contains("C/C++")) {
 				result.add("com.djyos.dide.ui.wizards.NewDWizard1");
 				result.add("com.djyos.dide.ui.wizards.NewDWizard2");
 				result.add("com.djyos.dide.ui.wizards.NewDWizard3");
-			}else {
+				// result.add("com.djyos.dide.ui.wizards.NewDWizard6");
+			} else {
 				for (String tag : model.getTags()) {
 					if (tag.startsWith(tagPrefix)) {
 						result.add(tag.substring(tagPrefix.length()));
 					}
 				}
 			}
-		}else {
+		} else {
 			for (String tag : model.getTags()) {
 				if (tag.startsWith(tagPrefix)) {
 					result.add(tag.substring(tagPrefix.length()));
 				}
 			}
-		}		
+		}
 		return result;
 	}
 
@@ -136,10 +138,8 @@ public class ModeledPageLayout implements IPageLayout {
 		}
 	}
 
-	public ModeledPageLayout(MWindow window, EModelService modelService,
-			EPartService partService,
-			MPerspective perspModel, IPerspectiveDescriptor descriptor, WorkbenchPage page,
-			boolean createReferences) {
+	public ModeledPageLayout(MWindow window, EModelService modelService, EPartService partService,
+			MPerspective perspModel, IPerspectiveDescriptor descriptor, WorkbenchPage page, boolean createReferences) {
 		// this.window = window;
 		MUIElement winParent = window.getParent();
 		this.application = (MApplication) winParent;
@@ -176,8 +176,7 @@ public class ModeledPageLayout implements IPageLayout {
 
 			window.getSharedElements().add(sharedArea);
 		} else {
-			List<MPartStack> stacks = modelService.findElements(sharedArea, null, MPartStack.class,
-					null);
+			List<MPartStack> stacks = modelService.findElements(sharedArea, null, MPartStack.class, null);
 			if (!stacks.isEmpty()) {
 				editorStack = stacks.get(0);
 			}
@@ -234,8 +233,7 @@ public class ModeledPageLayout implements IPageLayout {
 	}
 
 	@Override
-	public void addPlaceholder(String viewId, int relationship, float ratio,
-			String refId) {
+	public void addPlaceholder(String viewId, int relationship, float ratio, String refId) {
 		insertView(viewId, relationship, ratio, refId, false, true);
 	}
 
@@ -250,8 +248,7 @@ public class ModeledPageLayout implements IPageLayout {
 	}
 
 	@Override
-	public void addStandaloneView(String viewId, boolean showTitle,
-			int relationship, float ratio, String refId) {
+	public void addStandaloneView(String viewId, boolean showTitle, int relationship, float ratio, String refId) {
 		MUIElement newElement = insertView(viewId, relationship, ratio, refId, true, showTitle);
 		if (newElement instanceof MPartStack) {
 			MPartStack stack = (MPartStack) newElement;
@@ -263,8 +260,8 @@ public class ModeledPageLayout implements IPageLayout {
 	}
 
 	@Override
-	public void addStandaloneViewPlaceholder(String viewId, int relationship,
-			float ratio, String refId, boolean showTitle) {
+	public void addStandaloneViewPlaceholder(String viewId, int relationship, float ratio, String refId,
+			boolean showTitle) {
 		MUIElement newElement = insertView(viewId, relationship, ratio, refId, false, showTitle);
 		if (newElement instanceof MPartStack) {
 			MPartStack stack = (MPartStack) newElement;
@@ -280,8 +277,7 @@ public class ModeledPageLayout implements IPageLayout {
 		insertView(viewId, relationship, ratio, refId, true, true);
 	}
 
-	public void addView(String viewId, int relationship, float ratio, String refId,
-			boolean minimized) {
+	public void addView(String viewId, int relationship, float ratio, String refId, boolean minimized) {
 		if (minimized) {
 			E4Util.unsupported("addView: use of minimized for " + viewId + " ref " + refId); //$NON-NLS-1$ //$NON-NLS-2$
 		}
@@ -298,27 +294,23 @@ public class ModeledPageLayout implements IPageLayout {
 	}
 
 	protected void addViewActivator(MUIElement element) {
-		IPluginContribution contribution = (IPluginContribution) viewRegistry.find(element
-				.getElementId());
+		IPluginContribution contribution = (IPluginContribution) viewRegistry.find(element.getElementId());
 		IWorkbenchActivitySupport support = PlatformUI.getWorkbench().getActivitySupport();
-		IIdentifier identifier = support.getActivityManager().getIdentifier(
-				WorkbenchActivityHelper.createUnifiedId(contribution));
+		IIdentifier identifier = support.getActivityManager()
+				.getIdentifier(WorkbenchActivityHelper.createUnifiedId(contribution));
 		identifier.addIdentifierListener(new ViewActivator(element));
 	}
 
 	@Override
-	public IFolderLayout createFolder(String folderId, int relationship,
-			float ratio, String refId) {
-		MPartStack stack = insertStack(folderId, relationship, ratio, refId,
-				false);
+	public IFolderLayout createFolder(String folderId, int relationship, float ratio, String refId) {
+		MPartStack stack = insertStack(folderId, relationship, ratio, refId, false);
 		return new ModeledFolderLayout(this, application, stack);
 	}
 
 	@Override
-	public IPlaceholderFolderLayout createPlaceholderFolder(String folderId,
-			int relationship, float ratio, String refId) {
-		MPartStack Stack = insertStack(folderId, relationship, ratio, refId,
-				false);
+	public IPlaceholderFolderLayout createPlaceholderFolder(String folderId, int relationship, float ratio,
+			String refId) {
+		MPartStack Stack = insertStack(folderId, relationship, ratio, refId, false);
 		return new ModeledPlaceholderFolderLayout(this, application, Stack);
 	}
 
@@ -392,8 +384,7 @@ public class ModeledPageLayout implements IPageLayout {
 		// perspModel.setFixed(isFixed);
 	}
 
-	public static MStackElement createViewModel(MApplication application, String id,
-			boolean visible,
+	public static MStackElement createViewModel(MApplication application, String id, boolean visible,
 			WorkbenchPage page, EPartService partService, boolean createReferences) {
 		EModelService ms = application.getContext().get(EModelService.class);
 		MPartDescriptor partDesc = ms.getPartDescriptor(id);
@@ -410,10 +401,8 @@ public class ModeledPageLayout implements IPageLayout {
 			// there should only be view references for 3.x views that are
 			// visible to the end user, that is, the tab items are being
 			// drawn
-			if (visible
-					&& createReferences
-					&& CompatibilityPart.COMPATIBILITY_VIEW_URI.equals(partDesc
-							.getContributionURI())) {
+			if (visible && createReferences
+					&& CompatibilityPart.COMPATIBILITY_VIEW_URI.equals(partDesc.getContributionURI())) {
 				page.createViewReferenceForPart(part, id);
 			}
 			return ph;
@@ -421,22 +410,20 @@ public class ModeledPageLayout implements IPageLayout {
 		return null;
 	}
 
-	private MUIElement insertView(String viewId, int relationship, float ratio,
-			String refId, boolean visible, boolean withStack) {
+	private MUIElement insertView(String viewId, int relationship, float ratio, String refId, boolean visible,
+			boolean withStack) {
 
 		// Hide views that are filtered by capabilities
 		boolean isFiltered = isViewFiltered(viewId);
 
-		MStackElement viewModel = createViewModel(application, viewId, visible && !isFiltered,
-				page, partService,
+		MStackElement viewModel = createViewModel(application, viewId, visible && !isFiltered, page, partService,
 				createReferences);
 		MUIElement retVal = viewModel;
 
 		if (viewModel != null) {
 			if (withStack) {
 				String stackId = viewId + "MStack"; // Default id...basically unusable //$NON-NLS-1$
-				MPartStack stack = insertStack(stackId, relationship, ratio, refId, visible
-						& !isFiltered);
+				MPartStack stack = insertStack(stackId, relationship, ratio, refId, visible & !isFiltered);
 				stack.getChildren().add(viewModel);
 				retVal = stack;
 			} else {
@@ -471,8 +458,7 @@ public class ModeledPageLayout implements IPageLayout {
 		if (element instanceof MElementContainer<?>) {
 			MElementContainer<?> container = (MElementContainer<?>) element;
 			List<?> children = container.getChildren();
-			return children.isEmpty() ? container : getLastElement((MUIElement) children
-					.get(children.size() - 1));
+			return children.isEmpty() ? container : getLastElement((MUIElement) children.get(children.size() - 1));
 		}
 
 		MUIElement parent = element.getParent();
@@ -480,14 +466,14 @@ public class ModeledPageLayout implements IPageLayout {
 	}
 
 	/**
-	 * Returns the element that is the deepest and last element of the
-	 * containers underneath the current perspective. If this element's parent
-	 * is the perspective itself, the element will be returned. The perspective
-	 * will only be returned if the perspective itself has no children.
+	 * Returns the element that is the deepest and last element of the containers
+	 * underneath the current perspective. If this element's parent is the
+	 * perspective itself, the element will be returned. The perspective will only
+	 * be returned if the perspective itself has no children.
 	 *
-	 * @return the parent of the final element in the recursion chain of
-	 *         children, or the element itself if its parent is the perspective,
-	 *         or the perspective if the perspective itself has no children
+	 * @return the parent of the final element in the recursion chain of children,
+	 *         or the element itself if its parent is the perspective, or the
+	 *         perspective if the perspective itself has no children
 	 */
 	private MUIElement getLastElement() {
 		List<MPartSashContainerElement> children = perspModel.getChildren();
@@ -497,8 +483,7 @@ public class ModeledPageLayout implements IPageLayout {
 		return getLastElement(children.get(children.size() - 1));
 	}
 
-	private MPartStack insertStack(String stackId, int relationship,
-			float ratio, String refId, boolean visible) {
+	private MPartStack insertStack(String stackId, int relationship, float ratio, String refId, boolean visible) {
 		MUIElement refModel = findElement(perspModel, refId);
 		if (refModel == null) {
 			WorkbenchPlugin.log(NLS.bind(WorkbenchMessages.PageLayout_missingRefPart, refId));
@@ -531,8 +516,7 @@ public class ModeledPageLayout implements IPageLayout {
 		return stack;
 	}
 
-	public static void replace(MUIElement relTo,
-			MElementContainer<MUIElement> newParent) {
+	public static void replace(MUIElement relTo, MElementContainer<MUIElement> newParent) {
 		if (relTo == null || newParent == null)
 			return;
 
@@ -548,8 +532,7 @@ public class ModeledPageLayout implements IPageLayout {
 		kids.remove(relTo);
 	}
 
-	public static void insertParent(MElementContainer<MUIElement> newParent,
-			MUIElement relTo) {
+	public static void insertParent(MElementContainer<MUIElement> newParent, MUIElement relTo) {
 		if (newParent == null || relTo == null)
 			return;
 
@@ -563,8 +546,7 @@ public class ModeledPageLayout implements IPageLayout {
 	}
 
 	MUIElement findElement(MUIElement toSearch, String id) {
-		List<Object> found = modelService.findElements(toSearch, id, null, null,
-				EModelService.IN_ANY_PERSPECTIVE);
+		List<Object> found = modelService.findElements(toSearch, id, null, null, EModelService.IN_ANY_PERSPECTIVE);
 		if (found.size() > 0)
 			return (MUIElement) found.get(0);
 
@@ -607,8 +589,7 @@ public class ModeledPageLayout implements IPageLayout {
 	}
 
 	public void stackView(String id, String refId, boolean visible) {
-		MUIElement refModel = refId.equals(getEditorArea()) ? editorStack : findElement(perspModel,
-				refId);
+		MUIElement refModel = refId.equals(getEditorArea()) ? editorStack : findElement(perspModel, refId);
 		if (refModel == null) {
 			addView(id, LEFT, DEFAULT_VIEW_RATIO, refId);
 			return;
@@ -626,8 +607,7 @@ public class ModeledPageLayout implements IPageLayout {
 		boolean isFiltered = isViewFiltered(id);
 		boolean toBeRendered = visible && !isFiltered;
 
-		MStackElement viewModel = createViewModel(application, id, toBeRendered, page, partService,
-				createReferences);
+		MStackElement viewModel = createViewModel(application, id, toBeRendered, page, partService, createReferences);
 		if (viewModel != null) {
 			MPartStack stack = (MPartStack) refModel;
 			boolean wasEmpty = stack.getChildren().isEmpty();

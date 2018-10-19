@@ -4,19 +4,22 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.regex.Pattern;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
+import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
+import org.eclipse.cdt.core.settings.model.ICLanguageSetting;
+import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
+import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.core.settings.model.ICResourceDescription;
+import org.eclipse.cdt.core.settings.model.ICSettingEntry;
+import org.eclipse.cdt.core.settings.model.util.CDataUtil;
+import org.eclipse.cdt.utils.ui.controls.ControlFactory;
+import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
@@ -24,25 +27,21 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
-import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
@@ -66,6 +65,7 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -74,12 +74,8 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
+import com.djyos.dide.ui.wizards.board.Board;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 import com.djyos.dide.ui.wizards.component.CmpntCheck;
 import com.djyos.dide.ui.wizards.component.Component;
@@ -90,30 +86,10 @@ import com.djyos.dide.ui.wizards.component.ReadComponent;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.tools.Calculator;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 import com.djyos.dide.ui.wizards.djyosProject.tools.LinkHelper;
 import com.ibm.icu.text.DecimalFormat;
-
-import org.eclipse.cdt.core.model.CoreModel;
-import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
-import org.eclipse.cdt.core.settings.model.ICFileDescription;
-import org.eclipse.cdt.core.settings.model.ICFolderDescription;
-import org.eclipse.cdt.core.settings.model.ICLanguageSetting;
-import org.eclipse.cdt.core.settings.model.ICLanguageSettingEntry;
-import org.eclipse.cdt.core.settings.model.ICProjectDescription;
-import org.eclipse.cdt.core.settings.model.ICResourceDescription;
-import org.eclipse.cdt.core.settings.model.ICSettingBase;
-import org.eclipse.cdt.core.settings.model.ICSettingEntry;
-import org.eclipse.cdt.core.settings.model.ICSourceEntry;
-import org.eclipse.cdt.core.settings.model.util.CDataUtil;
-import org.eclipse.cdt.ui.CUIPlugin;
-import com.djyos.dide.ui.wizards.board.Board;
-import com.djyos.dide.ui.wizards.board.ReadBoardXml;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.cdt.utils.ui.controls.ControlFactory;
-import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
-
-import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 
 public class ComponentCfgPage extends PropertyPage {
 
@@ -122,13 +98,13 @@ public class ComponentCfgPage extends PropertyPage {
 	private String warningMsg = null;
 
 	private boolean handleOK(IProgressMonitor monitor) {
-		
-//		for(Component c:appCompontents) {
-//			if(c.getName().equals("fatfilesystem")) {
-//				System.out.println("fatfilesystem3.......................:  "+c.isSelect());
-//			}
-//		}
-		
+
+		// for(Component c:appCompontents) {
+		// if(c.getName().equals("fatfilesystem")) {
+		// System.out.println("fatfilesystem3.......................: "+c.isSelect());
+		// }
+		// }
+
 		IProject project = getProject();
 		final ICProjectDescription local_prjd = CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations(); // 获取工程的所有Configuration
@@ -214,7 +190,8 @@ public class ComponentCfgPage extends PropertyPage {
 	}
 
 	/*
-	 * --------------------------1、override的重写函数---------------------------------------
+	 * --------------------------1、override的重写函数------------------------------------
+	 * ---
 	 */
 	@Override
 	protected Control createContents(Composite parent) {
@@ -258,10 +235,10 @@ public class ComponentCfgPage extends PropertyPage {
 	public boolean performOk() {
 		// TODO Auto-generated method stub
 		boolean isError = false;
-		if(warningMsg != null) {
+		if (warningMsg != null) {
 			isError = true;
 			MessageDialog.openError(window.getShell(), "提示", warningMsg);
-		}else {
+		} else {
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {
 				@Override
 				public void run(IProgressMonitor monitor) {
@@ -367,9 +344,9 @@ public class ComponentCfgPage extends PropertyPage {
 
 	}
 
-	
 	/*
-	 * ------------------------2、创建依赖组件界面-----------------------------------------------
+	 * ------------------------2、创建依赖组件界面-------------------------------------------
+	 * ----
 	 */
 	private void creatDepedentCpt(Composite composite) {
 		// TODO Auto-generated method stub
@@ -391,9 +368,9 @@ public class ComponentCfgPage extends PropertyPage {
 		mutexText.setEditable(false);
 	}
 
-	
 	/*
-	 * --------------------------3、创建Iboot/App组件树--------------------------------------
+	 * --------------------------3、创建Iboot/App组件树-----------------------------------
+	 * ---
 	 */
 	private Control createTabContent(TabFolder folder, List<Component> appTypeComponents,
 			List<Component> ibootTypeComponents) {
@@ -426,7 +403,8 @@ public class ComponentCfgPage extends PropertyPage {
 				TreeItem[] items = componentTree.getSelection();
 				if (items.length > 0) {
 					String type = getAIType(items[0]);
-					Component itemCompt = getComponentByName(items[0].getData().toString(),type.equals("App")?appCompontents:ibootCompontents);
+					Component itemCompt = getComponentByName(items[0].getData().toString(),
+							type.equals("App") ? appCompontents : ibootCompontents);
 
 					IFileStore fileStore = EFS.getLocalFileSystem().getStore(new Path(itemCompt.getParentPath()));
 					fileStore = fileStore.getChild(itemCompt.getFileName());
@@ -483,7 +461,8 @@ public class ComponentCfgPage extends PropertyPage {
 								isApp = false;
 								ibootConfigureChanged = true;
 							}
-							itemCompt = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents);
+							itemCompt = getComponentByName(item.getData().toString(),
+									isApp ? appCompontents : ibootCompontents);
 							for (Control c : controls) {
 								Tree tempTree = (Tree) c;
 								TreeItem[] fChilds = tempTree.getItems();
@@ -520,7 +499,8 @@ public class ComponentCfgPage extends PropertyPage {
 								isApp = false;
 								ibootConfigureChanged = true;
 							}
-							itemCompt = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents);
+							itemCompt = getComponentByName(item.getData().toString(),
+									isApp ? appCompontents : ibootCompontents);
 							if (itemCompt.getSelectable().equals("必选")) {
 								item.setChecked(true);
 								MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
@@ -609,7 +589,8 @@ public class ComponentCfgPage extends PropertyPage {
 						} else {
 							isApp = false;
 						}
-						itemCompt = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents);
+						itemCompt = getComponentByName(item.getData().toString(),
+								isApp ? appCompontents : ibootCompontents);
 						List<String> depedents = itemCompt.getDependents();
 						List<String> mutexs = itemCompt.getMutexs();
 						String allDeps = "";
@@ -665,19 +646,19 @@ public class ComponentCfgPage extends PropertyPage {
 
 		TreeItem root = new TreeItem(componentTree, 0);
 		root.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
-		if(isApp) {
+		if (isApp) {
 			root.setText("App");
-		}else {
+		} else {
 			root.setText("Iboot");
 		}
-		
+
 		root.setGrayed(true);
 		root.setChecked(true);
 		for (Component component : firstList) {
-			createTreeCompItem(component,root,targetComponents,isApp);
+			createTreeCompItem(component, root, targetComponents, isApp);
 		}
 	}
-	
+
 	// 添加子组件
 	private void fillItem(TreeItem parentItem, List<Component> targetComponents, TreeItem rootItem, boolean isApp) {
 		// TODO Auto-generated method stub
@@ -689,39 +670,41 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 		for (Component child : childList) {
-			createTreeCompItem(child,parentItem,targetComponents,isApp);
+			createTreeCompItem(child, parentItem, targetComponents, isApp);
 		}
 	}
 
-	private void createTreeCompItem(Component component, TreeItem root, List<Component> targetComponents, boolean isApp) {
-		TreeItem item;//component,root,targetComponents,isApp
+	private void createTreeCompItem(Component component, TreeItem root, List<Component> targetComponents,
+			boolean isApp) {
+		TreeItem item;// component,root,targetComponents,isApp
 		if (component.getSelectable().equals("必选")) {
 			item = new TreeItem(root, 0);
 			item.setChecked(true);
 			component.setSelect(true);
-			(isApp?appCompontentsChecked:ibootCompontentsChecked).add(component);
+			(isApp ? appCompontentsChecked : ibootCompontentsChecked).add(component);
 		} else {
 			item = new TreeItem(root, 0);
 		}
 		if (!item.getChecked()) {
-			for (CmpntCheck check : isApp?appCmpntChecks:ibootCmpntChecks) {
+			for (CmpntCheck check : isApp ? appCmpntChecks : ibootCmpntChecks) {
 				if (check.getCmpntName().equals(component.getName())) {
-//					if(component.getName().equals("fatfilesystem")) {
-//						System.out.println("fatfilesystem1:  "+check.isChecked());
-//					}
+					// if(component.getName().equals("fatfilesystem")) {
+					// System.out.println("fatfilesystem1: "+check.isChecked());
+					// }
 					if (check.isChecked().equals("true")) {
 						item.setChecked(true);
 						component.setSelect(true);
-						(isApp?appCompontentsChecked:ibootCompontentsChecked).add(component);
+						(isApp ? appCompontentsChecked : ibootCompontentsChecked).add(component);
 					}
-//					if(component.getName().equals("fatfilesystem")) {
-//						System.out.println("fatfilesystem2:  "+component.isSelect());
-//					}
-//					for(Component c:appCompontents) {
-//						if(c.getName().equals("fatfilesystem")) {
-//							System.out.println("fatfilesystem4--------------------------------.:  "+c.isSelect());
-//						}
-//					}
+					// if(component.getName().equals("fatfilesystem")) {
+					// System.out.println("fatfilesystem2: "+component.isSelect());
+					// }
+					// for(Component c:appCompontents) {
+					// if(c.getName().equals("fatfilesystem")) {
+					// System.out.println("fatfilesystem4--------------------------------.:
+					// "+c.isSelect());
+					// }
+					// }
 					break;
 				}
 			}
@@ -736,21 +719,22 @@ public class ComponentCfgPage extends PropertyPage {
 		item.setData(component.getParentPath());
 		item.setData("anno", component.getAnnotation());
 		item.setText(component.getName());
-		
-		Component itemCompt = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents);
+
+		Component itemCompt = getComponentByName(item.getData().toString(), isApp ? appCompontents : ibootCompontents);
 		initConfiguration(itemCompt, false);
 		if (component.getSelectable().equals("必选")) {
-			(isApp?appRequiredItems:ibootRequiredItems).add(item);
+			(isApp ? appRequiredItems : ibootRequiredItems).add(item);
 		}
-		
-		//如果当前组件有子组件，则添加子组件
+
+		// 如果当前组件有子组件，则添加子组件
 		if (haveChildren(component, targetComponents)) {
 			fillItem(item, targetComponents, root, isApp);
 		}
 	}
-	
+
 	/*
-	 * ----------------------------4、组件初始化-------------------------------------------
+	 * ----------------------------4、组件初始化------------------------------------------
+	 * -
 	 */
 	private void initComponent(List<Component> typeCompontents, boolean isApp) {
 		// TODO Auto-generated method stub
@@ -890,7 +874,7 @@ public class ComponentCfgPage extends PropertyPage {
 	}
 
 	/*
-	 *--------------------------------5、 配置表界面--------------------------
+	 * --------------------------------5、 配置表界面--------------------------
 	 */
 	private void creatConfigTable(Composite parent) {
 		table = new Table(parent, SWT.NONE | SWT.FULL_SELECTION | SWT.H_SCROLL);
@@ -980,7 +964,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return dataString;
 	}
-	
+
 	private List<String> getExpandParas(Component componentSelect) {
 		List<String> expandParas = new ArrayList<String>();
 		for (int j = 0; j < compontentsList.size(); j++) {
@@ -1005,11 +989,12 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return expandParas;
 	}
-	
+
 	private void handleRequiredDepnds(boolean isApp, TreeItem item) {
 		// TODO Auto-generated method stub
 		String type = isApp ? "App" : "Iboot";
-		Component itemCompt = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents); ;
+		Component itemCompt = getComponentByName(item.getData().toString(), isApp ? appCompontents : ibootCompontents);
+		;
 
 		Control[] controls = folder.getChildren();
 		for (Control c : controls) {
@@ -1060,11 +1045,11 @@ public class ComponentCfgPage extends PropertyPage {
 		for (int i = 0; i < parametersDefined.length; i++) {
 			isSelect[i] = false;
 			String parameter = null;
-//			if (parametersDefined[i].contains("*")) {
-//				parameter = parametersDefined[i].trim().split("\\*")[0];
-//			} else {
-//				parameter = parametersDefined[i].trim();
-//			}
+			// if (parametersDefined[i].contains("*")) {
+			// parameter = parametersDefined[i].trim().split("\\*")[0];
+			// } else {
+			// parameter = parametersDefined[i].trim();
+			// }
 			parameter = parametersDefined[i].trim();
 			if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum")
 					|| parameter.contains("%$#@object_para") || parameter.contains("%$#@select")
@@ -1265,8 +1250,8 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 
-		if(selectExist) {
-			checkError(componentSelect);
+		if (selectExist) {
+			checkError(componentSelect, checkcounter);
 		}
 		expendParas = getExpandParas(componentSelect);
 		fillParts(pjCgfs, partNum, expendParas, componentSelect, isSelect);
@@ -1543,23 +1528,25 @@ public class ComponentCfgPage extends PropertyPage {
 							checkcounter = 0;
 						}
 					}
-					checkError(componentSelect);
 				}
+				checkError(componentSelect, checkcounter);
 				comptVisited.add(compName);
 				// 重置组件的配置
 				resetConfigure(componentSelect, isSelect);
+				System.out.println("checkcounter:  " + checkcounter);
 			}
 		});
 
 	}
 
-	private void checkError(Component componentSelect) {
-		if(checkcounter<1) {
-			warningMsg = componentSelect.getAttribute()+"[" + componentSelect.getName() + "]未勾选参数";
-		}else {
+	private void checkError(Component componentSelect, int num) {
+		if (num < 1) {
+			warningMsg = componentSelect.getAttribute() + "[" + componentSelect.getName() + "]未勾选参数";
+		} else {
 			warningMsg = null;
 		}
 	}
+
 	// 处理Enum类型的参数
 	private void handleEnumPara(int index, boolean[] isSelect, List<String> ranges, TableItem item, boolean isApp,
 			String compName, Component componentSelect, String tag) {
@@ -1635,11 +1622,10 @@ public class ComponentCfgPage extends PropertyPage {
 		return realComptName;
 	}
 
-
 	/*
-	 * ----------------------------------------------6、遍历组件--------------------------------
+	 * ----------------------------------------------6、遍历组件-------------------------
+	 * -------
 	 */
-
 
 	// 遍历与App/Iboot有关的组件，如果与当前选中的组件互斥，则返回true
 	protected boolean travelItems_Mutex(TreeItem treeItem, Component itemCompt, TreeItem eventTreeItem) {
@@ -1664,7 +1650,6 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return isMutx;
 	}
-	
 
 	// 遍历与App/Iboot有关的组件，如果被当前选中的组件依赖，则选中该组件
 	protected void travelItems_Depedent(TreeItem treeItem, Component itemCompt, boolean isApp,
@@ -1677,7 +1662,9 @@ public class ComponentCfgPage extends PropertyPage {
 			if (depedents.contains(item.getText())) {
 				if (!item.getChecked()) {
 					item.setChecked(true);
-					Component curComp = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents);;
+					Component curComp = getComponentByName(item.getData().toString(),
+							isApp ? appCompontents : ibootCompontents);
+					;
 					if (isApp) {
 						if (!appCompontentsChecked.contains(curComp)) {
 							appCompontentsChecked.add(curComp);
@@ -1707,7 +1694,6 @@ public class ComponentCfgPage extends PropertyPage {
 	}
 
 	// 判断组件是否被已经选中的组件依赖，如果被依赖，返回true
-
 
 	// 初始化配置参数的表格
 	public void creatProjectConfiure(File file, String coreConfigure, boolean isApp) {
@@ -1769,7 +1755,7 @@ public class ComponentCfgPage extends PropertyPage {
 		dideHelper.writeFile(file, defineInit);
 	}
 
-	//通过依赖关系排序
+	// 通过依赖关系排序
 	private void handleDependents(Component component, List<Component> typeCompontentsChecked,
 			List<Component> typeCheckedSort) {
 		// TODO Auto-generated method stub
@@ -1795,9 +1781,9 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 	}
 
-	
 	/*
-	 *---------------------------------------------- 7、文件操作-----------------------------------
+	 * ----------------------------------------------
+	 * 7、文件操作-----------------------------------
 	 */
 	private void initHeaderConfigure(Component component, List<String> pjCgfs) {
 		String[] parametersDefined = component.getConfigure().split("\n");
@@ -1865,7 +1851,7 @@ public class ComponentCfgPage extends PropertyPage {
 				+ "#include \"cpu_peri.h\"\n" + "extern ptu32_t djy_main(void);\n";
 
 		for (int i = 0; i < typeCompontentsChecked.size(); i++) {
-			handleDependents(typeCompontentsChecked.get(i), typeCompontentsChecked, typeCheckedSort);//通过依赖关系排序
+			handleDependents(typeCompontentsChecked.get(i), typeCompontentsChecked, typeCheckedSort);// 通过依赖关系排序
 			if (!typeCheckedSort.contains(typeCompontentsChecked.get(i))) {
 				typeCheckedSort.add(typeCompontentsChecked.get(i));
 			}
@@ -1952,7 +1938,7 @@ public class ComponentCfgPage extends PropertyPage {
 				+ "\t//-------------------later-------------------------//\n" + laterCode + lastInit + initEnd;
 		dideHelper.writeFile(file, content);
 	}
-	
+
 	private void createComptCheck(String projectLocation, boolean isApp) {
 		// 生成component_check.xml文件
 		String xmlName = null;
@@ -1977,10 +1963,10 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		ccx.createCheck(curCompontents, checkFile);
 	}
-	
-	
+
 	/*
-	 * -------------------------------------------------8、工具-----------------------------------
+	 * -------------------------------------------------8、工具------------------------
+	 * -----------
 	 */
 	private Component createNewComponent(Component c) {
 		Component component = new Component();
@@ -2004,7 +1990,7 @@ public class ComponentCfgPage extends PropertyPage {
 		component.setTarget(c.getTarget());
 		return component;
 	}
-	
+
 	// 通过hardware_info.xml获取当前工程所用到的板件和Cpu
 	private void getBoardAndCpu() {
 		IProject project = getProject();
@@ -2026,9 +2012,9 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-		
+
 	// 通过组件名获取当前组件对象
-	private Component getComponentByName(String itemName,List<Component> compontents) {
+	private Component getComponentByName(String itemName, List<Component> compontents) {
 		for (Component component : compontents) {
 			if (component.getParentPath().equals(itemName)) {
 				return component;
@@ -2036,7 +2022,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return null;
 	}
-	
+
 	private IProject getProject() {
 		Object element = getElement();
 		IProject project = null;
@@ -2048,7 +2034,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return project;
 	}
-	
+
 	private String getAIType(TreeItem item) {
 		TreeItem parentItem = item.getParentItem();
 		if (parentItem != null) {
@@ -2063,7 +2049,7 @@ public class ComponentCfgPage extends PropertyPage {
 			return null;
 		}
 	}
-	
+
 	private boolean haveChildren(Component parent, List<Component> componentList) {
 		for (Component compt : componentList) {
 			if (compt.getParent().equals(parent.getName())) {
@@ -2100,7 +2086,7 @@ public class ComponentCfgPage extends PropertyPage {
 			e.printStackTrace();
 		}
 	}
-	
+
 	// 获取被选中的组件
 	private List<String> getChecks(List<CmpntCheck> cmpntChecks) {
 		// TODO Auto-generated method stub
@@ -2111,9 +2097,9 @@ public class ComponentCfgPage extends PropertyPage {
 		return checkNames;
 	}
 
-	
 	/*
-	 * ------------------------------------------9、判断函数--------------------------------------
+	 * ------------------------------------------9、判断函数-----------------------------
+	 * ---------
 	 */
 	private boolean isParentCompExist(List<Component> components, String parentName) {
 		for (Component component : components) {
@@ -2123,7 +2109,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return false;
 	}
-	
+
 	protected boolean isDepedent(TreeItem treeItem, TreeItem eventTreeItem, String type, Component itemCompt,
 			boolean isApp) {
 		// TODO Auto-generated method stub
@@ -2131,7 +2117,8 @@ public class ComponentCfgPage extends PropertyPage {
 		List<String> eventDepedents = itemCompt.getDependents();
 		boolean isDepedent = true;
 		for (TreeItem item : items) {
-			Component tempCompt = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents);
+			Component tempCompt = getComponentByName(item.getData().toString(),
+					isApp ? appCompontents : ibootCompontents);
 			if (item.getChecked()) {
 				if (tempCompt.getDependents().contains(eventTreeItem.getText())) {
 					if (eventDepedents.contains(tempCompt.getName())) {
@@ -2161,7 +2148,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		return isDepedent;
 	}
-	
+
 	// Symbol是否存在
 	private boolean isSymbolExist(ICConfigurationDescription cond, String parameter) {
 		ICResourceDescription rds = cond.getRootFolderDescription();
@@ -2184,7 +2171,7 @@ public class ComponentCfgPage extends PropertyPage {
 		Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
 		return pattern.matcher(String.valueOf(c)).matches();
 	}
-	
+
 	@Override
 	public boolean isDjyos() {
 		// TODO Auto-generated method stub
@@ -2197,7 +2184,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 		// return revised;
 	}
-	
+
 	@Override
 	public boolean isPageDragable() {
 		// TODO Auto-generated method stub
@@ -2205,7 +2192,8 @@ public class ComponentCfgPage extends PropertyPage {
 	}
 
 	/*
-	 * -------------------------------------------10、Apply----------------------------------
+	 * -------------------------------------------10、Apply--------------------------
+	 * --------
 	 */
 	private boolean handleCheckAndExclude(List<Component> compontentsChecked, List<Component> compontents,
 			List<Component> compontentsInit, IProject project, ICConfigurationDescription[] conds, boolean isApp) {
@@ -2304,7 +2292,7 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 
 	}
-	
+
 	// 重置文件排除
 	private void resetExclude(List<Component> compontentsChecked, List<Component> components,
 			List<Component> componentsInit, boolean isApp, ICConfigurationDescription[] conds, IProject project) {
@@ -2392,7 +2380,8 @@ public class ComponentCfgPage extends PropertyPage {
 	}
 
 	/*
-	 * --------------------------------------------11、Default---------------------------------------
+	 * --------------------------------------------11、Default-----------------------
+	 * ----------------
 	 */
 	private void checkOrignalTreeItem(TreeItem treeItem, List<CmpntCheck> cmpntChecks, boolean isApp) {
 		// TODO Auto-generated method stub
@@ -2402,8 +2391,9 @@ public class ComponentCfgPage extends PropertyPage {
 				if (check.getCmpntName().equals(item.getText())) {
 					if (check.isChecked().equals("true")) {
 						item.setChecked(true);
-						Component curComponent = getComponentByName(item.getData().toString(),isApp?appCompontents:ibootCompontents);
-						(isApp?appCompontentsChecked:ibootCompontentsChecked).add(curComponent);
+						Component curComponent = getComponentByName(item.getData().toString(),
+								isApp ? appCompontents : ibootCompontents);
+						(isApp ? appCompontentsChecked : ibootCompontentsChecked).add(curComponent);
 					} else {
 						item.setChecked(false);
 					}
@@ -2416,7 +2406,7 @@ public class ComponentCfgPage extends PropertyPage {
 			}
 		}
 	}
-	
+
 	// 重置当前组件的Configure
 	protected void resetConfigure(Component componentSelect, boolean[] isSelect) {
 		// TODO Auto-generated method stub
@@ -2478,7 +2468,6 @@ public class ComponentCfgPage extends PropertyPage {
 		componentSelect.setConfigure(newConfig);
 	}
 
-	
 	private Table table;
 	private int lastchk, checkcounter;
 	private TabFolder folder;
