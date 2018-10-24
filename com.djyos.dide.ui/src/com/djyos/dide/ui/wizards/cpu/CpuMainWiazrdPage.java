@@ -1,27 +1,18 @@
 package com.djyos.dide.ui.wizards.cpu;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
@@ -32,59 +23,34 @@ import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.DropTargetListener;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.events.DragDetectEvent;
-import org.eclipse.swt.events.DragDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.TabFolder;
-import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
-import org.xml.sax.SAXException;
 
-import com.djyos.dide.ui.wizards.cpu.NewGroupOrCpuDialog;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-
-import org.eclipse.cdt.ui.CUIPlugin;
-import org.eclipse.cdt.ui.wizards.IWizardItemsListListener;
-import com.djyos.dide.ui.wizards.cpu.Cpu;
-import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
-import org.eclipse.cdt.utils.ui.controls.ControlFactory;
-import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
-
-import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
-import org.eclipse.cdt.internal.ui.newui.Messages;
-import org.eclipse.cdt.managedbuilder.core.IToolChain;
-import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 
 public class CpuMainWiazrdPage extends WizardPage {
 
@@ -149,21 +115,21 @@ public class CpuMainWiazrdPage extends WizardPage {
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
-		
+
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		initializeDialogUnits(parent);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 
-		IToolChain[] r_tcs = ManagedBuildManager.getRealToolChains();
-//		IResourceInfo resourceInfo = cfg.getRootFolderInfo();
-//		IToolListModification mod = getModification(tcmmgr,resourceInfo);
-//		IFolderInfoModification foim = (IFolderInfoModification)mod;
-		for(IToolChain tc:r_tcs) {
-			System.out.println("tc.getName():  "+tc.getName());
-		}
-		
+		// IToolChain[] r_tcs = ManagedBuildManager.getRealToolChains();
+		// IResourceInfo resourceInfo = cfg.getRootFolderInfo();
+		// IToolListModification mod = getModification(tcmmgr,resourceInfo);
+		// IFolderInfoModification foim = (IFolderInfoModification)mod;
+		// for(IToolChain tc:r_tcs) {
+		// System.out.println("tc.getName(): "+tc.getName());
+		// }
+
 		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL | SWT.H_SCROLL);
 		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -402,7 +368,7 @@ public class CpuMainWiazrdPage extends WizardPage {
 		for (int i = 0; i < roots.length; i++) {
 			if (roots[i].getName().equals("cpudrv")) {
 				TreeItem root = new TreeItem(tree, 0);
-				root.setText("Djyos");
+				root.setText("Cpu列表");
 				root.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
 				root.setData(roots[i]);// 保存当前节点数据
 				File dfile = (File) root.getData();
@@ -669,7 +635,7 @@ public class CpuMainWiazrdPage extends WizardPage {
 			if (cpu2.getCores().get(0).getFpuType() == null) {
 				cons.add("浮点配置");
 			}
-			if (cpu2.getCores().get(0).getArch().getFamily() == null) {
+			if (cpu2.getCores().get(0).getArch().getMcpu() == null) {
 				cons.add("内核配置");
 			}
 		}
@@ -717,11 +683,11 @@ public class CpuMainWiazrdPage extends WizardPage {
 							if (core.getArch().getSerie() != null) {
 								descContent += core.getArch().getSerie();
 							}
-							if (core.getArch().getArchitecture() != null) {
-								descContent += "，架构：" + core.getArch().getArchitecture();
+							if (core.getArch().getMarch() != null) {
+								descContent += "，架构：" + core.getArch().getMarch();
 							}
-							if (core.getArch().getFamily() != null) {
-								descContent += "，家族：" + core.getArch().getFamily();
+							if (core.getArch().getMcpu() != null) {
+								descContent += "，家族：" + core.getArch().getMcpu();
 							}
 							if (core.getFpuType() != null) {
 								descContent += "\n\t浮点：" + core.getFpuType();

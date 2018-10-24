@@ -3,7 +3,6 @@ package com.djyos.dide.ui.wizards.djyosProject;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -11,7 +10,6 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -23,11 +21,10 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 
-import com.djyos.dide.ui.wizards.cpu.Cpu;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
 
-public class SelectCoreDialog extends StatusDialog{
+public class SelectCoreDialog extends StatusDialog {
 	private String detailsDesc = null;
 	private Text detailsField;
 	private Label cpuSearchLabel;
@@ -35,37 +32,39 @@ public class SelectCoreDialog extends StatusDialog{
 	private Tree coreTree;
 	private List<Core> cores = new ArrayList<Core>();
 	private Core coreSelected;
-	
+
 	public Core getSelectCore() {
 		return coreSelected;
 	}
-	
-	public SelectCoreDialog(Shell parent,List<Core> coresList) {
+
+	private String toolchain;
+
+	public SelectCoreDialog(Shell parent, List<Core> coresList) {
 		super(parent);
 		cores = coresList;
 		setTitle("Ñ¡ÔñÄÚºË");
-		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX );
+		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
-		return new Point(500,500);
+		return new Point(500, 500);
 	}
-	
+
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
 		Composite composite = (Composite) super.createDialogArea(parent);
 		Composite coreCpt = new Composite(composite, SWT.NONE);
 		GridLayout coreLayout = new GridLayout();
-		coreLayout.numColumns=2;
+		coreLayout.numColumns = 2;
 		coreCpt.setLayout(coreLayout);
 		coreCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		createTreeForCores(coreCpt);
 		coreTree.setSize(170, 200);
-		detailsField = new Text(coreCpt,SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
+		detailsField = new Text(coreCpt, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
 		detailsField.setLayoutData(new GridData(GridData.FILL_BOTH));
 		detailsField.setEditable(false);
 		return super.createDialogArea(parent);
@@ -76,8 +75,8 @@ public class SelectCoreDialog extends StatusDialog{
 		TreeItem[] items = coreTree.getSelection();
 		if (items.length > 0) {
 			String coreName = items[0].getText();
-			for(int i=0;i<cores.size();i++) {
-				if(coreName.contains(String.valueOf(i+1))) {
+			for (int i = 0; i < cores.size(); i++) {
+				if (coreName.contains(String.valueOf(i + 1))) {
 					coreSelected = cores.get(i);
 					break;
 				}
@@ -85,19 +84,28 @@ public class SelectCoreDialog extends StatusDialog{
 		}
 		super.okPressed();
 	}
-	
+
 	private void createTreeForCores(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NULL);
 		coreTree = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		coreTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		coreTree.setHeaderVisible(true);
-		for(int i=0;i<cores.size();i++) {
+		for (int i = 0; i < cores.size(); i++) {
+			// boolean newTree = true;
+			// Arch arch = cores.get(i).getArch();
+			// String tc = arch.getToolchain();
+			// String tcStart = toolchain.split("-")[0];
+			// if (!tc.startsWith(tcStart)) {
+			// newTree = false;
+			// }
+			// if (newTree) {
 			TreeItem t = new TreeItem(coreTree, SWT.NONE);
-			t.setText("Core"+(i+1));
+			t.setText("Core" + (i + 1));
+			// }
 		}
-		
+
 		coreTree.addListener(SWT.MouseDoubleClick, new Listener() {
-			
+
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
@@ -106,21 +114,22 @@ public class SelectCoreDialog extends StatusDialog{
 		});
 
 		coreTree.addSelectionListener(new SelectionListener() {
-			
+
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				
+
 				TreeItem[] items = coreTree.getSelection();
 				if (items.length > 0) {
 					String coreName = items[0].getText();
 					detailsDesc = "";
 					for (int j = 0; j < cores.size(); j++) {
 						Core core = cores.get(j);
-						if(coreName.contains(String.valueOf(j+1))) {
-							String type = core.getArch().getSerie();;
-							String arch = core.getArch().getArchitecture();
-							String family = core.getArch().getFamily();
+						if (coreName.contains(String.valueOf(j + 1))) {
+							String type = core.getArch().getSerie();
+							;
+							String arch = core.getArch().getMarch();
+							String family = core.getArch().getMcpu();
 							String fpuType = core.getFpuType();
 							String resetAddr = core.getResetAddr();
 							String memoryString = "";
@@ -134,20 +143,20 @@ public class SelectCoreDialog extends StatusDialog{
 											+ memory.getSize() + "k";
 								}
 							}
-							detailsDesc = "type: "+type+"\nArch: " + arch + "\nFamily: " + family + "\nFputype: " + fpuType
-									+ "\nResetAddr: " + resetAddr + "\nMemory:  " + memoryString + "\n\n";
+							detailsDesc = "type: " + type + "\nArch: " + arch + "\nFamily: " + family + "\nFputype: "
+									+ fpuType + "\nResetAddr: " + resetAddr + "\nMemory:  " + memoryString + "\n\n";
 							break;
 						}
-						
+
 					}
 					detailsField.setText(detailsDesc);
 				}
 			}
-			
+
 			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				
+
 			}
 		});
 		final TreeColumn columnCpus = new TreeColumn(coreTree, SWT.NONE);

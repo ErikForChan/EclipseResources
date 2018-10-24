@@ -1,15 +1,10 @@
 package com.djyos.dide.ui.wizards.component;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.djyos.dide.ui.wizards.board.Board;
-
 import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
@@ -26,8 +21,8 @@ public class GetNonCompFiles {
 
 	// 遍历组件及其子组件
 	private void traverFiles(File file) {
-		if (!file.getName().equals("include")  && !file.getName().equals("startup")) {
-			
+		if (!file.getName().equals("include") && !file.getName().equals("startup")) {
+
 			List<File> allFiles = dideHelper.sortFileAndFolder(file);
 			boolean hExist = false;
 			for (File f : allFiles) {
@@ -55,15 +50,15 @@ public class GetNonCompFiles {
 							excludeCompFiles.add(file);
 						}
 					}
-				}else {
-					if(file.getParentFile().getName().equals("firmware")) {
-						System.out.print("file:  "+file.getName());
+				} else {
+					if (file.getParentFile().getName().equals("firmware")) {
+						// System.out.print("file: "+file.getName());
 						excludeCompFiles.add(file);
 					}
 				}
 			}
-			
-			if(file.getName().equals("firmware")) {
+
+			if (file.getName().equals("firmware")) {
 				for (File f : allFiles) {
 					traverFiles(f);
 				}
@@ -99,9 +94,9 @@ public class GetNonCompFiles {
 		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
 		String chipPath = didePath + "djysrc/bsp/chipdrv";
 		for (int i = 0; i < componentPaths.size(); i++) {
-			File sourceFile = new File(componentPaths.get(i));//third
+			File sourceFile = new File(componentPaths.get(i));// third
 			if (sourceFile.exists()) {
-				File[] files = sourceFile.listFiles();//firmfare
+				File[] files = sourceFile.listFiles();// firmfare
 				for (File file : files) {
 					if (file.isDirectory()) {
 						traverFiles(file);
@@ -170,7 +165,8 @@ public class GetNonCompFiles {
 				if (file.getName().equals(cpuName)) {
 					deapPath = file.getPath();
 					break;
-				} else if (!file.getName().equals("include") && !file.getName().equals("src")  && !file.getName().equals("startup")) {
+				} else if (!file.getName().equals("include") && !file.getName().equals("src")
+						&& !file.getName().equals("startup")) {
 					getDeapPath(file, cpuName);// 如果为目录，则继续扫描该目录
 				}
 			}

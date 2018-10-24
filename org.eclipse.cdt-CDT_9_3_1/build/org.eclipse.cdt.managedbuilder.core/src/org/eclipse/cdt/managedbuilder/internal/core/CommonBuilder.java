@@ -758,15 +758,6 @@ public class CommonBuilder extends ACBuilder {
 		String cfgName = configuration.getName();
 
 		CDTDideHelper helper = new CDTDideHelper();
-		// IConsole console = bInfo.getConsole();
-		// System.out.println("IConsole console...");
-		// if (console instanceof BuildConsolePartitioner) {
-		// System.out.println("console instanceof BuildConsolePartitioner...");
-		// BuildConsolePartitioner par = (BuildConsolePartitioner)console;
-		// // Show the error, but don't show it in the editor if we are viewing the global console.
-		// // Prevents showing errors in the editor for projects other than the current project.
-		// par.fEditData.clear();
-		// }
 
 		boolean toContinue = true;
 		if (helper.isNoaBuild()) {

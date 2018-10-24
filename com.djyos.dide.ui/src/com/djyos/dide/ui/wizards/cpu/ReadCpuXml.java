@@ -1,7 +1,6 @@
 package com.djyos.dide.ui.wizards.cpu;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,19 +8,16 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.TreeItem;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
+import com.djyos.dide.ui.arch.Arch;
+import com.djyos.dide.ui.arch.ReadArchXml;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.cpu.Cpu;
 
 public class ReadCpuXml {
 	private static DocumentBuilderFactory dbFactory = null;
@@ -29,6 +25,8 @@ public class ReadCpuXml {
 	private static Document document = null;
 	private List<Cpu> cpus = new ArrayList<Cpu>();
 	private DideHelper dideHelper = new DideHelper();
+	File archSourceFile = new File(dideHelper.getDjyosSrcPath() + "/bsp/arch");
+	List<File> archXmlFiles = dideHelper.getArchXmlFiles(archSourceFile, new ArrayList<File>());
 	static {
 		try {
 			dbFactory = DocumentBuilderFactory.newInstance();
@@ -37,55 +35,57 @@ public class ReadCpuXml {
 			e.printStackTrace();
 		}
 	}
-	
-	//获取当前路径下所有Cpu信息，通过扫描各个目下的xml文件
+
+	// 获取当前路径下所有Cpu信息，通过扫描各个目下的xml文件
 	public List<Cpu> getAllCpus() {
-		
-		String sourcePath = dideHelper.getDIDEPath()+"djysrc/bsp/cpudrv";
+
+		String sourcePath = dideHelper.getDIDEPath() + "djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
 		File[] files = sourceFile.listFiles();
-		for(File file:files){
-			if(file.isDirectory()) {
+		for (File file : files) {
+			if (file.isDirectory()) {
 				getCpus(file);
 			}
 		}
 		return cpus;
-		
+
 	}
-	//遍历父目录，当父目录名为cpudrv时停止扫描
-	private void traverseParents(Cpu cpu,File parentFile) {
-		if(!parentFile.getName().contains("cpudrv")) {		
-				File xmlFile = dideHelper.getXmlFile(parentFile);
-				try {
-					if(xmlFile!=null) {
-						unitCpu(cpu,xmlFile);
-					}
-				}catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+
+	// 遍历父目录，当父目录名为cpudrv时停止扫描
+	private void traverseParents(Cpu cpu, File parentFile) {
+		if (!parentFile.getName().contains("cpudrv")) {
+			File xmlFile = dideHelper.getXmlFile(parentFile);
+			try {
+				if (xmlFile != null) {
+					unitCpu(cpu, xmlFile);
 				}
-				parentFile = parentFile.getParentFile();
-				traverseParents(cpu,parentFile);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			parentFile = parentFile.getParentFile();
+			traverseParents(cpu, parentFile);
 		}
 	}
-	//获取Cpu.xml的信息
-	public void getCpus(File sourceFile) {//Atmel stm32
+
+	// 获取Cpu.xml的信息
+	public void getCpus(File sourceFile) {// Atmel stm32
 		String filePath = sourceFile.getPath();
 		File[] files = sourceFile.listFiles();
 		for (File file : files) {
 			if (file.isDirectory()) {
-				if(!file.getName().equals("include") && !file.getName().equals("src")){
-					getCpus(file);//如果为目录，则继续扫描该目录
-				}			
-			} else if (file.getName().endsWith(".xml")) {//如果为文件，且为xml格式的文件，则遍历所有父目录，获取当前cpu的信息
-				try {			
-					if(file.isFile() && !file.getName().contains("group") && file.getName().contains("cpu_")) {
+				if (!file.getName().equals("include") && !file.getName().equals("src")) {
+					getCpus(file);// 如果为目录，则继续扫描该目录
+				}
+			} else if (file.getName().endsWith(".xml")) {// 如果为文件，且为xml格式的文件，则遍历所有父目录，获取当前cpu的信息
+				try {
+					if (file.isFile() && !file.getName().contains("group") && file.getName().contains("cpu_")) {
 						Cpu cpu = new Cpu();
 						File parentFile = file.getParentFile();
-						traverseParents(cpu,parentFile);
-						Cpu newCpu = new Cpu(cpu.getCpuName(),cpu.getParentPath(),cpu.getCores());
+						traverseParents(cpu, parentFile);
+						Cpu newCpu = new Cpu(cpu.getCpuName(), cpu.getParentPath(), cpu.getCores());
 						cpus.add(newCpu);
-					} 
+					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -93,43 +93,43 @@ public class ReadCpuXml {
 			}
 		}
 	}
-	
+
 	public Cpu getCpuInfos(File file) throws Exception {
 		Cpu cpu = new Cpu();
-		if(file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
+		if (file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
 			cpu.setParentPath(file.getParentFile().getPath());
 		}
 		document = db.parse(file);
 		NodeList nameList = document.getElementsByTagName("cpuName");
-		for(int i=0;i<nameList.getLength();i++) {
+		for (int i = 0; i < nameList.getLength(); i++) {
 			String cpuName = nameList.item(i).getFirstChild().getTextContent();
 			cpu.setCpuName(cpuName);
 		}
-		
+
 		NodeList coreList = document.getElementsByTagName("core");
-		if(coreList.getLength() == 0) {
-			
-		}else {
+		if (coreList.getLength() == 0) {
+
+		} else {
 			cpu.setCoreNum(coreList.getLength());
 			List<Core> cores = new ArrayList<Core>();
 
-			for(int i=0;i<coreList.getLength();i++) {
-				Core core;				
+			for (int i = 0; i < coreList.getLength(); i++) {
+				Core core;
 				core = new Core();
-				
-				Node node = coreList.item(i);  
-		        NamedNodeMap namedNodeMap = node.getAttributes();  
-		        String id = namedNodeMap.getNamedItem("id").getTextContent();
-		        core.setId(Integer.parseInt(id));
-		        handleMultipleCoreListNode(node,core,false);
-		        cores.add(core);
+
+				Node node = coreList.item(i);
+				NamedNodeMap namedNodeMap = node.getAttributes();
+				String id = namedNodeMap.getNamedItem("id").getTextContent();
+				core.setId(Integer.parseInt(id));
+				handleMultipleCoreListNode(node, core, false);
+				cores.add(core);
 			}
 			cpu.setCores(cores);
 		}
-		
+
 		return cpu;
 	}
-	
+
 	private void handleMultipleCoreListNode(Node node, Core core, boolean memoryConfiged) {
 		// TODO Auto-generated method stub
 		NodeList cList = node.getChildNodes();
@@ -151,13 +151,14 @@ public class ReadCpuXml {
 						}
 						break;
 					case "family":
-						if (core.getArch().getFamily() == null) {
-							core.getArch().setFamily(content);
+						if (core.getArch().getMcpu() == null) {
+							core.getArch().setMcpu(content);
+							SetArch(core, content);
 						}
 						break;
 					case "arch":
-						if (core.getArch().getArchitecture() == null) {
-							core.getArch().setArchitecture(content);
+						if (core.getArch().getMarch() == null) {
+							core.getArch().setMarch(content);
 						}
 						break;
 					case "fpuType":
@@ -195,10 +196,19 @@ public class ReadCpuXml {
 			}
 		}
 	}
-	
 
+	private void SetArch(Core core, String family) {
+		Arch myArch = new Arch();
+		for (File f : archXmlFiles) {
+			if (f.getParentFile().getName().equals(family)) {
+				ReadArchXml rax = new ReadArchXml();
+				myArch = rax.getMutiplyFileArch(f, myArch);
+				break;
+			}
+		}
+		core.setArch(myArch);
+	}
 
-	
 	private void handleNoListOneCoreNode(Core core, NodeList cList) {
 		for (int i = 0; i < cList.getLength(); i++) {
 			Node node = cList.item(i);
@@ -214,6 +224,7 @@ public class ReadCpuXml {
 					break;
 				case "family":
 					core.getArch().setFamily(content);
+					SetArch(core, content);
 					break;
 				case "arch":
 					core.getArch().setArchitecture(content);
@@ -229,7 +240,7 @@ public class ReadCpuXml {
 		}
 
 	}
-	
+
 	private void handleNoListMultipleCoreNode(NodeList cList, List<Core> cores) {
 		for (int i = 0; i < cList.getLength(); i++) {
 			Node node = cList.item(i);
@@ -254,16 +265,17 @@ public class ReadCpuXml {
 					break;
 				case "family":
 					for (int j = 0; j < cores.size(); j++) {
-						if (cores.get(j).getArch().getFamily() == null) {
-							cores.get(j).getArch().setFamily(content);
+						if (cores.get(j).getArch().getMcpu() == null) {
+							cores.get(j).getArch().setMcpu(content);
+							SetArch(cores.get(j), content);
 						}
 					}
 
 					break;
 				case "arch":
 					for (int j = 0; j < cores.size(); j++) {
-						if (cores.get(j).getArch().getArchitecture() == null) {
-							cores.get(j).getArch().setArchitecture(content);
+						if (cores.get(j).getArch().getMarch() == null) {
+							cores.get(j).getArch().setMarch(content);
 						}
 					}
 
@@ -286,72 +298,72 @@ public class ReadCpuXml {
 			}
 		}
 	}
-	
-	public Cpu unitCpu(Cpu cpu,File file) throws Exception {
+
+	public Cpu unitCpu(Cpu cpu, File file) throws Exception {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
-//		System.out.println("cpuFile:   "+file.getName());
+		// System.out.println("cpuFile: "+file.getName());
 		document = db.parse(file);
-		if(file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
+		if (file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
 			cpu.setParentPath(file.getParentFile().getPath());
 		}
-		
+
 		NodeList nameList = document.getElementsByTagName("cpuName");
-		for(int i=0;i<nameList.getLength();i++) {
+		for (int i = 0; i < nameList.getLength(); i++) {
 			String cpuName = nameList.item(i).getFirstChild().getTextContent();
 			cpu.setCpuName(cpuName);
 		}
 
 		NodeList coreList = document.getElementsByTagName("core");
-		if(coreList.getLength() == 0) {
+		if (coreList.getLength() == 0) {
 			NodeList cpuList = document.getElementsByTagName("cpu");
 			Node cNode = cpuList.item(0);
 			NodeList cList = cNode.getChildNodes();
 			List<Core> cores = cpu.getCores();
-			if(cores.size() == 0) {//未配置内核个数
+			if (cores.size() == 0) {// 未配置内核个数
 				Core core = new Core();
-				handleNoListOneCoreNode(core,cList);
+				handleNoListOneCoreNode(core, cList);
 				cores.add(core);
-			}else {
-				handleNoListMultipleCoreNode(cList,cores);
+			} else {
+				handleNoListMultipleCoreNode(cList, cores);
 			}
-		}else {
-			if(cpu.getCoreNum() == 0) {
+		} else {
+			if (cpu.getCoreNum() == 0) {
 				cpu.setCoreNum(coreList.getLength());
 			}
 			List<Core> cores;
 			boolean isClean = true;
-			if(cpu.getCores().size() == 0) {
+			if (cpu.getCores().size() == 0) {
 				cores = new ArrayList<Core>();
-			}else {
+			} else {
 				isClean = false;
 				cores = cpu.getCores();
 			}
-			for(int i=0;i<coreList.getLength();i++) {
+			for (int i = 0; i < coreList.getLength(); i++) {
 				Core core;
 				boolean memoryConfiged = false;
-				if(cpu.getCores().size() == 0) {
+				if (cpu.getCores().size() == 0) {
 					core = new Core();
-				}else {				
+				} else {
 					core = cpu.getCores().get(i);
 				}
-				if(core.getMemorys().size()!=0) {
+				if (core.getMemorys().size() != 0) {
 					memoryConfiged = true;
 				}
-				Node node = coreList.item(i);  
-		        NamedNodeMap namedNodeMap = node.getAttributes();  
-		        String id = namedNodeMap.getNamedItem("id").getTextContent();
-		        core.setId(Integer.parseInt(id));
-		        handleMultipleCoreListNode(node, core, memoryConfiged);
-		        if(isClean) {
-		        	cores.add(core);
-		        }
-				
+				Node node = coreList.item(i);
+				NamedNodeMap namedNodeMap = node.getAttributes();
+				String id = namedNodeMap.getNamedItem("id").getTextContent();
+				core.setId(Integer.parseInt(id));
+				handleMultipleCoreListNode(node, core, memoryConfiged);
+				if (isClean) {
+					cores.add(core);
+				}
+
 			}
-			if(isClean) {
+			if (isClean) {
 				cpu.setCores(cores);
 			}
-			
+
 		}
-		return cpu;   
+		return cpu;
 	}
 }

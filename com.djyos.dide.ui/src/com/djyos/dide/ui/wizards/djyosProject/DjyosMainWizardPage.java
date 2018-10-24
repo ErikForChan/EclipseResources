@@ -76,14 +76,14 @@ public class DjyosMainWizardPage extends WizardPage {
 	private DideHelper dideHelper = new DideHelper();
 	private static IntegerFieldEditor fIbootSize;
 	private static Composite ibootComposite;
-	public String myToolchain = null;
+	// public String myToolchain = null;
 
 	private Composite right;
 	private Tree tree;
 	private Button showSup;
 	private Label rightLabel, categorySelectedLabel;
 	private Text fProjectNameField, fBoardNameField;
-	private Combo fToolchianCombo;
+	// private Combo fToolchianCombo;
 	private static Text projectTypeDesc;
 	public CWizardHandler h_selected;
 	private static Button[] radioBtns = new Button[4];
@@ -187,6 +187,25 @@ public class DjyosMainWizardPage extends WizardPage {
 
 	private void createDynamicGroup(Composite composite) {
 		// TODO Auto-generated method stub
+
+		// System.out.println("Java运行环境的版本:" + System.getProperty("java.version"));
+		// System.out.println("Java运行环境的生产商:" + System.getProperty("java.vendor"));
+		// System.out.println("Java的安装路径：" + System.getProperty("java.home"));
+		// System.out.println("虚拟机实现的版本：" + System.getProperty("java.vm.version"));
+		// System.out.println("虚拟机实现的生产商：" + System.getProperty("java.vm.vendor"));
+		// System.out.println("默认的临时文件路径：" + System.getProperty("java.io.tmpdir"));
+		// System.out.println("用户的账户名称：" + System.getProperty("user.name"));
+		// System.out.println("当前用户工作目录：" + System.getProperty("user.dir"));
+		// System.out.println("用户的home路径：" + System.getProperty("user.home"));
+		// System.out.println("操作系统的名称:" + System.getProperty("os.name"));
+		// System.out.println("操作系统的版本：" + System.getProperty("os.version"));
+		// System.out.println("操作系统的架构：" + System.getProperty("os.arch"));
+		// System.out.println("运行环境规范的名称:" +
+		// System.getProperty("java.specification.name"));
+		// System.out.println("Java类格式化的版本号：" +
+		// System.getProperty("java.class.version"));
+		// System.out.println("类所在的路径：" + System.getProperty("java.class.path"));
+
 		creatTemplateUI(composite);
 		createProjectAndBoardGroup(composite);
 		// createBoardGroup(composite);
@@ -220,20 +239,20 @@ public class DjyosMainWizardPage extends WizardPage {
 		test1Btn.setVisible(false);
 
 		// 工具链
-		Label toolchainLabel = new Label(projectGroup, SWT.NONE);
-		toolchainLabel.setText("ToolChain:");
-		fToolchianCombo = new Combo(projectGroup, SWT.READ_ONLY);
-		fToolchianCombo.setLayoutData(data);
-		fToolchianCombo.add("Cross-ARM-GCC");
-		fToolchianCombo.add("CSky-abiv1-Elf-Toolchain");
-		fToolchianCombo.add("CSky-abiv2-Elf-Toolchain");
-		fToolchianCombo.select(0);
-		BidiUtils.applyBidiProcessing(fToolchianCombo, BidiUtils.BTD_DEFAULT);
-		Button test2Btn = new Button(projectGroup, SWT.PUSH);
-		test2Btn.setVisible(false);
-		Button test3Btn = new Button(projectGroup, SWT.PUSH);
-		test3Btn.setVisible(false);
-		myToolchain = fToolchianCombo.getText().trim();
+		// Label toolchainLabel = new Label(projectGroup, SWT.NONE);
+		// toolchainLabel.setText("ToolChain:");
+		// fToolchianCombo = new Combo(projectGroup, SWT.READ_ONLY);
+		// fToolchianCombo.setLayoutData(data);
+		// fToolchianCombo.add("Cross-ARM-GCC");
+		// // fToolchianCombo.add("CSky-abiv1-Elf-Toolchain");
+		// fToolchianCombo.add("CSky-abiv2-Elf-Toolchain");
+		// fToolchianCombo.select(0);
+		// BidiUtils.applyBidiProcessing(fToolchianCombo, BidiUtils.BTD_DEFAULT);
+		// Button test2Btn = new Button(projectGroup, SWT.PUSH);
+		// test2Btn.setVisible(false);
+		// Button test3Btn = new Button(projectGroup, SWT.PUSH);
+		// test3Btn.setVisible(false);
+		// myToolchain = fToolchianCombo.getText().trim();
 
 		// 板件
 		Label boardLabel = new Label(projectGroup, SWT.NONE);
@@ -249,14 +268,14 @@ public class DjyosMainWizardPage extends WizardPage {
 		createBoardBtn.setText("Create");// BoardWizard
 
 		// myToolchain
-		fToolchianCombo.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				super.widgetSelected(e);
-				myToolchain = fToolchianCombo.getText().trim();
-			}
-		});
+		// fToolchianCombo.addSelectionListener(new SelectionAdapter() {
+		// @Override
+		// public void widgetSelected(SelectionEvent e) {
+		// // TODO Auto-generated method stub
+		// super.widgetSelected(e);
+		// myToolchain = fToolchianCombo.getText().trim();
+		// }
+		// });
 		// 创建板件按钮的监听
 		createBoardBtn.addSelectionListener(new SelectionAdapter() {
 
@@ -290,16 +309,18 @@ public class DjyosMainWizardPage extends WizardPage {
 						defaultCpu = dialog.defaultCpu;
 						selectedBoard = dialog.getSelectBoard();
 						selectedCore = dialog.getSelectCore();
-						fBoardNameField.setText(boardName);
 						boardModuleTrimPath = dialog.boardModuleTrimPath;
 						File ldsFile = new File(selectedBoard.getBoardPath() + "/lds");
 						File[] ldsFiles = ldsFile.listFiles();
 						if (ldsFiles.length < 3) {
 							radioBtns[0].setSelection(false);
 							radioBtns[0].setEnabled(false);
+
 							radioBtns[1].setSelection(true);
+
 							radioBtns[2].setSelection(false);
 							radioBtns[2].setEnabled(false);
+
 							radioBtns[3].setSelection(false);
 							radioBtns[3].setEnabled(false);
 							projectTypeDesc.setText("用于开发iboot的工程，用于App和iboot由不同团队维护的情况");
@@ -310,12 +331,12 @@ public class DjyosMainWizardPage extends WizardPage {
 							radioBtns[2].setEnabled(true);
 							radioBtns[3].setEnabled(true);
 						}
+						fBoardNameField.setText(boardName);
 						File mldsFile = new File(selectedBoard.getBoardPath() + "/lds/memory.lds");
 						String ibootSize = readIbootSize(mldsFile, "IbootSize");
 						if (ibootSize != null) {
 							fIbootSize.getTextControl(ibootComposite).setText(ibootSize);
 						}
-
 					}
 				}
 			}
@@ -636,7 +657,7 @@ public class DjyosMainWizardPage extends WizardPage {
 			nmWizard.addedComptCfg = true;
 		} else {
 			if (clickedNext) {
-				nmWizard.importProject(projectPath, selectedBoard, haveApp(), haveIboot());
+				nmWizard.importProject(projectPath, selectedBoard, selectedCore, haveApp(), haveIboot());
 				nmWizard.clickedMianNext = true;
 			}
 		}

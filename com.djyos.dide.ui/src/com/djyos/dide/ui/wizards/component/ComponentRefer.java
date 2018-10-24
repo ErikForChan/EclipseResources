@@ -13,13 +13,13 @@ import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 public class ComponentRefer {
 	private DideHelper dideHelper = new DideHelper();
 	private String didePath = dideHelper.getDIDEPath();
-	
+
 	public List<String> getClearCompPaths(String boardName) {
-		String componentPath = didePath+"djysrc/component";
-		String djyosPath = didePath+"djysrc/djyos";
-		String thirdPath = didePath+"djysrc/third";
-		String loaderPath = didePath+"djysrc/loader";
-		String demoPath =  dideHelper.getDemoBoardFilePath() + "/" + boardName;
+		String componentPath = didePath + "djysrc/component";
+		String djyosPath = didePath + "djysrc/djyos";
+		String thirdPath = didePath + "djysrc/third";
+		String loaderPath = didePath + "djysrc/loader";
+		String demoPath = dideHelper.getDemoBoardFilePath() + "/" + boardName;
 		String userPath = dideHelper.getUserBoardFilePath() + "/" + boardName;
 		List<String> componentPaths = new ArrayList<String>();
 		componentPaths.add(componentPath);
@@ -30,8 +30,9 @@ public class ComponentRefer {
 		componentPaths.add(thirdPath);
 		return componentPaths;
 	}
-	
+
 	public boolean isComponent(File file) {
+
 		FileReader reader = null;
 		List<String> allStrings = new ArrayList<String>();
 		try {
@@ -67,5 +68,9 @@ public class ComponentRefer {
 
 		return false;
 	}
-	
+
+	// public boolean idIncluded() {
+	//
+	// }
+
 }

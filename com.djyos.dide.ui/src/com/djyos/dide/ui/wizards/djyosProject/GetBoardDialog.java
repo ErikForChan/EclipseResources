@@ -1,21 +1,17 @@
 package com.djyos.dide.ui.wizards.djyosProject;
 
-import java.awt.Color;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.internal.resources.Folder;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.cdt.internal.ui.ICHelpContextIds;
+import org.eclipse.cdt.internal.ui.dialogs.StatusInfo;
+import org.eclipse.cdt.internal.ui.preferences.PreferencesMessages;
+import org.eclipse.cdt.internal.ui.wizards.dialogfields.DialogField;
+import org.eclipse.cdt.internal.ui.wizards.dialogfields.IDialogFieldListener;
+import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
+import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.window.Window;
@@ -28,19 +24,14 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
-import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
-import org.eclipse.ui.internal.wizards.datatransfer.DataTransferMessages;
 
+import com.djyos.dide.ui.wizards.board.Board;
 import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
 import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
 import com.djyos.dide.ui.wizards.component.Component;
@@ -48,38 +39,25 @@ import com.djyos.dide.ui.wizards.cpu.Cpu;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 import com.djyos.dide.ui.wizards.cpu.core.Core;
 import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
-
-import com.djyos.dide.ui.wizards.board.Board;
-import com.djyos.dide.ui.wizards.djyosProject.SelectBoardDialog;
-import com.djyos.dide.ui.wizards.djyosProject.SelectCoreDialog;
-import com.djyos.dide.ui.wizards.djyosProject.SelectCpuDialog;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-
-import org.eclipse.cdt.utils.ui.controls.ControlFactory;
-
-import org.eclipse.cdt.internal.ui.ICHelpContextIds;
-import org.eclipse.cdt.internal.ui.dialogs.StatusInfo;
-import org.eclipse.cdt.internal.ui.preferences.PreferencesMessages;
-import org.eclipse.cdt.internal.ui.wizards.dialogfields.ComboDialogField;
-import org.eclipse.cdt.internal.ui.wizards.dialogfields.DialogField;
-import org.eclipse.cdt.internal.ui.wizards.dialogfields.IDialogFieldListener;
-import org.eclipse.cdt.internal.ui.wizards.dialogfields.StringDialogField;
 
 public class GetBoardDialog extends StatusDialog {
 
-	private Text boardSelectField,boardDetailsDesc, MCUNameField, coreSelectFiled;
+	private Text boardSelectField, boardDetailsDesc, MCUNameField, coreSelectFiled;
 	private StringDialogField[] fDialogFields = new StringDialogField[2];
 	private String boardName = "";
 	String boardModuleTrimPath = "";
 	private Board boardSelected;
 	private Core coreSelected;
 	private List<Cpu> boardCpusList = new ArrayList<Cpu>();
-	List<Chip> chips = null; 
-	List<Component> components = null;
+	private List<Chip> chips = null;
+	private List<Component> components = null;
 	private Cpu selectCpu;
 	Cpu defaultCpu;
+	private ReadCpuXml rcx = new ReadCpuXml();
+	private List<Cpu> cpusList = rcx.getAllCpus();
 	private Composite content, baordDescCpt;
-	private Button importMCUBtn,selectCoreBtn;
+	private Button importMCUBtn, selectCoreBtn;
 	private DideHelper dideHelper = new DideHelper();
 
 	public String getBoardName() {
@@ -93,11 +71,11 @@ public class GetBoardDialog extends StatusDialog {
 	public Board getSelectBoard() {
 		return boardSelected;
 	}
-	
+
 	public Core getSelectCore() {
 		return coreSelected;
 	}
-	
+
 	private class CompilerImportBoardAdapter implements IDialogFieldListener {
 		@Override
 		public void dialogFieldChanged(DialogField field) {
@@ -139,9 +117,9 @@ public class GetBoardDialog extends StatusDialog {
 				}
 			}
 			String coreDesc = "";
-			if(coreSelected!=null) {
-				String arch = coreSelected.getArch().getArchitecture();
-				String family = coreSelected.getArch().getFamily();
+			if (coreSelected != null) {
+				String arch = coreSelected.getArch().getMarch();
+				String family = coreSelected.getArch().getMcpu();
 				String fpuType = coreSelected.getFpuType();
 				String resetAddr = coreSelected.getResetAddr();
 				String memoryString = "";
@@ -155,54 +133,48 @@ public class GetBoardDialog extends StatusDialog {
 								+ memory.getSize();
 					}
 				}
-				coreDesc += "\t架构: " + arch + "\n\t家族: " + family + "\n\t浮点: " + fpuType
-						+ "\n\t复位地址: " + resetAddr + "\n\t内存:  " + memoryString + "\n";	
+				coreDesc += "\t架构: " + arch + "\n\t家族: " + family + "\n\t浮点: " + fpuType + "\n\t复位地址: " + resetAddr
+						+ "\n\t内存:  " + memoryString + "\n";
 			}
-
 
 			String chipString = "";
 			String peripheralString = "";
 			OnBoardCpu onBoardCpu = new OnBoardCpu();
 
-			for(int i=0;i<boardSelected.getOnBoardCpus().size();i++) {
-				if(boardSelected.getOnBoardCpus().get(i).getCpuName().equals(selectCpu.getCpuName())) {
+			for (int i = 0; i < boardSelected.getOnBoardCpus().size(); i++) {
+				if (boardSelected.getOnBoardCpus().get(i).getCpuName().equals(selectCpu.getCpuName())) {
 					onBoardCpu = boardSelected.getOnBoardCpus().get(i);
 					break;
 				}
 			}
-			
-			chips = onBoardCpu.getChips(); 
+
+			chips = onBoardCpu.getChips();
 			components = onBoardCpu.getPeripherals();
-	
-			for(int i=0;i<chips.size();i++) {
-				chipString+="  "+chips.get(i).getChipName();
+
+			for (int i = 0; i < chips.size(); i++) {
+				chipString += "  " + chips.get(i).getChipName();
 			}
-			for(int i=0;i<components.size();i++) {
-				peripheralString+="  "+components.get(i).getName();
+			for (int i = 0; i < components.size(); i++) {
+				peripheralString += "  " + components.get(i).getName();
 			}
-			
-			boardDetailsDesc.setText("Cpu: " + selectCpu.getCpuName() +"\n" 
-			+coreDesc	
-			+ "主晶振频率: "+onBoardCpu.getMianClk() +"\n" 
-			+ "Rtc钟频率: " +onBoardCpu.getRtcClk() +"\n"
-			+ "板载设备: " +chipString+ "\n" 
-			+ "Cpu外设: " +peripheralString);
+
+			boardDetailsDesc.setText("Cpu: " + selectCpu.getCpuName() + "\n" + coreDesc + "主晶振频率: "
+					+ onBoardCpu.getMianClk() + "\n" + "Rtc钟频率: " + onBoardCpu.getRtcClk() + "\n" + "板载设备: "
+					+ chipString + "\n" + "Cpu外设: " + peripheralString);
 		}
 	};
-	
+
 	private Listener clkModifyListener = e -> {
-			String coreClk = fDialogFields[1].getTextControl(content).getText().trim();
-			Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");  
-	        boolean isInt =  pattern.matcher(coreClk).matches();
-	        if(!isInt) {
-	        	fDialogFields[1].getTextControl(content).setText("");
-	        	IWorkbenchWindow window = PlatformUI.getWorkbench()
-	    				.getActiveWorkbenchWindow();
-	        	MessageDialog.openError(window.getShell(), "提示",
-						"请输入正整数");
-	        }			
+		String coreClk = fDialogFields[1].getTextControl(content).getText().trim();
+		Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
+		boolean isInt = pattern.matcher(coreClk).matches();
+		if (!isInt) {
+			fDialogFields[1].getTextControl(content).setText("");
+			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+			MessageDialog.openError(window.getShell(), "提示", "请输入正整数");
+		}
 	};
-	
+
 	@Override
 	protected void okPressed() {
 		// TODO Auto-generated method stub
@@ -210,21 +182,16 @@ public class GetBoardDialog extends StatusDialog {
 		String coreName = coreSelectFiled.getText().trim();
 		String coreClk = fDialogFields[1].getTextControl(content).getText().trim();
 		boardName = boardSelectField.getText().trim();
-		IWorkbenchWindow window = PlatformUI.getWorkbench()
-				.getActiveWorkbenchWindow();
-		if(boardName.equals("")) {
-			MessageDialog.openError(window.getShell(), "提示",
-					"请选择板件");
-		}else if(cpuName.equals("")){
-			MessageDialog.openError(window.getShell(), "提示",
-					"请选择Cpu");
-		}else if(coreName.equals("")){
-			MessageDialog.openError(window.getShell(), "提示",
-					"请选择内核");
-		}else if(coreClk.equals("")){
-			MessageDialog.openError(window.getShell(), "提示",
-					"请选择内核时钟");
-		}else {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		if (boardName.equals("")) {
+			MessageDialog.openError(window.getShell(), "提示", "请选择板件");
+		} else if (cpuName.equals("")) {
+			MessageDialog.openError(window.getShell(), "提示", "请选择Cpu");
+		} else if (coreName.equals("")) {
+			MessageDialog.openError(window.getShell(), "提示", "请选择内核");
+		} else if (coreClk.equals("")) {
+			MessageDialog.openError(window.getShell(), "提示", "请选择内核时钟");
+		} else {
 			coreSelected.setCoreClk(Integer.parseInt(coreClk));
 			for (int i = 0; i < boardCpusList.size(); i++) {
 				if (boardCpusList.get(i).getCpuName().equals(cpuName)) {
@@ -234,8 +201,8 @@ public class GetBoardDialog extends StatusDialog {
 			}
 			selectCpu = defaultCpu;
 			super.okPressed();
-		}		
-		
+		}
+
 	}
 
 	public GetBoardDialog(Shell parent) {
@@ -253,7 +220,7 @@ public class GetBoardDialog extends StatusDialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
-//		String tipText = "板件模板会陆续添加.";
+		// String tipText = "板件模板会陆续添加.";
 		CompilerImportBoardAdapter adapter = new CompilerImportBoardAdapter();
 		Composite composite = (Composite) super.createDialogArea(parent);
 		composite.setSize(500, 500);
@@ -261,12 +228,12 @@ public class GetBoardDialog extends StatusDialog {
 		layout.marginTop = 5;
 		layout.numColumns = 1;
 		layout.marginLeft = 5;
-//		Composite tipCpt = new Composite(composite, SWT.NONE);
-//		tipCpt.setLayout(layout);
-//		tipCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//		Label tipLabel = new Label(tipCpt, SWT.NONE);
-//		tipLabel.setText(tipText);
-//		tipLabel.setForeground(tipCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
+		// Composite tipCpt = new Composite(composite, SWT.NONE);
+		// tipCpt.setLayout(layout);
+		// tipCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		// Label tipLabel = new Label(tipCpt, SWT.NONE);
+		// tipLabel.setText(tipText);
+		// tipLabel.setForeground(tipCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
 
 		content = new Composite(composite, SWT.NONE);
 		layout.numColumns = 3;
@@ -286,7 +253,7 @@ public class GetBoardDialog extends StatusDialog {
 				handleImportButtonPressed();
 			}
 		});
-//		boardSelectField.addListener(SWT.Modify, boardModifyListener);
+		// boardSelectField.addListener(SWT.Modify, boardModifyListener);
 
 		Label MCULabel = new Label(content, SWT.NONE);
 		MCULabel.setLayoutData(new GridData(GridData.BEGINNING));
@@ -304,14 +271,14 @@ public class GetBoardDialog extends StatusDialog {
 			}
 
 		});
-		
+
 		Label CoreLabel = new Label(content, SWT.NONE);
 		CoreLabel.setLayoutData(new GridData(GridData.BEGINNING));
 		CoreLabel.setText("内核" + ":    ");
 		coreSelectFiled = new Text(content, SWT.BORDER);
 		coreSelectFiled.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		coreSelectFiled.setEnabled(false);
-	    selectCoreBtn = new Button(content, SWT.PUSH);
+		selectCoreBtn = new Button(content, SWT.PUSH);
 		selectCoreBtn.setEnabled(false);
 		selectCoreBtn.setText(" Select...  ");
 		selectCoreBtn.addSelectionListener(new SelectionAdapter() {
@@ -340,16 +307,8 @@ public class GetBoardDialog extends StatusDialog {
 		boardDetailsDesc = new Text(baordDescCpt, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
 		boardDetailsDesc.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-		boardDetailsDesc.setText("Cpu: \n" 
-		+ "\t架构: \n"
-		+ "\t家族: \n"
-		+ "\t浮点: \n"
-		+ "\t复位地址: \n"
-		+ "\t内存: \n"
-		+ "主晶振频率: \n" 
-		+ "Rtc钟频率: \n"
-		+ "板载设备: \n" 
-		+ "Cpu外设: ");
+		boardDetailsDesc.setText("Cpu: \n" + "\t架构: \n" + "\t家族: \n" + "\t浮点: \n" + "\t复位地址: \n" + "\t内存: \n"
+				+ "主晶振频率: \n" + "Rtc钟频率: \n" + "板载设备: \n" + "Cpu外设: ");
 
 		boardDetailsDesc.setEditable(false);
 		super.createDialogArea(parent);
@@ -359,16 +318,16 @@ public class GetBoardDialog extends StatusDialog {
 	protected void handleSelectCoreButtonPressed() {
 		// TODO Auto-generated method stub
 		List<Core> cores = selectCpu.getCores();
-		SelectCoreDialog dialog = new SelectCoreDialog(getShell(),cores);
-		if(dialog.open() == Window.OK) {
+		SelectCoreDialog dialog = new SelectCoreDialog(getShell(), cores);
+		if (dialog.open() == Window.OK) {
 			coreSelected = dialog.getSelectCore();
-			for(int i=0;i<cores.size();i++) {
-				if(coreSelected.equals(cores.get(i))) {
-					coreSelectFiled.setText("Core"+(i+1));
+			for (int i = 0; i < cores.size(); i++) {
+				if (coreSelected.equals(cores.get(i))) {
+					coreSelectFiled.setText("Core" + (i + 1));
 				}
 			}
 		}
-		
+
 	}
 
 	protected void handleChooseButtonPressed() {
@@ -377,12 +336,12 @@ public class GetBoardDialog extends StatusDialog {
 			selectCpu = dialog.getSelectCpu();
 			MCUNameField.setText(selectCpu.getCpuName());
 			List<Core> cores = selectCpu.getCores();
-			if (cores.size()<2) {
+			if (cores.size() < 2) {
 				coreSelected = cores.get(0);
 				coreSelectFiled.setText("Core1");
 				selectCoreBtn.setEnabled(false);
 				// boardSelected.setCpu(selectCpu);
-			}else {
+			} else {
 				selectCoreBtn.setEnabled(true);
 			}
 		}
@@ -400,31 +359,29 @@ public class GetBoardDialog extends StatusDialog {
 			boardSelected = dialog.getSelectBoard();
 			boardSelectField.setText(boardSelected.getBoardName());
 			List<OnBoardCpu> cpusOn = boardSelected.getOnBoardCpus();
-			ReadCpuXml rcx = new ReadCpuXml();
-			List<Cpu> cpusList = rcx.getAllCpus();
 			for (int i = 0; i < cpusOn.size(); i++) {
 				String cpuName = cpusOn.get(i).getCpuName();
-				for(int j=0;j<cpusList.size();j++) {
-					if(cpuName.equals(cpusList.get(j).getCpuName())){
+				for (int j = 0; j < cpusList.size(); j++) {
+					if (cpuName.equals(cpusList.get(j).getCpuName())) {
 						boardCpusList.add(cpusList.get(j));
 						break;
 					}
 				}
 			}
-			if(boardCpusList.size()<2) {
+			if (boardCpusList.size() < 2) {
 				selectCpu = boardCpusList.get(0);
 				MCUNameField.setText(selectCpu.getCpuName());
 				List<Core> cores = selectCpu.getCores();
-				if (cores.size()<2) {
+				if (cores.size() < 2) {
 					importMCUBtn.setEnabled(false);
 					coreSelected = cores.get(0);
 					coreSelectFiled.setText("Core1");
 					selectCoreBtn.setEnabled(false);
 					// boardSelected.setCpu(selectCpu);
-				}else {
+				} else {
 					selectCoreBtn.setEnabled(true);
 				}
-			}else {
+			} else {
 				importMCUBtn.setEnabled(true);
 			}
 		}
@@ -437,6 +394,6 @@ public class GetBoardDialog extends StatusDialog {
 		super.configureShell(shell);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(shell, ICHelpContextIds.TODO_TASK_INPUT_DIALOG);
 	}
-	
+
 	private String[] BoardDetailsTextLabels = { "CPU", "内核时钟" };
 }

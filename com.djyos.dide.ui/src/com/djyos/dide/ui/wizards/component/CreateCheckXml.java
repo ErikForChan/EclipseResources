@@ -6,21 +6,16 @@ import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import com.djyos.dide.ui.wizards.component.Component;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 
 public class CreateCheckXml {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -35,9 +30,6 @@ public class CreateCheckXml {
 
 			Element componentElement = document.createElement("component");
 			for (int i = 0; i < cmpnts.size(); i++) {
-
-				System.out.println(
-						"cmpnts.get(i).getName():   " + cmpnts.get(i).getName() + "  " + cmpnts.get(i).isSelect());
 				Element elment = document.createElement(cmpnts.get(i).getName());
 				elment.setTextContent(cmpnts.get(i).isSelect() ? "true" : "false");
 				componentElement.appendChild(elment);

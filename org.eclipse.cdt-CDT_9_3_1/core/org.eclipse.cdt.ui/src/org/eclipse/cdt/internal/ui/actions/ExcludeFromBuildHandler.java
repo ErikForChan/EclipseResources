@@ -11,9 +11,21 @@
  *******************************************************************************/
 package org.eclipse.cdt.internal.ui.actions;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -39,6 +51,9 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ListSelectionDialog;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICContainer;
@@ -53,7 +68,6 @@ import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.cdt.ui.newui.AbstractPage;
 
 import org.eclipse.cdt.internal.ui.newui.Messages;
-
 
 /**
  * Handler for command that excludes resources from build.
@@ -71,10 +85,10 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 
 	protected ISelection getSelection(Object context) {
 		Object s = HandlerUtil.getVariable(context, ISources.ACTIVE_MENU_SELECTION_NAME);
-        if (s instanceof ISelection) {
-        	return (ISelection) s;
-        }
-	    return null;
+		if (s instanceof ISelection) {
+			return (ISelection) s;
+		}
+		return null;
 	}
 
 	public void setEnabledFromSelection(ISelection selection) {
@@ -86,18 +100,17 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 			// case for context menu
 			Object[] obs = null;
 			if (selection instanceof IStructuredSelection) {
-				obs = ((IStructuredSelection)selection).toArray();
-			}
-			else if (selection instanceof ITextSelection) {
+				obs = ((IStructuredSelection) selection).toArray();
+			} else if (selection instanceof ITextSelection) {
 				IFile file = getFileFromActiveEditor();
 				if (file != null)
 					obs = Collections.singletonList(file).toArray();
 			}
 			if (obs != null && obs.length > 0) {
-				for (int i=0; i<obs.length && cfgsOK; i++) {
+				for (int i = 0; i < obs.length && cfgsOK; i++) {
 					// if project selected, don't do anything
 					if ((obs[i] instanceof IProject) || (obs[i] instanceof ICProject)) {
-						cfgsOK=false;
+						cfgsOK = false;
 						break;
 					}
 					IResource res = null;
@@ -110,13 +123,15 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 					}
 					if (res != null) {
 						ICConfigurationDescription[] cfgds = getCfgsRead(res);
-						if (cfgds == null || cfgds.length == 0) continue;
+						if (cfgds == null || cfgds.length == 0)
+							continue;
 
-						if (objects == null) objects = new ArrayList<IResource>();
+						if (objects == null)
+							objects = new ArrayList<IResource>();
 						objects.add(res);
 						if (cfgNames == null) {
 							cfgNames = new ArrayList<String>(cfgds.length);
-							for (int j=0; j<cfgds.length; j++) {
+							for (int j = 0; j < cfgds.length; j++) {
 								if (!canExclude(res, cfgds[j])) {
 									cfgNames = null;
 									cfgsOK = false;
@@ -128,9 +143,9 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 							if (cfgNames.size() != cfgds.length) {
 								cfgsOK = false;
 							} else {
-								for (int j=0; j<cfgds.length; j++) {
-									if (! canExclude(res, cfgds[j]) ||
-										! cfgNames.contains(cfgds[j].getName())) {
+								for (int j = 0; j < cfgds.length; j++) {
+									if (!canExclude(res, cfgds[j])
+											|| !cfgNames.contains(cfgds[j].getName())) {
 										cfgsOK = false;
 										break;
 									}
@@ -160,6 +175,68 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 		return null;
 	}
 
+	private void addIncludeFile(File file, String content) {
+		// 创建文件工厂实例
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		dbf.setIgnoringElementContentWhitespace(false);
+
+		try {
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			// 创建Document对象
+			Document xmldoc = db.parse(file);
+			List<String> componentPaths = new ArrayList<String>();
+
+			NodeList componentList = xmldoc.getElementsByTagName("file");
+			for (int i = 0; i < componentList.getLength(); i++) {
+				String componentPath = componentList.item(i).getFirstChild().getTextContent();
+				componentPaths.add(componentPath);
+			}
+
+			if (!componentPaths.contains(content)) {
+				Element root = xmldoc.getDocumentElement();
+				Element compt = xmldoc.createElement("file");
+				compt.setTextContent(content);
+				root.appendChild(compt);
+				root.appendChild(compt);
+				// 保存
+				TransformerFactory factory = TransformerFactory.newInstance();
+				Transformer former = factory.newTransformer();
+				former.transform(new DOMSource(xmldoc), new StreamResult(file));
+			}
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+	private void deleteIncFile(File file, String content) {
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		dbf.setIgnoringElementContentWhitespace(true);
+
+		try {
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			// 创建Document对象
+			Document xmldoc = db.parse(file);
+
+			Element root = xmldoc.getDocumentElement();
+			NodeList componentList = xmldoc.getElementsByTagName("file");
+			for (int i = 0; i < componentList.getLength(); i++) {
+				String componentPath = componentList.item(i).getFirstChild().getTextContent();
+				if (componentPath.equals(content)) {
+					root.removeChild(componentList.item(i));
+					break;
+				}
+			}
+			// 保存
+			TransformerFactory factory = TransformerFactory.newInstance();
+			Transformer former = factory.newTransformer();
+			former.transform(new DOMSource(xmldoc), new StreamResult(file));
+
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
 	private boolean canExclude(IResource res, ICConfigurationDescription cfg) {
 		IPath p = res.getFullPath();
 		ICSourceEntry[] ent = cfg.getSourceEntries();
@@ -168,12 +245,70 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 	}
 
 	private void setExclude(IResource res, ICConfigurationDescription cfg, boolean exclude) {
+
+		String srcLocation = new File(System.getProperty("user.dir")).getParentFile().getPath().replace("\\",
+				"/") + "/djysrc";
+		IProject project = res.getProject();
+
+		File diskFile = new File(project.getLocation().toString() + "/data/user_handled_files.xml");
+		String resRelativePath = res.getLocation().toString().replace(srcLocation, "");
+		if (!exclude) {
+			if (!diskFile.exists()) {
+				try {
+					diskFile.createNewFile();
+					createIncludeFile(diskFile, resRelativePath);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				System.out.println(
+						"res.getLocation().toString().replace(srcLocation, \"\"):  " + resRelativePath);
+				addIncludeFile(diskFile, resRelativePath);
+			}
+			// IFile userHandledFile = project.getFile("data/user_handled_files.xml");
+		} else {
+			deleteIncFile(diskFile, resRelativePath);
+		}
+
 		try {
-			System.out.println("setExclude2:  "+res.getFullPath()+"  "+(res instanceof IFolder));
-			ICSourceEntry[] newEntries = CDataUtil.setExcluded(res.getFullPath(), (res instanceof IFolder), exclude, cfg.getSourceEntries());
+			// System.out.println("setExclude2: " + res.getFullPath() + " " + (res
+			// instanceof IFolder));
+			ICSourceEntry[] newEntries = CDataUtil.setExcluded(res.getFullPath(), (res instanceof IFolder),
+					exclude, cfg.getSourceEntries());
 			cfg.setSourceEntries(newEntries);
 		} catch (CoreException e) {
 			CUIPlugin.log(e);
+		}
+	}
+
+	private void createIncludeFile(File diskFile, String resRelativePath) {
+		// TODO Auto-generated method stub
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder;
+		try {
+			factory.setIgnoringElementContentWhitespace(false);
+			builder = factory.newDocumentBuilder();
+			Document document = builder.newDocument();
+			Element rootElement = document.createElement("IncludeFiles");
+
+			Element compt = document.createElement("file");
+			compt.setTextContent(resRelativePath);
+			rootElement.appendChild(compt);
+
+			document.appendChild(rootElement);
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");// 设置缩进为2
+			transformer.setOutputProperty("encoding", "UTF-8");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(document), new StreamResult(writer));
+			transformer.transform(new DOMSource(document), new StreamResult(diskFile));
+			writer.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -185,23 +320,24 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 
 	private ICConfigurationDescription[] getCfgsRead(IResource res) {
 		IProject p = res.getProject();
-		if (!p.isOpen()) return null;
-		if (!CoreModel.getDefault().isNewStyleProject(p)) return null;
+		if (!p.isOpen())
+			return null;
+		if (!CoreModel.getDefault().isNewStyleProject(p))
+			return null;
 		ICProjectDescription prjd = CoreModel.getDefault().getProjectDescription(p, false);
-		if (prjd == null) return null;
+		if (prjd == null)
+			return null;
 		return prjd.getConfigurations();
 	}
 
 	private void openDialog() {
-		if (objects == null || objects.size() == 0) return;
+		if (objects == null || objects.size() == 0)
+			return;
 		// create list of configurations to delete
 
-		ListSelectionDialog dialog = new ListSelectionDialog(
-				CUIPlugin.getActiveWorkbenchShell(),
-				cfgNames,
-				createSelectionDialogContentProvider(),
-				new LabelProvider() {},
-				ActionMessages.ExcludeFromBuildAction_0);
+		ListSelectionDialog dialog = new ListSelectionDialog(CUIPlugin.getActiveWorkbenchShell(), cfgNames,
+				createSelectionDialogContentProvider(), new LabelProvider() {
+				}, ActionMessages.ExcludeFromBuildAction_0);
 		dialog.setTitle(ActionMessages.ExcludeFromBuildAction_1);
 
 		boolean[] status = new boolean[cfgNames.size()];
@@ -210,14 +346,16 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 			IResource res = it.next();
 			ICConfigurationDescription[] cfgds = getCfgsRead(res);
 			IPath p = res.getFullPath();
-			for (int i=0; i<cfgds.length; i++) {
+			for (int i = 0; i < cfgds.length; i++) {
 				boolean b = CDataUtil.isExcluded(p, cfgds[i].getSourceEntries());
-				if (b) status[i] = true;
+				if (b)
+					status[i] = true;
 			}
 		}
 		ArrayList<String> lst = new ArrayList<String>();
-		for (int i=0; i<status.length; i++)
-			if (status[i]) lst.add(cfgNames.get(i));
+		for (int i = 0; i < status.length; i++)
+			if (status[i])
+				lst.add(cfgNames.get(i));
 		if (lst.size() > 0)
 			dialog.setInitialElementSelections(lst);
 
@@ -227,20 +365,21 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 			while (it2.hasNext()) {
 				IResource res = it2.next();
 				IProject p = res.getProject();
-				if (!p.isOpen()) continue;
+				if (!p.isOpen())
+					continue;
 				// get writable description
 				ICProjectDescription prjd = CoreModel.getDefault().getProjectDescription(p, true);
-				if (prjd == null) continue;
+				if (prjd == null)
+					continue;
 				ICConfigurationDescription[] cfgds = prjd.getConfigurations();
-				for (int i=0; i<cfgds.length; i++) {
+				for (int i = 0; i < cfgds.length; i++) {
 					boolean exclude = false;
-					for (int j=0; j<selected.length; j++) {
+					for (int j = 0; j < selected.length; j++) {
 						if (cfgds[i].getName().equals(selected[j])) {
 							exclude = true;
 							break;
 						}
 					}
-					System.out.println("res:  "+res.getName()+"   "+res.getFullPath());
 					setExclude(res, cfgds[i], exclude);
 				}
 				try {
@@ -256,11 +395,17 @@ public class ExcludeFromBuildHandler extends AbstractHandler {
 	private IStructuredContentProvider createSelectionDialogContentProvider() {
 		return new IStructuredContentProvider() {
 			@Override
-			public Object[] getElements(Object inputElement) { return cfgNames.toArray(); }
+			public Object[] getElements(Object inputElement) {
+				return cfgNames.toArray();
+			}
+
 			@Override
-			public void dispose() {}
+			public void dispose() {
+			}
+
 			@Override
-			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {}
+			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+			}
 		};
 	}
 

@@ -321,7 +321,7 @@ public class ComponentCfgPage extends PropertyPage {
 			item.setControl(createTabContent(folder, appBspComponents, ibootBspComponents));
 
 			item = new TabItem(folder, SWT.NONE);
-			item.setText("三方组件"); //$NON-NLS-1$
+			item.setText("第三方组件"); //$NON-NLS-1$
 			item.setControl(createTabContent(folder, appThirdComponents, ibootThirdComponents));
 
 			item = new TabItem(folder, SWT.NONE);
@@ -501,7 +501,8 @@ public class ComponentCfgPage extends PropertyPage {
 							}
 							itemCompt = getComponentByName(item.getData().toString(),
 									isApp ? appCompontents : ibootCompontents);
-							if (itemCompt.getSelectable().equals("必选")) {
+							if (itemCompt.getSelectable().equals("required")
+									|| itemCompt.getSelectable().equals("必选组件")) {
 								item.setChecked(true);
 								MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
 							} else {
@@ -677,7 +678,7 @@ public class ComponentCfgPage extends PropertyPage {
 	private void createTreeCompItem(Component component, TreeItem root, List<Component> targetComponents,
 			boolean isApp) {
 		TreeItem item;// component,root,targetComponents,isApp
-		if (component.getSelectable().equals("必选")) {
+		if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
 			item = new TreeItem(root, 0);
 			item.setChecked(true);
 			component.setSelect(true);
@@ -722,7 +723,7 @@ public class ComponentCfgPage extends PropertyPage {
 
 		Component itemCompt = getComponentByName(item.getData().toString(), isApp ? appCompontents : ibootCompontents);
 		initConfiguration(itemCompt, false);
-		if (component.getSelectable().equals("必选")) {
+		if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
 			(isApp ? appRequiredItems : ibootRequiredItems).add(item);
 		}
 
@@ -746,32 +747,34 @@ public class ComponentCfgPage extends PropertyPage {
 		if (isApp) {
 			setInitComponents(typeCompontents, appCompontentsInit, appCmpntChecks);
 			for (int i = 0; i < typeCompontents.size(); i++) {
-				if (typeCompontents.get(i).getAttribute().equals("核心组件")) {
+				String attribute = typeCompontents.get(i).getAttribute();
+				if (attribute.equals("system") || attribute.equals("核心组件")) {
 					appCoreComponents.add(typeCompontents.get(i));
 					if (!appCompontentsChecked.contains(typeCompontents.get(i))) {
 						appCompontentsChecked.add(typeCompontents.get(i));
 					}
-				} else if (typeCompontents.get(i).getAttribute().equals("bsp组件")) {
+				} else if (attribute.equals("bsp") || attribute.equals("bsp组件")) {
 					appBspComponents.add(typeCompontents.get(i));
-				} else if (typeCompontents.get(i).getAttribute().equals("第三方组件")) {
+				} else if (attribute.equals("third") || attribute.equals("第三方组件")) {
 					appThirdComponents.add(typeCompontents.get(i));
-				} else if (typeCompontents.get(i).getAttribute().equals("用户组件")) {
+				} else if (attribute.equals("user") || attribute.equals("用户组件")) {
 					appUserComponents.add(typeCompontents.get(i));
 				}
 			}
 		} else {
 			setInitComponents(typeCompontents, ibootCompontentsInit, ibootCmpntChecks);
 			for (int i = 0; i < typeCompontents.size(); i++) {
-				if (typeCompontents.get(i).getAttribute().equals("核心组件")) {
+				String attribute = typeCompontents.get(i).getAttribute();
+				if (attribute.equals("system") || attribute.equals("核心组件")) {
 					ibootCoreComponents.add(typeCompontents.get(i));
 					if (!ibootCoreComponents.contains(typeCompontents.get(i))) {
 						ibootCoreComponents.add(typeCompontents.get(i));
 					}
-				} else if (typeCompontents.get(i).getAttribute().equals("bsp组件")) {
+				} else if (attribute.equals("bsp") || attribute.equals("bsp组件")) {
 					ibootBspComponents.add(typeCompontents.get(i));
-				} else if (typeCompontents.get(i).getAttribute().equals("第三方组件")) {
+				} else if (attribute.equals("third") || attribute.equals("第三方组件")) {
 					ibootThirdComponents.add(typeCompontents.get(i));
-				} else if (typeCompontents.get(i).getAttribute().equals("用户组件")) {
+				} else if (attribute.equals("user") || attribute.equals("用户组件")) {
 					ibootUserComponents.add(typeCompontents.get(i));
 				}
 			}
@@ -1693,8 +1696,6 @@ public class ComponentCfgPage extends PropertyPage {
 		}
 	}
 
-	// 判断组件是否被已经选中的组件依赖，如果被依赖，返回true
-
 	// 初始化配置参数的表格
 	public void creatProjectConfiure(File file, String coreConfigure, boolean isApp) {
 		List<Component> compontentsCheckedSort = null;
@@ -2312,7 +2313,7 @@ public class ComponentCfgPage extends PropertyPage {
 
 			IFolder ifolder = project.getFolder(notExcludeFolder);
 			IFile ifile = project.getFile(notExcludeFile);
-			boolean isCoreComp = components.get(i).getAttribute().equals("核心组件");
+			boolean isCoreComp = components.get(i).getAttribute().equals("system");
 			if (componentsInit.get(i).isSelect() != components.get(i).isSelect() || isCoreComp) {
 				for (int j = 0; j < conds.length; j++) {
 					if (isApp) {
