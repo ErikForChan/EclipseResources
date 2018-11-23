@@ -4491,7 +4491,7 @@
 
 
 			<tool
-				command="csky-abiv2-elf-gcc"
+				command="csky-elfabiv2-gcc"
 				commandLineGenerator="com.djyos.csky.abiv2.managedbuild.cross.CompilerCommandLineGenerator"
                 commandLinePattern="${COMMAND} ${cross_toolchain_flags} ${FLAGS} -c ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}"                             
 				errorParsers="org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GASErrorParser"
