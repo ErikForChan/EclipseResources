@@ -4621,7 +4621,7 @@
 
 
 			<tool
-				command="csky-abiv2-elf-gcc"
+				command="csky-elfabiv2-gcc"
 				commandLineGenerator="com.djyos.csky.abiv2.managedbuild.cross.CompilerCommandLineGenerator"
                 commandLinePattern="${COMMAND} ${cross_toolchain_flags} ${FLAGS} -c ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}"                             
 				errorParsers="org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser"
@@ -4804,7 +4804,7 @@
 				</option>
 			</tool>
 			<tool
-				command="csky-abiv2-elf-g++"
+				command="csky-elfabiv2-g++"
 				commandLineGenerator="com.djyos.csky.abiv2.managedbuild.cross.CompilerCommandLineGenerator"
                 commandLinePattern="${COMMAND} ${cross_toolchain_flags} ${FLAGS} -c ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}"                             
 				errorParsers="org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser"
@@ -5171,7 +5171,7 @@
 			</tool>
 
 			<tool
-				command="csky-abiv2-elf-gcc"
+				command="csky-elfabiv2-gcc"
                 commandLinePattern="${COMMAND} ${cross_toolchain_flags} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}"
 				id="com.djyos.csky.abiv2.managedbuild.cross.tool.c.linker"
 				name="%tool.abiv2.c.linker"
@@ -5356,7 +5356,7 @@
 				</option>
 			</tool>
 			<tool
-				command="csky-abiv2-elf-g++"
+				command="csky-elfabiv2-g++"
                 commandLinePattern="${COMMAND} ${cross_toolchain_flags} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}"
 				id="com.djyos.csky.abiv2.managedbuild.cross.tool.cpp.linker"
 				name="%tool.abiv2.cpp.linker"
@@ -5542,7 +5542,7 @@
 			</tool>
 
 			<tool
-				command="csky-abiv2-elf-ar"
+				command="csky-elfabiv2-ar"
 				commandLinePattern="$(call loop, 50, ${INPUTS}, ${COMMAND} ${FLAGS} ${OUTPUT})"
 				id="com.djyos.csky.abiv2.managedbuild.cross.tool.archiver"
 				isAbstract="false"
@@ -5561,7 +5561,7 @@
          <!-- ===== Additional Tools for secondary targets ================ -->
 
 			<tool
-				command="csky-abiv2-elf-objcopy"
+				command="csky-elfabiv2-objcopy"
 				commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT}"
 				id="com.djyos.csky.abiv2.managedbuild.cross.tool.createflash"
 				isAbstract="false"
@@ -5670,7 +5670,7 @@
 				</option>
 			</tool>
 			<tool
-				command="csky-abiv2-elf-objdump"
+				command="csky-elfabiv2-objdump"
 				commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT}"
 				id="com.djyos.csky.abiv2.managedbuild.cross.tool.createlisting"
 				isAbstract="false"
@@ -5846,7 +5846,7 @@
 				</option>
 			</tool>
 			<tool
-				command="csky-abiv2-elf-size"
+				command="csky-elfabiv2-size"
 				commandLinePattern="${COMMAND} ${FLAGS}"
 				id="com.djyos.csky.abiv2.managedbuild.cross.tool.printsize"
 				isAbstract="false"
