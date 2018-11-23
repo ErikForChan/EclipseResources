@@ -79,6 +79,8 @@ public class ModeledPageLayout implements IPageLayout {
 				result.add("com.djyos.dide.ui.wizards.NewDWizard1");
 				result.add("com.djyos.dide.ui.wizards.NewDWizard2");
 				result.add("com.djyos.dide.ui.wizards.NewDWizard3");
+				// result.add("com.djyos.dide.ui.wizards.NewDWizard4");
+				result.add("com.djyos.dide.ui.wizards.NewDWizard5");
 				// result.add("com.djyos.dide.ui.wizards.NewDWizard6");
 			} else {
 				for (String tag : model.getTags()) {
