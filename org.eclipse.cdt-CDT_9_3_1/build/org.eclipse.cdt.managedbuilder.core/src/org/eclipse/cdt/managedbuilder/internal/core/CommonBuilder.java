@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.ConsoleOutputStream;
@@ -742,7 +743,6 @@ public class CommonBuilder extends ACBuilder {
 		}
 	}
 
-	@SuppressWarnings("restriction")
 	public boolean build(int kind, CfgBuildInfo bInfo, IProgressMonitor monitor) throws CoreException {
 		if (VERBOSE)
 			outputTrace(bInfo.getProject().getName(), "building cfg " + bInfo.getConfiguration().getName() //$NON-NLS-1$
@@ -752,17 +752,44 @@ public class CommonBuilder extends ACBuilder {
 		/*
 		 * New
 		 */
-		IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
+		// IBuilder internalBuilder = ManagedBuildManager.getInternalBuilder();
 		Configuration configuration = (Configuration) bInfo.getConfiguration();
 		IProject project = bInfo.getProject();
 		String cfgName = configuration.getName();
 
 		CDTDideHelper helper = new CDTDideHelper();
+		String pattern = ".*_.*_.*"; //$NON-NLS-1$
+
+		if ((cfgName.startsWith("libos") && Pattern.matches(pattern, cfgName)) //$NON-NLS-1$
+				|| cfgName.startsWith("libOS")) { //$NON-NLS-1$
+			IFolder folder = project.getFolder(cfgName);
+			if (!folder.exists()) {
+				configuration.enableInternalBuilder(true);
+				builder = configuration.getEditableBuilder();
+				bInfo = getCfgBuildInfo(builder, true);
+			} else {
+				Boolean makefileExist = false;
+				IPath path = folder.getLocation();
+				File file = path.toFile();
+				for (File cfile : file.listFiles()) {
+					if (cfile.getName().equals("makefile")) { //$NON-NLS-1$
+						makefileExist = true;
+						break;
+					}
+				}
+				if (!makefileExist) {
+					configuration.enableInternalBuilder(true);
+					builder = configuration.getEditableBuilder();
+					bInfo = getCfgBuildInfo(builder, true);
+				}
+			}
+		}
 
 		boolean toContinue = true;
 		if (helper.isNoaBuild()) {
 			boolean aExist = false;
-			if (!(cfgName.startsWith("libos") || cfgName.startsWith("libOS"))) {
+			if (!(cfgName.startsWith("libos") || cfgName.startsWith("libOS"))
+					&& Pattern.matches(pattern, cfgName)) {
 				String[] members = cfgName.split("_");
 				String commonString = members[members.length - 2] + "_" + members[members.length - 1];
 				IFolder folder = project.getFolder("libos_" + commonString);
@@ -777,12 +804,6 @@ public class CommonBuilder extends ACBuilder {
 							break;
 						}
 					}
-					// IFile file = folder.getFile("libos_"+commonString+".a");
-					// if(file.exists()) {
-					// aExist = true;
-					// }else {
-					// aExist = false;
-					// }
 				}
 
 				if (!aExist) {
@@ -862,34 +883,6 @@ public class CommonBuilder extends ACBuilder {
 			}
 			checkCancel(monitor);
 		}
-
-		// if (configuration.getName().startsWith("libos") || configuration.getName().startsWith("libOS")) {
-		// if (!folder.exists()) {
-		// configuration.enableInternalBuilder(true);
-		// builder = configuration.getEditableBuilder();
-		// bInfo = getCfgBuildInfo(builder, true);
-		// }
-		// else {
-		// Boolean makefileExist = false;
-		// IPath path = folder.getLocation();
-		// File file = path.toFile();
-		// for (File cfile : file.listFiles()) {
-		// if (cfile.getName().equals("makefile")) {
-		// makefileExist = true;
-		// break;
-		// }
-		// }
-		// if (!makefileExist) {
-		// configuration.enableInternalBuilder(true);
-		// builder = configuration.getEditableBuilder();
-		// bInfo = getCfgBuildInfo(builder, true);
-		// }
-		// }
-		// }
-
-		/*
-		 * New
-		 */
 
 		return clean;
 	}

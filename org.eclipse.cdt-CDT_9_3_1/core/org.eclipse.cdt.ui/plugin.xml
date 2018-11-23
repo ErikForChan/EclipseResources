@@ -1808,7 +1808,7 @@
                retarget="true">
          </action>
          <action
-               definitionId="org.eclipse.cdt.ui.refactor.hide.method"
+               definitionId="org.eclipse.cdt.ui.refactor.hide.method" 
                label="%Refactoring.hideMethod.label"
                menubarPath="org.eclipse.jdt.ui.refactoring.menu/codingGroup"
                id="org.eclipse.cdt.ui.actions.HideMethod"
