@@ -11,7 +11,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import com.djyos.dide.ui.wizards.cpu.Cpu;
+import com.djyos.dide.ui.objects.Cpu;
 
 public class ReadCpusInfo {
 	private static DocumentBuilderFactory dbFactory = null;

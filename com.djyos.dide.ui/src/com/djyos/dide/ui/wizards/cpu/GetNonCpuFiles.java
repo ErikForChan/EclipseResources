@@ -4,19 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.djyos.dide.ui.wizards.board.Board;
-
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.djyosProject.tools.LinkHelper;
+import com.djyos.dide.ui.helper.DideHelper;
 
 public class GetNonCpuFiles {
-	private DideHelper dideHelper = new DideHelper();
-	private LinkHelper linkHelper = new LinkHelper();
-	private String didePath = dideHelper.getDIDEPath();
+	private String didePath = DideHelper.getDIDEPath();
 	private List<File> excludeCpuFiles = new ArrayList<File>();
-	
+
 	public List<File> getNonCpus() {
-		String sourcePath = didePath+"djysrc/bsp/cpudrv";
+		String sourcePath = didePath + "djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
 		travelFiles(sourceFile);
 		return excludeCpuFiles;
@@ -25,12 +20,12 @@ public class GetNonCpuFiles {
 	private void travelFiles(File file) {
 		// TODO Auto-generated method stub
 		File[] files = file.listFiles();
-		for(File f:files) {
-			if(f.isDirectory()) {
-				if(!f.getName().equals("include") && !f.getName().equals("src")) {
-					if(!isForCpu(f)) {
+		for (File f : files) {
+			if (f.isDirectory()) {
+				if (!f.getName().equals("include") && !f.getName().equals("src")) {
+					if (!isForCpu(f)) {
 						excludeCpuFiles.add(f);
-					}else {
+					} else {
 						travelFiles(f);
 					}
 				}
@@ -42,22 +37,21 @@ public class GetNonCpuFiles {
 		// TODO Auto-generated method stub
 		boolean isOk = false;
 		File[] files = file.listFiles();
-		for(File f:files) {
-			if(f.isDirectory()) {
-				if(!f.getName().equals("include") && !f.getName().equals("src")) {
+		for (File f : files) {
+			if (f.isDirectory()) {
+				if (!f.getName().equals("include") && !f.getName().equals("src")) {
 					isOk = isForCpu(f);
 				}
-			}else {
-				if(f.getName().startsWith("cpu") && f.getName().endsWith(".xml")) {
+			} else {
+				if (f.getName().startsWith("cpu") && f.getName().endsWith(".xml")) {
 					isOk = true;
 				}
 			}
-			if(isOk) {
+			if (isOk) {
 				break;
 			}
 		}
 		return isOk;
 	}
-	
-	
+
 }

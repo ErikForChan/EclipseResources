@@ -14,9 +14,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.djyos.dide.ui.wizards.cpu.Cpu;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.board.Board;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.objects.Cpu;
 
 public class CreateHardWareDesc {
 	private DideHelper dideHelper = new DideHelper();

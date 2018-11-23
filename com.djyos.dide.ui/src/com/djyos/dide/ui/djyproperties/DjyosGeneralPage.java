@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Djyos Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.djyos.com
+ *
+ * Contributors:
+ *     Djyos Team - Jiaming Chen
+ *******************************************************************************/
 package com.djyos.dide.ui.djyproperties;
 
 import java.io.BufferedReader;
@@ -23,38 +33,58 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PropertyPage;
+import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 
-import com.djyos.dide.ui.wizards.board.Board;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.objects.Chip;
+import com.djyos.dide.ui.objects.Component;
+import com.djyos.dide.ui.objects.Core;
+import com.djyos.dide.ui.objects.CoreMemory;
+import com.djyos.dide.ui.objects.Cpu;
+import com.djyos.dide.ui.objects.OnBoardCpu;
+import com.djyos.dide.ui.objects.OnBoardMemory;
 import com.djyos.dide.ui.wizards.board.ReadBoardXml;
-import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
-import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
-import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardMemory;
-import com.djyos.dide.ui.wizards.component.Component;
-import com.djyos.dide.ui.wizards.cpu.Cpu;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
-import com.djyos.dide.ui.wizards.cpu.core.Core;
-import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
 
+@SuppressWarnings("restriction")
 public class DjyosGeneralPage extends PropertyPage {
 	private Board sBoard = null;
 	private List<Cpu> cpusList = null;
 	private Button hiddenLibosButton;
 	boolean hiddenLibos;
 	private IProject project;
-	DideHelper dideHelper = new DideHelper();
 	String didePjPrefsPath;
 
 	@Override
 	protected Control createContents(Composite parent) {
+		// TODO Auto-generated method stub
+		Composite composite = new Composite(parent, SWT.NONE);
+		initializeDialogUnits(parent);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
+		composite.setLayout(new GridLayout(1, true));
+		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+		boolean srcExist = DideHelper.isDjysrcExist();
+		if (srcExist) {
+			createDynamicGroup(composite);
+		} else {
+			Label warningLabel = new Label(composite, SWT.NONE);
+			warningLabel.setText("Djyos源码不存在，请重启DIDE根据提示下载");
+		}
+
+		return composite;
+	}
+
+	private void createDynamicGroup(Composite parent) {
 		// TODO Auto-generated method stub
 		project = getProject();
 		didePjPrefsPath = project.getLocation().toString() + "/.settings/com.djyos.ui.prefs";
 		File didePrefsFile = new File(didePjPrefsPath);
 
 		if (didePrefsFile.exists()) {
-			hiddenLibos = dideHelper.targetIsTrue(didePrefsFile, "HIDDEN_LIBOS_COMPILER");
+			hiddenLibos = DideHelper.targetIsTrue(didePrefsFile, "HIDDEN_LIBOS_COMPILER");
 		} else {
 			hiddenLibos = false;
 		}
@@ -66,8 +96,7 @@ public class DjyosGeneralPage extends PropertyPage {
 		Group descGroup = ControlFactory.createGroup(parent, "硬件描述", 1);
 		descGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		descGroup.setLayout(new GridLayout());
-		ReadCpuXml rcx = new ReadCpuXml();
-		cpusList = rcx.getAllCpus();
+		cpusList = ReadCpuXml.getAllCpus();
 		getBoardAndCpu();
 		List<OnBoardCpu> onBoardCpus = sBoard.getOnBoardCpus();
 		String infos = "";
@@ -206,19 +235,16 @@ public class DjyosGeneralPage extends PropertyPage {
 
 		Label descLabel = new Label(descGroup, SWT.NONE);
 		descLabel.setText(infos);
-		return descGroup;
 	}
 
 	private void getBoardAndCpu() {
 		String srcPath = project.getLocation().toString() + "/src";
 		File hardWardInfoFile = new File(srcPath + "/../" + "data/hardware_info.xml");
-		ReadHardWareDesc rhwd = new ReadHardWareDesc();
-		List<String> hardwares = rhwd.getHardWares(hardWardInfoFile);
+		List<String> hardwares = ReadHardWareDesc.getHardWares(hardWardInfoFile);
 		String cpuName = hardwares.get(1);
 		String boardName = hardwares.get(0);
 
-		ReadBoardXml rbx = new ReadBoardXml();
-		List<Board> boards = rbx.getAllBoards();
+		List<Board> boards = ReadBoardXml.getAllBoards();
 
 		for (int i = 0; i < boards.size(); i++) {
 			if (boards.get(i).getBoardName().equals(boardName)) {
@@ -248,7 +274,6 @@ public class DjyosGeneralPage extends PropertyPage {
 		try {
 			br = new BufferedReader(new FileReader(didePrefsFile));
 			while ((line = br.readLine()) != null) {
-				StringBuffer buf = new StringBuffer();
 				// 修改内容核心代码
 				if (line.startsWith(target)) {
 					line = target + "=" + isTrue;

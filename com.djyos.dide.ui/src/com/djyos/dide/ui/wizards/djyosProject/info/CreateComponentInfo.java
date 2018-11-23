@@ -15,29 +15,28 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.djyos.dide.ui.wizards.component.Component;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Component;
 
 public class CreateComponentInfo {
-	
-	private String didePath = new DideHelper().getDIDEPath();
-	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	String srcLocation = didePath+"djysrc";
-	private DideHelper dideHelper = new DideHelper();
-	public void createComponentInfo(File file,List<Component> components) {
-		
+
+	static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	static String srcLocation = DideHelper.getDjyosSrcPath();
+
+	public static void createComponentInfo(File file, List<Component> components) {
+
 		DocumentBuilder builder;
 		try {
 			factory.setIgnoringElementContentWhitespace(false);
 			builder = factory.newDocumentBuilder();
 			Document document = builder.newDocument();
 			Element csElement = document.createElement("components");
-			for(int i=0;i<components.size();i++) {
+			for (int i = 0; i < components.size(); i++) {
 				Component c = components.get(i);
 				String componentPath = c.getParentPath().replace("\\", "/");
-				Element cElement = document.createElement("component");	
+				Element cElement = document.createElement("component");
 				String relativePath = componentPath.replace(srcLocation, "");
-				cElement.setTextContent(relativePath+"/"+c.getFileName());
+				cElement.setTextContent(relativePath + "/" + c.getFileName());
 				csElement.appendChild(cElement);
 			}
 			document.appendChild(csElement);
@@ -53,8 +52,8 @@ public class CreateComponentInfo {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
-		}             
-		
+			DideHelper.showErrorMessage("文件" + file.getName() + "创建失败！ " + e.getMessage());
+		}
+
 	}
 }

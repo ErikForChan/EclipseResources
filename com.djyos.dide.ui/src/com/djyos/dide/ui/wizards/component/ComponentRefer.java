@@ -8,19 +8,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.helper.DideHelper;
 
 public class ComponentRefer {
-	private DideHelper dideHelper = new DideHelper();
-	private String didePath = dideHelper.getDIDEPath();
+	private String didePath = DideHelper.getDIDEPath();
 
 	public List<String> getClearCompPaths(String boardName) {
 		String componentPath = didePath + "djysrc/component";
 		String djyosPath = didePath + "djysrc/djyos";
 		String thirdPath = didePath + "djysrc/third";
 		String loaderPath = didePath + "djysrc/loader";
-		String demoPath = dideHelper.getDemoBoardFilePath() + "/" + boardName;
-		String userPath = dideHelper.getUserBoardFilePath() + "/" + boardName;
+		String demoPath = DideHelper.getDemoBoardFilePath() + "/" + boardName;
+		String userPath = DideHelper.getUserBoardFilePath() + "/" + boardName;
 		List<String> componentPaths = new ArrayList<String>();
 		componentPaths.add(componentPath);
 		componentPaths.add(djyosPath);

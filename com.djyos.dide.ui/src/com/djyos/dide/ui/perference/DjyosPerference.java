@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Djyos Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.djyos.com
+ *
+ * Contributors:
+ *     Djyos Team - Jiaming Chen
+ *******************************************************************************/
 package com.djyos.dide.ui.perference;
 
 import java.io.BufferedReader;
@@ -20,13 +30,12 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.PlatformUI;
 
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.helper.DideHelper;
 
 @SuppressWarnings("restriction")
 public class DjyosPerference extends PreferencePage implements IWorkbenchPreferencePage {
 
 	boolean showUpdate;
-	private DideHelper dideHelper = new DideHelper();
 	private Button showGitUpdateButton;
 	private Button atuo_buildlibos_new_Button;
 	private Button atuo_buildlibos_import_Button;
@@ -34,7 +43,7 @@ public class DjyosPerference extends PreferencePage implements IWorkbenchPrefere
 	boolean atuo_buildlibos_new;
 	boolean atuo_buildlibos_import;
 	boolean noa_buildlibos;
-	File didePrefsFile = new File(dideHelper.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
+	File didePrefsFile = new File(DideHelper.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
 
 	public DjyosPerference() {
 		super();
@@ -79,7 +88,6 @@ public class DjyosPerference extends PreferencePage implements IWorkbenchPrefere
 		try {
 			br = new BufferedReader(new FileReader(didePrefsFile));
 			while ((line = br.readLine()) != null) {
-				StringBuffer buf = new StringBuffer();
 				// 修改内容核心代码
 				if (line.startsWith(target)) {
 					line = target + "=" + isTrue;
@@ -151,10 +159,10 @@ public class DjyosPerference extends PreferencePage implements IWorkbenchPrefere
 		layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
 		composite.setLayout(layout);
 		if (didePrefsFile.exists()) {
-			showUpdate = dideHelper.targetIsTrue(didePrefsFile, "SHOW_GIT_UPDATE_DIALOG");
-			atuo_buildlibos_new = dideHelper.targetIsTrue(didePrefsFile, "AUTO_BUILDLIBOS_NEW");
-			atuo_buildlibos_import = dideHelper.targetIsTrue(didePrefsFile, "AUTO_BUILDLIBOS_IMPORT");
-			noa_buildlibos = dideHelper.targetIsTrue(didePrefsFile, "NOA_BUILDLIBOS");
+			showUpdate = DideHelper.targetIsTrue(didePrefsFile, "SHOW_GIT_UPDATE_DIALOG");
+			atuo_buildlibos_new = DideHelper.targetIsTrue(didePrefsFile, "AUTO_BUILDLIBOS_NEW");
+			atuo_buildlibos_import = DideHelper.targetIsTrue(didePrefsFile, "AUTO_BUILDLIBOS_IMPORT");
+			noa_buildlibos = DideHelper.targetIsTrue(didePrefsFile, "NOA_BUILDLIBOS");
 		} else {
 			showUpdate = true;
 			atuo_buildlibos_new = false;

@@ -4,19 +4,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
-import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
-import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardMemory;
-import com.djyos.dide.ui.wizards.component.Component;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.djyosProject.tools.LinkHelper;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Board;
 
 public class GetNonBoardFiles {
-	private DideHelper dideHelper = new DideHelper();
-	private LinkHelper linkHelper = new LinkHelper();
-	private String didePath = dideHelper.getDIDEPath();
+	private String didePath = DideHelper.getDIDEPath();
 	private List<File> excludeBoardFiles = new ArrayList<File>();
-	
+
 	public List<File> getNonBoards() {
 		List<Board> boards = new ArrayList<Board>();
 		List<String> paths = new ArrayList<String>();
@@ -25,12 +19,12 @@ public class GetNonBoardFiles {
 		paths.add(userBoardFilePath);
 		paths.add(demoBoardFilePath);
 		for (int i = 0; i < paths.size(); i++) {
-			File boardFile = new File(paths.get(i));//boarddrv\\user
+			File boardFile = new File(paths.get(i));// boarddrv\\user
 			File[] files = boardFile.listFiles();
 			for (int j = 0; j < files.length; j++) {
-				File file = files[j];//board
-				if(file.isDirectory()) {
-					if(!isBoard(file)) {
+				File file = files[j];// board
+				if (file.isDirectory()) {
+					if (!isBoard(file)) {
 						excludeBoardFiles.add(file);
 					}
 				}
@@ -41,12 +35,12 @@ public class GetNonBoardFiles {
 
 	public boolean isBoard(File file) {
 		File[] files = file.listFiles();
-		for(File f:files) {
-			if(f.getName().endsWith(".xml") && f.getName().startsWith("Board")) {
+		for (File f : files) {
+			if (f.getName().endsWith(".xml") && f.getName().startsWith("Board")) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 }

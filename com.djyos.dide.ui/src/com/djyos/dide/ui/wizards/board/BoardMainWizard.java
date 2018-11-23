@@ -1,7 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Djyos Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.djyos.com
+ *
+ * Contributors:
+ *     Djyos Team - Jiaming Chen
+ *******************************************************************************/
 package com.djyos.dide.ui.wizards.board;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.core.resources.IWorkspace;
@@ -11,6 +20,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DragSource;
@@ -29,8 +39,6 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowData;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -45,14 +53,15 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 
-import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
-import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
-import com.djyos.dide.ui.wizards.component.Component;
-import com.djyos.dide.ui.wizards.cpu.Cpu;
+import com.djyos.dide.ui.DPluginImages;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.objects.Core;
+import com.djyos.dide.ui.objects.CoreMemory;
+import com.djyos.dide.ui.objects.Cpu;
+import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolder;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolderUtils;
 
 public class BoardMainWizard extends WizardPage {
 
@@ -66,68 +75,58 @@ public class BoardMainWizard extends WizardPage {
 	private Board boardCreated;
 	final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 	private IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-	DideHelper dideHelper = new DideHelper();
+	private List<Cpu> allCpus;
 
 	public BoardMainWizard(String pageName) {
 		super(pageName);
-		boolean djysrcExist = true;
-		File djysrcFile = new File(dideHelper.getDjyosSrcPath());
-		if (djysrcFile.exists()) {
-			File[] files = djysrcFile.listFiles();
-			if (files.length < 2) {
-				djysrcExist = false;
-			}
-		} else {
-			djysrcExist = false;
-		}
-		if (!djysrcExist) {
-			MessageDialog.openInformation(window.getShell(), "提示", "Djyos源码不存在，请重启Eclipse根据提示下载");
-		}
 		setPageComplete(true);
 	}
 
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
-
 		Composite composite = new Composite(parent, SWT.NULL);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		initializeDialogUnits(parent);
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
+		boolean srcExist = DideHelper.isDjysrcExist();
+		if (srcExist) {
+			allCpus = ReadCpuXml.getAllCpus();
+			// TODO Auto-generated constructor stub
+			createDynamicGroup(composite);
+		} else {
+			DideHelper.showErrorMessage("Djyos源码不存在，请重启DIDE根据提示下载");
+		}
 
+		setErrorMessage(null);
+		setMessage(null);
+		setControl(composite);
+		Dialog.applyDialogFont(composite);
+
+	}
+
+	private void createDynamicGroup(Composite composite) {
+		// TODO Auto-generated method stub
 		ScrolledComposite scrolledComposite = new ScrolledComposite(composite, SWT.V_SCROLL | SWT.H_SCROLL);
 		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		infoArea = new Composite(scrolledComposite, SWT.NONE);
 		GridLayout infoLayout = new GridLayout();
-		infoLayout.numColumns = 1;
+		infoLayout.numColumns = 2;
 		infoArea.setLayout(infoLayout);
 		GridData data = new GridData(GridData.FILL_BOTH);
 		infoArea.setLayoutData(data);
 
-		Point cPoint = composite.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		Text projectTypeDesc;
 		String promoteString = "右键板件列表可";
 		String extraString = "新建板件 : ";
-		String QAQ = "\tIDE分级目录的形式管理操作系统支持的众多Cpu，本界面用于管理Cpu的分类,\n包括添加Cpu和分组,手动拖拽即可移动分组";
-		String descTitle = "分组/Cpu描述";
-
-		Composite promoteArea = new Composite(infoArea, SWT.NONE);
-		GridLayout promoteLayout = new GridLayout();
-		promoteLayout.numColumns = 2;
-		promoteArea.setLayout(promoteLayout);
-		GridData data1 = new GridData(GridData.FILL_BOTH);
-		promoteArea.setLayoutData(data1);
-
-		Label promoteLabel = new Label(promoteArea, SWT.NULL);
+		Label promoteLabel = new Label(infoArea, SWT.NULL);
 		promoteLabel.setText(promoteString);
 		FontData newFontData = promoteLabel.getFont().getFontData()[0];
 		newFontData.setStyle(SWT.BOLD);
 		newFontData.setHeight(8);
 		promoteLabel.setFont(new Font(infoArea.getDisplay(), newFontData));
 
-		Label extraLabel = new Label(promoteArea, SWT.NULL);
+		Label extraLabel = new Label(infoArea, SWT.NULL);
 		extraLabel.setText(extraString);
 		extraLabel.setForeground(infoArea.getDisplay().getSystemColor(SWT.COLOR_RED));
 		FontData newFontData1 = extraLabel.getFont().getFontData()[0];
@@ -135,72 +134,26 @@ public class BoardMainWizard extends WizardPage {
 		newFontData1.setHeight(11);
 		extraLabel.setFont(new Font(infoArea.getDisplay(), newFontData1));
 
-		Composite contentCpt = new Composite(infoArea, SWT.NULL);
-		GridLayout contentLayout = new GridLayout();
-		contentLayout.numColumns = 2;
-		contentCpt.setLayout(contentLayout);
-		contentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		SashForm sashForm = new SashForm(infoArea, SWT.HORIZONTAL);
+		GridData gd = new GridData(GridData.FILL_BOTH);
+		gd.horizontalSpan = 2;
+		sashForm.setLayoutData(gd);
 
-		createBoardTree(contentCpt);
+		create_BoardTree(sashForm);
 
 		initPopup();
 		handleTreeDrag();
-		Composite sashForm = new Composite(contentCpt, SWT.NULL);
-		sashForm.setLayout(new RowLayout());
 		configInfoText = new Text(sashForm, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
 		configInfoText.setEditable(false);
-		configInfoText.setLayoutData(new RowData(350, 350));
 		configInfoText.setText("选中板件即可显示选中的板件配置信息");
 
-		// MessageConsoleStream console1 = this.createConsole("MyConsole1");
-		// console1.println("Hello, I'm out from MyConsole1");
-		// String fileLoc = null;
-		// File outputFile= new File("G:/out.text");
-		// if(outputFile.exists()) {
-		// outputFile.delete();
-		// }
-		// outputFile.createNewFile();
-		// fileLoc = outputFile.getAbsolutePath();
-		//
-		// IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-		// IConsole[] consoles = manager.getConsoles();
-		// MessageConsole console = ((MessageConsole) consoles[0]);
-		// String message = MessageFormat.format(ConsoleMessages.ProcessConsole_1, new
-		// Object[] { fileLoc });
-		// addPatternMatchListener(new ConsoleLogFilePatternMatcher(fileLoc));
-		// if (message != null) {
-		// try (IOConsoleOutputStream stream = console.newOutputStream()) {
-		// stream.write(message);
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-		// }
-
+		sashForm.setWeights(new int[] { 2, 3 });// 内部容器之间宽度比例
 		Point point = infoArea.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		scrolledComposite.setContent(infoArea);
 		scrolledComposite.setMinHeight(point.y);
 		scrolledComposite.setExpandHorizontal(true);
 		scrolledComposite.setExpandVertical(true);
 
-		// System.setOut(null);
-		// try {
-		// List<String> infos = dideHelper.getLogs();
-		//// SendEmail email = new SendEmail();
-		//// email.send();
-		//// for(String s:infos) {
-		//// System.out.println("s：\n "+s);
-		//// }
-		// } catch (SVNException e1) {
-		// // TODO Auto-generated catch block
-		// e1.printStackTrace();
-		// }
-
-		// Printing the read line
-		// System.out.println(name);
-		setErrorMessage(null);
-		setMessage(null);
-		setControl(composite);
-		Dialog.applyDialogFont(composite);
 	}
 
 	private void handleTreeDrag() {
@@ -264,19 +217,13 @@ public class BoardMainWizard extends WizardPage {
 					String isDropable = isFileDropable(fileItem, srcFile, new File(eventItem.getData().toString()));
 					if (isDropable == null) {
 						tmssItem = new TreeItem(eventItem, SWT.NONE);
-						tmssItem.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
+						tmssItem.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
 						tmssItem.setExpanded(false);
 
 						tmssItem.setText(s);
 						tmssItem.setData(destFile);
-						try {
-							dideHelper.copyFolder(srcFile, destFile);
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-
-						DeleteFolder dlf = new DeleteFolder();
+						DideHelper.copyFolder(srcFile, destFile);
+						DeleteFolderUtils dlf = new DeleteFolderUtils();
 						dlf.deleteFolder(fileItem.getData().toString());
 						// 删除原来的节点
 						if (tree != null) {
@@ -349,7 +296,7 @@ public class BoardMainWizard extends WizardPage {
 
 		newBoardItem = new MenuItem(menu, SWT.PUSH);
 		newBoardItem.setText("新建板件");
-		newBoardItem.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
+		newBoardItem.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
 
 		reviseItem = new MenuItem(menu, SWT.PUSH);
 		reviseItem.setText("维护板件");
@@ -364,17 +311,7 @@ public class BoardMainWizard extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				NewOrReviseBoard newBoardDialog = new NewOrReviseBoard(infoArea.getShell(), true, null);
-				if (newBoardDialog.open() == Window.OK) {
-					Board board = newBoardDialog.getBoard();
-					boardCreated = board;
-					TreeItem t = new TreeItem(t2, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL, 0);
-					t.setData(board.getBoardPath());
-					t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
-					t.setText(board.getBoardName());
-					tree.select(t);
-					displayBoardDetails(t);
-				}
+				handle_NewBoard_Click();
 			}
 
 			@Override
@@ -389,7 +326,7 @@ public class BoardMainWizard extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-				handleReviseClick();
+				handle_Revice_Board();
 			}
 		});
 
@@ -403,7 +340,7 @@ public class BoardMainWizard extends WizardPage {
 						"您确认要删除板件[" + items[0].getText() + "]吗?");
 				if (isSure) {
 					String curFilePath = items[0].getData().toString();// 获取当前选中文件的路径
-					DeleteFolder dlf = new DeleteFolder();
+					DeleteFolderUtils dlf = new DeleteFolderUtils();
 					dlf.deleteFolder(curFilePath);
 					items[0].dispose();
 					// IProject[] projects = workspace.getRoot().getProjects();
@@ -445,14 +382,28 @@ public class BoardMainWizard extends WizardPage {
 		tree.setMenu(menu);
 	}
 
-	private void createBoardTree(Composite contentCpt) {
+	protected void handle_NewBoard_Click() {
+		NewOrReviseBoardDialog newBoardDialog = new NewOrReviseBoardDialog(infoArea.getShell(), true, null);
+		if (newBoardDialog.open() == Window.OK) {
+			Board board = newBoardDialog.getBoard();
+			boardCreated = board;
+			TreeItem t = new TreeItem(t2, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL, 0);
+			t.setData(board.getBoardPath());
+			t.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
+			t.setText(board.getBoardName());
+			t.setData("type", "board");
+			tree.select(t);
+			fill_BoardChilds(board, t);
+			Display_BoardDetails(t);
+		}
+	}
+
+	private void create_BoardTree(SashForm sashForm) {
 		// TODO Auto-generated method stub
-		Composite sourceTreeCpt = new Composite(contentCpt, SWT.NULL);
-		tree = new Tree(sourceTreeCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		tree = new Tree(sashForm, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		tree.setLayoutData(new GridData(GridData.FILL_BOTH));
-		tree.setSize(200, 360);
+		// tree.setSize(200, 360);
 		tree.setHeaderVisible(true);
-		sourceTreeCpt.setTouchEnabled(true);
 		final TreeColumn columnArhives = new TreeColumn(tree, SWT.NONE);
 		columnArhives.setText("板件列表");
 		columnArhives.setWidth(190);
@@ -460,17 +411,16 @@ public class BoardMainWizard extends WizardPage {
 		columnArhives.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
 
 		t2 = new TreeItem(tree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		t2.setData(dideHelper.getUserBoardFilePath());
-		t2.setImage(DPluginImages.DESC_GROUP_VIEW.createImage());
+		t2.setData(DideHelper.getUserBoardFilePath());
+		t2.setImage(DPluginImages.OBJ_GROUP_VIEW.createImage());
 		t2.setText("用户板件");
 
 		t1 = new TreeItem(tree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		t1.setData(dideHelper.getDemoBoardFilePath());
+		t1.setData(DideHelper.getDemoBoardFilePath());
 		t1.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
 		t1.setText("Djyos板件");
 
-		ReadBoardXml rbx = new ReadBoardXml();
-		boardsList = rbx.getAllBoards();
+		boardsList = ReadBoardXml.getAllBoards();
 		for (int i = 0; i < boardsList.size(); i++) {
 			TreeItem t;
 			if (boardsList.get(i).getBoardPath().contains("demo")) {
@@ -478,12 +428,14 @@ public class BoardMainWizard extends WizardPage {
 			} else {
 				t = new TreeItem(t2, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 			}
-
+			t.setData("type", "board");
+			fill_BoardChilds(boardsList.get(i), t);
 			t.setData(boardsList.get(i).getBoardPath());
-			t.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
+			t.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
 			t.setText(boardsList.get(i).getBoardName());
 		}
 
+		// t1.setExpanded(true);
 		tree.addListener(SWT.MouseDown, new Listener() {
 
 			@Override
@@ -494,13 +446,21 @@ public class BoardMainWizard extends WizardPage {
 				if (item != null) {
 					String itemText = item.getText();
 					if (itemText.contains("板件")) {
+						newBoardItem.setEnabled(true);
 						deleteItem.setEnabled(false);
 						reviseItem.setEnabled(false);
 						configInfoText.setText("选中板件即可显示选中的板件配置信息");
 					} else {
-						deleteItem.setEnabled(true);
-						reviseItem.setEnabled(true);
-						displayBoardDetails(item);
+						if (!item.getData("type").equals("board")) {
+							newBoardItem.setEnabled(false);
+							deleteItem.setEnabled(false);
+							reviseItem.setEnabled(false);
+						} else {
+							newBoardItem.setEnabled(true);
+							deleteItem.setEnabled(true);
+							reviseItem.setEnabled(true);
+						}
+						Display_BoardDetails(item);
 					}
 				}
 			}
@@ -511,13 +471,47 @@ public class BoardMainWizard extends WizardPage {
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
-				handleReviseClick();
+				Point point = new Point(event.x, event.y);
+				TreeItem item = tree.getItem(point);
+				if (item != null && item.getData("type") != null) {
+					if (item.getData("type").equals("board")) {
+						handle_Revice_Board();
+					} else {
+						IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+						MessageDialog.openInformation(window.getShell(), "提示", "请选中板件");
+					}
+				}
 			}
 		});
 
 	}
 
-	protected void handleReviseClick() {
+	private void fill_BoardChilds(Board board, TreeItem t) {
+		// TODO Auto-generated method stub
+		List<OnBoardCpu> onBoardCpus = board.getOnBoardCpus();
+		for (OnBoardCpu o : onBoardCpus) {
+			TreeItem cpuItem = new TreeItem(t, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			fill_CpuChilds(DideHelper.getCpuByonBoard(o, allCpus), cpuItem);
+			cpuItem.setText(o.getCpuName());
+			cpuItem.setData(o.getCpuName());
+			cpuItem.setData("type", "cpu");
+			cpuItem.setImage(DPluginImages.OBJ_CPU_VIEW.createImage());
+		}
+	}
+
+	private void fill_CpuChilds(Cpu c, TreeItem cpuItem) {
+		// TODO Auto-generated method stub
+		List<Core> cores = c.getCores();
+		for (int i = 0; i < cores.size(); i++) {
+			TreeItem coreItem = new TreeItem(cpuItem, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+			coreItem.setText("Core" + (i + 1));
+			coreItem.setData("Core" + (i + 1));
+			coreItem.setData("type", "core");
+			coreItem.setImage(DPluginImages.OBJ_CORE_VIEW.createImage());
+		}
+	}
+
+	protected void handle_Revice_Board() {
 		// TODO Auto-generated method stub
 		TreeItem[] items = tree.getSelection();
 		if (items.length > 0) {
@@ -525,7 +519,7 @@ public class BoardMainWizard extends WizardPage {
 			TreeItem parentItem = items[0].getParentItem();
 			if (!itemName.contains("板件")) {
 				Board board = getBoardByName(itemName);
-				NewOrReviseBoard dialog = new NewOrReviseBoard(infoArea.getShell(), false, board);
+				NewOrReviseBoardDialog dialog = new NewOrReviseBoardDialog(infoArea.getShell(), false, board);
 				if (dialog.open() == Window.OK) {
 					String reviseBoardName = dialog.lastBoardName;
 					// 扫描工作空间中所有用得到此板件的工程，并修改它们的板件名
@@ -548,72 +542,108 @@ public class BoardMainWizard extends WizardPage {
 					items[0].dispose();
 					TreeItem item = new TreeItem(parentItem, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL, 0);
 					item.setText(reviseBoardName);
-					item.setImage(DPluginImages.DESC_BOARD_VIEW.createImage());
+					item.setData("type", "board");
+					item.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
 					item.setExpanded(false);
 					item.setData(new File(parentItem.getData().toString() + "/" + reviseBoardName));
 					tree.select(item);
-					displayBoardDetails(item);
+					Display_BoardDetails(item);
 				}
 				;
 			}
 		}
 	}
 
-	protected void displayBoardDetails(TreeItem item) {
+	protected void Display_BoardDetails(TreeItem item) {
 		// TODO Auto-generated method stub
 		String boardDesc = "";
-		Board curBoard = null;
 		if (item != null) {
-			String itemText = item.getText();
-			ReadBoardXml rbx = new ReadBoardXml();
-			boardsList = rbx.getAllBoards();
-			for (Board borad : boardsList) {
-				if (borad.getBoardName().endsWith(itemText)) {
-					curBoard = borad;
-					break;
-				}
-			}
-			List<OnBoardCpu> onBoardCpus = curBoard.getOnBoardCpus();
-			boardDesc += "板件 [" + itemText + "] 配置信息：\n\n";
-			int cpuCount = 1;
-			for (OnBoardCpu onBoardCpu : onBoardCpus) {
-				Cpu cpu = getCpuByOnBoardCpu(onBoardCpu);
-				if (cpu != null) {
-					if (onBoardCpus.size() < 2) {
-						boardDesc += "板载Cpu：" + onBoardCpu.getCpuName() + "\n";
-					} else {
-						boardDesc += "板载Cpu" + cpuCount + "：" + onBoardCpu.getCpuName() + "\n";
-					}
-					String chipString = "";
-					String peripheralString = "";
-					List<Chip> chips = onBoardCpu.getChips();
-					List<Component> components = onBoardCpu.getPeripherals();
-					for (int i = 0; i < chips.size(); i++) {
-						chipString += "  " + chips.get(i).getChipName();
-					}
-					for (int i = 0; i < components.size(); i++) {
-						peripheralString += "  " + components.get(i).getName() + ",";
-					}
-					boardDesc += "主晶振频率: " + onBoardCpu.getMianClk() + "\n" + "Rtc钟频率: " + onBoardCpu.getRtcClk() + "\n"
-							+ "板载芯片: " + chipString + "\n" + "Cpu外设: " + peripheralString;
-					cpuCount++;
-				}
+			boardsList = ReadBoardXml.getAllBoards();
+			String selectText = item.getText();
+			if (selectText.contains("板件")) {
+				boardDesc += "选中板件即可显示选中的板件配置信息";
+			} else {
+				String type = item.getData("type").toString();
 
+				for (int i = 0; i < boardsList.size(); i++) {
+					Board board = boardsList.get(i);
+					if (type.equals("board")) {
+						if (board.getBoardName().equals(selectText)) {
+							List<OnBoardCpu> cpus = board.getOnBoardCpus();
+							boardDesc += "板载Cpu个数: " + cpus.size();
+							break;
+						}
+					} else if (type.equals("cpu") || type.equals("core")) {
+						if (item.getParentItem().getText().equals(board.getBoardName())
+								|| item.getParentItem().getParentItem().getText().equals(board.getBoardName())) {
+							List<OnBoardCpu> onBoardCpus = board.getOnBoardCpus();
+							for (OnBoardCpu o : onBoardCpus) {
+								Cpu myCpu = DideHelper.getCpuByonBoard(o, allCpus);
+								if (type.equals("core")) {
+									if (myCpu.getCpuName().equals(item.getParentItem().getText())) {
+										for (int c = 0; c < myCpu.getCores().size(); c++) {
+											Core core = myCpu.getCores().get(c);
+											if (selectText.equals("Core" + (c + 1))) {
+												if (core.getArch().getSerie() != null) {
+													boardDesc += "架构：\n" + core.getArch().getSerie();
+												}
+												if (core.getArch().getMarch() != null) {
+													boardDesc += "，" + core.getArch().getMarch();
+												}
+												if (core.getArch().getMcpu() != null) {
+													boardDesc += "，" + core.getArch().getMcpu();
+												}
+												if (core.getFpuType() != null) {
+													boardDesc += "\n浮点：" + core.getFpuType();
+												}
+												if (core.getResetAddr() != null) {
+													boardDesc += "\n复位地址：" + core.getResetAddr();
+												}
+												if (core.getMemorys().size() != 0) {
+													List<CoreMemory> memorys = core.getMemorys();
+													for (int k = 0; k < memorys.size(); k++) {
+														boardDesc += "\n内存" + (k + 1) + "：\n";
+														if (memorys.get(k).getType() != null) {
+															boardDesc += memorys.get(k).getType();
+														}
+														if (memorys.get(k).getStartAddr() != null) {
+															boardDesc += "，起始地址：" + memorys.get(k).getStartAddr();
+														}
+														if (memorys.get(k).getSize() != null) {
+															boardDesc += "，大小：" + memorys.get(k).getSize();
+														}
+													}
+												}
+											}
+										}
+									}
+								} else {
+									if (o.getCpuName().equals(selectText)) {
+										String chipString = "";
+										if (o.getChips().size() > 0) {
+											for (int k = 0; k < o.getChips().size(); k++) {
+												chipString += ((k != 0 ? "，" : "") + o.getChips().get(k).getChipName());
+											}
+										}
+
+										String peripheralString = "";
+										for (int k = 0; k < o.getPeripherals().size(); k++) {
+											peripheralString += ((k != 0 ? "，" : "")
+													+ o.getPeripherals().get(k).getName());
+										}
+										boardDesc += "内核个数" + "： " + myCpu.getCores().size();
+										boardDesc += "\n主晶振频率: " + o.getMianClk() + "\nRtc钟频率: " + o.getRtcClk()
+												+ "\n芯片: " + chipString + "\n外设: " + peripheralString + "\n\n";
+									}
+								}
+
+							}
+						}
+					}
+				}
 			}
 			configInfoText.setText(boardDesc);
 		}
-	}
-
-	private Cpu getCpuByOnBoardCpu(OnBoardCpu onBoardCpus) {
-		// TODO Auto-generated method stub
-		ReadCpuXml rcx = new ReadCpuXml();
-		List<Cpu> cpusList = rcx.getAllCpus();
-		for (Cpu cpu : cpusList) {
-			if (cpu.getCpuName().equals(onBoardCpus.getCpuName())) {
-				return cpu;
-			}
-		}
-		return null;
 	}
 
 	private Board getBoardByName(String baordName) {

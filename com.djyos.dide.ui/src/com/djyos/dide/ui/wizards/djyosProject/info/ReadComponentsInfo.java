@@ -14,16 +14,16 @@ public class ReadComponentsInfo {
 	private static DocumentBuilderFactory dbFactory = null;
 	private static DocumentBuilder db = null;
 	private static Document document = null;
-	List<String> componentPaths = new ArrayList<String>();
-	
-	public List<String> getCompsInfo(File file) {
-		
+	static List<String> componentPaths = new ArrayList<String>();
+
+	public static List<String> getCompsInfo(File file) {
+
 		try {
 			dbFactory = DocumentBuilderFactory.newInstance();
 			db = dbFactory.newDocumentBuilder();
 			document = db.parse(file);
 			NodeList componentList = document.getElementsByTagName("component");
-			for(int i=0;i<componentList.getLength();i++) {
+			for (int i = 0; i < componentList.getLength(); i++) {
 				String componentPath = componentList.item(i).getFirstChild().getTextContent();
 				componentPaths.add(componentPath);
 			}
@@ -31,6 +31,6 @@ public class ReadComponentsInfo {
 			e.printStackTrace();
 		}
 		return componentPaths;
-		
+
 	}
 }

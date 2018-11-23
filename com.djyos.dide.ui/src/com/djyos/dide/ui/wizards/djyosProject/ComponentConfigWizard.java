@@ -26,6 +26,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
@@ -58,76 +59,27 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 
-import com.djyos.dide.ui.wizards.board.Board;
-import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
-import com.djyos.dide.ui.wizards.component.Component;
-import com.djyos.dide.ui.wizards.component.ConfigureTarget;
-import com.djyos.dide.ui.wizards.component.CreateCheckXml;
+import com.djyos.dide.ui.DPluginImages;
+import com.djyos.dide.ui.enums.ConfigureTarget;
+import com.djyos.dide.ui.helper.Calculator;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.messages.IComponentConstants;
+import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.objects.Component;
+import com.djyos.dide.ui.objects.Core;
+import com.djyos.dide.ui.objects.OnBoardCpu;
+import com.djyos.dide.ui.wizards.component.ComponentCommon;
 import com.djyos.dide.ui.wizards.component.ReadComponent;
-import com.djyos.dide.ui.wizards.cpu.core.Core;
-import com.djyos.dide.ui.wizards.djyosProject.tools.Calculator;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DPluginImages;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.djyosProject.tools.LinkHelper;
-import com.ibm.icu.text.DecimalFormat;
 
-public class ComponentConfigWizard extends WizardPage {
+@SuppressWarnings("restriction")
+public class ComponentConfigWizard extends WizardPage implements IComponentConstants {
 
-	private Table table;
-	private int lastchk;
-	private TabFolder folder;
-	private int checkcounter;
-	private Board sBoard = null;
-	private String defineInit;
-	private Group configGroup = null;
-	private OnBoardCpu onBoardCpu = null;
-	private Text dependentText, mutexText;
-	private TableEditor editor, editor1;
-	private boolean appExist, ibootExist;
-	private List<Component> compontentsList = null;
-	private String depedentLabel = "依赖组件: ", mutexLabel = "互斥组件: ";
-	private ArrayList<Control> tabelControls = new ArrayList<Control>();
-	private ArrayList<Control> partControls = new ArrayList<Control>();
-	private DecimalFormat df = new DecimalFormat("######0");
-	private List<TreeItem> appRequiredItems = new ArrayList<TreeItem>();
-	private List<TreeItem> ibootRequiredItems = new ArrayList<TreeItem>();
-	private IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-	private List<Component> appCompontents = new ArrayList<Component>();
-	private List<Component> ibootCompontents = new ArrayList<Component>();
-	private List<Component> appCompontentsChecked = new ArrayList<Component>();
-	private List<Component> ibootCompontentsChecked = new ArrayList<Component>();
-	public String warningMsg = null;
-
-	private DideHelper dideHelper = new DideHelper();
-	private LinkHelper linkHelper = new LinkHelper();
-
-	private Component createNewComponent(Component c) {
-		Component component = new Component();
-		component.setName(c.getName());
-		component.setAnnotation(c.getAnnotation());
-		component.setAttribute(c.getAttribute());
-		component.setGrade(c.getGrade());
-		component.setCode(c.getCode());
-		component.setConfigure(c.getConfigure());
-		component.setLinkFolder(c.getLinkFolder());
-		component.setDependents(c.getDependents());
-		component.setMutexs(c.getMutexs());
-		component.setFileName(c.getFileName());
-		component.setSelectable(c.getSelectable());
-		component.setParent(c.getParent());
-		component.setWeakDependents(c.getWeakDependents());
-		component.setExcludes(c.getExcludes());
-		component.setIncludes(c.getIncludes());
-		component.setSelect(c.isSelect());
-		component.setParentPath(c.getParentPath());
-		component.setTarget(c.getTarget());
-		return component;
-	}
+	private ComponentCommon componentCommon = new ComponentCommon();
 
 	private void initComponent(List<Component> typeCompontents, boolean isApp) {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < compontentsList.size(); i++) {
-			Component component = createNewComponent(compontentsList.get(i));
+			Component component = componentCommon.createNewComponent(compontentsList.get(i));
 			// 当组件为必选且不需要配置时，不显示在界面上
 			// if (component.getSelectable().equals("required") &&
 			// (!component.getConfigure().contains("#define"))) {
@@ -181,7 +133,6 @@ public class ComponentConfigWizard extends WizardPage {
 	public void creatProjectConfiure(String projectLocation, Core core, boolean isApp) {
 		List<Component> compontentsCheckedSort = null;
 		String cfgPath = null;
-		// File file = new File(path+(isApp?"/app":"/iboot")+"/initPrj.c");
 		if (isApp) {
 			compontentsCheckedSort = appCheckedSort;
 			cfgPath = projectLocation + "/src/app/OS_prjcfg/project_config.h";
@@ -190,15 +141,7 @@ public class ComponentConfigWizard extends WizardPage {
 			cfgPath = projectLocation + "/src/iboot/OS_prjcfg/project_config.h";
 		}
 		File file = new File(cfgPath);
-		if (file.exists()) {
-			file.delete();
-		}
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		DideHelper.createNewFile(file);
 		defineInit = DjyosMessages.Automatically_Generated;
 		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
 				+ "#include \"stdint.h\"\n\n";
@@ -242,7 +185,7 @@ public class ComponentConfigWizard extends WizardPage {
 				+ String.format("%-18s", "(" + core.getCoreClk() + "*Mhz)") + "//主频，内核要用，必须定义";
 		defineInit += "\n\n#endif";
 
-		dideHelper.writeFile(file, defineInit);
+		DideHelper.writeFile(file, defineInit);
 	}
 
 	public void initProject(String projectLocation, boolean isApp) {
@@ -256,12 +199,12 @@ public class ComponentConfigWizard extends WizardPage {
 	private void handleInitProject(List<Component> typeCompontentsChecked, List<Component> typeCheckedSort,
 			String projectLocation, boolean isApp) {
 		// TODO Auto-generated method stub
-		String content = "", firstInit = "\tuint16_t evtt_main;\n\n", lastInit = "", moduleInit = "", gpioInit = "",
-				djyMain = "", shellInit = "";
+		String content = "", firstInit = "\tuint16_t evtt_main;\n\n", lastInit = "", gpioInit = "", djyMain = "",
+				shellInit = "";
 		String earlyCode = "", mediumCode = "", laterCode = "";
 		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n" + "#include \"stdint.h\"\n" + "#include \"stddef.h\"\n"
-				+ "#include \"cpu_peri.h\"\n" + "extern ptu32_t djy_main(void);\n";
+		initHead += "#include \"project_config.h\"\n" + "#include \"djyos.h\"\n" + "#include \"stdint.h\"\n"
+				+ "#include \"stddef.h\"\n" + "#include \"cpu_peri.h\"\n" + "extern ptu32_t djy_main(void);\n";
 		File file = new File(projectLocation + "/src/" + (isApp ? "app" : "iboot") + "/initPrj.c");
 		if (file.exists()) {
 			file.delete();
@@ -274,19 +217,6 @@ public class ComponentConfigWizard extends WizardPage {
 		}
 		for (int i = 0; i < typeCompontentsChecked.size(); i++) {
 			handleDependents(typeCompontentsChecked.get(i), typeCompontentsChecked, typeCheckedSort);
-			// List<String> dependents = typeCompontentsChecked.get(i).getDependents();
-			// List<String> weakDependents =
-			// typeCompontentsChecked.get(i).getWeakDependents();
-			// for (int j = 0; j < typeCompontentsChecked.size(); j++) {
-			// if (!typeCheckedSort.contains(typeCompontentsChecked.get(j))) {
-			// if (dependents.contains(typeCompontentsChecked.get(j).getName())) {
-			// typeCheckedSort.add(typeCompontentsChecked.get(j));
-			// } else if (weakDependents.contains(typeCompontentsChecked.get(j).getName()))
-			// {
-			// typeCheckedSort.add(typeCompontentsChecked.get(j));
-			// }
-			// }
-			// }
 			if (!typeCheckedSort.contains(typeCompontentsChecked.get(i))) {
 				typeCheckedSort.add(typeCompontentsChecked.get(i));
 			}
@@ -308,7 +238,7 @@ public class ComponentConfigWizard extends WizardPage {
 							|| parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
 							|| parameter.contains("%$#@select") || parameter.contains("%$#@free")
 							|| parameter.contains("%$#@object_num")) {
-						tag = dideHelper.getTag(parameter, tag);
+						tag = DideHelper.getTag(parameter, tag);
 					}
 					String[] members = parameter.split("\\s+");
 					if (parameter.contains("#define") && tag.equals("obj_para")) {
@@ -370,30 +300,11 @@ public class ComponentConfigWizard extends WizardPage {
 				+ "\t//-------------------early-------------------------//\n" + earlyCode
 				+ "\t//-------------------medium-------------------------//\n" + mediumCode
 				+ "\t//-------------------later-------------------------//\n" + laterCode + lastInit + initEnd;
-		dideHelper.writeFile(file, content);
+		DideHelper.writeFile(file, content);
 
 		// 生成component_check.xml文件
-		String xmlName = null;
-		List<Component> curCompontents = new ArrayList<Component>();
-		if (isApp) {
-			xmlName = "app_component_check.xml";
-			curCompontents = appCompontents;
-		} else {
-			xmlName = "iboot_component_check.xml";
-			curCompontents = ibootCompontents;
-		}
-		CreateCheckXml ccx = new CreateCheckXml();
-		File checkFile = new File(projectLocation + "/data/" + xmlName);
-		if (checkFile.exists()) {
-			checkFile.delete();
-		}
-		try {
-			checkFile.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ccx.createCheck(curCompontents, checkFile);
+		componentCommon.createCheckXml(isApp, projectLocation, appCompontents, ibootCompontents);
+
 	}
 
 	private void handleDependents(Component component, List<Component> typeCompontentsChecked,
@@ -440,69 +351,43 @@ public class ComponentConfigWizard extends WizardPage {
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 		createDynamicGroup(composite);
 		for (TreeItem t : appRequiredItems) {
-			handleRequiredDepnds(true, t);
+			componentCommon.handleRequiredDepnds(true, t, folder, appCompontents, ibootCompontents,
+					appCompontentsChecked, ibootCompontentsChecked);
 		}
 		for (TreeItem t : ibootRequiredItems) {
-			handleRequiredDepnds(false, t);
+			componentCommon.handleRequiredDepnds(false, t, folder, appCompontents, ibootCompontents,
+					appCompontentsChecked, ibootCompontentsChecked);
 		}
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
 	}
 
-	private void handleRequiredDepnds(boolean isApp, TreeItem item) {
+	public void creatDepedentCpt(Composite composite) {
 		// TODO Auto-generated method stub
-		String type = isApp ? "App" : "Iboot";
-		Component itemCompt;
-		if (isApp) {
-			itemCompt = getAppComponent(item.getData().toString());
-		} else {
-			itemCompt = getIbootComponent(item.getData().toString());
-		}
-
-		Control[] controls = folder.getChildren();
-		for (Control c : controls) {
-			Tree tempTree = (Tree) c;
-			TreeItem[] fChilds = tempTree.getItems();
-			for (TreeItem treeItem : fChilds) {
-				if (treeItem.getText().equals(type)) {
-					List<String> visitedComp = new ArrayList<String>();
-					travelItems_Depedent(treeItem, itemCompt, isApp, visitedComp);
-					itemCompt.setSelect(true);
-					if (isApp) {
-						if (!appCompontentsChecked.contains(itemCompt)) {
-							appCompontentsChecked.add(itemCompt);
-						}
-					} else {
-						if (!ibootCompontentsChecked.contains(itemCompt)) {
-							ibootCompontentsChecked.add(itemCompt);
-						}
-					}
-
-					break;
-				}
-			}
-		}
-	}
-
-	/*
-	 * 判断组件是否有子组件
-	 */
-	private boolean haveChildren(Component parent, List<Component> componentList) {
-		for (Component compt : componentList) {
-			if (compt.getParent().equals(parent.getName())) {
-				return true;
-			}
-		}
-		return false;
+		Composite depedentCpt = new Composite(composite, SWT.BORDER);
+		depedentCpt.setLayout(new GridLayout(2, true));
+		depedentCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
+		// 显示依赖组件
+		dependentText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
+		GridData depedentData = new GridData(GridData.FILL_BOTH);
+		depedentData.grabExcessHorizontalSpace = true;
+		dependentText.setLayoutData(depedentData);
+		dependentText.setText(depedentLabel);
+		dependentText.setEditable(false);
+		dependentText.setSize(SWT.HORIZONTAL, 50);
+		// 显示互斥组件
+		mutexText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
+		mutexText.setLayoutData(depedentData);
+		mutexText.setText(mutexLabel);
+		mutexText.setEditable(false);
 	}
 
 	private void createDynamicGroup(Composite composite) {
 		// TODO Auto-generated method stub
 		creatDepedentCpt(composite);
 
-		ReadComponent rc = new ReadComponent();
-		compontentsList = rc.getComponents(onBoardCpu, sBoard);
+		compontentsList = ReadComponent.getComponents(onBoardCpu, sBoard);
 		if (appExist) {
 			initComponent(appCompontents, true);
 		}
@@ -543,24 +428,28 @@ public class ComponentConfigWizard extends WizardPage {
 
 	}
 
-	// 创建依赖组件界面
-	private void creatDepedentCpt(Composite composite) {
+	public void creatConfigTable(Composite parent) {
 		// TODO Auto-generated method stub
-		Composite depedentCpt = new Composite(composite, SWT.BORDER);
-		depedentCpt.setLayout(new GridLayout(2, true));
-		depedentCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
-		dependentText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
-		GridData depedentData = new GridData(GridData.FILL_BOTH);
-		depedentData.grabExcessHorizontalSpace = true;
-		dependentText.setLayoutData(depedentData);
-		dependentText.setText(depedentLabel);
-		dependentText.setEditable(false);
-		dependentText.setSize(SWT.HORIZONTAL, 50);
-		// 显示互斥组件
-		mutexText = new Text(depedentCpt, SWT.MULTI | SWT.WRAP);
-		mutexText.setLayoutData(depedentData);
-		mutexText.setText(mutexLabel);
-		mutexText.setEditable(false);
+		table = new Table(parent, SWT.NONE | SWT.FULL_SELECTION | SWT.H_SCROLL);
+		GridData gd = new GridData(GridData.FILL_BOTH);
+		gd.minimumHeight = 80;
+		table.setLayoutData(gd);
+		table.setHeaderVisible(true);
+		table.setLinesVisible(true);
+		// 创建表头的字符串数组
+		for (int i = 0; i < tableHeader.length; i++) {
+			TableColumn tableColumn = new TableColumn(table, SWT.NONE | SWT.CENTER);
+			tableColumn.setAlignment(SWT.LEFT);
+			tableColumn.setText(tableHeader[i]);
+
+			// 设置表头可移动，默认为false
+			tableColumn.setMoveable(true);
+			if (i == tableHeader.length - 1) {
+				tableColumn.setWidth(200);
+			} else {
+				tableColumn.setWidth(130);
+			}
+		}
 	}
 
 	// 检查所有组件参数是否合法
@@ -577,7 +466,7 @@ public class ComponentConfigWizard extends WizardPage {
 			if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum")
 					|| parameter.contains("%$#@object_para") || parameter.contains("%$#@select")
 					|| parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
-				tag = dideHelper.getTag(parameter, tag);
+				tag = DideHelper.getTag(parameter, tag);
 
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
@@ -589,7 +478,6 @@ public class ComponentConfigWizard extends WizardPage {
 			} else if (parameter.contains("#define")) {
 				String[] defines = parameter.trim().split("//");
 				String[] members = null;
-				String annoation = null;
 				if (parameter.startsWith("//")) {
 					members = defines[1].trim().split("\\s+");
 				} else {
@@ -607,7 +495,7 @@ public class ComponentConfigWizard extends WizardPage {
 						String maxString = rangesCopy.get(1);
 						if (tag.equals("int")) {
 							try {
-								if (!dideHelper.handleIntPara(minString, maxString, new ArrayList<String>(), members)) {
+								if (!DideHelper.handleIntPara(minString, maxString, new ArrayList<String>(), members)) {
 									return false;
 								}
 							} catch (Exception e) {
@@ -617,7 +505,7 @@ public class ComponentConfigWizard extends WizardPage {
 							}
 						} else if (tag.equals("string")) {
 							try {
-								if (!dideHelper.handleStringPara(minString, maxString, new ArrayList<String>(), members,
+								if (!DideHelper.handleStringPara(minString, maxString, new ArrayList<String>(), members,
 										defines)) {
 									return false;
 								}
@@ -642,16 +530,6 @@ public class ComponentConfigWizard extends WizardPage {
 		return true;
 	}
 
-	// 判断当前组件是否存在父组件
-	private boolean isParentCompExist(List<Component> components, String parentName) {
-		for (Component component : components) {
-			if (component.getName().equals(parentName)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	// 创建用于存放组件的Tab
 	private Control createTabContent(TabFolder folder, List<Component> appTypeComponents,
 			List<Component> ibootTypeComponents) {
@@ -667,11 +545,11 @@ public class ComponentConfigWizard extends WizardPage {
 		componentTree.setMenu(menu);
 
 		if (appExist) {
-			creatTabAppContent(appTypeComponents, componentTree);
+			createTabTargetContent(appTypeComponents, componentTree, true);
 		}
 
 		if (ibootExist) {
-			creatTabIbootContent(ibootTypeComponents, componentTree);
+			createTabTargetContent(ibootTypeComponents, componentTree, false);
 		}
 
 		openFileItem.addSelectionListener(new SelectionListener() {
@@ -683,12 +561,9 @@ public class ComponentConfigWizard extends WizardPage {
 				TreeItem[] items = componentTree.getSelection();
 				if (items.length > 0) {
 					Component itemCompt = null;
-					String type = getAIType(items[0]);
-					if (type.equals("App")) {
-						itemCompt = getAppComponent(items[0].getData().toString());
-					} else {
-						itemCompt = getIbootComponent(items[0].getData().toString());
-					}
+					String type = componentCommon.getAIType(items[0]);
+					itemCompt = componentCommon.getComponentByName(items[0].getData().toString(),
+							type.equals("App") ? appCompontents : ibootCompontents);
 					IFileStore fileStore = EFS.getLocalFileSystem().getStore(new Path(itemCompt.getParentPath()));
 					fileStore = fileStore.getChild(itemCompt.getFileName());
 					IFileInfo fetchInfo = fileStore.fetchInfo();
@@ -746,7 +621,7 @@ public class ComponentConfigWizard extends WizardPage {
 					}
 					Component itemCompt;
 					Control[] controls = folder.getChildren();
-					String type = getAIType(item);
+					String type = componentCommon.getAIType(item);
 					if (item.getChecked()) {
 						componentTree.setSelection(item);
 						// 判断当前选中组件与已选中组件是否有互斥，如果没有互斥则处理组件依赖
@@ -754,36 +629,43 @@ public class ComponentConfigWizard extends WizardPage {
 							boolean isApp;
 							if (type.equals("App")) {
 								isApp = true;
-								itemCompt = getAppComponent(item.getData().toString());
 							} else {
 								isApp = false;
-								itemCompt = getIbootComponent(item.getData().toString());
 							}
-							for (Control c : controls) {
-								Tree tempTree = (Tree) c;
-								TreeItem[] fChilds = tempTree.getItems();
-								for (TreeItem treeItem : fChilds) {
-									if (treeItem.getText().equals(type)) {
-										boolean isMutex = travelItems_Mutex(treeItem, itemCompt, item);
-										if (!isMutex) {
-											List<String> visitedComp = new ArrayList<String>();
-											travelItems_Depedent(treeItem, itemCompt, isApp, visitedComp);
-											itemCompt.setSelect(true);
-											if (isApp) {
-												if (!appCompontentsChecked.contains(itemCompt)) {
-													appCompontentsChecked.add(itemCompt);
-												}
-											} else {
-												if (!ibootCompontentsChecked.contains(itemCompt)) {
-													ibootCompontentsChecked.add(itemCompt);
-												}
+							itemCompt = componentCommon.getComponentByName(item.getData().toString(),
+									isApp ? appCompontents : ibootCompontents);
 
+							if (itemCompt != null) {
+								for (Control c : controls) {
+									Tree tempTree = (Tree) c;
+									TreeItem[] fChilds = tempTree.getItems();
+									for (TreeItem treeItem : fChilds) {
+										if (treeItem.getText().equals(type)) {
+											boolean isMutex = componentCommon.travelItems_Mutex(treeItem, itemCompt,
+													item);
+											if (!isMutex) {
+												List<String> visitedComp = new ArrayList<String>();
+												componentCommon.travelItems_Depedent(treeItem, itemCompt, isApp,
+														visitedComp, appCompontents, ibootCompontents,
+														appCompontentsChecked, ibootCompontentsChecked, folder);
+												itemCompt.setSelect(true);
+												if (isApp) {
+													if (!appCompontentsChecked.contains(itemCompt)) {
+														appCompontentsChecked.add(itemCompt);
+													}
+												} else {
+													if (!ibootCompontentsChecked.contains(itemCompt)) {
+														ibootCompontentsChecked.add(itemCompt);
+													}
+
+												}
 											}
+											break;
 										}
-										break;
 									}
 								}
 							}
+
 						}
 					} else {
 						// 取消选中当前组件时，判断已选中组件是否依赖于此组件，如果有依赖，则不允许取消并提示
@@ -791,31 +673,36 @@ public class ComponentConfigWizard extends WizardPage {
 							boolean isApp;
 							if (type.equals("App")) {
 								isApp = true;
-								itemCompt = getAppComponent(item.getData().toString());
 							} else {
 								isApp = false;
-								itemCompt = getIbootComponent(item.getData().toString());
 							}
-							if (itemCompt.getSelectable().equals("required")
-									|| itemCompt.getSelectable().equals("必选组件")) {
-								item.setChecked(true);
-								MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
-							} else {
-								for (Control c : controls) {
-									Tree tempTree = (Tree) c;
-									TreeItem[] fChilds = tempTree.getItems();
-									for (TreeItem treeItem : fChilds) {
-										if (treeItem.getText().equals(type)) {
-											boolean isDepedent = isDepedent(treeItem, item, type, itemCompt, isApp);
-											if (isDepedent) {
-												itemCompt.setSelect(false);
-												if (isApp) {
-													appCompontentsChecked.remove(itemCompt);
-												} else {
-													ibootCompontentsChecked.remove(itemCompt);
+							itemCompt = componentCommon.getComponentByName(item.getData().toString(),
+									isApp ? appCompontents : ibootCompontents);
+
+							if (itemCompt != null) {
+								if (itemCompt.getSelectable().equals("required")
+										|| itemCompt.getSelectable().equals("必选组件")) {
+									item.setChecked(true);
+									MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
+								} else {
+									for (Control c : controls) {
+										Tree tempTree = (Tree) c;
+										TreeItem[] fChilds = tempTree.getItems();
+										for (TreeItem treeItem : fChilds) {
+											if (treeItem.getText().equals(type)) {
+												boolean isDepedent = componentCommon.isDepedent(treeItem, item, type,
+														itemCompt, isApp, appCompontents, ibootCompontents,
+														appCompontentsChecked, ibootCompontentsChecked);
+												if (isDepedent) {
+													itemCompt.setSelect(false);
+													if (isApp) {
+														appCompontentsChecked.remove(itemCompt);
+													} else {
+														ibootCompontentsChecked.remove(itemCompt);
+													}
 												}
+												break;
 											}
-											break;
 										}
 									}
 								}
@@ -858,46 +745,53 @@ public class ComponentConfigWizard extends WizardPage {
 					table.removeAll();
 					if (!item.getText().equals("App") && !item.getText().equals("Iboot")) {
 						String itemText = item.getText();
-						String type = getAIType(item);
+						String type = componentCommon.getAIType(item);
 
 						Component itemCompt;
+						boolean isApp = false;
 						if (type.equals("App")) {
-							itemCompt = getAppComponent(item.getData().toString());
+							isApp = true;
 						} else {
-							itemCompt = getIbootComponent(item.getData().toString());
+							isApp = false;
 						}
-						List<String> depedents = itemCompt.getDependents();
-						List<String> mutexs = itemCompt.getMutexs();
-						String allDeps = "";
-						String allMuts = "";
-						// 互斥组件
-						for (int k = 0; k < mutexs.size(); k++) {
-							allMuts += (k != 0 ? "，" : "") + mutexs.get(k);
-						}
-						for (int k = 0; k < depedents.size(); k++) {
-							allDeps += (k != 0 ? "，" : "") + depedents.get(k);
+						itemCompt = componentCommon.getComponentByName(item.getData().toString(),
+								isApp ? appCompontents : ibootCompontents);
+
+						if (itemCompt != null) {
+							List<String> depedents = itemCompt.getDependents();
+							List<String> mutexs = itemCompt.getMutexs();
+							String allDeps = "";
+							String allMuts = "";
+							// 互斥组件
+							for (int k = 0; k < mutexs.size(); k++) {
+								allMuts += (k != 0 ? "，" : "") + mutexs.get(k);
+							}
+							for (int k = 0; k < depedents.size(); k++) {
+								allDeps += (k != 0 ? "，" : "") + depedents.get(k);
+							}
+
+							if (allDeps.equals("")) {
+								dependentText.setText(depedentLabel + " 无");
+							} else {
+								dependentText.setText(depedentLabel + allDeps);
+							}
+							if (allMuts.equals("")) {
+								mutexText.setText(mutexLabel + " 无");
+							} else {
+								mutexText.setText(mutexLabel + allMuts);
+							}
+
+							String configure = itemCompt.getConfigure();
+							if (!configure.contains("#define")) {
+								configGroup.setText("组件 [" + itemText + "] 无需配置");
+								table.setEnabled(false);
+							} else {
+								configGroup.setText(type + "组件 [" + itemText + "] 配置");
+								table.setEnabled(true);
+							}
+							initTable(itemCompt, isApp);
 						}
 
-						if (allDeps.equals("")) {
-							dependentText.setText(depedentLabel + " 无");
-						} else {
-							dependentText.setText(depedentLabel + allDeps);
-						}
-						if (allMuts.equals("")) {
-							mutexText.setText(mutexLabel + " 无");
-						} else {
-							mutexText.setText(mutexLabel + allMuts);
-						}
-
-						String configure = itemCompt.getConfigure();
-						if (!configure.contains("#define")) {
-							configGroup.setText("组件 [" + itemText + "] 无需配置");
-							table.setEnabled(false);
-						} else {
-							configGroup.setText(type + "组件 [" + itemText + "] 配置");
-							table.setEnabled(true);
-						}
-						initTable(itemCompt);
 					} else {
 						configGroup.setText("组件配置[请选择要配置的组件]");
 						table.setEnabled(false);
@@ -909,219 +803,80 @@ public class ComponentConfigWizard extends WizardPage {
 		return componentTree;
 	}
 
-	// 创建Tab的内容:Iboot组件
-	private void creatTabIbootContent(List<Component> ibootTypeComponents, Tree componentTree) {
-		// TODO Auto-generated method stub
-		List<Component> iFirstList = new ArrayList<Component>();
-		for (int i = 0; i < ibootTypeComponents.size(); i++) {
-			String parentName = ibootTypeComponents.get(i).getParent();
-			if (!isParentCompExist(ibootTypeComponents, parentName)) {
-				iFirstList.add(ibootTypeComponents.get(i));
+	private void createTabTargetContent(List<Component> targetComponents, Tree componentTree, boolean isApp) {
+		List<Component> firstList = new ArrayList<Component>();
+		for (int i = 0; i < targetComponents.size(); i++) {
+			String parentName = targetComponents.get(i).getParent();
+			if (!componentCommon.isParentCompExist(targetComponents, parentName)) {
+				firstList.add(targetComponents.get(i));
 			}
 		}
 
-		TreeItem rootIboot = new TreeItem(componentTree, 0);
-		rootIboot.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
-		rootIboot.setText("Iboot");
-		rootIboot.setGrayed(true);
-		rootIboot.setChecked(true);
-		for (Component component : iFirstList) {
-			TreeItem item;
-			if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
-				item = new TreeItem(rootIboot, SWT.ERROR_CANNOT_SET_ENABLED);
-				item.setChecked(true);
-				component.setSelect(true);
-				ibootCompontentsChecked.add(component);
-			} else {
-				item = new TreeItem(rootIboot, 0);
-			}
-			item.setData(component.getParentPath());
-			item.setData("anno", component.getAnnotation());
-			item.setText(component.getName());
-			boolean pass = checkParameter(component);
-			if (pass) {
-				item.setImage(DPluginImages.CFG_COMPONENT_OBJ.createImage());
-			} else {
-				item.setImage(DPluginImages.CFG_COMPTERROR_VIEW.createImage());
-			}
-			if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
-				ibootRequiredItems.add(item);
-			}
-			// 叶子节点对应的数值为相应文件夹的File对象
-			if (haveChildren(component, ibootTypeComponents)) {
-				fillItem(item, ibootTypeComponents, rootIboot, false);
-			}
-		}
-	}
-
-	// 创建Tab的内容:App组件
-	private void creatTabAppContent(List<Component> appTypeComponents, Tree componentTree) {
-		// TODO Auto-generated method stub
-		List<Component> aFirstList = new ArrayList<Component>();
-		for (int i = 0; i < appTypeComponents.size(); i++) {
-			String parentName = appTypeComponents.get(i).getParent();
-			if (!isParentCompExist(appTypeComponents, parentName)) {
-				aFirstList.add(appTypeComponents.get(i));
-			}
-		}
-		TreeItem rootApp = new TreeItem(componentTree, 0);
-		rootApp.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
-		rootApp.setText("App");
-		rootApp.setGrayed(true);
-		rootApp.setChecked(true);
-		for (Component component : aFirstList) {
-			String configure = component.getConfigure();
-			TreeItem item;
-			if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
-				item = new TreeItem(rootApp, SWT.ERROR_CANNOT_SET_ENABLED);
-				item.setChecked(true);
-				component.setSelect(true);
-				appCompontentsChecked.add(component);
-			} else {
-				item = new TreeItem(rootApp, 0);
-			}
-			item.setData(component.getParentPath());
-			item.setData("anno", component.getAnnotation());
-			item.setText(component.getName());
-			boolean pass = checkParameter(component);
-			if (pass) {
-				item.setImage(DPluginImages.CFG_COMPONENT_OBJ.createImage());
-			} else {
-				item.setImage(DPluginImages.CFG_COMPTERROR_VIEW.createImage());
-			}
-			if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
-				appRequiredItems.add(item);
-			}
-			if (haveChildren(component, appTypeComponents)) {
-				fillItem(item, appTypeComponents, rootApp, true);
-			}
-		}
-	}
-
-	// 判断当前组件是否被依赖
-	protected boolean isDepedent(TreeItem treeItem, TreeItem eventTreeItem, String type, Component itemCompt,
-			boolean isApp) {
-		// TODO Auto-generated method stub
-		TreeItem[] items = treeItem.getItems();
-		List<String> eventDepedents = itemCompt.getDependents();
-		boolean isDepedent = true;
-		for (TreeItem item : items) {
-			Component tempCompt;
-			if (type.equals("App")) {
-				tempCompt = getAppComponent(item.getData().toString());
-			} else {
-				tempCompt = getIbootComponent(item.getData().toString());
-			}
-			if (item.getChecked()) {
-				if (tempCompt.getDependents().contains(eventTreeItem.getText())) {
-					if (eventDepedents.contains(tempCompt.getName())) {
-						item.setChecked(false);
-						if (isApp) {
-							if (!appCompontentsChecked.contains(tempCompt)) {
-								appCompontentsChecked.remove(tempCompt);
-							}
-						} else {
-							if (!ibootCompontentsChecked.contains(tempCompt)) {
-								ibootCompontentsChecked.remove(tempCompt);
-							}
-						}
-					} else {
-						eventTreeItem.setChecked(true);
-						isDepedent = false;
-						IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-						MessageDialog.openError(window.getShell(), "提示",
-								"该组件被" + tempCompt.getName() + " 等已勾选的组件依赖，不可取消勾选");
-					}
-				}
-			}
-
-			if (item.getItems().length > 0 && isDepedent) {
-				isDepedent = isDepedent(item, eventTreeItem, type, itemCompt, isApp);
-			}
-		}
-		return isDepedent;
-	}
-
-	// 遍历与App/Iboot有关的组件，如果与当前选中的组件互斥，则返回true
-	protected boolean travelItems_Mutex(TreeItem treeItem, Component itemCompt, TreeItem eventTreeItem) {
-		// TODO Auto-generated method stub
-		boolean isMutx = false;
-		List<String> mutexs = itemCompt.getMutexs();
-		TreeItem[] items = treeItem.getItems();
-		for (TreeItem item : items) {
-			if (mutexs.contains(item.getText())) {
-				if (item.getChecked()) {
-					eventTreeItem.setChecked(false);
-					isMutx = true;
-					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-					MessageDialog.openError(window.getShell(), "提示",
-							item.getText() + "组件已勾选，与" + itemCompt.getName() + "互斥 ！");
-				}
-			} else {
-				if (item.getItems().length > 0 && !isMutx) {
-					isMutx = travelItems_Mutex(item, itemCompt, eventTreeItem);
-				}
-			}
-		}
-		return isMutx;
-	}
-
-	// 遍历与App/Iboot有关的组件，如果被当前选中的组件依赖，则选中该组件
-	protected void travelItems_Depedent(TreeItem treeItem, Component itemCompt, boolean isApp,
-			List<String> visitedComp) {
-		// TODO Auto-generated method stub
-		visitedComp.add(itemCompt.getName());
-		List<String> depedents = itemCompt.getDependents();
-		TreeItem[] items = treeItem.getItems();
-		for (TreeItem item : items) {
-			if (!item.getChecked()) {
-				if (depedents.contains(item.getText())) {
-					item.setChecked(true);
-					Component curComp;
-					if (isApp) {
-						curComp = getAppComponent(item.getData().toString());
-						if (!appCompontentsChecked.contains(curComp)) {
-							appCompontentsChecked.add(curComp);
-						}
-					} else {
-						curComp = getIbootComponent(item.getData().toString());
-						if (!ibootCompontentsChecked.contains(curComp)) {
-							ibootCompontentsChecked.add(curComp);
-						}
-					}
-					curComp.setSelect(true);
-
-					Control[] controls = folder.getChildren();
-					for (Control c : controls) {
-						String type = isApp ? "App" : "Iboot";
-						Tree tempTree = (Tree) c;
-						TreeItem[] fChilds = tempTree.getItems();
-						for (TreeItem t : fChilds) {
-							if (t.getText().equals(type)) {
-								travelItems_Depedent(t, curComp, isApp, visitedComp);
-							}
-						}
-					}
-				}
-			}
-
-			travelItems_Depedent(item, itemCompt, isApp, visitedComp);
-		}
-	}
-
-	// 获取当前组件的类型:App或者Iboot
-	private String getAIType(TreeItem item) {
-		TreeItem parentItem = item.getParentItem();
-		if (parentItem != null) {
-			if (parentItem.getText().equals("App")) {
-				return "App";
-			} else if (parentItem.getText().equals("Iboot")) {
-				return "Iboot";
-			} else {
-				return getAIType(parentItem);
-			}
+		TreeItem root = new TreeItem(componentTree, 0);
+		root.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
+		if (isApp) {
+			root.setText("App");
 		} else {
-			return null;
+			root.setText("Iboot");
+		}
+
+		root.setGrayed(true);
+		root.setChecked(true);
+
+		if (targetComponents.size() > 0) {
+			if (targetComponents.get(0).getAttribute().equals("third")) {
+				TreeItem firewareItem = new TreeItem(root, 0);
+				firewareItem.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
+				firewareItem.setText("firmware");
+				firewareItem.setData("firmware");
+				firewareItem.setData("anno", "firmware");
+				firewareItem.setGrayed(true);
+				firewareItem.setChecked(true);
+				for (Component component : firstList) {
+					createTreeCompItem(component, firewareItem, targetComponents, isApp);
+				}
+			}
+		}
+
+		for (Component component : firstList) {
+			createTreeCompItem(component, root, targetComponents, isApp);
+		}
+	}
+
+	private void createTreeCompItem(Component component, TreeItem root, List<Component> targetComponents,
+			boolean isApp) {
+
+		if ((root.getText().equals("firmware") && component.getParentPath().contains("firmware")
+				|| (!root.getText().equals("firmware") && !component.getParentPath().contains("firmware")))) {
+			createChild(component, root, targetComponents, isApp);
+		}
+
+	}
+
+	private void createChild(Component component, TreeItem root, List<Component> targetComponents, boolean isApp) {
+		// TODO Auto-generated method stub
+		TreeItem item;
+		item = new TreeItem(root, 0);
+		if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
+			item.setChecked(true);
+			component.setSelect(true);
+			(isApp ? appCompontentsChecked : ibootCompontentsChecked).add(component);
+		}
+		item.setData(component.getParentPath());
+		item.setData("anno", component.getAnnotation());
+		item.setText(component.getName());
+		boolean pass = checkParameter(component);
+		if (pass) {
+			item.setImage(DPluginImages.CFG_COMPONENT_OBJ.createImage());
+		} else {
+			item.setImage(DPluginImages.CFG_COMPTERROR_VIEW.createImage());
+		}
+		if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
+			(isApp ? appRequiredItems : ibootRequiredItems).add(item);
+		}
+		// 叶子节点对应的数值为相应文件夹的File对象
+		if (componentCommon.haveChildren(component, targetComponents)) {
+			fillItem(item, targetComponents, root, false);
 		}
 	}
 
@@ -1168,39 +923,14 @@ public class ComponentConfigWizard extends WizardPage {
 					ibootRequiredItems.add(item);
 				}
 			}
-			if (haveChildren(child, compontentsList)) {
+			if (componentCommon.haveChildren(child, compontentsList)) {
 				fillItem(item, compontentsList, rootItem, isApp);
 			}
 		}
 	}
 
-	// 创建配置参数的Table
-	private void creatConfigTable(Composite parent) {
-		table = new Table(parent, SWT.NONE | SWT.FULL_SELECTION | SWT.H_SCROLL);
-		GridData gd = new GridData(GridData.FILL_BOTH);
-		gd.minimumHeight = 80;
-		table.setLayoutData(gd);
-		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
-		// 创建表头的字符串数组
-		String[] tableHeader = { "参数", "值", "注释" };
-		for (int i = 0; i < tableHeader.length; i++) {
-			TableColumn tableColumn = new TableColumn(table, SWT.NONE | SWT.CENTER);
-			tableColumn.setAlignment(SWT.LEFT);
-			tableColumn.setText(tableHeader[i]);
-
-			// 设置表头可移动，默认为false
-			tableColumn.setMoveable(true);
-			if (i == tableHeader.length - 1) {
-				tableColumn.setWidth(200);
-			} else {
-				tableColumn.setWidth(130);
-			}
-		}
-	}
-
 	// 初始化配置参数的表格
-	private void initTable(Component componentSelect) {
+	private void initTable(Component componentSelect, boolean isApp) {
 		tabelControls.clear();
 		checkcounter = 0;
 		int partNum = 0;
@@ -1215,14 +945,9 @@ public class ComponentConfigWizard extends WizardPage {
 		for (int i = 0; i < parametersDefined.length; i++) {
 			isSelect[i] = false;
 			String parameter = null;
-			// if(parametersDefined[i].contains("*")) {
-			// parameter = parametersDefined[i].trim().split("\\*")[0];
-			// }else {
-			// parameter = parametersDefined[i].trim();
-			// }
 			parameter = parametersDefined[i].trim();
-			if (dideHelper.isParaHead(parameter)) {
-				tag = dideHelper.getTag(parameter, tag);
+			if (DideHelper.isParaHead(parameter)) {
+				tag = DideHelper.getTag(parameter, tag);
 				infos = parameter.split(",|，");
 				ranges = new ArrayList<String>();
 				if (!tag.equals("free")) {
@@ -1246,7 +971,11 @@ public class ComponentConfigWizard extends WizardPage {
 					annoation = defines.length > 1 ? defines[1] : "";
 				}
 
-				realComptName = getRealCompName(annoation, members, paras, ranges, tag);
+				String[] annos = annoation.split(",|，");
+				if (annos[0].trim().startsWith("\"") && annos[0].trim().endsWith("\"")) {
+					annoation = annoation.substring(annos[0].length(), annoation.length()).replaceFirst(",|，", "");
+				}
+				realComptName = componentCommon.getRealCompName(annos[0].trim(), members, paras, ranges, tag);
 				setItemText(configure, members, item, realComptName, defines, annoation);
 
 				editor = new TableEditor(table);
@@ -1263,7 +992,7 @@ public class ComponentConfigWizard extends WizardPage {
 					partNum = Integer.parseInt(members[2]);
 				} else if (tag.equals("select")) {
 					selectExist = true;
-					handleSelectPara(i, checkBtn, parameter, ranges, isSelect, componentSelect, item, tag);
+					handleSelectPara(i, checkBtn, parameter, ranges, isSelect, componentSelect, item, tag, isApp);
 				} else {
 					isSelect[i] = true;
 					// 创建一个文本框，用于输入文字
@@ -1279,7 +1008,7 @@ public class ComponentConfigWizard extends WizardPage {
 						String minString = rangesCopy.get(0);
 						String maxString = rangesCopy.get(1);
 						if (tag.equals("int")) {
-							text.setText(dideHelper.getridParentheses(item.getText(1)));
+							text.setText(DideHelper.getridParentheses(item.getText(1)));
 							handleIntPara(minString, maxString, members, text);
 						} else if (tag.equals("string")) {
 							if (item.getText(1).replace("\"", "").trim().equals("")) {
@@ -1295,9 +1024,17 @@ public class ComponentConfigWizard extends WizardPage {
 						text.setText(item.getText(1));
 					}
 
-					// 当文本框改变值时,注册文本框改变事件，该事件改变表格中的数据,否则即使改变的文本框的值，对表格中的数据也不会影响
-					text.addModifyListener(new ModifyListener() {
-						public void modifyText(ModifyEvent e) {
+					text.addMouseTrackListener(new MouseTrackListener() {
+
+						@Override
+						public void mouseHover(MouseEvent e) {
+							// TODO Auto-generated method stub
+
+						}
+
+						@Override
+						public void mouseExit(MouseEvent e) {
+							// TODO Auto-generated method stub
 							String tempString = text.getText();
 							boolean toCalculate = false;
 							IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
@@ -1326,13 +1063,13 @@ public class ComponentConfigWizard extends WizardPage {
 									} else if (tempString.contains("+") || tempString.contains("-")
 											|| tempString.contains("*") || tempString.contains("/")) {
 										toCalculate = true;
-										String pureCal = dideHelper.getridParentheses(tempString);
+										String pureCal = DideHelper.getridParentheses(tempString);
 										double result = Calculator.conversion(pureCal);
 										BigDecimal bd = new BigDecimal(df.format(result));
 										curNum = Long.valueOf(bd.toPlainString());
 									} else {
-										if (isInt) {
-											curNum = Integer.parseInt(dideHelper.getridParentheses(tempString));
+										if (isInt && !tempString.trim().equals("")) {
+											curNum = Integer.parseInt(DideHelper.getridParentheses(tempString));
 										}
 									}
 									if (curNum < min || curNum > max) {
@@ -1362,9 +1099,14 @@ public class ComponentConfigWizard extends WizardPage {
 								item.setText(1, text.getText());
 							}
 
-							resetConfigure(componentSelect, isSelect);
+							componentCommon.resetConfigure(componentSelect, isSelect, table);
 						}
 
+						@Override
+						public void mouseEnter(MouseEvent e) {
+							// TODO Auto-generated method stub
+
+						}
 					});
 				}
 				// 创建一个文本框，用于输入文字
@@ -1379,8 +1121,9 @@ public class ComponentConfigWizard extends WizardPage {
 						// TODO Auto-generated method stub
 						String anno = annoText.getText();
 						item.setText(2, anno);
-						resetConfigure(componentSelect, isSelect);
+						componentCommon.resetConfigure(componentSelect, isSelect, table);
 					}
+
 				});
 				editor1.setEditor(annoText, item, 2);
 				tabelControls.add(annoText);
@@ -1388,107 +1131,12 @@ public class ComponentConfigWizard extends WizardPage {
 				isSelect[i] = true;
 			}
 		}
-		if (selectExist) {
-			checkError(componentSelect);
-		}
-		expendParas = getExpandParas(componentSelect);
+		expendParas = componentCommon.getExpandParas(componentSelect, compontentsList);
 		fillParts(partNum, expendParas, componentSelect, isSelect);
-		resetConfigure(componentSelect, isSelect);
-
-	}
-
-	private String getRealCompName(String annoation, String[] members, List<String> paras, List<String> ranges,
-			String tag) {
-		// TODO Auto-generated method stub
-		String realComptName = null;
-		String[] annos = annoation.split(",|，");
-		if (annos[0].trim().startsWith("\"") && annos[0].trim().endsWith("\"")) {
-			annoation = annoation.substring(annos[0].length(), annoation.length()).replaceFirst(",|，", "");
-			if (!annos[0].contains("name")) {
-				realComptName = annos[0].trim().replaceAll("\"", "");
-			} else {
-				realComptName = members[1];
-			}
-		} else {
-			realComptName = members[1];
-		}
-
-		if (paras.contains(members[1])) {
-			realComptName = "（参数重名）" + realComptName;
-		}
-		paras.add(members[1]);// 添加当前的参数名到paras
-
-		if (tag.equals("int") && ranges.size() > 0) {
-			String min = ranges.get(0);
-			String max = ranges.get(1);
-			realComptName = realComptName + "( " + min + "~" + max + " )";
-		} else if (tag.equals("string") && ranges.size() > 0) {
-			String min = ranges.get(0);
-			String max = ranges.get(1);
-			realComptName = realComptName + "(长度：" + min + "~" + max + " )";
-		}
-		return realComptName;
+		componentCommon.resetConfigure(componentSelect, isSelect, table);
 	}
 
 	// 重置当前组件的Configure
-	protected void resetConfigure(Component componentSelect, boolean[] isSelect) {
-		// TODO Auto-generated method stub
-		TableItem[] items = table.getItems();
-		String newConfig = "";
-		int itemCount = 0;
-		String tag = null;
-		String[] parametersDefined = componentSelect.getConfigure().split("\n");
-		// 给所有define重设值
-		for (int i = 0; i < parametersDefined.length; i++) {
-			String parameter = parametersDefined[i];
-			if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum")
-					|| parameter.contains("%$#@object_para") || parameter.contains("%$#@select")
-					|| parameter.contains("%$#@free") || parameter.contains("%$#@object_num")) {
-				tag = dideHelper.getTag(parameter, tag);
-			}
-			if (parameter.contains("#define") && !tag.equals("obj_para")) {
-				String[] defines = parameter.trim().split("//");
-				String[] members = null;
-				String annoation = null;
-				if (parametersDefined[i].startsWith("//")) {
-					members = defines[1].trim().split("\\s+");
-					annoation = defines.length > 2 ? defines[2] : "";
-
-				} else {
-					members = defines[0].trim().split("\\s+");
-					annoation = defines.length > 1 ? defines[1] : "";
-				}
-				// define格式化
-				if (isSelect[i]) {
-					parametersDefined[i] = String.format("%-11s", members[0]) + " " + String.format("%-32s", members[1])
-							+ " " + String.format("%-18s", items[itemCount].getText(1)) + "//"
-							+ items[itemCount].getText(2);
-				} else {
-					parametersDefined[i] = String.format("%-11s", "//" + members[0]) + " "
-							+ String.format("%-32s", members[1]) + " "
-							+ String.format("%-18s", items[itemCount].getText(1)) + "//" + items[itemCount].getText(2);
-				}
-
-				itemCount++;
-			}
-			if (tag != null) {
-				if (!tag.equals("obj_para")) {
-					newConfig += parametersDefined[i] + "\n";
-				} else if (!parameter.contains("#define")) {
-					newConfig += parametersDefined[i] + "\n";
-				}
-			} else {
-				newConfig += parametersDefined[i] + "\n";
-			}
-		}
-		for (int i = itemCount; i < table.getItemCount(); i++) {
-			String configure = String.format("%-11s", "#define") + " " + String.format("%-32s", items[i].getText(0))
-					+ " " + String.format("%-18s", items[i].getText(1)) + "//" + items[i].getText(2);
-			newConfig += configure + "\n";
-		}
-		componentSelect.setConfigure(newConfig);
-	}
-
 	private void handleStringPara(String minString, String maxString, String[] defines, Text text) {
 		int min, max;
 		String value = null;
@@ -1520,16 +1168,16 @@ public class ComponentConfigWizard extends WizardPage {
 			curData = Long.parseLong(members[2].substring(2), 16);
 		} else if (members[2].contains("+") || members[2].contains("-") || members[2].contains("*")
 				|| members[2].contains("/")) {
-			String pureCal = dideHelper.getridParentheses(members[2]);
+			String pureCal = DideHelper.getridParentheses(members[2]);
 			if (pureCal.startsWith("-")) {
-				curData = dideHelper.toUnsigned(Long.parseLong(pureCal));
+				curData = DideHelper.toUnsigned(Long.parseLong(pureCal));
 			} else {
 				double result = Calculator.conversion(pureCal);
 				BigDecimal bd = new BigDecimal(df.format(result));
 				curData = Long.valueOf(bd.toPlainString());
 			}
 		} else {
-			curData = Long.parseLong(dideHelper.getridParentheses(members[2]));
+			curData = Long.parseLong(DideHelper.getridParentheses(members[2]));
 		}
 		if (curData < min || curData > max) {
 			text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
@@ -1537,7 +1185,7 @@ public class ComponentConfigWizard extends WizardPage {
 	}
 
 	private void handleSelectPara(int i, Button[] checkBtn, String parameter, List<String> ranges, boolean[] isSelect,
-			Component componentSelect, TableItem item, String tag) {
+			Component componentSelect, TableItem item, String tag, boolean isApp) {
 		checkBtn[i] = new Button(table, SWT.CHECK);
 		editor.setEditor(checkBtn[i], item, 1);
 		int cur = i;
@@ -1561,14 +1209,13 @@ public class ComponentConfigWizard extends WizardPage {
 
 		int chkran = range1;
 		checkBtn[i].addListener(SWT.Selection, new Listener() {
-
 			@Override
 			public void handleEvent(Event event) {
 				// TODO Auto-generated method stub
 				boolean checked = checkBtn[cur].getSelection();
 				if (checked) {
+					checkcounter += 1;
 					if (rangeSize > 0) {
-						checkcounter += 1;
 						if ((checkcounter > chkran)) {
 							if (chkran > 1) {
 								checkcounter = chkran;
@@ -1593,20 +1240,11 @@ public class ComponentConfigWizard extends WizardPage {
 							checkcounter = 0;
 						}
 					}
-					checkError(componentSelect);
 				}
-				resetConfigure(componentSelect, isSelect);
+				componentCommon.resetConfigure(componentSelect, isSelect, table);
 			}
 		});
 		tabelControls.add(checkBtn[i]);
-	}
-
-	private void checkError(Component componentSelect) {
-		if (checkcounter < 1) {
-			warningMsg = componentSelect.getAttribute() + "[" + componentSelect.getName() + "]未勾选参数";
-		} else {
-			warningMsg = null;
-		}
 	}
 
 	private void handleEnumPara(int i, boolean[] isSelect, List<String> ranges, TableItem item,
@@ -1631,7 +1269,7 @@ public class ComponentConfigWizard extends WizardPage {
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				item.setText(1, combo.getText());
-				resetConfigure(componentSelect, isSelect);
+				componentCommon.resetConfigure(componentSelect, isSelect, table);
 			}
 
 			@Override
@@ -1690,10 +1328,10 @@ public class ComponentConfigWizard extends WizardPage {
 				for (Control control : partControls) {
 					control.dispose();
 				}
-				List<String> expendParas = getExpandParas(componentSelect);
+				List<String> expendParas = componentCommon.getExpandParas(componentSelect, compontentsList);
 				fillParts(partCount, expendParas, componentSelect, isSelect);
 				item.setText(1, combo.getText());
-				resetConfigure(componentSelect, isSelect);
+				componentCommon.resetConfigure(componentSelect, isSelect, table);
 			}
 
 			@Override
@@ -1739,20 +1377,20 @@ public class ComponentConfigWizard extends WizardPage {
 				} else {
 					realComptName = members[1];
 				}
-				boolean isNFSelect = isInteger(annoation.charAt(0));
+				boolean isNFSelect = componentCommon.isInteger(annoation.charAt(0));
 				setItemText(componentSelect.getConfigure(), members, item, realComptName + "_" + i, defines,
 						isNFSelect ? annoation.replace("0", String.valueOf(i)) : i + annoation.trim());
 				Text text = new Text(table, SWT.BORDER);
 				text.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 				// 将文本框当前值，设置为表格中的值
-				text.setText(dideHelper.getridParentheses(item.getText(1)));
+				text.setText(DideHelper.getridParentheses(item.getText(1)));
 				text.addModifyListener(new ModifyListener() {
 
 					@Override
 					public void modifyText(ModifyEvent e) {
 						// TODO Auto-generated method stub
 						item.setText(1, text.getText());
-						resetConfigure(componentSelect, isSelect);
+						componentCommon.resetConfigure(componentSelect, isSelect, table);
 					}
 				});
 				editor.setEditor(text, item, 1);
@@ -1790,11 +1428,6 @@ public class ComponentConfigWizard extends WizardPage {
 		}
 	}
 
-	public static boolean isInteger(char c) {
-		Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
-		return pattern.matcher(String.valueOf(c)).matches();
-	}
-
 	public List<Component> getAppCompontentsChecked() {
 		return appCompontentsChecked;
 	}
@@ -1803,71 +1436,46 @@ public class ComponentConfigWizard extends WizardPage {
 		return ibootCompontentsChecked;
 	}
 
-	// 通过节点名获取组件
-	private Component getAppComponent(String itemName) {
-		for (Component component : appCompontents) {
-			if (component.getParentPath().equals(itemName)) {
-				return component;
-			}
-		}
-		return null;
+	private Table table;
+
+	private int lastchk;
+
+	private TabFolder folder;
+
+	private int checkcounter;
+
+	private Board sBoard = null;
+
+	private String defineInit;
+
+	private Group configGroup = null;
+
+	private OnBoardCpu onBoardCpu = null;
+
+	private Text dependentText, mutexText;
+
+	private TableEditor editor, editor1;
+
+	private boolean appExist, ibootExist;
+
+	private List<Component> compontentsList = null;
+
+	private ArrayList<Control> tabelControls = new ArrayList<Control>(), partControls = new ArrayList<Control>();
+
+	private List<TreeItem> appRequiredItems = new ArrayList<TreeItem>(), ibootRequiredItems = new ArrayList<TreeItem>();
+
+	private List<Component> appCompontents = new ArrayList<Component>(), ibootCompontents = new ArrayList<Component>(),
+			appCompontentsChecked = new ArrayList<Component>(), ibootCompontentsChecked = new ArrayList<Component>(),
+			appCoreComponents = new ArrayList<Component>(), appBspComponents = new ArrayList<Component>(),
+			appThirdComponents = new ArrayList<Component>(), appUserComponents = new ArrayList<Component>(),
+			ibootCoreComponents = new ArrayList<Component>(), ibootBspComponents = new ArrayList<Component>(),
+			ibootThirdComponents = new ArrayList<Component>(), ibootUserComponents = new ArrayList<Component>();
+
+	private List<Component> appCheckedSort = new ArrayList<Component>(), ibootCheckedSort = new ArrayList<Component>();
+	private String initHead = null;
+
+	public String validateThirdCompt(List<Component> thirdCompontents, boolean isApp) {
+		// TODO Auto-generated method stub
+		return componentCommon.validateThirdCompt(thirdCompontents, isApp);
 	}
-
-	// 通过节点名获取组件
-	private Component getIbootComponent(String itemName) {
-		for (Component component : ibootCompontents) {
-			if (component.getParentPath().equals(itemName)) {
-				return component;
-			}
-		}
-		return null;
-	}
-
-	// 获取扩展的参数
-	private List<String> getExpandParas(Component componentSelect) {
-		List<String> expandParas = new ArrayList<String>();
-		for (int j = 0; j < compontentsList.size(); j++) {
-			if (componentSelect.getParentPath().equals(compontentsList.get(j).getParentPath())) {
-				String configure = compontentsList.get(j).getConfigure();
-				String[] parametersDefined = configure.split("\n");
-				String tag = null;
-				for (int i = 0; i < parametersDefined.length; i++) {
-					String parameter = parametersDefined[i];
-					if (parameter.contains("%$#@num") || parameter.contains("%$#@string")
-							|| parameter.contains("%$#@enum") || parameter.contains("%$#@object_para")
-							|| parameter.contains("%$#@select") || parameter.contains("%$#@free")
-							|| parameter.contains("%$#@object_num")) {
-						tag = dideHelper.getTag(parameter, tag);
-					}
-
-					if (parameter.contains("#define") && tag.equals("obj_para")) {
-						expandParas.add(parameter);
-					}
-				}
-			}
-		}
-		return expandParas;
-	}
-
-	private List<Component> appCoreComponents = new ArrayList<Component>();
-	private List<Component> appBspComponents = new ArrayList<Component>();
-	private List<Component> appThirdComponents = new ArrayList<Component>();
-	private List<Component> appUserComponents = new ArrayList<Component>();
-
-	private List<Component> ibootCoreComponents = new ArrayList<Component>();
-	private List<Component> ibootBspComponents = new ArrayList<Component>();
-	private List<Component> ibootThirdComponents = new ArrayList<Component>();
-	private List<Component> ibootUserComponents = new ArrayList<Component>();
-
-	private List<Component> appCheckedSort = new ArrayList<Component>();
-	private List<Component> ibootCheckedSort = new ArrayList<Component>();
-
-	String djyStart = "ptu32_t __djy_main(void)\r\n" + "{\n";
-	String djyEnd = "\tdjy_main();\r\n" + "\treturn 0;\r\n" + "}\n\n";
-	String initStart = "void Sys_ModuleInit(void)\r\n" + "{\n";
-	String initEnd = "\treturn ;\r\n" + "}\n\n";
-	String initHead = null;
-	String evttMain = "\tevtt_main = Djy_EvttRegist(EN_CORRELATIVE,CN_PRIO_RRS,0,0,\r\n"
-			+ "\t__djy_main,NULL,CFG_MAINSTACK_LIMIT, \"main function\");\r\n"
-			+ "\t//事件的两个参数暂设为0,如果用shell启动,可用来采集shell命令行参数\r\n" + "\tDjy_EventPop(evtt_main,NULL,0,NULL,0,0);\n\n";
 }

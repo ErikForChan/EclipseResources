@@ -15,24 +15,24 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.djyos.dide.ui.wizards.board.Board;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Board;
 
 public class CreateBoardInfo {
-	
-	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	private DideHelper dideHelper = new DideHelper();
-	public void createBoardInfo(File file,List<Board> boards) {
-		
+
+	static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+	public static void createBoardInfo(File file, List<Board> boards) {
+
 		DocumentBuilder builder;
 		try {
 			factory.setIgnoringElementContentWhitespace(false);
 			builder = factory.newDocumentBuilder();
 			Document document = builder.newDocument();
 			Element boardsElement = document.createElement("boards");
-			for(int i=0;i<boards.size();i++) {
+			for (int i = 0; i < boards.size(); i++) {
 				Board b = boards.get(i);
-				Element boardElement = document.createElement("board");	
+				Element boardElement = document.createElement("board");
 				boardElement.setTextContent(b.getBoardName());
 				boardsElement.appendChild(boardElement);
 			}
@@ -49,8 +49,8 @@ public class CreateBoardInfo {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
-		}             
-		
+			DideHelper.showErrorMessage("文件" + file.getName() + "创建失败！ " + e.getMessage());
+		}
+
 	}
 }

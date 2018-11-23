@@ -12,13 +12,12 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-
 import org.eclipse.cdt.core.CCProjectNature;
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.CProjectNature;
 import org.eclipse.cdt.core.DjyosProjectNature;
+
+import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosCommonProjectWizard;
 
 /**

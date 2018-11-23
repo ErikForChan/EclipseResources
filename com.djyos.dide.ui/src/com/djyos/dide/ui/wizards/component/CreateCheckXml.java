@@ -15,11 +15,11 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Component;
 
 public class CreateCheckXml {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	private DideHelper dideHelper = new DideHelper();
 
 	public void createCheck(List<Component> cmpnts, File file) {
 		factory.setIgnoringElementContentWhitespace(false);
@@ -48,7 +48,7 @@ public class CreateCheckXml {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			dideHelper.showErrorMessage("文件" + file.getName() + "创建失败！ " + e.getMessage());
+			DideHelper.showErrorMessage("文件" + file.getName() + "创建失败！ " + e.getMessage());
 		}
 
 	}

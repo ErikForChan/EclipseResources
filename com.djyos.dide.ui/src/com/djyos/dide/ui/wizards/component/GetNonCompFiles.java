@@ -4,26 +4,21 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.djyos.dide.ui.wizards.board.Board;
-import com.djyos.dide.ui.wizards.board.onboardcpu.Chip;
-import com.djyos.dide.ui.wizards.board.onboardcpu.OnBoardCpu;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
-import com.djyos.dide.ui.wizards.djyosProject.tools.LinkHelper;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.objects.Chip;
+import com.djyos.dide.ui.objects.OnBoardCpu;
 
 public class GetNonCompFiles {
-	private DideHelper dideHelper = new DideHelper();
-	private LinkHelper linkHelper = new LinkHelper();
-	private String didePath = dideHelper.getDIDEPath();
-	private String deapPath = null;
-	private List<File> excludeCompFiles = new ArrayList<File>();
-	private List<String> componentPaths = new ArrayList<String>();
-	ComponentRefer cRefer = new ComponentRefer();
+	private static String didePath = DideHelper.getDIDEPath();
+	private static List<File> excludeCompFiles = new ArrayList<File>();
+	static ComponentRefer cRefer = new ComponentRefer();
 
 	// 遍历组件及其子组件
-	private void traverFiles(File file) {
+	private static void traverFiles(File file) {
 		if (!file.getName().equals("include") && !file.getName().equals("startup")) {
 
-			List<File> allFiles = dideHelper.sortFileAndFolder(file);
+			List<File> allFiles = DideHelper.sortFileAndFolder(file);
 			boolean hExist = false;
 			for (File f : allFiles) {
 				if (f.getName().endsWith(".h") && f.getName().contains("component_config")) {
@@ -37,7 +32,6 @@ public class GetNonCompFiles {
 			if (!hExist) {
 				if (!file.getPath().contains("third")) {
 					boolean haveComp = false;
-					List<File> excludeFiles = new ArrayList<File>();
 					for (File f : allFiles) {
 						if (f.getName().endsWith(".c")) {
 							if (cRefer.isComponent(f)) {
@@ -67,10 +61,9 @@ public class GetNonCompFiles {
 		}
 	}
 
-	private boolean haveChildComp(File file) {
+	private static boolean haveChildComp(File file) {
 		// TODO Auto-generated method stub
 		boolean isComp = false;
-		boolean haveComp = false;
 		File[] files = file.listFiles();
 		for (File f : files) {
 			if (!f.getName().equals("include") && !f.getName().equals("startup")) {
@@ -89,7 +82,7 @@ public class GetNonCompFiles {
 		return isComp;
 	}
 
-	public List<File> getNonCompFiles(OnBoardCpu onBoardCpu, Board board) {
+	public static List<File> getNonCompFiles(OnBoardCpu onBoardCpu, Board board) {
 		ComponentRefer cRefer = new ComponentRefer();
 		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
 		String chipPath = didePath + "djysrc/bsp/chipdrv";
@@ -137,41 +130,6 @@ public class GetNonCompFiles {
 		}
 
 		return excludeCompFiles;
-	}
-
-	private String getCpuSrcPath(String cpuName) {
-		String sourcePath = didePath + "djysrc/bsp/cpudrv";
-		File sourceFile = new File(sourcePath);
-		File[] files = sourceFile.listFiles();
-		String path = null;
-		for (File file : files) {// cpudrv下的所有文件 Atmel stm32
-			if (file.isDirectory()) {
-				getDeapPath(file, cpuName);
-				if (deapPath != null) {
-					path = deapPath + "/../src";
-					break;
-				}
-			}
-
-		}
-		return path;
-	}
-
-	public String getDeapPath(File sourceFile, String cpuName) {
-		File[] files = sourceFile.listFiles();
-		String path = null;
-		for (File file : files) {
-			if (file.isDirectory()) {
-				if (file.getName().equals(cpuName)) {
-					deapPath = file.getPath();
-					break;
-				} else if (!file.getName().equals("include") && !file.getName().equals("src")
-						&& !file.getName().equals("startup")) {
-					getDeapPath(file, cpuName);// 如果为目录，则继续扫描该目录
-				}
-			}
-		}
-		return deapPath;
 	}
 
 }

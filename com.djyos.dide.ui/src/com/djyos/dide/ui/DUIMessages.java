@@ -1,15 +1,25 @@
+/*******************************************************************************
+ * Copyright (c) 2017 Djyos Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.djyos.com
+ *
+ * Contributors:
+ *     Djyos Team - Jiaming Chen
+ *******************************************************************************/
 package com.djyos.dide.ui;
 
 import org.eclipse.osgi.util.NLS;
 
-public class DUIMessages extends NLS{
+public class DUIMessages extends NLS {
 
 	private static final String BUNDLE_NAME = "com.djyos.dide.ui.DUIMessages";//$NON-NLS-1$
-	
+
 	private DUIMessages() {
 		// Do not instantiate
 	}
-	
+
 	public static String Drag_move_problem_title;
 	public static String Drag_move_problem_message;
 	public static String ExceptionDialog_seeErrorLogMessage;
@@ -65,5 +75,5 @@ public class DUIMessages extends NLS{
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, DUIMessages.class);
 	}
-	
+
 }

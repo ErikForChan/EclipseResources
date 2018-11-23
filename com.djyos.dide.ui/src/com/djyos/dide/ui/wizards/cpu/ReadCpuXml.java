@@ -13,20 +13,20 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.djyos.dide.ui.arch.Arch;
 import com.djyos.dide.ui.arch.ReadArchXml;
-import com.djyos.dide.ui.wizards.cpu.core.Core;
-import com.djyos.dide.ui.wizards.cpu.core.memory.CoreMemory;
-import com.djyos.dide.ui.wizards.djyosProject.tools.DideHelper;
+import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Arch;
+import com.djyos.dide.ui.objects.Core;
+import com.djyos.dide.ui.objects.CoreMemory;
+import com.djyos.dide.ui.objects.Cpu;
 
 public class ReadCpuXml {
 	private static DocumentBuilderFactory dbFactory = null;
 	private static DocumentBuilder db = null;
 	private static Document document = null;
-	private List<Cpu> cpus = new ArrayList<Cpu>();
-	private DideHelper dideHelper = new DideHelper();
-	File archSourceFile = new File(dideHelper.getDjyosSrcPath() + "/bsp/arch");
-	List<File> archXmlFiles = dideHelper.getArchXmlFiles(archSourceFile, new ArrayList<File>());
+	private static List<Cpu> cpus = new ArrayList<Cpu>();
+	static File archSourceFile = new File(DideHelper.getDjyosSrcPath() + "/bsp/arch");
+	static List<File> archXmlFiles = DideHelper.getArchXmlFiles(archSourceFile, new ArrayList<File>());
 	static {
 		try {
 			dbFactory = DocumentBuilderFactory.newInstance();
@@ -37,9 +37,10 @@ public class ReadCpuXml {
 	}
 
 	// 获取当前路径下所有Cpu信息，通过扫描各个目下的xml文件
-	public List<Cpu> getAllCpus() {
+	public static List<Cpu> getAllCpus() {
 
-		String sourcePath = dideHelper.getDIDEPath() + "djysrc/bsp/cpudrv";
+		cpus = new ArrayList<Cpu>();
+		String sourcePath = DideHelper.getDIDEPath() + "djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
 		File[] files = sourceFile.listFiles();
 		for (File file : files) {
@@ -47,14 +48,15 @@ public class ReadCpuXml {
 				getCpus(file);
 			}
 		}
+		System.out.println("cpus.size():   " + cpus.size());
 		return cpus;
 
 	}
 
 	// 遍历父目录，当父目录名为cpudrv时停止扫描
-	private void traverseParents(Cpu cpu, File parentFile) {
+	private static void traverseParents(Cpu cpu, File parentFile) {
 		if (!parentFile.getName().contains("cpudrv")) {
-			File xmlFile = dideHelper.getXmlFile(parentFile);
+			File xmlFile = DideHelper.getXmlFile(parentFile);
 			try {
 				if (xmlFile != null) {
 					unitCpu(cpu, xmlFile);
@@ -69,8 +71,7 @@ public class ReadCpuXml {
 	}
 
 	// 获取Cpu.xml的信息
-	public void getCpus(File sourceFile) {// Atmel stm32
-		String filePath = sourceFile.getPath();
+	public static void getCpus(File sourceFile) {// Atmel stm32
 		File[] files = sourceFile.listFiles();
 		for (File file : files) {
 			if (file.isDirectory()) {
@@ -94,7 +95,7 @@ public class ReadCpuXml {
 		}
 	}
 
-	public Cpu getCpuInfos(File file) throws Exception {
+	public static Cpu getCpuInfos(File file) throws Exception {
 		Cpu cpu = new Cpu();
 		if (file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
 			cpu.setParentPath(file.getParentFile().getPath());
@@ -130,7 +131,7 @@ public class ReadCpuXml {
 		return cpu;
 	}
 
-	private void handleMultipleCoreListNode(Node node, Core core, boolean memoryConfiged) {
+	private static void handleMultipleCoreListNode(Node node, Core core, boolean memoryConfiged) {
 		// TODO Auto-generated method stub
 		NodeList cList = node.getChildNodes();
 		for (int j = 0; j < cList.getLength(); j++) {
@@ -197,7 +198,7 @@ public class ReadCpuXml {
 		}
 	}
 
-	private void SetArch(Core core, String family) {
+	private static void SetArch(Core core, String family) {
 		Arch myArch = new Arch();
 		for (File f : archXmlFiles) {
 			if (f.getParentFile().getName().equals(family)) {
@@ -209,7 +210,7 @@ public class ReadCpuXml {
 		core.setArch(myArch);
 	}
 
-	private void handleNoListOneCoreNode(Core core, NodeList cList) {
+	private static void handleNoListOneCoreNode(Core core, NodeList cList) {
 		for (int i = 0; i < cList.getLength(); i++) {
 			Node node = cList.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -241,7 +242,7 @@ public class ReadCpuXml {
 
 	}
 
-	private void handleNoListMultipleCoreNode(NodeList cList, List<Core> cores) {
+	private static void handleNoListMultipleCoreNode(NodeList cList, List<Core> cores) {
 		for (int i = 0; i < cList.getLength(); i++) {
 			Node node = cList.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -299,7 +300,7 @@ public class ReadCpuXml {
 		}
 	}
 
-	public Cpu unitCpu(Cpu cpu, File file) throws Exception {
+	public static Cpu unitCpu(Cpu cpu, File file) throws Exception {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
 		// System.out.println("cpuFile: "+file.getName());
 		document = db.parse(file);
