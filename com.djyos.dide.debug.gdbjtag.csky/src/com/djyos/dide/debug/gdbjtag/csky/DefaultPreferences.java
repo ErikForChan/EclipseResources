@@ -10,6 +10,9 @@ public class DefaultPreferences {
 
 	protected static final boolean SERVER_DO_START_DEFAULT = true;
 	public static final boolean DO_START_GDB_SERVER_DEFAULT = true;
+	
+	public static final boolean DO_CONNECT_TO_RUNNING_DEFAULT = false;
+
 	public static final String SERVER_EXECUTABLE_DEFAULT = "DebugServerConsole.exe";
 	protected static final String CLIENT_EXECUTABLE_DEFAULT = "csky-elfabiv2-gdb.exe";
 	

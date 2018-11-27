@@ -62,26 +62,33 @@ public class DebuggerCommands extends GnuArmDebuggerCommandsService {
 		if (!status.isOK()) {
 			return status;
 		}
-
-		if (CDebugUtils.getAttribute(fAttributes, IGDBJtagConstants.ATTR_LOAD_IMAGE,
-				IGDBJtagConstants.DEFAULT_LOAD_IMAGE)
-				&& !CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.DO_DEBUG_IN_RAM,
-						DefaultPreferences.getCSkyDebugInRam())) {
-
-			status = addLoadImageCommands(commandsList);
-
-			if (!status.isOK()) {
-				return status;
+		
+		boolean doConnectToRunning = CDebugUtils.getAttribute(fAttributes,
+				ConfigurationAttributes.DO_CONNECT_TO_RUNNING, DefaultPreferences.DO_CONNECT_TO_RUNNING_DEFAULT);
+	
+		if (!doConnectToRunning) {
+			if (CDebugUtils.getAttribute(fAttributes, IGDBJtagConstants.ATTR_LOAD_IMAGE,
+					IGDBJtagConstants.DEFAULT_LOAD_IMAGE)
+					&& !CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.DO_DEBUG_IN_RAM,
+							DefaultPreferences.getCSkyDebugInRam())) {
+	
+				status = addLoadImageCommands(commandsList);
+	
+				if (!status.isOK()) {
+					return status;
+				}
 			}
 		}
-
 		return Status.OK_STATUS;
 	}
 
 	@Override
 	public IStatus addGnuArmStartCommands(List<String> commandsList) {
 
-		IStatus status = addStartRestartCommands(true, commandsList);
+		boolean doReset = !CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.DO_CONNECT_TO_RUNNING,
+				DefaultPreferences.DO_CONNECT_TO_RUNNING_DEFAULT);
+		
+		IStatus status = addStartRestartCommands(doReset, commandsList);
 
 		if (!status.isOK()) {
 			return status;
@@ -95,18 +102,21 @@ public class DebuggerCommands extends GnuArmDebuggerCommandsService {
 	@Override
 	public IStatus addFirstResetCommands(List<String> commandsList) {
 
-//		if (CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.DO_FIRST_RESET,
-//				DefaultPreferences.getCSkyDoInitialReset())) {
-//
-//			String commandStr = DefaultPreferences.DO_INITIAL_RESET_COMMAND;
-//			commandsList.add(commandStr);
-//
-//			// Although the manual claims that reset always does a
-//			// halt, better issue it explicitly
-//			commandStr = DefaultPreferences.HALT_COMMAND;
-//			commandsList.add(commandStr);
+//		boolean noReset = CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.DO_CONNECT_TO_RUNNING,
+//				DefaultPreferences.DO_CONNECT_TO_RUNNING_DEFAULT);
+//		if (noReset) {
+//			if (CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.DO_FIRST_RESET,
+//					DefaultPreferences.getCSkyDoInitialReset())) {
+//	
+//				String commandStr = DefaultPreferences.DO_INITIAL_RESET_COMMAND;
+//				commandsList.add(commandStr);
+//	
+//				// Although the manual claims that reset always does a
+//				// halt, better issue it explicitly
+//				commandStr = DefaultPreferences.HALT_COMMAND;
+//				commandsList.add(commandStr);
+//			}
 //		}
-
 		String otherInits = CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.OTHER_INIT_COMMANDS,
 				DefaultPreferences.getCSkyInitOther()).trim();
 
@@ -122,7 +132,7 @@ public class DebuggerCommands extends GnuArmDebuggerCommandsService {
 	@Override
 	public IStatus addStartRestartCommands(boolean doReset, List<String> commandsList) {
 
-//		if (doReset) {
+//		if (!doReset) {
 //			if (CDebugUtils.getAttribute(fAttributes, ConfigurationAttributes.DO_SECOND_RESET,
 //					DefaultPreferences.getCSkyDoPreRunReset())) {
 //				String commandStr = DefaultPreferences.DO_PRERUN_RESET_COMMAND;

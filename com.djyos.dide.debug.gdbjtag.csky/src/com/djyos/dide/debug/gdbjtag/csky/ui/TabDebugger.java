@@ -38,6 +38,7 @@ import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 
 import ilg.gnuarmeclipse.debug.gdbjtag.data.CProjectAttributes;
+
 import com.djyos.dide.debug.gdbjtag.csky.Activator;
 import com.djyos.dide.debug.gdbjtag.csky.ConfigurationAttributes;
 import com.djyos.dide.debug.gdbjtag.csky.DefaultPreferences;
@@ -60,6 +61,7 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 	private Text fGdbClientOtherOptions;
 	private Text fGdbClientOtherCommands;
 
+	private Button fDoConnectToRunning;
 	//private Button fEnableSemihosting;
 	//private Text fSemihostingCmdline;
 
@@ -92,12 +94,15 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 	protected String fSavedCmsisBoardName;
 
 	protected String fProjectName;
+	
+	private TabStartup fTabStartup;
 
 	// ------------------------------------------------------------------------
 
 	protected TabDebugger(TabStartup tabStartup) {
 		super();
 
+		fTabStartup = tabStartup;
 		fSavedCmsisDeviceName = null;
 		fSavedCmsisBoardName = null;
 	}
@@ -218,12 +223,30 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 
 		Label label;
 		{
-			fDoStartGdbServer = new Button(comp, SWT.CHECK);
-			fDoStartGdbServer.setText(Messages.getString("DebuggerTab.doStartGdbServer_Text"));
-			fDoStartGdbServer.setToolTipText(Messages.getString("DebuggerTab.doStartGdbServer_ToolTipText"));
-			gd = new GridData();
+			Composite local = new Composite(comp, SWT.NONE);
+			layout = new GridLayout();
+			layout.numColumns = 2;
+			layout.marginHeight = 0;
+			layout.marginWidth = 0;
+			local.setLayout(layout);
+
+			gd = new GridData(GridData.FILL_HORIZONTAL);
 			gd.horizontalSpan = ((GridLayout) comp.getLayout()).numColumns;
-			fDoStartGdbServer.setLayoutData(gd);
+			local.setLayoutData(gd);
+
+			{
+				fDoStartGdbServer = new Button(local, SWT.CHECK);
+				fDoStartGdbServer.setText(Messages.getString("DebuggerTab.doStartGdbServer_Text"));
+				fDoStartGdbServer.setToolTipText(Messages.getString("DebuggerTab.doStartGdbServer_ToolTipText"));
+				gd = new GridData(GridData.FILL_HORIZONTAL);
+				fDoStartGdbServer.setLayoutData(gd);
+
+				fDoConnectToRunning = new Button(local, SWT.CHECK);
+				fDoConnectToRunning.setText(Messages.getString("DebuggerTab.noReset_Text"));
+				fDoConnectToRunning.setToolTipText(Messages.getString("DebuggerTab.noReset_ToolTipText"));
+				gd = new GridData(GridData.FILL_HORIZONTAL);
+				fDoConnectToRunning.setLayoutData(gd);
+			}
 		}
 
 		{
@@ -367,6 +390,16 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 				if (fDoStartGdbServer.getSelection()) {
 					fTargetIpAddress.setText(DefaultPreferences.REMOTE_IP_ADDRESS_LOCALHOST);
 				}
+				scheduleUpdateJob();
+			}
+		});
+		
+		fDoConnectToRunning.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+
+				fTabStartup.doConnectToRunningChanged(fDoConnectToRunning.getSelection());
+
 				scheduleUpdateJob();
 			}
 		});
@@ -594,6 +627,7 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 
 		boolean enabled = fDoStartGdbServer.getSelection();
 
+		fDoConnectToRunning.setEnabled(enabled);
 		fGdbServerExecutable.setEnabled(enabled);
 		fGdbServerBrowseButton.setEnabled(enabled);
 		fGdbServerVariablesButton.setEnabled(enabled);
@@ -673,6 +707,10 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 				booleanDefault = PersistentPreferences.getGdbServerDoStart();
 				fDoStartGdbServer.setSelection(
 						configuration.getAttribute(ConfigurationAttributes.DO_START_GDB_SERVER, booleanDefault));
+
+				fDoConnectToRunning.setSelection(
+						configuration.getAttribute(ConfigurationAttributes.DO_CONNECT_TO_RUNNING,
+								DefaultPreferences.DO_CONNECT_TO_RUNNING_DEFAULT));
 
 				// Executable
 				stringDefault = PersistentPreferences.getGdbServerExecutable();
@@ -770,6 +808,8 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 			// Start server locally
 			booleanDefault = DefaultPreferences.getGdbServerDoStart();
 			fDoStartGdbServer.setSelection(booleanDefault);
+			
+			fDoConnectToRunning.setSelection(DefaultPreferences.DO_CONNECT_TO_RUNNING_DEFAULT);
 
 			// Executable
 			stringDefault = DefaultPreferences.getGdbServerExecutable();
@@ -862,6 +902,10 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 			configuration.setAttribute(ConfigurationAttributes.DO_START_GDB_SERVER, booleanValue);
 			PersistentPreferences.putGdbServerDoStart(booleanValue);
 
+			// Connect to running
+			configuration.setAttribute(ConfigurationAttributes.DO_CONNECT_TO_RUNNING,
+					fDoConnectToRunning.getSelection());
+			
 			// Executable
 			stringValue = fGdbServerExecutable.getText().trim();
 			configuration.setAttribute(ConfigurationAttributes.GDB_SERVER_EXECUTABLE, stringValue);
@@ -966,6 +1010,9 @@ public class TabDebugger extends AbstractLaunchConfigurationTab {
 			defaultBoolean = PersistentPreferences.getGdbServerDoStart();
 			configuration.setAttribute(ConfigurationAttributes.DO_START_GDB_SERVER, defaultBoolean);
 
+			configuration.setAttribute(ConfigurationAttributes.DO_CONNECT_TO_RUNNING,
+					DefaultPreferences.DO_CONNECT_TO_RUNNING_DEFAULT);
+			
 			defaultString = PersistentPreferences.getGdbServerExecutable();
 			configuration.setAttribute(ConfigurationAttributes.GDB_SERVER_EXECUTABLE, defaultString);
 

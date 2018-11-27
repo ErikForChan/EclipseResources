@@ -59,7 +59,7 @@ public class TabStartup extends AbstractLaunchConfigurationTab {
 //	private Button fDoFirstReset;
 //
 //	private Button fDoSecondReset;
-	private Label fSecondResetWarning;
+//	private Label fSecondResetWarning;
 
 	private Button fLoadExecutable;
 	private Text fImageFileName;
@@ -695,11 +695,11 @@ public class TabStartup extends AbstractLaunchConfigurationTab {
 
 		// System.out.println(flag);
 //		fDoFirstReset.setEnabled(!flag);
-		// firstResetType.setEnabled(!flag);
+//		firstResetType.setEnabled(!flag);
 
 //		fDoSecondReset.setEnabled(!flag);
-		// secondResetType.setEnabled(!flag);
-		fSecondResetWarning.setEnabled(!flag);
+//		fsecondResetType.setEnabled(!flag);
+//		fSecondResetWarning.setEnabled(!flag);
 
 		fLoadExecutable.setEnabled(!flag);
 	}
