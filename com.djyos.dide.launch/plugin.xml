@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+	<extension point="org.eclipse.debug.core.launchConfigurationTypes">
+		<launchConfigurationType
+			id="com.djyos.csky.launch.CSKYApplicationType"
+			modes="debug,run"
+			name="%launchConfigurationType.name"
+			public="true" />
+	</extension>
+	<!-- LaunchConfigurationDelegate.java is where fun starts -->
+	<extension point="org.eclipse.debug.core.launchDelegates">
+		<launchDelegate
+            id="com.djyos.csky.launch.CSKYApplicationLaunch"
+            type="com.djyos.csky.launch.CSKYApplicationType"
+            delegate="com.djyos.csky.launch.ui.LaunchConfigurationDelegate"
+            modes="debug,run"
+            name="%launchDelegate.name"
+            delegateDescription="CSKY Application Launch"
+            sourceLocatorId="org.eclipse.cdt.debug.core.sourceLocator"
+            sourcePathComputerId="org.eclipse.cdt.debug.core.sourcePathComputer">
+      </launchDelegate>
+
+		
+	</extension>	
+	<extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">          
+        <launchConfigurationTypeImage
+            icon="icons/csky_bare.gif"
+            configTypeID="com.djyos.csky.launch.CSKYApplicationType"
+            id="com.csky.cds.launch.CSKYApplicationImage">
+        </launchConfigurationTypeImage>
+   </extension>
+   
+   	<extension point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+		<launchConfigurationTabGroup
+            type="com.djyos.csky.launch.CSKYApplicationType"
+            class="com.djyos.csky.launch.ui.PlaceHolderLaunchConfigurationTabGroup"
+            id="com.djyos.csky.launch.CSKYApplicationTabGroup">
+        </launchConfigurationTabGroup>	
+	</extension> 
+	
+   <extension point="org.eclipse.debug.ui.launchConfigurationTabs">
+      <tab
+            id="com.djyos.csky.launch.CSKYApplication.mainTab"
+            group="com.djyos.csky.launch.CSKYApplicationTabGroup"
+            name="%MainLaunchTab.name"
+            class="com.djyos.csky.launch.ui.CAPPMainTab">
+        <associatedDelegate delegate="com.djyos.csky.launch.CSKYApplicationLaunch"/>
+      </tab>
+      <!--tab
+            id="com.djyos.csky.launch.CSKYApplication.mainTab"
+            group="com.djyos.csky.launch.CSKYApplicationTabGroup"
+            name="%MainLaunchTab.name"
+            class="com.djyos.csky.launch.ui.TabMain">
+        <associatedDelegate delegate="com.djyos.csky.launch.CSKYApplicationLaunch"/>
+      </tab-->      
+      <tab
+            id="com.djyos.csky.launch.CSKYApplication.debuggerTab"
+            group="com.djyos.csky.launch.CSKYApplicationTabGroup"
+            name="%DebuggerLaunchTab.name"
+            class="com.djyos.csky.launch.ui.CAPPDebuggerTab">
+        <associatedDelegate delegate="com.djyos.csky.launch.CSKYApplicationLaunch"/>
+        <placement after="com.djyos.csky.launch.CSKYApplication.mainTab"/>
+      </tab>
+      <tab
+           id="com.djyos.csky.launch.CSKYApplication.sourceLookupTab"
+           group="com.djyos.csky.launch.CSKYApplicationTabGroup"
+           name="%SourceLookupLaunchTab.name"
+           class="org.eclipse.debug.ui.sourcelookup.SourceLookupTab">
+        <associatedDelegate delegate="com.djyos.csky.launch.CSKYApplicationLaunch"/>
+        <placement after="com.djyos.csky.launch.CSKYApplication.debuggerTab"/>
+	  </tab>
+	  <tab
+            id="com.djyos.csky.launch.CSKYApplication.commonTab"
+            group="com.djyos.csky.launch.CSKYApplicationTabGroup"
+            name="%CommonLaunchTab.name"
+            class="org.eclipse.debug.ui.CommonTab">
+        <associatedDelegate delegate="com.djyos.csky.launch.CSKYApplicationLaunch"/>
+        <placement after="com.djyos.csky.launch.CSKYApplication.sourceLookupTab"/>
+      </tab>
+ </extension>     
+ 
+ 
+</plugin>
