@@ -85,6 +85,32 @@ public class HandleProjectImport {
 			File hardWardFolder = new File(project.getLocation().toString() + "/data/hardwares");
 			File hardWardInfoFile = new File(project.getLocation().toString() + "/data/hardware_info.xml");
 			
+//			for (int i = 0; i < conds.length; i++) {
+//			if(!conds[i].getName().startsWith("libos")) {
+//				System.out.println("conds[i].getName():   "+conds[i].getName());
+//				ICResourceDescription rds = conds[i].getRootFolderDescription();
+//				IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
+//				IResourceInfo resourceInfo = cfg.getRootFolderInfo();
+//				IToolChain toolchain = resourceInfo.getParent().getToolChain();
+//				
+//				ITool[] tools = toolchain.getToolsBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker");
+//				for (ITool t : tools) {
+//					IOption op = t.getOptionBySuperClassId(
+//							"ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.scriptfile");
+//					try {
+//						OptionStringValue[] values = op.getBasicStringListValueElements();
+//						for (OptionStringValue v : values) {
+//							System.out.println("value:   " + v.getValue());
+//						}
+//
+//					} catch (BuildException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//			}
+//		}
+			
 			List<String> hardwares;
 			if (hardWardInfoFile.exists()) {
 				if (!hardWardFolder.exists()) {

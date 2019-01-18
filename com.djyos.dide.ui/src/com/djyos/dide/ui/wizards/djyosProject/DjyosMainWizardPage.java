@@ -585,7 +585,9 @@ public class DjyosMainWizardPage extends WizardPage {
 		nmWizard.cpomtCfgPage.setTitle("Component Configuration");
 		nmWizard.cpomtCfgPage.setDescription("π§≥Ã≤√ºÙ”Î≈‰÷√");
 		nmWizard.addPage(nmWizard.cpomtCfgPage);
-		nmWizard.importProject(projectPath, selectedBoard, selectedCore, haveApp(), needIbootLds());
+		
+		int tIndex = getTemplateIndex();
+		nmWizard.importProject(projectPath, selectedBoard, selectedCore, haveApp(), needIbootLds(), tIndex);
 		
 		return super.getNextPage();
 //		

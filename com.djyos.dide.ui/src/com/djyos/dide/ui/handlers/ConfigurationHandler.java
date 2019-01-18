@@ -6,7 +6,9 @@ import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICMultiConfigDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.managedbuilder.core.BuildException;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+import org.eclipse.cdt.managedbuilder.core.IOption;
 import org.eclipse.cdt.managedbuilder.core.ITool;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
 import org.eclipse.cdt.managedbuilder.internal.core.MultiConfiguration;
@@ -50,10 +52,8 @@ public class ConfigurationHandler {
 	}
 
 	// …Ë÷√ƒ¨»œ√¸¡ÓŒ™pattern
+	@SuppressWarnings("deprecation")
 	public void setDefaultArchiverCmd(IProject project) {
-		// TODO Auto-generated method stub
-		String str;
-
 		final ICProjectDescription local_prjd = CoreModel.getDefault().getProjectDescription(project);
 		if (local_prjd != null) {
 			ICConfigurationDescription[] conds = local_prjd.getConfigurations();
@@ -73,7 +73,6 @@ public class ConfigurationHandler {
 				}
 
 				if (!s.contains("libos")) {
-					IFile ibootLdsFile = project.getFile("src/lds/iboot.lds");
 					String pType = "-p0";
 //					System.out.println("toolChainName111:  "+toolChainName);
 //					if(!ibootLdsFile.exists()) {
@@ -108,6 +107,23 @@ public class ConfigurationHandler {
 							if (!tool.getCommandLinePattern().equals(pattern)) {
 								tool.setCommandLinePattern(pattern);
 							}
+							IOption[] options = tool.getOptions();
+							for(IOption op:options) {
+								if(op.getName().equalsIgnoreCase("Archiver flags")) {
+//									System.out.println("value:  "+op.getValue().toString());
+									try {
+										op.setValue("-ru");
+									} catch (BuildException e) {
+										// TODO Auto-generated catch block
+										e.printStackTrace();
+									}
+								}
+							}
+//							tool.set
+//							System.out.println("getOutputFlag:  "+tool.getOutputFlag());
+//							tool.setOutputFlag(flag);
+//								String flags =tool.getToolCommand();
+//								System.out.println("flags:  "+flags);
 						}
 
 					}

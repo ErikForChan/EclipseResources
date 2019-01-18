@@ -25,7 +25,6 @@ import org.eclipse.cdt.managedbuilder.core.IResourceInfo;
 import org.eclipse.cdt.managedbuilder.core.ITool;
 import org.eclipse.cdt.managedbuilder.core.IToolChain;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
-import org.eclipse.cdt.managedbuilder.core.OptionStringValue;
 import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -125,7 +124,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 	}
 
 	public boolean importProject(String projectPath, Board selectedBoard, Core selectedCore, boolean haveApp,
-			boolean needIbootLds) {
+			boolean needIbootLds, int tIndex) {
 
 		String projectName = fMainPage.getProjectName();// 用户填写的工程名
 		String templateName = getTemplateName();// 用户选择的模板
@@ -164,7 +163,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 						projectExist = false;
 						createdProject = true;
 						String boardFolderPath = selectedBoard.getBoardFolderPath();
-						fill_Lds(destPath, boardFolderPath, haveApp, needIbootLds, selectedCore);
+						fill_Lds(destPath, boardFolderPath, haveApp, needIbootLds, selectedCore, tIndex);
 					}
 				};
 
@@ -173,7 +172,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					DideHelper.showErrorMessage("工程创建失败" + e.getMessage());
-					e.printStackTrace();
 				}
 
 			} else {
@@ -186,7 +184,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		return true;
 	}
 
-	private void fill_Lds(String destPath, String boardFolderPath, boolean haveApp, boolean needIbootLds, Core core) {
+	private void fill_Lds(String destPath, String boardFolderPath, boolean haveApp, boolean needIbootLds, Core core, int tIndex) {
 		// TODO Auto-generated method stub
 		boardFolderPath += "/lds";
 		if(core.getName() != null) {
@@ -200,13 +198,45 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			destLdsFile.mkdirs();
 		}
 		try {
+			File memoryLdsFile = new File(boardFolderPath + "/memory.lds");
+			
 			File debugLdsFile = new File(boardFolderPath + "/debug.lds");
 			File releaseLdsFile = new File(boardFolderPath + "/release.lds");
 			File ibootLdsFile = new File(boardFolderPath + "/iboot.lds");
-			File memoryLdsFile = new File(boardFolderPath + "/memory.lds");
 			File bdebugLdsFile = new File(boardFolderPath + "/bdebug.lds");
 			File breleaseLdsFile = new File(boardFolderPath + "/brelease.lds");
-
+			
+//			File app_debug_LdsFile = new File(boardFolderPath + "/app_debug.lds");
+//			File app_release_LdsFile = new File(boardFolderPath + "/app_release.lds");
+//			File iboot_debug_LdsFile = new File(boardFolderPath + "/iboot_debug.lds");
+//			File iboot_release_LdsFile = new File(boardFolderPath + "/iboot_release.lds");
+//			File bare_debug_LdsFile = new File(boardFolderPath + "/bare_debug.lds");
+//			File bare_release_LdsFile = new File(boardFolderPath + "/bare_release.lds");
+//			
+//			if(tIndex==0 || tIndex==1) {
+//				if(iboot_debug_LdsFile.exists()) {
+//					DideHelper.copyFolder(iboot_debug_LdsFile, new File(destPath + "/src/lds/iboot_debug.lds"));
+//				}
+//				if(iboot_release_LdsFile.exists()) {
+//					DideHelper.copyFolder(iboot_release_LdsFile, new File(destPath + "/src/lds/iboot_release.lds"));
+//				}
+//			}
+//			if(tIndex==0 || tIndex==2) {
+//				if(app_debug_LdsFile.exists()) {
+//					DideHelper.copyFolder(app_debug_LdsFile, new File(destPath + "/src/lds/app_debug.lds"));
+//				}
+//				if(app_release_LdsFile.exists()) {
+//					DideHelper.copyFolder(app_release_LdsFile, new File(destPath + "/src/lds/app_release.lds"));
+//				}
+//			}
+//			if(tIndex==3) {
+//				if(bare_debug_LdsFile.exists()) {
+//					DideHelper.copyFolder(bare_debug_LdsFile, new File(destPath + "/src/lds/bare_debug.lds"));
+//				}
+//				if(bare_release_LdsFile.exists()) {
+//					DideHelper.copyFolder(bare_release_LdsFile, new File(destPath + "/src/lds/bare_release.lds"));
+//				}
+//			}
 			if (haveApp && needIbootLds) {
 				if (debugLdsFile.exists()) {
 					DideHelper.copyFolder(debugLdsFile, new File(destPath + "/src/lds/debug.lds"));

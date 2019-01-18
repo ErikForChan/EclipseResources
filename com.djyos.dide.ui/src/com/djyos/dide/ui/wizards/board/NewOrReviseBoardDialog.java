@@ -910,10 +910,12 @@ public class NewOrReviseBoardDialog extends StatusDialog {
 				TreeItem t = new TreeItem(shared_memoryTree, SWT.NONE);
 				t.setText(memoryOnName);
 			}
-			shared_memoryTypeCombo.select(shared_memorys.get(0).getType().equals("FLASH")?1:0);
-			shared_addrField.setText(shared_memorys.get(0).getStartAddr());
-			shared_sizeField.setText(shared_memorys.get(0).getSize());
-			shared_memoryTree.setSelection(shared_memoryTree.getItems()[0]);
+			if(shared_memorys.size() > 0) {
+				shared_memoryTypeCombo.select(shared_memorys.get(0).getType().equals("FLASH")?1:0);
+				shared_addrField.setText(shared_memorys.get(0).getStartAddr());
+				shared_sizeField.setText(shared_memorys.get(0).getSize());
+				shared_memoryTree.setSelection(shared_memoryTree.getItems()[0]);
+			}
 		}
 		
 		enableSharedMemory(false);

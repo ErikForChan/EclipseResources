@@ -113,6 +113,7 @@ public class ComponentCommonPage implements IComponentCommon {
 		String tag = null;
 		int paraSelected = 0;
 		String[] infos = null;
+//		System.out.println("nme:  "+component.getName());
 		for (int i = 0; i < parametersDefined.length; i++) {
 			String parameter = parametersDefined[i].trim();
 			if (DideHelper.isParaHead(parameter)) {
@@ -127,14 +128,17 @@ public class ComponentCommonPage implements IComponentCommon {
 			}
 		}
 
-		if (infos.length > 1) {
-			if (paraSelected < Integer.parseInt(infos[1])) {
-				String attribute = component.getAttribute();
-				attribute = transalateCompt(attribute);
-				return (isApp ? "App" : "Iboot") + ": " + attribute + "[" + component.getName() + "]请至少勾选" + infos[1]
-						+ "个参数";
+		if(infos != null) {
+			if (infos.length > 1) {
+				if (paraSelected < Integer.parseInt(infos[1])) {
+					String attribute = component.getAttribute();
+					attribute = transalateCompt(attribute);
+					return (isApp ? "App" : "Iboot") + ": " + attribute + "[" + component.getName() + "]请至少勾选" + infos[1]
+							+ "个参数";
+				}
 			}
 		}
+		
 		return null;
 	}
 
@@ -438,22 +442,21 @@ public class ComponentCommonPage implements IComponentCommon {
 				tag = DideHelper.getTag(parameter, tag);
 			}
 			if (parameter.contains("#define") && !tag.equals("obj_para")) {
+				String[] realNameSplites = parametersDefined[i].trim().split("\"");
+				String name = realNameSplites.length > 2? ("\"" + realNameSplites[realNameSplites.length-2] + "\","):"";
 				String[] defines = parametersDefined[i].trim().split("//");
 				String[] members = null;
-				if (parametersDefined[i].startsWith("//")) {
-					members = defines[1].trim().split("\\s+");
-				} else {
-					members = defines[0].trim().split("\\s+");
-				}
+				members = parametersDefined[i].startsWith("//")?defines[1].trim().split("\\s+"):defines[0].trim().split("\\s+");
 				// define格式化
 				if (isSelect[i]) {
 					parametersDefined[i] = String.format("%-11s", members[0]) + " " + String.format("%-32s", members[1])
-							+ " " + String.format("%-18s", items[itemCount].getData("value")) + "//"
+							+ " " + String.format("%-18s", items[itemCount].getData("value")) + "//" + name
 							+ items[itemCount].getText(2);
 				} else {
 					parametersDefined[i] = String.format("%-11s", "//" + members[0]) + " "
 							+ String.format("%-32s", members[1]) + " "
-							+ String.format("%-18s", items[itemCount].getData("value")) + "//" + items[itemCount].getText(2);
+							+ String.format("%-18s", items[itemCount].getData("value")) + "//" + name
+							+ items[itemCount].getText(2);
 				}
 				itemCount++;
 			}
@@ -467,11 +470,12 @@ public class ComponentCommonPage implements IComponentCommon {
 				newConfig += parametersDefined[i] + "\n";
 			}
 		}
-		for (int i = itemCount; i < table.getItemCount(); i++) {
-			String configure = String.format("%-11s", "#define") + " " + String.format("%-32s", items[i].getText(0))
-					+ " " + String.format("%-18s", items[i].getData("value")) + "//" + items[i].getText(2);
-			newConfig += configure + "\n";
-		}
+//		for (int i = itemCount; i < table.getItemCount(); i++) {
+//			String configure = String.format("%-11s", "#define") + " " + String.format("%-32s", items[i].getText(0))
+//					+ " " + String.format("%-18s", items[i].getData("value")) + "//" + items[i].getText(2);
+//			newConfig += configure + "\n";
+//		}
+//		System.out.println("newConfig:  "+newConfig);
 		componentSelect.setConfigure(newConfig);
 	}
 
