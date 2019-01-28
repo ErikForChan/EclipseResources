@@ -200,11 +200,15 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		try {
 			File memoryLdsFile = new File(boardFolderPath + "/memory.lds");
 			
-			File debugLdsFile = new File(boardFolderPath + "/debug.lds");
-			File releaseLdsFile = new File(boardFolderPath + "/release.lds");
-			File ibootLdsFile = new File(boardFolderPath + "/iboot.lds");
-			File bdebugLdsFile = new File(boardFolderPath + "/bdebug.lds");
-			File breleaseLdsFile = new File(boardFolderPath + "/brelease.lds");
+//			File debugLdsFile = new File(boardFolderPath + "/debug.lds");
+//			File releaseLdsFile = new File(boardFolderPath + "/release.lds");
+//			File ibootLdsFile = new File(boardFolderPath + "/iboot.lds");
+//			File bdebugLdsFile = new File(boardFolderPath + "/bdebug.lds");
+//			File breleaseLdsFile = new File(boardFolderPath + "/brelease.lds");
+			
+			File app_LdsFile = new File(boardFolderPath + "/app.lds");
+			File iboot_LdsFile = new File(boardFolderPath + "/iboot.lds");
+			File bare_LdsFile = new File(boardFolderPath + "/bare.lds");
 			
 //			File app_debug_LdsFile = new File(boardFolderPath + "/app_debug.lds");
 //			File app_release_LdsFile = new File(boardFolderPath + "/app_release.lds");
@@ -213,58 +217,67 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 //			File bare_debug_LdsFile = new File(boardFolderPath + "/bare_debug.lds");
 //			File bare_release_LdsFile = new File(boardFolderPath + "/bare_release.lds");
 //			
-//			if(tIndex==0 || tIndex==1) {
+			if(tIndex==0 || tIndex==1) {
+				if(iboot_LdsFile.exists()) {
+					DideHelper.copyFolder(iboot_LdsFile, new File(destPath + "/src/lds/iboot.lds"));
+				}
 //				if(iboot_debug_LdsFile.exists()) {
 //					DideHelper.copyFolder(iboot_debug_LdsFile, new File(destPath + "/src/lds/iboot_debug.lds"));
 //				}
 //				if(iboot_release_LdsFile.exists()) {
 //					DideHelper.copyFolder(iboot_release_LdsFile, new File(destPath + "/src/lds/iboot_release.lds"));
 //				}
-//			}
-//			if(tIndex==0 || tIndex==2) {
+			}
+			if(tIndex==0 || tIndex==2) {
+				if(app_LdsFile.exists()) {
+					DideHelper.copyFolder(app_LdsFile, new File(destPath + "/src/lds/app.lds"));
+				}
 //				if(app_debug_LdsFile.exists()) {
 //					DideHelper.copyFolder(app_debug_LdsFile, new File(destPath + "/src/lds/app_debug.lds"));
 //				}
 //				if(app_release_LdsFile.exists()) {
 //					DideHelper.copyFolder(app_release_LdsFile, new File(destPath + "/src/lds/app_release.lds"));
 //				}
-//			}
-//			if(tIndex==3) {
+			}
+			if(tIndex==3) {
+				if(bare_LdsFile.exists()) {
+					DideHelper.copyFolder(bare_LdsFile, new File(destPath + "/src/lds/bare.lds"));
+				}
 //				if(bare_debug_LdsFile.exists()) {
 //					DideHelper.copyFolder(bare_debug_LdsFile, new File(destPath + "/src/lds/bare_debug.lds"));
 //				}
 //				if(bare_release_LdsFile.exists()) {
 //					DideHelper.copyFolder(bare_release_LdsFile, new File(destPath + "/src/lds/bare_release.lds"));
 //				}
+			}
+//			if (haveApp && needIbootLds) {
+//				if (debugLdsFile.exists()) {
+//					DideHelper.copyFolder(debugLdsFile, new File(destPath + "/src/lds/debug.lds"));
+//				}
+//				if (releaseLdsFile.exists()) {
+//					DideHelper.copyFolder(releaseLdsFile, new File(destPath + "/src/lds/release.lds"));
+//				}
 //			}
-			if (haveApp && needIbootLds) {
-				if (debugLdsFile.exists()) {
-					DideHelper.copyFolder(debugLdsFile, new File(destPath + "/src/lds/debug.lds"));
-				}
-				if (releaseLdsFile.exists()) {
-					DideHelper.copyFolder(releaseLdsFile, new File(destPath + "/src/lds/release.lds"));
-				}
-			}
-			if (needIbootLds) {
-				if (ibootLdsFile.exists()) {
-					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/iboot.lds"));
-				}
-			}else {
-				if(bdebugLdsFile.exists()) {
-					String dubugContent = DideHelper.readFile(bdebugLdsFile);
-					File debugLds = new File(destPath + "/src/lds/debug.lds");
-					DideHelper.createNewFile(debugLds);
-					DideHelper.writeFile(debugLds, dubugContent);
-//					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/bdebug.lds"));
-				}
-		 		if(breleaseLdsFile.exists()) {
-		 			String releaseContent = DideHelper.readFile(breleaseLdsFile);
-					File releaseLds = new File(destPath + "/src/lds/release.lds");
-					DideHelper.createNewFile(releaseLds);
-					DideHelper.writeFile(releaseLds, releaseContent);
-//					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/brelease.lds"));
-				}
-			}
+//			if (needIbootLds) {
+//				if (ibootLdsFile.exists()) {
+//					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/iboot.lds"));
+//				}
+//			}else {
+//				if(bdebugLdsFile.exists()) {
+//					String dubugContent = DideHelper.readFile(bdebugLdsFile);
+//					File debugLds = new File(destPath + "/src/lds/debug.lds");
+//					DideHelper.createNewFile(debugLds);
+//					DideHelper.writeFile(debugLds, dubugContent);
+////					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/bdebug.lds"));
+//				}
+//		 		if(breleaseLdsFile.exists()) {
+//		 			String releaseContent = DideHelper.readFile(breleaseLdsFile);
+//					File releaseLds = new File(destPath + "/src/lds/release.lds");
+//					DideHelper.createNewFile(releaseLds);
+//					DideHelper.writeFile(releaseLds, releaseContent);
+////					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/brelease.lds"));
+//				}
+//			}
 			
 			if (memoryLdsFile.exists()) {
 				DideHelper.copyFolder(memoryLdsFile, new File(destPath + "/src/lds/memory.lds"));
@@ -385,7 +398,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 					"src/libos" + curArchFile.getPath().replace("\\", "/").replace(DideHelper.getDjyosSrcPath(), ""));
 			List<IFolder> archtectureFolders = new ArrayList<IFolder>();
 			getArchFolders(archtectureFolder, archtectureFolders);
-			setFoldersInclude(archtectureFolders, conds);
+			LinkHelper.setFoldersInclude(archtectureFolders, conds);
 		}
 	}
 
@@ -402,37 +415,43 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 
 		String pattern = "$(call loop, 50, ${INPUTS}, ${COMMAND} ${FLAGS} ${OUTPUT})";
 		if (!conName.contains("libos")) {
-			String pType = "-p0";
-			if(index == 3) {
-				pType = "-p3";
-			}else {
-				String ibootPattern = ".*_Iboot_.*";
-				String debugPattern = ".*_App_Debug";
-				String releasePattern = ".*_App_Release";
-				if(Pattern.matches(ibootPattern, conName)) {
-					pType = "-p0";
-				}else if(Pattern.matches(debugPattern, conName)) {
-					if (toolChainName.indexOf("CSky") != -1 || toolChainName.indexOf("CKcore") != -1) {
-						pType = "-p2";
-					}else {
-						pType = "-p1";
-					}
-				}else if(Pattern.matches(releasePattern, conName)) {
-					pType = "-p2";
+			cfg.setPostbuildStep("");
+			ITool[] tools = cfg.getToolChain().getTools();
+			for (ITool tool : tools) {
+				String toolName = tool.getName();
+				if (toolName.contains("Cross ARM GNU C++ Linker") || toolName.contains("CSKY Elf C++ Linker")) {
+					String curPattern = tool.getCommandLinePattern().split("&&")[0].trim();
+					tool.setCommandLinePattern(curPattern+" && addsh.exe ${ConfigName}.elf");
+				}
+				if (toolName.contains("Cross ARM GNU Create Flash Image") || toolName.contains("CSKY Elf Create Flash Image") ) {
+					String curPattern = tool.getCommandLinePattern().split("&&")[0].trim();
+					tool.setCommandLinePattern(curPattern+" && addver.exe ${ConfigName}.bin");
 				}
 			}
-
-			cfg.setPostbuildStep("addsh.exe "+pType+" -v3 -a2 ${ConfigName}.elf");
-			
-//			cfg.setPostbuildStep("make " + conName + ".bin && elf_to_bin.exe " + conName + ".elf " + conName
-//					+ ".bin && ren " + conName + ".bin new" + conName + ".bin");
 		}
 		if (conName.contains("libos")) {
+			if(conName.contains("_App")) {
+				cfg.setArtifactName("libos_App");
+			}else if(conName.contains("_Iboot")) {
+				cfg.setArtifactName("libos_Iboot");
+			} 
+			
 			ITool[] tools = cfg.getToolChain().getTools();
 			for (ITool tool : tools) {
 				if (tool.getName().contains("Cross ARM GNU Archiver") || tool.getName().contains("CSky Elf Archiver")) {
 					if (!tool.getCommandLinePattern().equals(pattern)) {
 						tool.setCommandLinePattern(pattern);
+						IOption[] options = tool.getOptions();
+						for(IOption op:options) {
+							if(op.getName().equalsIgnoreCase("Archiver flags")) {
+								try {
+									op.setValue("-ru");
+								} catch (BuildException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}
 					}
 				}
 
@@ -504,7 +523,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			} else if (f.isDirectory()) {
 				IFolder ifolder = project.getFolder("src/libos" + relativePath);
 				for (int j = 0; j < conds.length; j++) {
-					LinkHelper.setExclude(ifolder, conds[j], true);
+					LinkHelper.setFolderExclude(ifolder, conds[j], true);
 				}
 			}
 		}
@@ -779,12 +798,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		for (File file : files) {
 			if (file.isDirectory()) {
 				File[] myFiles = file.listFiles();
-				String fileTag = null;
-				if (isDemoBoard) {
-					fileTag = "demo";
-				} else {
-					fileTag = "user";
-				}
+				String fileTag = isDemoBoard?"demo":"user";
 				if (file.getName().equals(fileTag)) {
 					for (File f : myFiles) {
 						boolean exclude = f.getName().equals(boardName);
@@ -806,19 +820,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		IFolder folder = project.getFolder("src/libos" + relativePath);
 		for (int i = 0; i < conds.length; i++) {
 			if (conds[i].getName().contains("libos")) {
-				LinkHelper.setExclude(folder, conds[i], exclude);
-			}
-		}
-	}
-
-	// include多个文件夹
-	private void setFoldersInclude(List<IFolder> folders, ICConfigurationDescription[] conds) {
-		// TODO Auto-generated method stub
-		for (int i = 0; i < conds.length; i++) {
-			if (conds[i].getName().contains("libos")) {
-				for (int k = folders.size() - 1; k >= 0; k--) {
-					LinkHelper.setExclude(folders.get(k), conds[i], false);
-				}
+				LinkHelper.setFolderExclude(folder, conds[i], exclude);
 			}
 		}
 	}
@@ -836,11 +838,11 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			for (int i = 0; i < conds.length; i++) {
 				if (isApp) {
 					if (conds[i].getName().contains("libos_App")) {
-						LinkHelper.setExclude(folder, conds[i], true);
+						LinkHelper.setFolderExclude(folder, conds[i], true);
 					}
 				} else {
 					if (conds[i].getName().contains("libos_Iboot")) {
-						LinkHelper.setExclude(folder, conds[i], true);
+						LinkHelper.setFolderExclude(folder, conds[i], true);
 					}
 				}
 			}
@@ -858,7 +860,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 
 		// 隐藏不需要编译的文件
 		for (int j = 0; j < excludes.size(); j++) {
-//			System.out.println("excludes.get(j):  " + excludes.get(j));
 			IFile ifle = project.getFile(excludes.get(j));
 			for (int i = 0; i < conds.length; i++) {
 				if (isApp) {
@@ -883,12 +884,10 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			for (Component checked : compontentsChecked) {
 				if (checked.getParentPath().equals(list.getParentPath())) {
 					exist = true;
-//					System.out.println("exist:  "+list.getName());
 					break;
 				}
 			}
 			if (!exist) {
-//				System.out.println("compontentsExclude:  "+list.getName());
 				compontentsExclude.add(list);
 			}
 		}
@@ -930,6 +929,9 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		for (int k = 0; k < myLinks.size(); k++) {
 			ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(myLinks.get(k), 0);
 			entries.add(entry);
+			if (myLinks.get(k).endsWith("include")) {
+				assemblyLinks.add(myLinks.get(k));
+			}
 		}
 
 		// Assembly Entries
@@ -937,12 +939,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		for (int k = 0; k < assemblyLinks.size(); k++) {
 			ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(assemblyLinks.get(k), 0);
 			assemblyEntries.add(entry);
-		}
-		for (int k = 0; k < myLinks.size(); k++) {
-			if (myLinks.get(k).endsWith("include")) {
-				ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(myLinks.get(k), 0);
-				assemblyEntries.add(entry);
-			}
 		}
 
 		ICLanguageSetting[] languageSettings = LinkHelper.getLangSetting(rds);
@@ -1042,6 +1038,12 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 
 				File hardWardInfoFile = new File(projectLocation + "/data/hardware_info.xml");
 				DideHelper.createNewFile(hardWardInfoFile);
+				if(DideHelper.get_DIDE_Version() != null) {
+					File versionFile = new File(projectLocation + "/data/version.ini");
+					DideHelper.createNewFile(versionFile);
+					DideHelper.writeFile(versionFile,"DIDE_VERSION=" + DideHelper.get_DIDE_Version());
+				}
+				
 				CreateHardWareDesc chwd = new CreateHardWareDesc();
 				String coreName = DideHelper.getCoreName(core, cpu.getCores().indexOf(core));
 				chwd.createHardWareXml(board.getBoardName(), cpu.getCpuName(),coreName, hardWardInfoFile);

@@ -33,12 +33,7 @@ import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 public class ComponentCommonPage implements IComponentCommon {
 	
 	public void creatProjectConfiure(File file, String coreConfigure, boolean isApp, List<Component> appCheckedSort, List<Component> ibootCheckedSort, int index) {
-		List<Component> compontentsCheckedSort = null;
-		if (isApp) {
-			compontentsCheckedSort = appCheckedSort;
-		} else {
-			compontentsCheckedSort = ibootCheckedSort;
-		}
+		List<Component> compontentsCheckedSort = isApp?appCheckedSort:ibootCheckedSort;
 		DideHelper.createNewFile(file);
 		String defineInit = DjyosMessages.Automatically_Generated;
 		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
@@ -55,31 +50,20 @@ public class ComponentCommonPage implements IComponentCommon {
 					String[] configures = c.getConfigure().split("\n");
 					for (int j = 0; j < configures.length; j++) {
 						if (configures[j].contains("#define")) {
-							try {
-								String pureDefine = null;
-								String annoName = null;
-								if (configures[j].trim().startsWith("//")) {
-									pureDefine = configures[j].replaceFirst("//", "");
-								} else {
-									pureDefine = configures[j];
+							String pureDefine = configures[j].trim().startsWith("//")
+									? configures[j].replaceFirst("//", "")
+									: configures[j];
+							String annoName = null;
+							String[] defines = pureDefine.split("//");
+							if (defines.length > 1) {
+								String[] infos = defines[1].split(",|，");
+								if (infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
+									annoName = infos[0];
 								}
-								String[] defines = pureDefine.split("//");
-								if (defines.length > 1) {
-									String[] infos = defines[1].split(",|，");
-									if (infos[0].startsWith("\"") && infos[0].endsWith("\"")) {
-										annoName = infos[0];
-									}
-								}
-								if (annoName == null) {
-									defineInit += configures[j] + "\n";
-								} else {
-									defineInit += configures[j].replace(annoName, "").replace(",", "").replace("，", "")
-											+ "\n";
-								}
-							} catch (Exception e) {
-								// TODO: handle exception
-								DideHelper.showErrorMessage("组件: "+c.getName()+"\n"+configures[j]+"\n配置有误!\n"+e.getMessage());
 							}
+							defineInit += (annoName == null) ? configures[j]
+									: configures[j].replace(annoName, "").replace(",", "").replace("，", "");
+							defineInit += "\n";
 						}
 					}
 				}
@@ -88,6 +72,7 @@ public class ComponentCommonPage implements IComponentCommon {
 		defineInit += "//******************************* Core Clock ******************************************//\n";
 		defineInit += coreConfigure;
 		defineInit += "\n\n#endif";
+		System.out.println("defineInit:   "+defineInit);
 		DideHelper.writeFile(file, defineInit);
 	}
 
@@ -113,7 +98,6 @@ public class ComponentCommonPage implements IComponentCommon {
 		String tag = null;
 		int paraSelected = 0;
 		String[] infos = null;
-//		System.out.println("nme:  "+component.getName());
 		for (int i = 0; i < parametersDefined.length; i++) {
 			String parameter = parametersDefined[i].trim();
 			if (DideHelper.isParaHead(parameter)) {
@@ -489,7 +473,6 @@ public class ComponentCommonPage implements IComponentCommon {
 			} else {
 				realComptName = members[1];
 			}
-
 		} else {
 			realComptName = members[1];
 		}
@@ -499,14 +482,14 @@ public class ComponentCommonPage implements IComponentCommon {
 		}
 		paras.add(members[1]);// 添加当前的参数名到paras
 
-		if (tag.equals("int") && ranges.size() > 0) {
+		if(ranges.size() > 1) {
 			String min = ranges.get(0);
 			String max = ranges.get(1);
-			realComptName = realComptName + "( " + min + "~" + max + " )";
-		} else if (tag.equals("string") && ranges.size() > 0) {
-			String min = ranges.get(0);
-			String max = ranges.get(1);
-			realComptName = realComptName + "(长度：" + min + "~" + max + " )";
+			if (tag.equals("int")) {
+				realComptName = realComptName + "( " + min + "~" + max + " )";
+			} else if (tag.equals("string")) {
+				realComptName = realComptName + "(长度：" + min + "~" + max + " )";
+			}
 		}
 		return realComptName;
 	}
@@ -539,15 +522,8 @@ public class ComponentCommonPage implements IComponentCommon {
 	public void createCheckXml(boolean isApp, String projectLocation, List<Component> appCompontents,
 			List<Component> ibootCompontents) {
 		// TODO Auto-generated method stub
-		String xmlName = null;
-		List<Component> curCompontents = new ArrayList<Component>();
-		if (isApp) {
-			xmlName = "app_component_check.xml";
-			curCompontents = appCompontents;
-		} else {
-			xmlName = "iboot_component_check.xml";
-			curCompontents = ibootCompontents;
-		}
+		String xmlName = isApp?"app_component_check.xml":"iboot_component_check.xml";
+		List<Component> curCompontents = isApp?appCompontents:ibootCompontents;
 		CreateCheckXml ccx = new CreateCheckXml();
 		File checkFile = new File(projectLocation + "/data/" + xmlName);
 		DideHelper.createNewFile(checkFile);

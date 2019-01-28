@@ -21,25 +21,22 @@ import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionPreferences;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionWorkspacePreferences;
-import org.eclipse.cdt.core.settings.model.ICResourceDescription;
-import org.eclipse.cdt.managedbuilder.core.BuildException;
-import org.eclipse.cdt.managedbuilder.core.IConfiguration;
-import org.eclipse.cdt.managedbuilder.core.IOption;
-import org.eclipse.cdt.managedbuilder.core.IResourceInfo;
-import org.eclipse.cdt.managedbuilder.core.ITool;
-import org.eclipse.cdt.managedbuilder.core.IToolChain;
-import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
-import org.eclipse.cdt.managedbuilder.core.OptionStringValue;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.variables.IStringVariableManager;
+import org.eclipse.core.variables.IValueVariable;
+import org.eclipse.core.variables.VariablesPlugin;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.ui.PlatformUI;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.helper.LinkHelper;
 import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.objects.CmpntCheck;
 import com.djyos.dide.ui.objects.Component;
 import com.djyos.dide.ui.objects.Core;
 import com.djyos.dide.ui.objects.Cpu;
@@ -48,14 +45,14 @@ import com.djyos.dide.ui.wizards.board.GetNonBoardFiles;
 import com.djyos.dide.ui.wizards.board.ReadBoardXml;
 import com.djyos.dide.ui.wizards.component.GetNonCompFiles;
 import com.djyos.dide.ui.wizards.component.ReadComponent;
+import com.djyos.dide.ui.wizards.component.ReadComponentCheckXml;
 import com.djyos.dide.ui.wizards.cpu.GetNonCpuFiles;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
-import com.djyos.dide.ui.wizards.djyosProject.info.CreateBoardInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateComponentInfo;
-import com.djyos.dide.ui.wizards.djyosProject.info.CreateCpuInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadComponentsInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadIncludeFile;
+import ilg.gnuarmeclipse.core.EclipseUtils;
 
 public class HandleProjectImport {
 
@@ -63,6 +60,11 @@ public class HandleProjectImport {
 	String srcLocation = DideHelper.getDjyosSrcPath();
 
 	public void handlProjectImport() {
+//		IPreferenceStore ps = PlatformUI.getPreferenceStore();
+		String openOCD_Path =  DideHelper.didePath + "Tools/OpenOCD/bin";
+//		System.out.println("EclipseUtils:  "+EclipseUtils.getVariableValue("openocd_path"));
+//		System.out.println("DideHelper.didePath:  "+DideHelper.didePath);
+		EclipseUtils.setVariableValue("openocd_path", openOCD_Path);
 		IProject[] projects = workspace.getRoot().getProjects();
 		for (IProject project : projects) {
 			handleProjectElemExculde(project);
@@ -84,32 +86,6 @@ public class HandleProjectImport {
 			File boardInfoFile = new File(project.getLocation().toString() + "/data/hardwares/board_infos.xml");
 			File hardWardFolder = new File(project.getLocation().toString() + "/data/hardwares");
 			File hardWardInfoFile = new File(project.getLocation().toString() + "/data/hardware_info.xml");
-			
-//			for (int i = 0; i < conds.length; i++) {
-//			if(!conds[i].getName().startsWith("libos")) {
-//				System.out.println("conds[i].getName():   "+conds[i].getName());
-//				ICResourceDescription rds = conds[i].getRootFolderDescription();
-//				IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
-//				IResourceInfo resourceInfo = cfg.getRootFolderInfo();
-//				IToolChain toolchain = resourceInfo.getParent().getToolChain();
-//				
-//				ITool[] tools = toolchain.getToolsBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker");
-//				for (ITool t : tools) {
-//					IOption op = t.getOptionBySuperClassId(
-//							"ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.scriptfile");
-//					try {
-//						OptionStringValue[] values = op.getBasicStringListValueElements();
-//						for (OptionStringValue v : values) {
-//							System.out.println("value:   " + v.getValue());
-//						}
-//
-//					} catch (BuildException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-//			}
-//		}
 			
 			List<String> hardwares;
 			if (hardWardInfoFile.exists()) {
@@ -137,30 +113,29 @@ public class HandleProjectImport {
 					}
 					return;
 				}
-//				System.out.println("sBoard:   " + sBoard.getBoardName());
+				
 				// 处理组件
 				if (sBoard != null) {
 					List<OnBoardCpu> onBoardCpus = sBoard.getOnBoardCpus();
 					onBoardCpu = DideHelper.getOnBoardByCpu(onBoardCpus, cpu.getCpuName());
 					List<Component> allCompontents = ReadComponent.getAllComponents(cpu, sBoard);
 					if (compInfoFile.exists()) {
+					
 						List<String> compPaths = ReadComponentsInfo.getCompsInfo(compInfoFile);
 						List<File> noneCompFiles = GetNonCompFiles.getNonCompFiles(onBoardCpu, sBoard);
-						// 排除新增的组件
-						excludeComponentNewed(allCompontents, compPaths, conds, project);
 						
 						// 排除不是組建的文件
 						excludeComponentNot(noneCompFiles, conds, project);
 						
-						// 打开用户选中的组件
+						//获取当前工程的check.xml，include或者exclude被选中或者没有选中的组件  //排除新增的组件 除了被选中的
+						in_ex_cludeComponent(allCompontents, compPaths, conds, project);
 						
 						// 打开用户手动打开的组件
-						ReadIncludeFile rif = new ReadIncludeFile();
-						excludeComponentOpenByUser(rif, conds, project);
+						excludeComponentOpenByUser(conds, project);
 
 					}
-//					DideHelper.createNewFile(compInfoFile);
-//					CreateComponentInfo.createComponentInfo(compInfoFile, allCompontents);
+					DideHelper.createNewFile(compInfoFile);
+					CreateComponentInfo.createComponentInfo(compInfoFile, allCompontents);
 				}
 
 				// 处理板件
@@ -189,18 +164,15 @@ public class HandleProjectImport {
 		}
 	}
 
-	private void excludeComponentOpenByUser(ReadIncludeFile rif, ICConfigurationDescription[] conds, IProject project) {
+	private void excludeComponentOpenByUser(ICConfigurationDescription[] conds, IProject project) {
 		// TODO Auto-generated method stub
+		ReadIncludeFile rif = new ReadIncludeFile();
 		File diskFile = new File(project.getLocation().toString() + "/data/user_handled_files.xml");
 		if (diskFile.exists()) {
 			List<String> inculdePaths = rif.getIncludeFiles(diskFile);
 			for (String incPath : inculdePaths) {
 				IFolder ifolder = project.getFolder("src/libos" + incPath);
-				for (int j = 0; j < conds.length; j++) {
-					if (conds[j].getName().startsWith("libos")) {
-						LinkHelper.setExclude(ifolder, conds[j], false);
-					}
-				}
+				LinkHelper.setProjectFolderExclude(ifolder,conds,false);
 			}
 		}
 	}
@@ -209,36 +181,64 @@ public class HandleProjectImport {
 			IProject project) {
 		// TODO Auto-generated method stub
 		for (File f : excludeCompFiles) {
-			String relativePath = null;
-			if (f.isDirectory()) {
-				relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
-			} else {
-				relativePath = f.getParentFile().getPath().replace("\\", "/").replace(srcLocation, "");
-			}
+			String relativePath = f.isDirectory()?f.getPath().replace("\\", "/").replace(srcLocation, ""):
+									f.getParentFile().getPath().replace("\\", "/").replace(srcLocation, "");
 			IFolder ifolder = project.getFolder("src/libos" + relativePath);
-			for (int j = 0; j < conds.length; j++) {
-				LinkHelper.setExclude(ifolder, conds[j], true);
-			}
-
+			LinkHelper.setProjectFolderExclude(ifolder,conds,true);
 		}
 	}
 
-	private void excludeComponentNewed(List<Component> allCompontents, List<String> compPaths,
+	/*
+	 *  排除新增的组件
+	 */
+	private void in_ex_cludeComponent(List<Component> allCompontents, List<String> compPaths,
 			ICConfigurationDescription[] conds, IProject project) {
 		// TODO Auto-generated method stub
-		for (Component component : allCompontents) {
-			String componentPath = component.getParentPath().replace("\\", "/");
-			String fileName = component.getFileName();
-			String relativePath = componentPath.replace(srcLocation, "");
-			String compPath = relativePath + "/" + fileName;
-			if (!compPaths.contains(compPath)) {
-				IFolder ifolder = project.getFolder("src/libos" + relativePath);
-				for (int j = 0; j < conds.length; j++) {
-					if(conds[j].getName().startsWith("libos")) {
-						LinkHelper.setExclude(ifolder, conds[j], true);
-					}
+		File appCheckFile = new File(project.getLocation().toString() + "/data/app_component_check.xml");
+		File ibootCheckFile = new File(project.getLocation().toString() + "/data/iboot_component_check.xml");
+		List<String> appCmpntNamesChecks = new ArrayList<String>(), ibootCmpntNamesChecks = new ArrayList<String>();
+		if (appCheckFile.exists()) {
+			List<CmpntCheck> appCmpntChecks = ReadComponentCheckXml.getCmpntChecks(appCheckFile);
+			for(CmpntCheck cc:appCmpntChecks) {
+				if(cc.isChecked().equals("true")) {
+					appCmpntNamesChecks.add(cc.getCmpntName());
 				}
 			}
+		}
+		if (ibootCheckFile.exists()) {
+			List<CmpntCheck> ibootCmpntChecks = ReadComponentCheckXml.getCmpntChecks(ibootCheckFile);
+			for(CmpntCheck cc:ibootCmpntChecks) {
+				if(cc.isChecked().equals("true")) {
+					ibootCmpntNamesChecks.add(cc.getCmpntName());
+				}
+			}
+		}
+//		for(String check:ibootCmpntNamesChecks) {
+//			System.out.println("check:  "+check);
+//		}
+		for (Component component : allCompontents) {
+			String componentPath = component.getParentPath().replace("\\", "/");//组件父目录路径
+			String fileName = component.getFileName();//组件文件名称
+			String relativePath = componentPath.replace(srcLocation, "");//组件父目录路相对路径
+			
+			String compPath = relativePath + "/" + fileName;//组件文件相对路径 /component/...........
+			IFolder ifolder = project.getFolder("src/libos" + relativePath);
+			for (int j = 0; j < conds.length; j++) {
+				if(conds[j].getName().startsWith("libos")) {
+					boolean toExclude = false;
+					if(!(relativePath.contains("component") || relativePath.contains("djyos"))) {
+//						System.out.println("compPath:  "+compPath);
+						if(conds[j].getName().startsWith("libos_App")) {
+							toExclude = appCmpntNamesChecks.contains(component.getName())?false:true;
+						}else if(conds[j].getName().startsWith("libos_Iboot")) {
+							toExclude = ibootCmpntNamesChecks.contains(component.getName())?false:true;
+						}
+					}
+					LinkHelper.setFolderExclude(ifolder, conds[j], toExclude);
+				}
+			}
+//			if (!compPaths.contains(compPath)) { //compPaths:component_infos.xml中所有的之前已存在的组件，如果不存在当前组件的相对路径，则排除编译
+//			}
 		}
 
 	}
@@ -253,11 +253,7 @@ public class HandleProjectImport {
 					String boardPath = board.getBoardFolderPath().replace("\\", "/");
 					String relativePath = boardPath.replace(srcLocation, "");
 					IFolder ifolder = project.getFolder("src/libos" + relativePath);
-					for (int j = 0; j < conds.length; j++) {
-						if(conds[j].getName().startsWith("libos")) {
-							LinkHelper.setExclude(ifolder, conds[j], true);
-						}
-					}
+					LinkHelper.setProjectFolderExclude(ifolder,conds,true);
 				}
 			}
 
@@ -267,11 +263,7 @@ public class HandleProjectImport {
 			for (File f : excludeBoardFiles) {
 				String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
 				IFolder ifolder = project.getFolder("src/libos" + relativePath);
-				for (int j = 0; j < conds.length; j++) {
-					if(conds[j].getName().startsWith("libos")) {
-						LinkHelper.setExclude(ifolder, conds[j], true);
-					}
-				}
+				LinkHelper.setProjectFolderExclude(ifolder,conds,true);
 			}
 		}
 	}
@@ -288,11 +280,7 @@ public class HandleProjectImport {
 					List<IFolder> folders = new ArrayList<IFolder>();
 					getFolders(project, folders, cpuFolder, "cpudrv");
 					for (IFolder folder : folders) {// srm32f7123,f7,stm32
-						for (int j = 0; j < conds.length; j++) {
-							if(conds[j].getName().startsWith("libos")) {
-								LinkHelper.setExclude(folder, conds[j], true);
-							}
-						}
+						LinkHelper.setProjectFolderExclude(folder,conds,true);
 					}
 				}
 			}
@@ -303,9 +291,7 @@ public class HandleProjectImport {
 				String relativePath = f.getPath().replace("\\", "/").replace(srcLocation, "");
 				IFolder ifolder = project.getFolder("src/libos" + relativePath);
 				for (int j = 0; j < conds.length; j++) {
-					if(conds[j].getName().startsWith("libos")) {
-						LinkHelper.setExclude(ifolder, conds[j], true);
-					}
+					LinkHelper.setProjectFolderExclude(ifolder,conds,true);
 				}
 			}
 			// 打开本工程的Cpu
@@ -316,11 +302,8 @@ public class HandleProjectImport {
 					List<IFolder> folders = new ArrayList<IFolder>();
 					getFolders(project, folders, cpuFolder, "cpudrv");// stm32f7123,f7,stm32
 					for (int i = folders.size() - 1; i >= 0; i--) {// stm32,f7,stm32f7123
-						for (int j = 0; j < conds.length; j++) {
-							if (conds[j].getName().startsWith("libos")) {
-								LinkHelper.setExclude(folders.get(i), conds[j], false);
-							}
-						}
+//						System.out.println("folder:  "+folders.get(i).getProjectRelativePath().toString());
+						LinkHelper.setProjectFolderExclude(folders.get(i),conds,false);
 					}
 				}
 			}
@@ -353,7 +336,7 @@ public class HandleProjectImport {
 			if (!f.getName().equals(archType) && f.isDirectory()) {
 				for (int j = 0; j < conds.length; j++) {
 					if (conds[j].getName().startsWith("libos")) {
-						LinkHelper.setExclude(ifolder, conds[j], true);
+						LinkHelper.setFolderExclude(ifolder, conds[j], true);
 					}
 				}
 			} else if (f.getName().equals(archType) && f.isDirectory()) {
@@ -363,7 +346,7 @@ public class HandleProjectImport {
 		if (myArchfolder != null) {
 			for (int j = 0; j < conds.length; j++) {
 				if (conds[j].getName().startsWith("libos")) {
-					LinkHelper.setExclude(myArchfolder, conds[j], false);
+					LinkHelper.setFolderExclude(myArchfolder, conds[j], false);
 				}
 			}
 		}
@@ -381,4 +364,29 @@ public class HandleProjectImport {
 
 	}
 
+//	for (int i = 0; i < conds.length; i++) {
+//	if(!conds[i].getName().startsWith("libos")) {
+//		System.out.println("conds[i].getName():   "+conds[i].getName());
+//		ICResourceDescription rds = conds[i].getRootFolderDescription();
+//		IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(rds.getConfiguration());
+//		IResourceInfo resourceInfo = cfg.getRootFolderInfo();
+//		IToolChain toolchain = resourceInfo.getParent().getToolChain();
+//		
+//		ITool[] tools = toolchain.getToolsBySuperClassId("ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker");
+//		for (ITool t : tools) {
+//			IOption op = t.getOptionBySuperClassId(
+//					"ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.scriptfile");
+//			try {
+//				OptionStringValue[] values = op.getBasicStringListValueElements();
+//				for (OptionStringValue v : values) {
+//					System.out.println("value:   " + v.getValue());
+//				}
+//
+//			} catch (BuildException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
+//	}
+//}
 }

@@ -157,19 +157,13 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		}
 
 		monitor.worked(5);
-		try {
-			for (int i = 0; i < conds.length; i++) {
-				String conName = conds[i].getName();
-				if (conName.contains("App")) {
-					linkComponentGUN(appCompontentsChecked, conds[i]);
-				} else if (conName.contains("Iboot")) {
-					linkComponentGUN(ibootCompontentsChecked, conds[i]);
-				}
+		for (int i = 0; i < conds.length; i++) {
+			String conName = conds[i].getName();
+			if (conName.contains("App")) {
+				linkComponentGUN(appCompontentsChecked, conds[i]);
+			} else if (conName.contains("Iboot")) {
+				linkComponentGUN(ibootCompontentsChecked, conds[i]);
 			}
-		} catch (Exception e) {
-			// TODO: handle exception
-			MessageDialog.openError(window.getShell(), "提示", "为" + "修改工程链接失败！" + e.getMessage());
-			return false;
 		}
 
 		monitor.worked(2);
@@ -254,7 +248,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		}
 		if (warningMsg != null) {
 			isError = true;
-			MessageDialog.openError(window.getShell(), "提示", warningMsg);
+			DideHelper.showErrorMessage(warningMsg);
 		} else {
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {
 				@Override
@@ -274,6 +268,9 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				e.printStackTrace();
 				isError = true;
 			}
+		}
+		if(!isError) {
+			super.performOk();
 		}
 		return !isError;
 	}
@@ -899,7 +896,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 							dataString = cfgs[2].equals("default") ? "" : cfgs[2];
 							item.setData("value",dataString);
 							item.setText(new String[] { realComptName,"" , cdefines.length > 1 ? annoation : "" });
-						} else if (cfgs.length == 4) {
+						} else if (cfgs.length >3) {
 							int begin = cdefines[0].indexOf("\"");
 							int end = cdefines[0].lastIndexOf("\"");
 							dataString = cdefines[0].substring(begin, end + 1);
@@ -935,7 +932,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 					dataString = members[2].equals("default") ? "" : members[2];
 					item.setData("value",dataString);
 					item.setText(new String[] { realComptName, "", defines.length > 1 ? annoation : "" });
-				} else if (members.length == 4) {
+				} else if (members.length > 3) {
 					int begin = defines[0].indexOf("\"");
 					int end = defines[0].lastIndexOf("\"");
 					dataString = defines[0].substring(begin, end + 1);
@@ -1065,25 +1062,15 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								} else {
 									ibootConfigureChanged = true;
 								}
-								String tempString = text.getText();
+								String tempString = text.getText().replace("\"", "");
 								boolean toCalculate = false;
-								IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 								if (rangesCopy.size() > 0) {
 									if (flag.equals("int")) {
 										String minString = rangesCopy.get(0);
 										String maxString = rangesCopy.get(1);
-										double min;
-										long max;
-										if (minString.startsWith("0x")) {
-											min = Integer.parseInt(minString.substring(2), 16);
-										} else {
-											min = Integer.parseInt(minString);
-										}
-										if (maxString.startsWith("0x")) {
-											max = Long.parseLong(maxString.substring(2), 16);
-										} else {
-											max = Long.parseLong(maxString);
-										}
+										double min = minString.startsWith("0x")?Integer.parseInt(minString.substring(2), 16):Integer.parseInt(minString);
+										long max = maxString.startsWith("0x")?Long.parseLong(maxString.substring(2), 16):Long.parseLong(maxString);
+										
 										long curNum = -1;
 										Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
 										boolean isInt = pattern.matcher(tempString).matches();
@@ -1103,8 +1090,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 										}
 										if (curNum < min || curNum > max) {
 											text.setText("");
-											MessageDialog.openError(window.getShell(), "提示",
-													"请填写在之" + min + "与" + max + "之间的整数");
+											DideHelper.showErrorMessage("请填写在" + min + "与" + max + "之间的整数");
 										}
 									} else if (flag.equals("string")) {
 										if (rangesCopy.size() > 0) {
@@ -1112,8 +1098,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 											int max = Integer.parseInt(rangesCopy.get(1));
 											if (tempString.length() < min || tempString.length() > max) {
 												text.setText("");
-												MessageDialog.openError(window.getShell(), "提示",
-														"字符串长度不得小于" + min + "或者大于" + max);
+												DideHelper.showErrorMessage("字符串长度不得小于" + min + "或者大于" + max);
 											}
 										}
 
@@ -1335,18 +1320,9 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 	// 处理Int类型的参数
 	private void handleIntPara(String minString, String maxString, String dataString, String[] members, Text text) {
 		// TODO Auto-generated method stub
-		int min;
-		long max, curData;
-		if (minString.startsWith("0x")) {
-			min = Integer.parseInt(minString.substring(2), 16);
-		} else {
-			min = Integer.parseInt(minString);
-		}
-		if (maxString.startsWith("0x")) {
-			max = Long.parseLong(maxString.substring(2), 16);
-		} else {
-			max = Long.parseLong(maxString);
-		}
+		int min = minString.startsWith("0x")?Integer.parseInt(minString.substring(2), 16):Integer.parseInt(minString);
+		long max = maxString.startsWith("0x")?Long.parseLong(maxString.substring(2), 16):Long.parseLong(maxString);
+		long curData;
 		if (dataString.startsWith("0x")) {
 			curData = Long.parseLong(dataString.substring(2), 16);
 		} else if (members[2].contains("+") || members[2].contains("-") || members[2].contains("*")
@@ -1501,6 +1477,8 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				combo.setItems(ranges.toArray(new String[ranges.size()]));
 			}
 			for (int j = 0; j < ranges.size(); j++) {
+				System.out.println("ranges.get(j):  "+ranges.get(j));
+				System.out.println("item.getData(\"value\").toString():  "+item.getData("value").toString());
 				if (ranges.get(j).equals(item.getData("value").toString())) {
 					combo.select(j);
 					break;
@@ -1816,9 +1794,13 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		List<ICLanguageSettingEntry> _entries = new ArrayList<ICLanguageSettingEntry>();
 		LinkHelper.fillSymbols(compontentsChecked, _entries);
 		List<ICLanguageSettingEntry> entries = new ArrayList<ICLanguageSettingEntry>();
+		List<ICLanguageSettingEntry> assemblyEntries = new ArrayList<ICLanguageSettingEntry>();
 		for (int k = 0; k < myLinks.size(); k++) {
 			ICLanguageSettingEntry entry = CDataUtil.createCIncludePathEntry(myLinks.get(k), 0);
 			entries.add(entry);
+			if (myLinks.get(k).endsWith("include")) {
+				assemblyEntries.add(entry);
+			}
 		}
 
 		for (int j = 0; j < languageSettings.length; j++) {
@@ -1827,7 +1809,8 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 			LinkHelper.changeIt(ICSettingEntry.MACRO, _entries, ents, lang);
 			// Assembly添加链接
 			if (j == 0) {
-
+				LinkHelper.changeIt(ICSettingEntry.INCLUDE_PATH, assemblyEntries,
+						lang.getSettingEntries(ICSettingEntry.INCLUDE_PATH), lang);
 			} else {// GNU C/C++ 添加链接
 				LinkHelper.changeIt(ICSettingEntry.INCLUDE_PATH, entries,
 						lang.getSettingEntries(ICSettingEntry.INCLUDE_PATH), lang);
@@ -1865,7 +1848,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 							LinkHelper.getFolders(ifolder, includeFolders);
 							if (comp.isSelect() || isCoreComp) {
 								for (int k = includeFolders.size() - 1; k >= 0; k--) {
-									LinkHelper.setExclude(includeFolders.get(k), conds[j], false);
+									LinkHelper.setFolderExclude(includeFolders.get(k), conds[j], false);
 								}
 								if (comp.getFileName().endsWith(".c")) {
 									LinkHelper.setFileExclude(ifile, conds[j], false);
@@ -1876,7 +1859,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								// }else if(comp.getFileName().endsWith(".h")) {
 								// linkHelper.setExclude(ifolder, conds[j], true);
 								// }
-								LinkHelper.setExclude(ifolder, conds[j], true);
+								LinkHelper.setFolderExclude(ifolder, conds[j], true);
 							}
 						}
 					} else {
@@ -1885,7 +1868,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 							LinkHelper.getFolders(ifolder, includeFolders);
 							if (comp.isSelect() || isCoreComp) {
 								for (int k = includeFolders.size() - 1; k >= 0; k--) {
-									LinkHelper.setExclude(includeFolders.get(k), conds[j], false);
+									LinkHelper.setFolderExclude(includeFolders.get(k), conds[j], false);
 								}
 								if (comp.getFileName().endsWith(".c")) {
 									LinkHelper.setFileExclude(ifile, conds[j], false);
@@ -1896,7 +1879,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								// }else if(comp.getFileName().endsWith(".h")) {
 								// linkHelper.setExclude(ifolder, conds[j], true);
 								// }
-								LinkHelper.setExclude(ifolder, conds[j], true);
+								LinkHelper.setFolderExclude(ifolder, conds[j], true);
 							}
 						}
 					}

@@ -15,8 +15,8 @@ public class GetNonCompFiles {
 	static ComponentRefer cRefer = new ComponentRefer();
 
 	// 遍历组件及其子组件
-	private static void traverFiles(File file) {
-		if (!file.getName().equals("include") && !file.getName().equals("startup")) {
+	private static void traverFiles(File file) { // lds
+		if (!file.getName().equals("include") && !file.getName().equals("startup") && !file.getName().equals("lds")) {
 
 			List<File> allFiles = DideHelper.sortFileAndFolder(file);
 			boolean hExist = false;
@@ -88,9 +88,9 @@ public class GetNonCompFiles {
 		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
 		String chipPath = didePath + "djysrc/bsp/chipdrv";
 		for (int i = 0; i < componentPaths.size(); i++) {
-			File sourceFile = new File(componentPaths.get(i));// third
+			File sourceFile = new File(componentPaths.get(i));// third Explorer
 			if (sourceFile.exists()) {
-				File[] files = sourceFile.listFiles();// firmfare
+				File[] files = sourceFile.listFiles();// firmfare drv lds
 				for (File file : files) {
 					if (file.isDirectory()) {
 						traverFiles(file);

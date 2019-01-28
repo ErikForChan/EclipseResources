@@ -83,7 +83,7 @@ public class BoardCommonWizard extends BasicNewResourceWizard {
 							ICConfigurationDescription[] conds = local_prjd.getConfigurations(); // 获取工程的所有Configuration
 							for (int i = 0; i < conds.length; i++) {
 								if (conds[i].getName().contains("libos")) {
-									LinkHelper.setExclude(folder, conds[i], true);
+									LinkHelper.setFolderExclude(folder, conds[i], true);
 								}
 							}
 

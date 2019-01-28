@@ -1,6 +1,8 @@
 package com.djyos.dide.ui.startup;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -11,6 +13,8 @@ import com.djyos.dide.ui.git.GitHandler;
 import com.djyos.dide.ui.handlers.ConfigurationHandler;
 import com.djyos.dide.ui.handlers.FileHandler;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Component;
+import com.djyos.dide.ui.wizards.component.ReadComponent;
 
 public class StartupHandler implements IStartup {
 
@@ -27,7 +31,23 @@ public class StartupHandler implements IStartup {
 		Init_Workspace();
 
 		Auto_Test_Build();
+		
+		Check_Compt_Repeat();
 
+	}
+
+	private void Check_Compt_Repeat() {
+		// TODO Auto-generated method stub
+		List<Component>  workspaceCompts = ReadComponent.getWorkspaceComponents();
+		List<String> cptNames = new ArrayList<String>();
+		for(Component c:workspaceCompts) {
+			if(!cptNames.contains(c.getName())) {
+				cptNames.add(c.getName());
+			}else {
+				DideHelper.showErrorMessage("源码中两组件名称 ("+c.getName()+") 相同，请修改!");
+			}
+		}
+		
 	}
 
 	private void Auto_Test_Build() {

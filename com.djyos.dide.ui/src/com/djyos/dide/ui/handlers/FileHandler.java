@@ -20,7 +20,9 @@ import org.eclipse.core.runtime.CoreException;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.helper.LinkHelper;
+import com.djyos.dide.ui.objects.CmpntCheck;
 import com.djyos.dide.ui.startup.HandleProjectImport;
+import com.djyos.dide.ui.wizards.component.ReadComponentCheckXml;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 
 public class FileHandler implements IResourceChangeListener {
@@ -66,7 +68,6 @@ public class FileHandler implements IResourceChangeListener {
 								ExcludeWhenImport(resource,project,hardWardInfoFile);
 							}
 							
-							
 							//用户新增的文件，除了djyos、component、当前板件、当前CPU、当前arch，APP 。都排除编译
 //							ExcludeNewFile(resource,project,hardWardInfoFile);
 							
@@ -92,7 +93,9 @@ public class FileHandler implements IResourceChangeListener {
 	protected void BuildOsAuto(IResource resource, IProject project, File stup_complie_file) {
 		// TODO Auto-generated method stub
 		if (resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
-			String libCfgName = resource.getName().replace(".a", "");
+			IResource pResource = resource.getParent();
+			String libCfgName = pResource.getName();
+			System.out.println("libCfgName: "+libCfgName);
 			String commonName = libCfgName.replace("libos", "");
 			String targetName = project.getName() + commonName;
 			DideHelper.buildTarget(project, targetName);
@@ -123,6 +126,26 @@ public class FileHandler implements IResourceChangeListener {
 				String boardName = hardwares.get(0);
 				String cpuName = hardwares.get(1);
 				boolean toExclude = false;
+				
+				File appCheckFile = new File(project.getLocation().toString() + "/data/app_component_check.xml");
+				File ibootCheckFile = new File(project.getLocation().toString() + "/data/iboot_component_check.xml");
+				List<String> appCmpntFileNamesChecks = new ArrayList<String>(), ibootCmpntFileNamesChecks = new ArrayList<String>();
+				if (appCheckFile.exists()) {
+					List<CmpntCheck> appCmpntChecks = ReadComponentCheckXml.getCmpntChecks(appCheckFile);
+					for(CmpntCheck cc:appCmpntChecks) {
+						if(cc.isChecked().equals("true")) {
+							appCmpntFileNamesChecks.add(cc.getCmpntName());
+						}
+					}
+				}
+				if (ibootCheckFile.exists()) {
+					List<CmpntCheck> ibootCmpntChecks = ReadComponentCheckXml.getCmpntChecks(ibootCheckFile);
+					for(CmpntCheck cc:ibootCmpntChecks) {
+						if(cc.isChecked().equals("true")) {
+							ibootCmpntFileNamesChecks.add(cc.getCmpntName());
+						}
+					}
+				}
 				
 				if(relativePath.contains("libos") && !relativePath.contains("component") && !relativePath.contains("djyos")
 						&& !relativePath.contains("arch")) {

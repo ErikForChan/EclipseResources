@@ -98,6 +98,47 @@ public class ReadComponent {
 		}
 		return null;
 	}
+	
+	public static List<Component> getWorkspaceComponents(){
+		components = new ArrayList<Component>();
+		String componentPath = didePath + "djysrc/component";
+		String djyosPath = didePath + "djysrc/djyos";
+		String thirdPath = didePath + "djysrc/third";
+		String loaderPath = didePath + "djysrc/loader";
+//		String libcPath = didePath + "djysrc/libc";
+		String chipPath = didePath + "djysrc/bsp/chipdrv";
+		List<String> componentPaths = new ArrayList<String>();
+		componentPaths.add(componentPath);
+		componentPaths.add(djyosPath);
+		componentPaths.add(loaderPath);
+		componentPaths.add(thirdPath);
+		componentPaths.add(chipPath);
+		
+		for (int i = 0; i < componentPaths.size(); i++) {
+			File sourceFile = new File(componentPaths.get(i));
+			if (sourceFile.exists()) {
+				File[] files = sourceFile.listFiles();
+				for (File file : files) {
+					if (file.isDirectory()) {
+						traverFiles(file);
+					} else {
+						if (!file.getPath().contains("third")) {
+							if (file.getName().endsWith(".c")) {
+								try {
+									getComponent(file);
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+//		traverFiles(new File(libcPath));
+		return components;
+	}
 
 	public static List<Component> getComponents(OnBoardCpu onBoardCpu, Board board) {
 		components = new ArrayList<Component>();
@@ -105,7 +146,7 @@ public class ReadComponent {
 		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
 		String libcPath = didePath + "djysrc/libc";
 		String chipPath = didePath + "djysrc/bsp/chipdrv";
-
+		
 		for (int i = 0; i < componentPaths.size(); i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			if (sourceFile.exists()) {

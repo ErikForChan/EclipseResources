@@ -550,7 +550,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		for (int i = 0; i < conds.length; i++) {
 			if (conds[i].getName().contains("libos")) {
 				for (int k = folders.size() - 1; k >= 0; k--) {
-					LinkHelper.setExclude(folders.get(k), conds[i], false);
+					LinkHelper.setFolderExclude(folders.get(k), conds[i], false);
 				}
 			}
 		}
@@ -591,7 +591,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		IFolder folder = project.getFolder("src/libos" + relativePath);
 		for (int i = 0; i < conds.length; i++) {
 			if (conds[i].getName().contains("libos")) {
-				LinkHelper.setExclude(folder, conds[i], true);
+				LinkHelper.setFolderExclude(folder, conds[i], true);
 			}
 		}
 	}
@@ -689,7 +689,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		IFolder folder = project.getFolder("src/libos" + relativePath);
 		for (int i = 0; i < conds.length; i++) {
 			if (conds[i].getName().contains("libos")) {
-				LinkHelper.setExclude(folder, conds[i], false);
+				LinkHelper.setFolderExclude(folder, conds[i], false);
 			}
 		}
 	}

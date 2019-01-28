@@ -75,9 +75,26 @@ import com.ibm.icu.text.DecimalFormat;
 @SuppressWarnings("restriction")
 public class DideHelper {
 
-	static String didePath = new File(System.getProperty("user.dir")).getParentFile().getPath().replace("\\", "/")
+	public static String project_version = "V1.6_20190124";
+	public static String didePath = new File(System.getProperty("user.dir")).getParentFile().getPath().replace("\\", "/")
 			+ "/";
 	static DecimalFormat df = new DecimalFormat("######0");
+	
+	public static String get_DIDE_Version() {
+		File versionFile = new File(didePath + "IDE/DIDE.ini");
+		if(versionFile.exists()) {
+			String content = getFileContent(versionFile);
+			String[] lines = content.split("\n");
+			for(String line:lines) {
+				line = line.trim();
+				if(line.startsWith("version")) {
+					String[] datas = line.split("=");
+					return datas[1];
+				}
+			}
+		}
+		return null;
+	}
 	
 	public static String getCoreName(Core core, int index) {
 		String coreName = (core.getName() == null)?("Core" + (index + 1)):core.getName();
@@ -789,7 +806,6 @@ public class DideHelper {
 
 	// 检查参数是否有配置错误
 	public static boolean checkParameter(Component component, Boolean isApp, IProject curProject) {
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		List<String> pjCgfs = new ArrayList<String>();
 		if(curProject != null) {
 			File configFile = new File(curProject.getLocation().toString() + "/src/" + (isApp ? "app" : "iboot")
@@ -817,13 +833,9 @@ public class DideHelper {
 				}
 
 			} else if (parameter.contains("#define")) {
-				String[] defines = parameter.trim().split("//");
-				String[] members = null;
-				if (parameter.startsWith("//")) {
-					members = defines[1].trim().split("\\s+");
-				} else {
-					members = defines[0].trim().split("\\s+");
-				}
+				String[] members = parameter.replace("//", " ").trim().split("\\s+");
+//				String[] defines = parameter.trim().split("//");
+//				String[] members = parameter.startsWith("//")?defines[1].trim().split("\\s+"):defines[0].trim().split("\\s+");
 				paras.add(members[1]);// 将所有参数存放到paras
 				List<String> rangesCopy = ranges;
 				if (rangesCopy.size() != 0) {
@@ -834,29 +846,14 @@ public class DideHelper {
 
 					} else {
 						if (tag.equals("int")) {
-							try {
-								if (!handleIntPara(minString, maxString,pjCgfs, members)) {
+								if (!handleIntPara(component,minString, maxString,pjCgfs, members)) {
 									return false;
 								}
-							} catch (Exception e) {
-								// TODO: handle exception
-								MessageDialog.openError(window.getShell(), "提示",
-										"组件" + component.getName() + "配置信息有误，" + e.getMessage());
-							}
 						} else if (tag.equals("string")) {
-							try {
-								if (!handleStringPara(minString, maxString, pjCgfs, members,
-										defines)) {
-									return false;
-								}
-							} catch (Exception e) {
-								// TODO: handle exception
-								MessageDialog.openError(window.getShell(), "提示",
-										"组件" + component.getName() + "配置信息有误，" + e.getMessage());
+							System.out.println("parameter: "+parameter);
+							if (!handleStringPara(component,minString, maxString, pjCgfs, members)) {
+								return false;
 							}
-//							if (!handleStringPara(minString, maxString, pjCgfs, members, defines)) {
-//								return false;
-//							}
 						}
 					}
 				}
@@ -873,31 +870,34 @@ public class DideHelper {
 	}
 
 	// 处理String类型的参数
-	public static boolean handleStringPara(String minString, String maxString, List<String> pjCgfs, String[] members,
-			String[] defines) {
+	public static boolean handleStringPara(Component component, String minString, String maxString, List<String> pjCgfs, String[] members) {
 		// TODO Auto-generated method stub
-		int min, max;
-		String value = null;
-		min = Integer.parseInt(minString);
-		max = Integer.parseInt(maxString);
-		if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
-			for (String cfg : pjCgfs) {
-				String[] cdefines = cfg.split("//");
-				if (cfg.contains(members[1])) {
-					int begin = cdefines[0].indexOf("\"");
-					int end = cdefines[0].lastIndexOf("\"");
-					value = cdefines[0].substring(begin + 1, end);
-					break;
+		if(!members[2].contains("\"")) {
+			DideHelper.showErrorMessage(component.getName()+"配置参数："+members[2]+" 不是字符串类型");
+			return false;//CFG_TFTP_PATHDEFAULT  CN_TFTP_PATHDEFAULT
+		}else {
+			String value = null;
+			int min = Integer.parseInt(minString);
+			int max = Integer.parseInt(maxString);
+			if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
+				for (String cfg : pjCgfs) {
+					String[] cdefines = cfg.split("\\s+");
+					if (cfg.contains(members[1])) {
+						value = cdefines[2].replace("\"", "");
+						break;
+					}
 				}
+			} else {
+				value = members[2].replace("\"", "");
 			}
-
-		} else {
-			int begin = defines[0].indexOf("\"");
-			int end = defines[0].lastIndexOf("\"");
-			value = defines[0].substring(begin + 1, end);
-		}
-		if (value.length() < min || value.length() > max) {
-			return false;
+			if(value == null) {
+				value = members[2].replace("\"", "");
+			}
+			
+			if (value.length() < min || value.length() > max) {
+				return false;
+			}
+			
 		}
 		return true;
 	}
@@ -913,65 +913,59 @@ public class DideHelper {
 	}
 
 	// 处理Int类型的参数
-	public static boolean handleIntPara(String minString, String maxString, List<String> pjCgfs, String[] members) {
+	public static boolean handleIntPara(Component component,String minString, String maxString, List<String> pjCgfs, String[] members) {
 		// TODO Auto-generated method stub
-		int min;
-		long max, curData = -1;
-		if (minString.startsWith("0x")) {
-			min = Integer.parseInt(minString.substring(2), 16);
-		} else {
-			min = Integer.parseInt(minString);
-		}
-		if (maxString.startsWith("0x")) {
-			max = Long.parseLong(maxString.substring(2), 16);
-		} else {
-			max = Long.parseLong(maxString);
-		}
-		if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
-			for (String cfg : pjCgfs) {
-				if (cfg.contains(members[1])) {
-					String[] cfgs = cfg.trim().split("\\s+");
-					if (cfgs[2].startsWith("0x")) {
-						curData = Long.parseLong(cfgs[2].substring(2), 16);
-					} else if (cfgs[2].contains("+") || cfgs[2].contains("-") || cfgs[2].contains("*")
-							|| cfgs[2].contains("/")) {
-						String pureCal = getridParentheses(cfgs[2]);
-						if (pureCal.startsWith("-")) {
-							curData = toUnsigned(Long.parseLong(pureCal));
+		if(members[2].contains("\"")) {
+			DideHelper.showErrorMessage(component.getName()+"配置参数："+members[2]+" 不是int类型");
+			return false;//CFG_TFTP_PATHDEFAULT  CN_TFTP_PATHDEFAULT
+		}else {
+			int min = minString.startsWith("0x")?Integer.parseInt(minString.substring(2), 16):Integer.parseInt(minString);
+			long max = maxString.startsWith("0x")?Long.parseLong(maxString.substring(2), 16):Long.parseLong(maxString);;
+			long curData = -1;
+			if (pjCgfs.size() > 0) {// 如果已存在该组件的配置
+				for (String cfg : pjCgfs) {
+					if (cfg.contains(members[1])) {
+						String[] cfgs = cfg.trim().split("\\s+");
+						if (cfgs[2].startsWith("0x")) {
+							curData = Long.parseLong(cfgs[2].substring(2), 16);
+						} else if (cfgs[2].contains("+") || cfgs[2].contains("-") || cfgs[2].contains("*")
+								|| cfgs[2].contains("/")) {
+							String pureCal = getridParentheses(cfgs[2]);
+							if (pureCal.startsWith("-")) {
+								curData = toUnsigned(Long.parseLong(pureCal));
+							} else {
+								double result = Calculator.conversion(pureCal);
+								BigDecimal bd = new BigDecimal(df.format(result));
+								curData = Long.valueOf(bd.toPlainString());
+							}
 						} else {
-							double result = Calculator.conversion(pureCal);
-							BigDecimal bd = new BigDecimal(df.format(result));
-							curData = Long.valueOf(bd.toPlainString());
+							curData = Integer.parseInt(getridParentheses(cfgs[2]));
 						}
-					} else {
-						curData = Integer.parseInt(getridParentheses(cfgs[2]));
+						break;
 					}
-
-					break;
 				}
-			}
 
-		} else {
-			if (members[2].startsWith("0x")) {
-				curData = Long.parseLong(members[2].substring(2), 16);
-			} else if (members[2].contains("+") || members[2].contains("-") || members[2].contains("*")
-					|| members[2].contains("/")) {
-				String pureCal = getridParentheses(members[2]);
-				// System.out.println("pureCal: "+pureCal);
-				if (pureCal.startsWith("-")) {
-					curData = toUnsigned(Long.parseLong(pureCal));
-				} else {
-					double result = Calculator.conversion(pureCal);
-					BigDecimal bd = new BigDecimal(df.format(result));
-					curData = Long.valueOf(bd.toPlainString());
-				}
 			} else {
-				curData = Integer.parseInt(getridParentheses(members[2]));
+				if (members[2].startsWith("0x")) {
+					curData = Long.parseLong(members[2].substring(2), 16);
+				} else if (members[2].contains("+") || members[2].contains("-") || members[2].contains("*")
+						|| members[2].contains("/")) {
+					String pureCal = getridParentheses(members[2]);
+					if (pureCal.startsWith("-")) {
+						curData = toUnsigned(Long.parseLong(pureCal));
+					} else {
+						double result = Calculator.conversion(pureCal);
+						BigDecimal bd = new BigDecimal(df.format(result));
+						curData = Long.valueOf(bd.toPlainString());
+					}
+				} else {
+					curData = Integer.parseInt(getridParentheses(members[2]));
+				}
 			}
-		}
 
-		if (curData < min || curData > max) {
-			return false;
+			if (curData < min || curData > max) {
+				return false;
+			}
 		}
 
 		return true;

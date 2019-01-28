@@ -128,7 +128,7 @@ public class ChangeBuildConfigActionBase {
 				/*
 				 * 如果hidden为true，则隐藏库的编译选项
 				 */
-				if(!s.contains("Iboot_Release")) {
+//				if(!s.contains("Iboot_Release")) {
 					if (hidden) {
 						if (!configNames.contains(s) && !s.contains("libos"))
 							configNames.add(s);
@@ -140,7 +140,7 @@ public class ChangeBuildConfigActionBase {
 					// configNames.add(s);
 					if (cfgDesc.isActive())
 						sActiveConfig = s;
-				}
+//				}
 			}
 
 			// Check whether all projects have the same active configuration

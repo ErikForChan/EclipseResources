@@ -87,6 +87,12 @@ public class OpenOcdPage extends FieldEditorPreferencePage implements IWorkbench
 				Messages.OpenOCDPagePropertyPage_executable_folder, getFieldEditorParent(), isStrict);
 		addField(folder);
 	}
+	
+	@Override
+	public boolean performOk() {
+		// TODO Auto-generated method stub
+		return super.performOk();
+	}
 
 	// ------------------------------------------------------------------------
 }

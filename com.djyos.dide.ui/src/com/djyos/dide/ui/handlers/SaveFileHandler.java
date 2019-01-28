@@ -187,7 +187,7 @@ public class SaveFileHandler extends SaveHandler {
 						if (file.isFile()) {
 							LinkHelper.setFileExclude(ifile, cond, false);
 						} else if (file.isDirectory()) {
-							LinkHelper.setExclude(ifolder, cond, false);
+							LinkHelper.setFolderExclude(ifolder, cond, false);
 						}
 					}
 				} else {
@@ -195,7 +195,7 @@ public class SaveFileHandler extends SaveHandler {
 						if (file.isFile()) {
 							LinkHelper.setFileExclude(ifile, cond, false);
 						} else if (file.isDirectory()) {
-							LinkHelper.setExclude(ifolder, cond, false);
+							LinkHelper.setFolderExclude(ifolder, cond, false);
 						}
 					}
 				}

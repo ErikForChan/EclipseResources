@@ -49,7 +49,7 @@ import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolderUtils;
 
 public class GitHandler {
-	// https://git.coding.net/djyos/source.git
+	// https://git.coding.net/djyos/djyos.git
 	// https://gitee.com/djyos/source.git
 	// https://github.com/ErikForChan/Arraylist_link.git
 	DeleteFolderUtils df = new DeleteFolderUtils();
@@ -262,37 +262,20 @@ public class GitHandler {
 				try {
 					monitor.worked(5);
 					Git gitLocal = Git.open(gitLocalFile);
-
-					String curVersion = getCurVersion(gitLocal);
-					boolean versionExist = objects_Exist_Version(gitLocalFile, curVersion);
-					String preFetchVersion = getFetchVersion(gitLocalFile);
-					System.out.println("curVersion1 : " + curVersion);
-					System.out.println("remoteVersion1 : " + preFetchVersion);
-					if (curVersion.equals(preFetchVersion) || versionExist) {
-						FetchResult fetchResult = gitLocal.fetch().call();
-						TrackingRefUpdate refUpdate = fetchResult.getTrackingRefUpdate("refs/remotes/origin/release");
-						if (refUpdate != null) {
-							monitor.worked(3);
-							String remoteVersion = getFetchVersion(gitLocalFile);
-							System.out.println("curVersion : " + curVersion);
-							System.out.println("remoteVersion : " + remoteVersion);
-							monitor.worked(1);
-
-							Git gitLocal2 = Git.open(gitLocalFile);
-							curVersion = getCurVersion(gitLocal2);
-							versionExist = objects_Exist_Version(gitLocalFile, curVersion);
-							if (curVersion.equals(remoteVersion) || versionExist) {
-								update = false;
-							}
-						} else {
-							update = false;
-						}
+//					String curVersion = getCurVersion(gitLocal);
+//					String preFetchVersion = getFetchVersion(gitLocalFile);
+//					System.out.println("curVersion1 : " + curVersion);
+//					System.out.println("preFetchVersion : " + preFetchVersion);
+					FetchResult fetchResult = gitLocal.fetch().call();
+					TrackingRefUpdate refUpdate = fetchResult.getTrackingRefUpdate("refs/remotes/origin/release");
+					if (refUpdate == null) {
+						update = false;
 					}
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
-					e1.printStackTrace();
 					update = false;
 				}
+//				System.out.println("update : " + update);
 				if (!update) {
 					if (tag == 1) {
 						PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
@@ -306,24 +289,12 @@ public class GitHandler {
 					prepare_Update(tag);
 					return Status.OK_STATUS;
 				}
-				monitor.worked(1);
+				monitor.worked(5);
 				return Status.CANCEL_STATUS;
 			}
 		};
 		backgroundJob.schedule();
 
-	}
-
-	protected boolean objects_Exist_Version(File gitLocalFile, String curVersion) {
-		// TODO Auto-generated method stub
-		String head = curVersion.substring(0, 2);
-		String tail = curVersion.substring(2);
-		File versionFile = new File(gitLocalFile + "/objects" + "/" + head + "/" + tail);
-		// System.out.println("versionFile: " + versionFile.getPath());
-		if (versionFile.exists()) {
-			return true;
-		}
-		return false;
 	}
 
 	/*

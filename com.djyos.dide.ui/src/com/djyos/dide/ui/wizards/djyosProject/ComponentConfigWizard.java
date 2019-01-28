@@ -602,12 +602,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 						String type = componentCommon.getAIType(item);
 
 						Component itemCompt;
-						boolean isApp = false;
-						if (type.equals("App")) {
-							isApp = true;
-						} else {
-							isApp = false;
-						}
+						boolean isApp = type.equals("App")?true:false;
 						itemCompt = componentCommon.getComponentByPath(item.getData().toString(),
 								isApp ? appCompontents : ibootCompontents);
 
@@ -624,16 +619,8 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 								allDeps += (k != 0 ? "，" : "") + depedents.get(k);
 							}
 
-							if (allDeps.equals("")) {
-								dependentText.setText(depedentLabel + " 无");
-							} else {
-								dependentText.setText(depedentLabel + allDeps);
-							}
-							if (allMuts.equals("")) {
-								mutexText.setText(mutexLabel + " 无");
-							} else {
-								mutexText.setText(mutexLabel + allMuts);
-							}
+							dependentText.setText(allDeps.equals("")?(depedentLabel + " 无"):(depedentLabel + allDeps));
+							mutexText.setText(allMuts.equals("")?(mutexLabel + " 无"):((mutexLabel + allMuts));
 
 							String configure = itemCompt.getConfigure();
 							if (!configure.contains("#define")) {
@@ -889,26 +876,15 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 						@Override
 						public void mouseExit(MouseEvent e) {
 							// TODO Auto-generated method stub
-							String tempString = text.getText();
+							String tempString = text.getText().replace("\"", "");
 							boolean toCalculate = false;
-							IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 							if (rangesCopy.size() > 0) {
 								if (flag.equals("int")) {
 									String minString = rangesCopy.get(0);
 									String maxString = rangesCopy.get(1);
-									double min;
-									long max;
-									if (minString.startsWith("0x")) {
-										min = Integer.parseInt(minString.substring(2), 16);
-									} else {
-										min = Integer.parseInt(minString);
-									}
-									if (maxString.startsWith("0x")) {
-										max = Long.parseLong(maxString.substring(2), 16);
-									} else {
-										max = Long.parseLong(maxString);
-									}
-
+									double min = minString.startsWith("0x")?Integer.parseInt(minString.substring(2), 16):Integer.parseInt(minString);
+									long max = maxString.startsWith("0x")?Long.parseLong(maxString.substring(2), 16):Long.parseLong(maxString);
+									
 									long curNum = -1;
 									Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
 									boolean isInt = pattern.matcher(tempString).matches();
@@ -928,8 +904,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 									}
 									if (curNum < min || curNum > max) {
 										text.setText("");
-										MessageDialog.openError(window.getShell(), "提示",
-												"请填写在之" + min + "与" + max + "之间的整数");
+										DideHelper.showErrorMessage("请填写在" + min + "与" + max + "之间的整数");
 									}
 								} else if (flag.equals("string")) {
 									if (rangesCopy.size() > 0) {
@@ -937,8 +912,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 										int max = Integer.parseInt(rangesCopy.get(1));
 										if (tempString.length() < min || tempString.length() > max) {
 											text.setText("");
-											MessageDialog.openError(window.getShell(), "提示",
-													"字符串长度不得小于" + min + "或者大于" + max);
+											DideHelper.showErrorMessage("字符串长度不得小于" + min + "或者大于" + max);
 										}
 									}
 
@@ -994,11 +968,9 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 
 	// 重置当前组件的Configure
 	private void handleStringPara(String minString, String maxString, String[] defines, Text text) {
-		int min, max;
-		String value = null;
-		min = Integer.parseInt(minString);
-		max = Integer.parseInt(maxString);
-		value = defines[0].split("\\s+")[2].replace("\"", "");
+		int min = Integer.parseInt(minString);
+		int max = Integer.parseInt(maxString);
+		String value = defines[0].split("\\s+")[2].replace("\"", "");
 //		System.out.println("value:  "+value);
 		if(value != null) {
 			if (value.length() < min || value.length() > max) {
@@ -1008,19 +980,9 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 	}
 
 	private void handleIntPara(String minString, String maxString, String[] members, Text text) {
-		int min;
-		long max, curData;
-		;
-		if (minString.startsWith("0x")) {
-			min = Integer.parseInt(minString.substring(2), 16);
-		} else {
-			min = Integer.parseInt(minString);
-		}
-		if (maxString.startsWith("0x")) {
-			max = Long.parseLong(maxString.substring(2), 16);
-		} else {
-			max = Long.parseLong(maxString);
-		}
+		int min = minString.startsWith("0x")?Integer.parseInt(minString.substring(2), 16):Integer.parseInt(minString);
+		long max = maxString.startsWith("0x")?Long.parseLong(maxString.substring(2), 16):Long.parseLong(maxString);
+		long curData;
 		if (members[2].startsWith("0x")) {
 			curData = Long.parseLong(members[2].substring(2), 16);
 		} else if (members[2].contains("+") || members[2].contains("-") || members[2].contains("*")

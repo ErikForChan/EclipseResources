@@ -103,7 +103,7 @@ public class CpuCommonWizard extends BasicNewResourceWizard {
 							for (IFolder folder : folders) {
 								for (int i = 0; i < conds.length; i++) {
 									if (conds[i].getName().contains("libos")) {
-										LinkHelper.setExclude(folder, conds[i], true);
+										LinkHelper.setFolderExclude(folder, conds[i], true);
 									}
 								}
 							}
