@@ -620,7 +620,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 							}
 
 							dependentText.setText(allDeps.equals("")?(depedentLabel + " нч"):(depedentLabel + allDeps));
-							mutexText.setText(allMuts.equals("")?(mutexLabel + " нч"):((mutexLabel + allMuts));
+							mutexText.setText(allMuts.equals("")?(mutexLabel + " нч"):((mutexLabel + allMuts)));
 
 							String configure = itemCompt.getConfigure();
 							if (!configure.contains("#define")) {

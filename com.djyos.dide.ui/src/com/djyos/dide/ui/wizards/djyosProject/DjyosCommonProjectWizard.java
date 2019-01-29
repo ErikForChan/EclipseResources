@@ -241,7 +241,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			}
 			if(tIndex==3) {
 				if(bare_LdsFile.exists()) {
-					DideHelper.copyFolder(bare_LdsFile, new File(destPath + "/src/lds/bare.lds"));
+					DideHelper.copyFolder(bare_LdsFile, new File(destPath + "/src/lds/app.lds"));
+					
 				}
 //				if(bare_debug_LdsFile.exists()) {
 //					DideHelper.copyFolder(bare_debug_LdsFile, new File(destPath + "/src/lds/bare_debug.lds"));
@@ -297,6 +298,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 
 		SubMonitor subMonitor = SubMonitor.convert(mon, 3);
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		
 		IProject project = workspace.getRoot().getProject(projectName);
 		if (!userPath.contains(projectName)) {
 			IPath locationPath = new Path(destPath);
