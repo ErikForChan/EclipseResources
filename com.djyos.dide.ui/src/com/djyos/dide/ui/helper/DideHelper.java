@@ -32,7 +32,9 @@ import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -51,6 +53,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.console.MessageConsoleStream;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.actions.NewWizardShortcutAction;
@@ -70,6 +73,7 @@ import com.djyos.dide.ui.objects.Cpu;
 import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.wizards.board.ReadBoardXml;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
+import com.djyos.dide.ui.wizards.djyosProject.tools.ConsoleFactory;
 import com.ibm.icu.text.DecimalFormat;
 
 @SuppressWarnings("restriction")
@@ -286,7 +290,7 @@ public class DideHelper {
 		// bufAll.append(target + "=" + isTrue + "\n");
 		// }
 		file.delete();
-		writeFile(file, bufAll.toString());
+		writeFile(file, bufAll.toString(),false);
 
 	}
 
@@ -571,7 +575,7 @@ public class DideHelper {
 		}
 	}
 
-	public static void writeFile(File file, String content) {
+	public static void writeFile(File file, String content,boolean append) {
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
@@ -582,7 +586,7 @@ public class DideHelper {
 		}
 		FileWriter writer;
 		try {
-			writer = new FileWriter(file);
+			writer = new FileWriter(file, append);
 			writer.write(content);
 			writer.flush();
 			writer.close();
@@ -806,6 +810,11 @@ public class DideHelper {
 
 	// 检查参数是否有配置错误
 	public static boolean checkParameter(Component component, Boolean isApp, IProject curProject) {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		String workspacePath = workspace.getRoot().getLocation().toString();
+		File checkLog = new File(workspacePath+"/check_component.log");
+		String errCheckMsg = DideHelper.readFile(checkLog);
+		
 		List<String> pjCgfs = new ArrayList<String>();
 		if(curProject != null) {
 			File configFile = new File(curProject.getLocation().toString() + "/src/" + (isApp ? "app" : "iboot")
@@ -839,21 +848,48 @@ public class DideHelper {
 				paras.add(members[1]);// 将所有参数存放到paras
 				List<String> rangesCopy = ranges;
 				if (rangesCopy.size() != 0) {
-					String minString = rangesCopy.get(0), maxString = rangesCopy.get(1);
-					if (tag.equals("enum")) {
+					try {
+						String minString = rangesCopy.get(0), maxString = rangesCopy.get(1);
+						if (tag.equals("enum")) {
 
-					} else if (tag.equals("select")) {
+						} else if (tag.equals("select")) {
 
-					} else {
-						if (tag.equals("int")) {
-								if (!handleIntPara(component,minString, maxString,pjCgfs, members)) {
-									return false;
+						} else {
+							if (tag.equals("int")) {
+								if(members[2].contains("\"")) {
+									String log = "配置文件"+component.getFileName() + "\n" +parameter+"\n配置有误,原因:"+members[2]+" 不是int类型\n\n";
+									if(!errCheckMsg.contains(log)) {
+										openFileInDide(new File(component.getParentPath() + "/" + component.getFileName()));
+										DideHelper.writeFile(checkLog, log, true);
+									}
+									return false;//CFG_TFTP_PATHDEFAULT  CN_TFTP_PATHDEFAULT
+								}else {
+									if (!handleIntPara(component,minString, maxString,pjCgfs, members)) {
+										return false;
+									}
 								}
-						} else if (tag.equals("string")) {
-							System.out.println("parameter: "+parameter);
-							if (!handleStringPara(component,minString, maxString, pjCgfs, members)) {
-								return false;
+							} else if (tag.equals("string")) {
+								if(!members[2].contains("\"")) {
+									String log = "配置文件"+component.getFileName() + "\n" +parameter+"\n配置有误,原因:"+members[2]+" 不是字符串类型\n\n";
+									if(!errCheckMsg.contains(log)) {
+										openFileInDide(new File(component.getParentPath() + "/" + component.getFileName()));
+										DideHelper.writeFile(checkLog, log, true);
+									}
+									return false;
+								}else {
+									if (!handleStringPara(component,minString, maxString, pjCgfs, members)) {
+										return false;
+									}
+								}
+								
 							}
+						}
+					} catch (Exception e) {
+						// TODO: handle exception
+						String log = "配置文件"+component.getFileName() + "\n" +parameter+"\n配置有误,原因未知\n\n";
+						if(!errCheckMsg.contains(log)) {
+							openFileInDide(new File(component.getParentPath() + "/" + component.getFileName()));
+							DideHelper.writeFile(checkLog, log, true);
 						}
 					}
 				}
@@ -872,10 +908,6 @@ public class DideHelper {
 	// 处理String类型的参数
 	public static boolean handleStringPara(Component component, String minString, String maxString, List<String> pjCgfs, String[] members) {
 		// TODO Auto-generated method stub
-		if(!members[2].contains("\"")) {
-			DideHelper.showErrorMessage(component.getName()+"配置参数："+members[2]+" 不是字符串类型");
-			return false;//CFG_TFTP_PATHDEFAULT  CN_TFTP_PATHDEFAULT
-		}else {
 			String value = null;
 			int min = Integer.parseInt(minString);
 			int max = Integer.parseInt(maxString);
@@ -898,7 +930,6 @@ public class DideHelper {
 				return false;
 			}
 			
-		}
 		return true;
 	}
 
@@ -915,10 +946,6 @@ public class DideHelper {
 	// 处理Int类型的参数
 	public static boolean handleIntPara(Component component,String minString, String maxString, List<String> pjCgfs, String[] members) {
 		// TODO Auto-generated method stub
-		if(members[2].contains("\"")) {
-			DideHelper.showErrorMessage(component.getName()+"配置参数："+members[2]+" 不是int类型");
-			return false;//CFG_TFTP_PATHDEFAULT  CN_TFTP_PATHDEFAULT
-		}else {
 			int min = minString.startsWith("0x")?Integer.parseInt(minString.substring(2), 16):Integer.parseInt(minString);
 			long max = maxString.startsWith("0x")?Long.parseLong(maxString.substring(2), 16):Long.parseLong(maxString);;
 			long curData = -1;
@@ -966,9 +993,22 @@ public class DideHelper {
 			if (curData < min || curData > max) {
 				return false;
 			}
-		}
 
 		return true;
+	}
+
+	/**
+	 * 向控制台打印一条信息，并激活控制台。
+	 * 
+	 * @param message
+	 * @param activate
+	 *            是否激活控制台
+	 */
+	public static void printToConsole(String message, boolean activate) {
+		MessageConsoleStream printer = ConsoleFactory.getConsole()
+				.newMessageStream();
+		printer.setActivateOnWrite(activate);
+		printer.println(message);
 	}
 
 }

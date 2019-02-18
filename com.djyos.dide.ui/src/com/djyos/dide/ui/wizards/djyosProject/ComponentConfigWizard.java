@@ -12,6 +12,8 @@ import org.eclipse.cdt.utils.ui.controls.TabFolderLayout;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardPage;
@@ -227,8 +229,8 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 			}
 
 		}
-		lastInit += "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
-				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
+//		lastInit += "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
+//				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
 
 		content += initHead;
 		content += "\n" + djyStart + djyMain + djyEnd;
@@ -236,7 +238,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 				+ "\t//-------------------early-------------------------//\n" + earlyCode
 				+ "\t//-------------------medium-------------------------//\n" + mediumCode
 				+ "\t//-------------------later-------------------------//\n" + laterCode + lastInit + initEnd;
-		DideHelper.writeFile(file, content);
+		DideHelper.writeFile(file, content,false);
 		componentCommon.createCheckXml(isApp, projectLocation, appCompontents, ibootCompontents);
 
 	}
@@ -277,6 +279,11 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		String workspacePath = workspace.getRoot().getLocation().toString();
+		File checkLog = new File(workspacePath+"/check_component.log");
+		DideHelper.createNewFile(checkLog);
+		
 		Composite composite = new Composite(parent, SWT.NONE);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 		composite.setLayout(new GridLayout(1, true));
@@ -293,6 +300,12 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
+		
+		String errCheckMsg = DideHelper.readFile(checkLog);
+		if((errCheckMsg != null) && (!errCheckMsg.trim().equals(""))) {
+			DideHelper.showErrorMessage("部分配置文件有错误，请查看控制台详细信息");
+			DideHelper.printToConsole(errCheckMsg, true);
+		}
 	}
 
 	public void creatDepedentCpt(Composite composite) {

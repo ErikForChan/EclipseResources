@@ -79,8 +79,8 @@ public class ChipdrvCommonProject extends BasicNewResourceWizard {
 			File HFile = new File(path + "/FileTemp/HFileTemplate");
 			String CString = DideHelper.readFile(CFile);
 			String HString = DideHelper.readFile(HFile);
-			DideHelper.writeFile(myChipDrvCFile, CString);
-			DideHelper.writeFile(myChipDrvHFile, HString);
+			DideHelper.writeFile(myChipDrvCFile, CString,false);
+			DideHelper.writeFile(myChipDrvHFile, HString,false);
 
 			openFile(myChipDrvCFile);
 			openFile(myChipDrvHFile);

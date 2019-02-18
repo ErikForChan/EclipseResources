@@ -11,6 +11,7 @@
 package com.djyos.dide.ui.startup;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,12 +22,16 @@ import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionPreferences;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionWorkspacePreferences;
+import org.eclipse.core.internal.resources.Project;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.variables.IStringVariableManager;
 import org.eclipse.core.variables.IValueVariable;
 import org.eclipse.core.variables.VariablesPlugin;
@@ -52,6 +57,8 @@ import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateComponentInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadComponentsInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadIncludeFile;
+import com.djyos.dide.ui.wizards.djyosProject.tools.ReviseVariableToXML;
+
 import ilg.gnuarmeclipse.core.EclipseUtils;
 
 public class HandleProjectImport {
@@ -68,6 +75,46 @@ public class HandleProjectImport {
 		IProject[] projects = workspace.getRoot().getProjects();
 		for (IProject project : projects) {
 			handleProjectElemExculde(project);
+			
+			IFile libosFolder = project.getFile("src/libos");
+			if(!libosFolder.exists()) {
+				libosFolder.getLocation().toFile().mkdir();
+				ReviseVariableToXML rvtx = new ReviseVariableToXML();
+				rvtx.add_djyos_links(project.getFile(".project"));
+			}
+			
+//			String[] libos_members = {"bsp","component","djyos","libc","loader","third"};
+//			for(String m:libos_members) {
+//				IFolder newFolder = project.getFolder("src/libos/"+m);
+//				if(!newFolder.exists()) {
+//					newFolder.getLocation().toFile().mkdir();
+//				}
+//	        	try {
+//					newFolder.createLink( new Path("DJYOS_SRC_LOCATION/"+m), 0, null);
+//				} catch (CoreException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+        	
+//			Project p = (Project) project;
+//			boolean changed = p.internalGetDescription().setLinkLocation(getProjectRelativePath(), linkDescription);
+//			if(changed) {
+//				try {
+//					p.writeDescription(IResource.NONE);
+//				} catch (CoreException e) {
+//					// A problem happened updating the description, so delete the resource from the workspace.
+////					workspace.deleteResource(this);
+//					throw e; // Rethrow.
+//				}
+//			}
+		}
+		
+		try {
+			workspace.getRoot().refreshLocal(IResource.DEPTH_INFINITE, null);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

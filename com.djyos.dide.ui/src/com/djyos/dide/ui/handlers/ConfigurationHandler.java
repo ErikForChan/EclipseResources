@@ -20,6 +20,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.ProjectPattern;
 
 @SuppressWarnings("restriction")
 public class ConfigurationHandler {
@@ -59,82 +60,8 @@ public class ConfigurationHandler {
 			for (ICConfigurationDescription cfgDesc : conds) {
 				String s = cfgDesc.getName();
 				IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(cfgDesc);
-
 				String toolChainName = cfg.getToolChain().getName();
-				if (toolChainName.indexOf("CSky") != -1 || toolChainName.indexOf("CKcore") != -1) {
-					cfg.setBuildCommand("make");
-					cfg.setBuildArguments("SHELL=bash.exe" + " " + cfg.getBuildArguments()
-							.replaceAll("SHELL=cmd.exe", "").replaceAll("SHELL=bash.exe", "").trim());
-				} else {
-					cfg.setBuildCommand("${cross_make}");
-					cfg.setBuildArguments(
-							"SHELL=cmd.exe" + " " + cfg.getBuildArguments().replaceAll("SHELL=cmd.exe", "").trim());
-				}
-
-				if (!s.contains("libos")) {
-					cfg.setPostbuildStep("");
-					ITool[] tools = cfg.getToolChain().getTools();
-					for (ITool tool : tools) {
-						String toolName = tool.getName();
-						if (toolName.contains("Cross ARM GNU C++ Linker") || toolName.contains("CSKY Elf C++ Linker")) {
-							String curPattern = tool.getCommandLinePattern().split("&&")[0].trim();
-							tool.setCommandLinePattern(curPattern+" && addsh.exe ${ConfigName}.elf");
-						}
-						if (toolName.contains("Cross ARM GNU Create Flash Image") || toolName.contains("CSKY Elf Create Flash Image") ) {
-							String curPattern = tool.getCommandLinePattern().split("&&")[0].trim();
-							tool.setCommandLinePattern(curPattern+" && addver.exe ${ConfigName}.bin");
-						}
-					}
-//					String pType = "-p0";
-////					System.out.println("toolChainName111:  "+toolChainName);
-////					if(!ibootLdsFile.exists()) {
-////						pType = "-p3";
-////					}else {
-////						String content = DideHelper.readFile(ibootLdsFile.getLocation().toFile());
-////						System.out.println("ibootLdsFile:  "+ibootLdsFile.getLocation().toString());
-////						System.out.println("content:  "+content);
-//						String ibootPattern = ".*_Iboot_.*";
-//						String debugPattern = ".*_App_Debug";
-//						String releasePattern = ".*_App_Release";
-//						if(Pattern.matches(ibootPattern, s)) {
-//							pType = "-p0";
-//						}else if(Pattern.matches(debugPattern, s)) {
-//							if (toolChainName.indexOf("CSky") != -1 || toolChainName.indexOf("CKcore") != -1) {
-//								pType = "-p2";
-//							}else {
-//								pType = "-p1";
-//							}
-//						}else if(Pattern.matches(releasePattern, s)) {
-//							pType = "-p2";
-//						}
-////					}
-//					cfg.setPostbuildStep("addsh.exe "+pType+" -v3 -a2 ${ConfigName}.elf");
-				}
-
-				if (s.contains("libos")) {
-					ITool[] tools = cfg.getToolChain().getTools();
-					for (ITool tool : tools) {
-						if (tool.getName().contains("Cross ARM GNU Archiver")
-								|| tool.getName().contains("CSky Elf Archiver")) {
-							if (!tool.getCommandLinePattern().equals(pattern)) {
-								tool.setCommandLinePattern(pattern);
-							}
-							IOption[] options = tool.getOptions();
-							for(IOption op:options) {
-								if(op.getName().equalsIgnoreCase("Archiver flags")) {
-									try {
-										op.setValue("-ru");
-									} catch (BuildException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-								}
-							}
-						}
-
-					}
-				}
-
+				ProjectPattern.handleBuilderPattern(toolChainName, cfg, s);
 				try {
 					CoreModel.getDefault().setProjectDescription(project, local_prjd);
 				} catch (CoreException e1) {

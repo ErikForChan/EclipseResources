@@ -367,8 +367,8 @@ public class CpuMainWiazrdPage extends WizardPage implements ICpuConstants,IArch
 			File HFile = new File(path + "/FileTemp/HFileTemplate");
 			String CString = DideHelper.readFile(CFile);
 			String HString = DideHelper.readFile(HFile);
-			DideHelper.writeFile(srcFile, CString);
-			DideHelper.writeFile(incFile, HString);
+			DideHelper.writeFile(srcFile, CString,false);
+			DideHelper.writeFile(incFile, HString,false);
 			DideHelper.openFileInDide(srcFile);
 			DideHelper.openFileInDide(incFile);
 

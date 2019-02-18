@@ -250,7 +250,7 @@ public class SvnUpdateHandler {
 		if (!find) {
 			bufAll.append("SVN_VERION=" + version + "\n");
 		}
-		DideHelper.writeFile(svnVerFile, bufAll.toString());
+		DideHelper.writeFile(svnVerFile, bufAll.toString(),false);
 	}
 
 }

@@ -67,6 +67,7 @@ import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateBoardInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateComponentInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateCpuInfo;
+import com.djyos.dide.ui.wizards.djyosProject.tools.ProjectPattern;
 import com.djyos.dide.ui.wizards.djyosProject.tools.ReviseVariableToXML;
 
 public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
@@ -199,87 +200,26 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		}
 		try {
 			File memoryLdsFile = new File(boardFolderPath + "/memory.lds");
-			
-//			File debugLdsFile = new File(boardFolderPath + "/debug.lds");
-//			File releaseLdsFile = new File(boardFolderPath + "/release.lds");
-//			File ibootLdsFile = new File(boardFolderPath + "/iboot.lds");
-//			File bdebugLdsFile = new File(boardFolderPath + "/bdebug.lds");
-//			File breleaseLdsFile = new File(boardFolderPath + "/brelease.lds");
-			
 			File app_LdsFile = new File(boardFolderPath + "/app.lds");
 			File iboot_LdsFile = new File(boardFolderPath + "/iboot.lds");
 			File bare_LdsFile = new File(boardFolderPath + "/bare.lds");
 			
-//			File app_debug_LdsFile = new File(boardFolderPath + "/app_debug.lds");
-//			File app_release_LdsFile = new File(boardFolderPath + "/app_release.lds");
-//			File iboot_debug_LdsFile = new File(boardFolderPath + "/iboot_debug.lds");
-//			File iboot_release_LdsFile = new File(boardFolderPath + "/iboot_release.lds");
-//			File bare_debug_LdsFile = new File(boardFolderPath + "/bare_debug.lds");
-//			File bare_release_LdsFile = new File(boardFolderPath + "/bare_release.lds");
-//			
 			if(tIndex==0 || tIndex==1) {
 				if(iboot_LdsFile.exists()) {
 					DideHelper.copyFolder(iboot_LdsFile, new File(destPath + "/src/lds/iboot.lds"));
 				}
-//				if(iboot_debug_LdsFile.exists()) {
-//					DideHelper.copyFolder(iboot_debug_LdsFile, new File(destPath + "/src/lds/iboot_debug.lds"));
-//				}
-//				if(iboot_release_LdsFile.exists()) {
-//					DideHelper.copyFolder(iboot_release_LdsFile, new File(destPath + "/src/lds/iboot_release.lds"));
-//				}
 			}
 			if(tIndex==0 || tIndex==2) {
 				if(app_LdsFile.exists()) {
 					DideHelper.copyFolder(app_LdsFile, new File(destPath + "/src/lds/app.lds"));
 				}
-//				if(app_debug_LdsFile.exists()) {
-//					DideHelper.copyFolder(app_debug_LdsFile, new File(destPath + "/src/lds/app_debug.lds"));
-//				}
-//				if(app_release_LdsFile.exists()) {
-//					DideHelper.copyFolder(app_release_LdsFile, new File(destPath + "/src/lds/app_release.lds"));
-//				}
 			}
 			if(tIndex==3) {
 				if(bare_LdsFile.exists()) {
 					DideHelper.copyFolder(bare_LdsFile, new File(destPath + "/src/lds/app.lds"));
 					
 				}
-//				if(bare_debug_LdsFile.exists()) {
-//					DideHelper.copyFolder(bare_debug_LdsFile, new File(destPath + "/src/lds/bare_debug.lds"));
-//				}
-//				if(bare_release_LdsFile.exists()) {
-//					DideHelper.copyFolder(bare_release_LdsFile, new File(destPath + "/src/lds/bare_release.lds"));
-//				}
 			}
-//			if (haveApp && needIbootLds) {
-//				if (debugLdsFile.exists()) {
-//					DideHelper.copyFolder(debugLdsFile, new File(destPath + "/src/lds/debug.lds"));
-//				}
-//				if (releaseLdsFile.exists()) {
-//					DideHelper.copyFolder(releaseLdsFile, new File(destPath + "/src/lds/release.lds"));
-//				}
-//			}
-//			if (needIbootLds) {
-//				if (ibootLdsFile.exists()) {
-//					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/iboot.lds"));
-//				}
-//			}else {
-//				if(bdebugLdsFile.exists()) {
-//					String dubugContent = DideHelper.readFile(bdebugLdsFile);
-//					File debugLds = new File(destPath + "/src/lds/debug.lds");
-//					DideHelper.createNewFile(debugLds);
-//					DideHelper.writeFile(debugLds, dubugContent);
-////					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/bdebug.lds"));
-//				}
-//		 		if(breleaseLdsFile.exists()) {
-//		 			String releaseContent = DideHelper.readFile(breleaseLdsFile);
-//					File releaseLds = new File(destPath + "/src/lds/release.lds");
-//					DideHelper.createNewFile(releaseLds);
-//					DideHelper.writeFile(releaseLds, releaseContent);
-////					DideHelper.copyFolder(ibootLdsFile, new File(destPath + "/src/lds/brelease.lds"));
-//				}
-//			}
-			
 			if (memoryLdsFile.exists()) {
 				DideHelper.copyFolder(memoryLdsFile, new File(destPath + "/src/lds/memory.lds"));
 			}
@@ -404,63 +344,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		}
 	}
 
-	private void handleBuilderPattern(int index, String toolChainName, IConfiguration cfg, String conName) {
-		if (toolChainName.indexOf("CSky") != -1 || toolChainName.indexOf("CKcore") != -1) {
-			cfg.setBuildCommand("make");
-			cfg.setBuildArguments("SHELL=bash.exe" + " "
-					+ cfg.getBuildArguments().replaceAll("SHELL=cmd.exe", "").replaceAll("SHELL=bash.exe", "").trim());
-		} else {
-			cfg.setBuildCommand("${cross_make}");
-			cfg.setBuildArguments(
-					"SHELL=cmd.exe" + " " + cfg.getBuildArguments().replaceAll("SHELL=cmd.exe", "").trim());
-		}
-
-		String pattern = "$(call loop, 50, ${INPUTS}, ${COMMAND} ${FLAGS} ${OUTPUT})";
-		if (!conName.contains("libos")) {
-			cfg.setPostbuildStep("");
-			ITool[] tools = cfg.getToolChain().getTools();
-			for (ITool tool : tools) {
-				String toolName = tool.getName();
-				if (toolName.contains("Cross ARM GNU C++ Linker") || toolName.contains("CSKY Elf C++ Linker")) {
-					String curPattern = tool.getCommandLinePattern().split("&&")[0].trim();
-					tool.setCommandLinePattern(curPattern+" && addsh.exe ${ConfigName}.elf");
-				}
-				if (toolName.contains("Cross ARM GNU Create Flash Image") || toolName.contains("CSKY Elf Create Flash Image") ) {
-					String curPattern = tool.getCommandLinePattern().split("&&")[0].trim();
-					tool.setCommandLinePattern(curPattern+" && addver.exe ${ConfigName}.bin");
-				}
-			}
-		}
-		if (conName.contains("libos")) {
-			if(conName.contains("_App")) {
-				cfg.setArtifactName("libos_App");
-			}else if(conName.contains("_Iboot")) {
-				cfg.setArtifactName("libos_Iboot");
-			} 
-			
-			ITool[] tools = cfg.getToolChain().getTools();
-			for (ITool tool : tools) {
-				if (tool.getName().contains("Cross ARM GNU Archiver") || tool.getName().contains("CSky Elf Archiver")) {
-					if (!tool.getCommandLinePattern().equals(pattern)) {
-						tool.setCommandLinePattern(pattern);
-						IOption[] options = tool.getOptions();
-						for(IOption op:options) {
-							if(op.getName().equalsIgnoreCase("Archiver flags")) {
-								try {
-									op.setValue("-ru");
-								} catch (BuildException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							}
-						}
-					}
-				}
-
-			}
-		}
-	}
-
 	public void handleCProject(int index, List<Component> appCompontentsChecked, List<Component> ibootCompontentsChecked,
 			Board board, Cpu cpu, Core core, String projectPath, String projectName) {
 		String _cpuName = cpu.getCpuName();
@@ -563,7 +446,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			IResourceInfo resourceInfo = cfg.getRootFolderInfo();
 
 			String toolChainName = cfg.getToolChain().getName();
-			handleBuilderPattern(index,toolChainName, cfg, conName);
+			ProjectPattern.handleBuilderPattern(toolChainName, cfg, conName);
 
 			IToolChain toolchain = resourceInfo.getParent().getToolChain();
 			List<String> links = new ArrayList<String>();
@@ -985,7 +868,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		File file = new File(sourcePath + "/src/lds/memory.lds");
 		String content = ldsHead + ldsDesc;
 		DideHelper.createNewFile(file);
-		DideHelper.writeFile(file, content);
+		DideHelper.writeFile(file, content,false);
 	}
 
 	@Override
@@ -1043,7 +926,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 				if(DideHelper.get_DIDE_Version() != null) {
 					File versionFile = new File(projectLocation + "/data/version.ini");
 					DideHelper.createNewFile(versionFile);
-					DideHelper.writeFile(versionFile,"DIDE_VERSION=" + DideHelper.get_DIDE_Version());
+					DideHelper.writeFile(versionFile,"DIDE_VERSION=" + DideHelper.get_DIDE_Version(),false);
 				}
 				
 				CreateHardWareDesc chwd = new CreateHardWareDesc();

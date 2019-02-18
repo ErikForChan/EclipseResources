@@ -73,7 +73,7 @@ public class ComponentCommonPage implements IComponentCommon {
 		defineInit += coreConfigure;
 		defineInit += "\n\n#endif";
 		System.out.println("defineInit:   "+defineInit);
-		DideHelper.writeFile(file, defineInit);
+		DideHelper.writeFile(file, defineInit,false);
 	}
 
 	@Override

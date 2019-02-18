@@ -113,7 +113,7 @@ public class StepByStepPage extends PropertyPage {
 			public void run(IProgressMonitor monitor) {
 				monitor.beginTask("¥Ê¥¢≈‰÷√...", 10);
 				// handleOK(monitor);
-				DideHelper.writeFile(stepPrefsFile, stepDesc);
+				DideHelper.writeFile(stepPrefsFile, stepDesc,false);
 				monitor.done();
 				monitor.setTaskName("ÕÍ≥…");
 			}
@@ -337,7 +337,7 @@ public class StepByStepPage extends PropertyPage {
 		// TODO Auto-generated method stub
 		DideHelper.createNewFile(file);
 		String content = DideHelper.readFile(new File(DideHelper.getStepByStepPath() + "/" + file.getName()));
-		DideHelper.writeFile(file, content);
+		DideHelper.writeFile(file, content,false);
 	}
 
 	private void getParentFileNames(File objectFile, String lastMember, List<String> parentFileNames) {

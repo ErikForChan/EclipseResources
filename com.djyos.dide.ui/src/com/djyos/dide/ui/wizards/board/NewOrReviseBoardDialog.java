@@ -170,7 +170,7 @@ public class NewOrReviseBoardDialog extends StatusDialog {
 										e.printStackTrace();
 									}
 									String content = DideHelper.readFile(f);
-									DideHelper.writeFile(newFile, content);
+									DideHelper.writeFile(newFile, content,false);
 								}
 							}
 						}
@@ -202,11 +202,11 @@ public class NewOrReviseBoardDialog extends StatusDialog {
 		setShellStyle(getShellStyle() | SWT.CLOSE | SWT.RESIZE);
 	}
 
-	@Override
-	protected Point getInitialSize() {
-		// TODO Auto-generated method stub
-		return new Point(600, 820);
-	}
+//	@Override
+//	protected Point getInitialSize() {
+//		// TODO Auto-generated method stub
+//		return new Point(600, 820);
+//	}
 
 	@Override
 	protected Control createDialogArea(Composite parent) {
@@ -291,14 +291,11 @@ public class NewOrReviseBoardDialog extends StatusDialog {
 		if (toAdd) {
 			for (int i = 0; i < peripheralsList.size(); i++) {
 				String curName = peripheralsList.get(i).getName();
-				System.out.println("curName: " + curName);
 				if (curName.equals(cpudrvName)) {
 					newComponent = new Component();
 					newComponent.setName(curName);
-					System.out.println("true");
 					peripheralsList.remove(i);
 					peripheralsOn.add(newComponent);
-
 					break;
 				}
 			}

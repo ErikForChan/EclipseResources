@@ -32,6 +32,8 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -191,7 +193,12 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 		composite.setLayout(new GridLayout(1, true));
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
-
+		
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		String workspacePath = workspace.getRoot().getLocation().toString();
+		File checkLog = new File(workspacePath+"/check_component.log");
+		DideHelper.createNewFile(checkLog);
+		
 		project = getProject();
 		IFile bspLdsFile = project.getFile("src/lds/bsp.lds");
 		if (bspLdsFile.exists()) {
@@ -213,6 +220,12 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				Label warningLabel = new Label(composite, SWT.NONE);
 				warningLabel.setText("Djyos源码不存在，请重启DIDE根据提示下载");
 			}
+		}
+		
+		String errCheckMsg = DideHelper.readFile(checkLog);
+		if((errCheckMsg != null) && (!errCheckMsg.trim().equals(""))) {
+			DideHelper.showErrorMessage("部分配置文件有错误，请查看控制台详细信息");
+			DideHelper.printToConsole(errCheckMsg, true);
 		}
 		return composite;
 
@@ -1679,15 +1692,15 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		
 
 		}
-		lastInit += "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
-				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
+//		lastInit += "\tprintf(\"\\r\\n: info : all modules are configured.\");\r\n"
+//				+ "\tprintf(\"\\r\\n: info : os starts.\\r\\n\");\n\n";
 		content += initHead;
 		content += "\n" + djyStart + djyMain + djyEnd;
 		content += initStart + firstInit + gpioInit + shellInit
 				+ "\t//-------------------early-------------------------//\n" + earlyCode
 				+ "\t//-------------------medium-------------------------//\n" + mediumCode
 				+ "\t//-------------------later-------------------------//\n" + laterCode + lastInit + initEnd;
-		DideHelper.writeFile(file, content);
+		DideHelper.writeFile(file, content,false);
 	}
 
 	// 通过hardware_info.xml获取当前工程所用到的板件和Cpu
