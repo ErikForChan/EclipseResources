@@ -68,6 +68,11 @@ public class FileHandler implements IResourceChangeListener {
 								ExcludeWhenImport(resource,project,hardWardInfoFile);
 							}
 							
+							if (resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
+								String content = DideHelper.readFile(resource.getLocation().toFile());
+								System.out.println(content);
+							}
+							
 							//用户新增的文件，除了djyos、component、当前板件、当前CPU、当前arch，APP 。都排除编译
 //							ExcludeNewFile(resource,project,hardWardInfoFile);
 							

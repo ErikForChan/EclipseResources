@@ -10,10 +10,13 @@
  *******************************************************************************/
 package com.djyos.dide.ui.startup;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.model.CoreModel;
@@ -57,6 +60,7 @@ import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateComponentInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadComponentsInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadIncludeFile;
+import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
 import com.djyos.dide.ui.wizards.djyosProject.tools.ReviseVariableToXML;
 
 import ilg.gnuarmeclipse.core.EclipseUtils;
@@ -74,6 +78,43 @@ public class HandleProjectImport {
 		EclipseUtils.setVariableValue("openocd_path", openOCD_Path);
 		IProject[] projects = workspace.getRoot().getProjects();
 		for (IProject project : projects) {
+			
+			IFile file =  project.getFile("libos_Iboot_Debug/libos_Iboot.a");
+			File f = file.getLocation().toFile();
+			
+			//将.a解压缩到os文件夹中
+//			String parentPath = f.getParentFile().getPath();
+//			File os_file = new File(parentPath+"/os");
+//			String commond = "arm-none-eabi-ar -x "+f.getPath();
+//			String[] commands = {"cmd","/C",commond};
+//			String line = null;
+//			StringBuilder sb = new StringBuilder();
+//			Runtime runtime = Runtime.getRuntime();
+//			try {
+//				Process process = runtime.exec(commands,null,os_file);
+//				BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//				while ((line = bufferedReader.readLine()) != null) {
+//					sb.append(line + "\n");
+////					System.out.println("line: "+line);
+//				}
+//			} catch (IOException e) {
+//				// TODO 自动生成的 catch 块
+//				e.printStackTrace();
+//			}
+			
+			File osFile = new File(f.getParentFile().getPath()+"/os");
+			File[] os = osFile.listFiles();
+			for(File o:os) {
+				System.out.println("\n"+o.getPath()+":\n");
+				Map<String, String> map = DideHelper.get_o_content(o);
+				String shell = map.get("shell");
+				if(shell != null) {
+					
+				}
+				DideHelper.printToConsole(map.get("o_content"), true);
+//				System.out.println(map.get("o_content"));
+			}
+			
 			handleProjectElemExculde(project);
 			
 			IFile libosFolder = project.getFile("src/libos");

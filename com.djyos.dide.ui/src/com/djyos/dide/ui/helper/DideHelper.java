@@ -9,12 +9,15 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.model.CoreModel;
@@ -684,25 +687,54 @@ public class DideHelper {
 
 		return allFiles;
 	}
+	
+	public static Map<String, String> get_o_content(File f) {
+		Map<String, String> map = new HashMap<String, String>();
+		String[] shellStrings = {"ro_shell_cmd","ex_shell_cmd","ro_shell_data","ro_shell_data"};
+		String command = "arm-none-eabi-objdump.exe -h "+f.getPath();
+		String line = null;
+		StringBuilder sb = new StringBuilder();
+		Runtime runtime = Runtime.getRuntime();
+		try {
+			Process process = runtime.exec(command);
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			while ((line = bufferedReader.readLine()) != null) {
+				sb.append(line + "\n");
+				if(map.get("shell") == null) {
+					for(String shell:shellStrings) {
+						if(line.contains(shell)) {
+							map.put("shell", shell);
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			// TODO 自动生成的 catch 块
+			e.printStackTrace();
+		}
+		map.put("o_content", sb.toString());
+		return map;
+	}
+	
 
 	/********* * 与测试有关的函数* * *********/
 	public static void objdumpTest() {
-		// String command="arm-none-eabi-objdump.exe -h F:\\djyos\\atomic.o";
-		// String line = null;
-		// StringBuilder sb = new StringBuilder();
-		// Runtime runtime = Runtime.getRuntime();
-		// try {
-		// Process process = runtime.exec(command);
-		// BufferedReader bufferedReader = new BufferedReader
-		// (new InputStreamReader(process.getInputStream()));
-		// while ((line = bufferedReader.readLine()) != null) {
-		// sb.append(line + "\n");
-		// System.out.println(line);
-		// }
-		// } catch (IOException e) {
-		// // TODO 自动生成的 catch 块
-		// e.printStackTrace();
-		// }
+//		 String command="arm-none-eabi-objdump.exe -h F:\\djyos\\atomic.o";
+//		 String line = null;
+//		 StringBuilder sb = new StringBuilder();
+//		 Runtime runtime = Runtime.getRuntime();
+//		 try {
+//		 Process process = runtime.exec(command);
+//		 BufferedReader bufferedReader = new BufferedReader
+//		 (new InputStreamReader(process.getInputStream()));
+//		 while ((line = bufferedReader.readLine()) != null) {
+//		 sb.append(line + "\n");
+//		 System.out.println(line);
+//		 }
+//		 } catch (IOException e) {
+//		 // TODO 自动生成的 catch 块
+//		 e.printStackTrace();
+//		 }
 
 		// long a = Integer.parseInt("1");
 		// long b = Long.parseLong("0xFFFFFFFF".substring(2), 16);

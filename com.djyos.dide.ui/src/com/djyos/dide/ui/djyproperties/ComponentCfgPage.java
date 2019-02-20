@@ -326,15 +326,54 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				appCmpntChecks = ReadComponentCheckXml.getCmpntChecks(appCheckFile);
 				appExist = true;
 				initComponent(appCompontents, true);
+				File configFile = new File(project.getLocation().toString() + "/src/app/OS_prjcfg/project_config.h");
+				revice_config_file(configFile);
 			}
 			if (ibootCheckFile.exists()) {
 				ibootCmpntChecks = ReadComponentCheckXml.getCmpntChecks(ibootCheckFile);
 				ibootExist = true;
 				initComponent(ibootCompontents, false);
+				File configFile = new File(project.getLocation().toString() + "/src/iboot/OS_prjcfg/project_config.h");
+				revice_config_file(configFile);
 			}
 			createSashForm(composite);
 		}
 
+	}
+
+	/*
+	 * @parm  configFile 工程中的project_config.h
+	 * 功能：当源码配置中的参数有删除或者新增时，修改project_config.h
+	 */
+	private void revice_config_file(File configFile) {
+		// TODO Auto-generated method stub
+		FileReader reader;
+		try {
+			reader = new FileReader(configFile.getPath());
+			BufferedReader br = new BufferedReader(reader);
+			String str = null;
+			boolean start = false, stop = false;
+			while ((str = br.readLine()) != null) {
+				if (str.contains("Configure")) {
+					stop = true;
+					break;
+				}
+//				String[] infos = str.split("\\s+");
+//				if (start && str.contains("Configure")) {
+//					stop = true;
+//					break;
+//				}
+//				if (start && !stop) {
+//					pjCgfs.add(str);// 添加当前组件的所有预定义值
+//				}
+//				if (str.contains("Configure") && infos[2].equals(component.getName())) {
+//					start = true;
+//				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private void createSashForm(Composite composite) {
@@ -831,10 +870,9 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		List<String> checkNames = getChecks(cmpntChecks);
 		for (int i = 0; i < components.size(); i++) {
 			Component component = componentCommon.createNewComponent(compontentsList.get(i));
-			if (!checkNames.contains(component.getName())) {
-				component.setSelect(false);
+			if (checkNames.contains(component.getName())) {
+				component.setSelect(true);
 			}
-			// 当组件为必选且不需要配置时，不显示在界面上
 			componentsInit.add(component);
 		}
 	}
@@ -1733,7 +1771,9 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		// TODO Auto-generated method stub
 		List<String> checkNames = new ArrayList<String>();
 		for (CmpntCheck check : cmpntChecks) {
-			checkNames.add(check.getCmpntName());
+			if(check.isChecked().equals("true")) {
+				checkNames.add(check.getCmpntName());
+			}
 		}
 		return checkNames;
 	}
