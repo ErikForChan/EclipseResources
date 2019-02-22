@@ -33,6 +33,7 @@ import org.eclipse.cdt.managedbuilder.tcmodification.IToolListModification;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
@@ -77,6 +78,7 @@ import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.wizards.board.ReadBoardXml;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
 import com.djyos.dide.ui.wizards.djyosProject.tools.ConsoleFactory;
+import com.djyos.dide.ui.wizards.djyosProject.tools.ReviseVariableToXML;
 import com.ibm.icu.text.DecimalFormat;
 
 @SuppressWarnings("restriction")
@@ -688,10 +690,9 @@ public class DideHelper {
 		return allFiles;
 	}
 	
-	public static Map<String, String> get_o_content(File f) {
+	public static Map<String, String> get_o_symbol(File f) {
 		Map<String, String> map = new HashMap<String, String>();
-		String[] shellStrings = {"ro_shell_cmd","ex_shell_cmd","ro_shell_data","ro_shell_data"};
-		String command = "arm-none-eabi-objdump.exe -h "+f.getPath();
+		String command = "arm-none-eabi-objdump -ht "+f.getPath();
 		String line = null;
 		StringBuilder sb = new StringBuilder();
 		Runtime runtime = Runtime.getRuntime();
@@ -700,18 +701,29 @@ public class DideHelper {
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 			while ((line = bufferedReader.readLine()) != null) {
 				sb.append(line + "\n");
-				if(map.get("shell") == null) {
-					for(String shell:shellStrings) {
-						if(line.contains(shell)) {
-							map.put("shell", shell);
-						}
-					}
-				}
 			}
 		} catch (IOException e) {
 			// TODO 自动生成的 catch 块
 			e.printStackTrace();
 		}
+		
+		String[] sections = {".ro_shell_cmd",".ex_shell_cmd",".ro_shell_data",".ex_shell_data"}; 
+		String[] contents = sb.toString().split("SYMBOL TABLE:");
+		String my_section = null;
+		String my_symbol = null;
+		for(String section:sections) {
+			if(contents[0].contains(section)) {
+				my_section = section;
+				break;
+			}
+		}
+		if(my_section != null) {
+			if(contents[1].contains(my_section)) {
+				String[] section_splite = contents[1].split(my_section);
+				my_symbol = section_splite[section_splite.length-1].trim().split("\\s+")[1];
+			}
+		}
+		map.put("symbol", my_symbol);
 		map.put("o_content", sb.toString());
 		return map;
 	}
@@ -750,8 +762,38 @@ public class DideHelper {
 		// System.out.println("c= "+toUnsigned(c));
 		// System.out.println("b>a");
 		// }
+		
+		
+//		String[] libos_members = {"bsp","component","djyos","libc","loader","third"};
+//		for(String m:libos_members) {
+//			IFolder newFolder = project.getFolder("src/libos/"+m);
+//			if(!newFolder.exists()) {
+//				newFolder.getLocation().toFile().mkdir();
+//			}
+//        	try {
+//				newFolder.createLink( new Path("DJYOS_SRC_LOCATION/"+m), 0, null);
+//			} catch (CoreException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
+    	
+//		Project p = (Project) project;
+//		boolean changed = p.internalGetDescription().setLinkLocation(getProjectRelativePath(), linkDescription);
+//		if(changed) {
+//			try {
+//				p.writeDescription(IResource.NONE);
+//			} catch (CoreException e) {
+//				// A problem happened updating the description, so delete the resource from the workspace.
+////				workspace.deleteResource(this);
+//				throw e; // Rethrow.
+//			}
+//		}
 	}
 
+	/**
+	 * 重启DIDE
+	 */
 	public static void Restart_DIDE() {
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 
@@ -810,7 +852,12 @@ public class DideHelper {
 
 	}
 
-	// 获取此行参数的标识
+	/**
+	 * 获取此行参数的标识
+	 * @param parameter
+	 * @param tag
+	 * @return
+	 */
 	public static String getTag(String parameter, String tag) {
 		// TODO Auto-generated method stub
 		if (parameter.contains("%$#@num")) {
@@ -831,6 +878,11 @@ public class DideHelper {
 		return tag;
 	}
 
+	/**
+	 * 判断parameter是否为开始
+	 * @param parameter
+	 * @return
+	 */
 	public static boolean isParaHead(String parameter) {
 		if (parameter.contains("%$#@num") || parameter.contains("%$#@string") || parameter.contains("%$#@enum")
 				|| parameter.contains("%$#@object_para") || parameter.contains("%$#@select")
@@ -840,7 +892,13 @@ public class DideHelper {
 		return false;
 	}
 
-	// 检查参数是否有配置错误
+	/**
+	 * 检查参数是否有配置错误
+	 * @param component
+	 * @param isApp
+	 * @param curProject
+	 * @return
+	 */
 	public static boolean checkParameter(Component component, Boolean isApp, IProject curProject) {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		String workspacePath = workspace.getRoot().getLocation().toString();
@@ -937,7 +995,15 @@ public class DideHelper {
 
 	}
 
-	// 处理String类型的参数
+	/**
+	 * 处理String类型的参数
+	 * @param component
+	 * @param minString
+	 * @param maxString
+	 * @param pjCgfs
+	 * @param members
+	 * @return
+	 */
 	public static boolean handleStringPara(Component component, String minString, String maxString, List<String> pjCgfs, String[] members) {
 		// TODO Auto-generated method stub
 			String value = null;
@@ -1043,4 +1109,30 @@ public class DideHelper {
 		printer.println(message);
 	}
 
+	/**
+	 * 重设.project的djyos文件夹的链接
+	 * 
+	 * @param project:当前工程
+	 */
+	public static void reset_djyos_link(IProject project) {
+		IFile libosFolder = project.getFile("src/libos");
+		if(!libosFolder.exists()) {
+			libosFolder.getLocation().toFile().mkdir();
+			ReviseVariableToXML rvtx = new ReviseVariableToXML();
+			rvtx.add_djyos_links(project.getFile(".project"));
+		}
+	}
+	
+	/**
+	 * 刷新当前工作空间
+	 */
+	public static void refresh_workspace(){
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		try {
+			workspace.getRoot().refreshLocal(IResource.DEPTH_INFINITE, null);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }

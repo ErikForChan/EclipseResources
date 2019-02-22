@@ -82,13 +82,14 @@ import com.djyos.dide.ui.DPluginImages;
 import com.djyos.dide.ui.enums.ConfigureTarget;
 import com.djyos.dide.ui.helper.Calculator;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.helper.ExceptionHelper;
 import com.djyos.dide.ui.helper.LinkHelper;
 import com.djyos.dide.ui.messages.IComponentConstants;
 import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.CmpntCheck;
 import com.djyos.dide.ui.objects.Component;
 import com.djyos.dide.ui.objects.OnBoardCpu;
-import com.djyos.dide.ui.wizards.component.ComponentCommonPage;
+import com.djyos.dide.ui.wizards.component.ComponentHelper;
 import com.djyos.dide.ui.wizards.component.ReadComponent;
 import com.djyos.dide.ui.wizards.component.ReadComponentCheckXml;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
@@ -97,7 +98,7 @@ import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 @SuppressWarnings("restriction")
 public class ComponentCfgPage extends PropertyPage implements IComponentConstants {
 
-	private ComponentCommonPage componentCommon = new ComponentCommonPage();
+	private ComponentHelper componentHelper = new ComponentHelper();
 	private String warningMsg = null;
 	IProject project;
 
@@ -209,11 +210,11 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 			if (srcExist) {
 				createDynamicGroup(composite);
 				for (TreeItem t : appRequiredItems) {
-					componentCommon.handleRequiredDepnds(true, t, folder, appCompontents, ibootCompontents,
+					componentHelper.handleRequiredDepnds(true, t, folder, appCompontents, ibootCompontents,
 							appCompontentsChecked, ibootCompontentsChecked);
 				}
 				for (TreeItem t : ibootRequiredItems) {
-					componentCommon.handleRequiredDepnds(false, t, folder, appCompontents, ibootCompontents,
+					componentHelper.handleRequiredDepnds(false, t, folder, appCompontents, ibootCompontents,
 							appCompontentsChecked, ibootCompontentsChecked);
 				}
 			} else {
@@ -327,54 +328,21 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				appExist = true;
 				initComponent(appCompontents, true);
 				File configFile = new File(project.getLocation().toString() + "/src/app/OS_prjcfg/project_config.h");
-				revice_config_file(configFile);
+				ExceptionHelper.revice_config_file(configFile,appCompontents);
 			}
 			if (ibootCheckFile.exists()) {
 				ibootCmpntChecks = ReadComponentCheckXml.getCmpntChecks(ibootCheckFile);
 				ibootExist = true;
 				initComponent(ibootCompontents, false);
 				File configFile = new File(project.getLocation().toString() + "/src/iboot/OS_prjcfg/project_config.h");
-				revice_config_file(configFile);
+				ExceptionHelper.revice_config_file(configFile,ibootCompontents);
 			}
 			createSashForm(composite);
 		}
 
 	}
 
-	/*
-	 * @parm  configFile 工程中的project_config.h
-	 * 功能：当源码配置中的参数有删除或者新增时，修改project_config.h
-	 */
-	private void revice_config_file(File configFile) {
-		// TODO Auto-generated method stub
-		FileReader reader;
-		try {
-			reader = new FileReader(configFile.getPath());
-			BufferedReader br = new BufferedReader(reader);
-			String str = null;
-			boolean start = false, stop = false;
-			while ((str = br.readLine()) != null) {
-				if (str.contains("Configure")) {
-					stop = true;
-					break;
-				}
-//				String[] infos = str.split("\\s+");
-//				if (start && str.contains("Configure")) {
-//					stop = true;
-//					break;
-//				}
-//				if (start && !stop) {
-//					pjCgfs.add(str);// 添加当前组件的所有预定义值
-//				}
-//				if (str.contains("Configure") && infos[2].equals(component.getName())) {
-//					start = true;
-//				}
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+	
 
 	private void createSashForm(Composite composite) {
 		// TODO Auto-generated method stub
@@ -470,8 +438,8 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				// TODO Auto-generated method stub
 				TreeItem[] items = componentTree.getSelection();
 				if (items.length > 0) {
-					String type = componentCommon.getAIType(items[0]);
-					Component itemCompt = componentCommon.getComponentByPath(items[0].getData().toString(),
+					String type = componentHelper.getAIType(items[0]);
+					Component itemCompt = componentHelper.getComponentByPath(items[0].getData().toString(),
 							type.equals("App") ? appCompontents : ibootCompontents);
 					DideHelper.openFileInDide(new File(itemCompt.getParentPath() + "/" + itemCompt.getFileName()));
 				}
@@ -500,7 +468,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 					}
 					Component itemCompt;
 					Control[] controls = folder.getChildren();
-					String type = componentCommon.getAIType(item);
+					String type = componentHelper.getAIType(item);
 					if (item.getChecked()) {
 						componentTree.setSelection(item);
 						// 判断当前选中组件与已选中组件是否有互斥，如果没有互斥则处理组件依赖
@@ -513,7 +481,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								isApp = false;
 								ibootConfigureChanged = true;
 							}
-							itemCompt = componentCommon.getComponentByPath(item.getData().toString(),
+							itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
 									isApp ? appCompontents : ibootCompontents);
 							if (itemCompt != null) {
 								for (Control c : controls) {
@@ -521,11 +489,11 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 									TreeItem[] fChilds = tempTree.getItems();
 									for (TreeItem treeItem : fChilds) {
 										if (treeItem.getText().equals(type)) {
-											boolean isMutex = componentCommon.travelItems_Mutex(treeItem, itemCompt,
+											boolean isMutex = componentHelper.travelItems_Mutex(treeItem, itemCompt,
 													item);
 											if (!isMutex) {
 												List<String> visitedComp = new ArrayList<String>();
-												componentCommon.travelItems_Depedent(treeItem, itemCompt, isApp,
+												componentHelper.travelItems_Depedent(treeItem, itemCompt, isApp,
 														visitedComp, appCompontents, ibootCompontents,
 														appCompontentsChecked, ibootCompontentsChecked, folder);
 												itemCompt.setSelect(true);
@@ -557,7 +525,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								isApp = false;
 								ibootConfigureChanged = true;
 							}
-							itemCompt = componentCommon.getComponentByPath(item.getData().toString(),
+							itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
 									isApp ? appCompontents : ibootCompontents);
 							if (itemCompt != null) {
 								if (itemCompt.getSelectable().equals("required")
@@ -570,7 +538,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 										TreeItem[] fChilds = tempTree.getItems();
 										for (TreeItem treeItem : fChilds) {
 											if (treeItem.getText().equals(type)) {
-												boolean isDepedent = componentCommon.isDepedent(treeItem, item, type,
+												boolean isDepedent = componentHelper.isDepedent(treeItem, item, type,
 														itemCompt, isApp, appCompontents, ibootCompontents,
 														appCompontentsChecked, ibootCompontentsChecked);
 												if (isDepedent) {
@@ -644,7 +612,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 					table.removeAll();
 					if (!item.getText().equals("App") && !item.getText().equals("Iboot")) {
 						String itemText = item.getText();
-						String type = componentCommon.getAIType(item);
+						String type = componentHelper.getAIType(item);
 						boolean isApp;
 						Component itemCompt;
 						if (type.equals("App")) {
@@ -652,7 +620,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 						} else {
 							isApp = false;
 						}
-						itemCompt = componentCommon.getComponentByPath(item.getData().toString(),
+						itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
 								isApp ? appCompontents : ibootCompontents);
 
 						if (itemCompt != null) {
@@ -706,7 +674,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		List<Component> firstList = new ArrayList<Component>();
 		for (int i = 0; i < targetComponents.size(); i++) {
 			String parentName = targetComponents.get(i).getParent();
-			if (!componentCommon.isParentCompExist(targetComponents, parentName)) {
+			if (!componentHelper.isParentCompExist(targetComponents, parentName)) {
 				firstList.add(targetComponents.get(i));
 			}
 		}
@@ -799,7 +767,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		item.setData("anno", component.getAnnotation());
 		item.setText(component.getName());
 
-		Component itemCompt = componentCommon.getComponentByPath(item.getData().toString(),
+		Component itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
 				isApp ? appCompontents : ibootCompontents);
 		initConfiguration(itemCompt, isApp);
 		if (component.getSelectable().equals("required") || component.getSelectable().equals("必选组件")) {
@@ -808,7 +776,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 
 		// 如果当前组件有子组件，则添加子组件
 		if (!component.getAttribute().equals("third")) {
-			if (componentCommon.haveChildren(component, targetComponents)) {
+			if (componentHelper.haveChildren(component, targetComponents)) {
 				fillItem(item, targetComponents, root, isApp);
 			}
 		}
@@ -821,7 +789,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 	private void initComponent(List<Component> typeCompontents, boolean isApp) {
 		// TODO Auto-generated method stub
 		for (int i = 0; i < compontentsList.size(); i++) {
-			Component component = componentCommon.createNewComponent(compontentsList.get(i));
+			Component component = componentHelper.createNewComponent(compontentsList.get(i));
 			typeCompontents.add(component);
 		}
 
@@ -869,7 +837,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		// TODO Auto-generated method stub
 		List<String> checkNames = getChecks(cmpntChecks);
 		for (int i = 0; i < components.size(); i++) {
-			Component component = componentCommon.createNewComponent(compontentsList.get(i));
+			Component component = componentHelper.createNewComponent(compontentsList.get(i));
 			if (checkNames.contains(component.getName())) {
 				component.setSelect(true);
 			}
@@ -1047,7 +1015,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				if (annos[0].trim().startsWith("\"") && annos[0].trim().endsWith("\"")) {
 					annoation = annoation.substring(annos[0].length(), annoation.length()).replaceFirst(",|，", "");
 				}
-				String realComptName = componentCommon.getRealCompName(annos[0].trim(), members, paras, ranges, tag);
+				String realComptName = componentHelper.getRealCompName(annos[0].trim(), members, paras, ranges, tag);
 				dataString = setItemText(configure, members, pjCgfs, dataString, item, realComptName, defines,
 						annoation,tag);
 				editor = new TableEditor(table);
@@ -1178,7 +1146,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								} else {
 									item.setData("value", text.getText());
 								}
-								componentCommon.resetConfigure(componentSelect, isSelect, table);
+								componentHelper.resetConfigure(componentSelect, isSelect, table);
 							}
 
 							@Override
@@ -1208,7 +1176,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 						}
 						String anno = annoText.getText();
 						item.setText(2, anno);
-						componentCommon.resetConfigure(componentSelect, isSelect, table);
+						componentHelper.resetConfigure(componentSelect, isSelect, table);
 					}
 
 				});
@@ -1218,9 +1186,9 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 			}
 		}
 
-		expendParas = componentCommon.getExpandParas(componentSelect, compontentsList);
+		expendParas = componentHelper.getExpandParas(componentSelect, compontentsList);
 		fillParts(pjCgfs, partNum, expendParas, componentSelect, isSelect,tag);
-		componentCommon.resetConfigure(componentSelect, isSelect, table);
+		componentHelper.resetConfigure(componentSelect, isSelect, table);
 	}
 
 	private void handleObjnumPara(int index, List<String> pjCgfs, Button[] checkBtn, IProject curProject,
@@ -1275,11 +1243,11 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				for (Control control : partControls) {
 					control.dispose();
 				}
-				List<String> expendParas = componentCommon.getExpandParas(componentSelect, compontentsList);
+				List<String> expendParas = componentHelper.getExpandParas(componentSelect, compontentsList);
 				fillParts(pjCgfs, partCount, expendParas, componentSelect, isSelect,tag);
 				item.setData("value", combo.getText());
 //				item.setText(1, combo.getText());
-				componentCommon.resetConfigure(componentSelect, isSelect, table);
+				componentHelper.resetConfigure(componentSelect, isSelect, table);
 			}
 		});
 	}
@@ -1321,7 +1289,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				} else {
 					realComptName = members[1];
 				}
-				boolean isNFSelect = componentCommon.isInteger(annoation.charAt(0));
+				boolean isNFSelect = componentHelper.isInteger(annoation.charAt(0));
 				setItemText(componentSelect.getConfigure(), members, pjCgfs, dataString, item, realComptName + "_" + i,
 						defines, isNFSelect ? annoation.replace("0", String.valueOf(i)) : i + annoation.trim(),tag);
 				Text text = new Text(table, SWT.BORDER);
@@ -1335,7 +1303,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 						// TODO Auto-generated method stub
 //						item.setText(1, text.getText());
 						item.setData("value",text.getText());
-						componentCommon.resetConfigure(componentSelect, isSelect, table);
+						componentHelper.resetConfigure(componentSelect, isSelect, table);
 					}
 				});
 				editor.setEditor(text, item, 1);
@@ -1410,11 +1378,11 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 			ICConfigurationDescription cond = conds[m];
 			if (isApp) {
 				if (cond.getName().contains("libos_App")) {
-					symolsExist = componentCommon.isSymbolExist(cond, parameter);
+					symolsExist = componentHelper.isSymbolExist(cond, parameter);
 				}
 			} else {
 				if (cond.getName().contains("libos_Iboot")) {
-					symolsExist = componentCommon.isSymbolExist(cond, parameter);
+					symolsExist = componentHelper.isSymbolExist(cond, parameter);
 				}
 			}
 
@@ -1482,7 +1450,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				// checkError(componentSelect, checkcounter, isApp);
 				comptVisited.add(compName);
 				// 重置组件的配置
-				componentCommon.resetConfigure(componentSelect, isSelect, table);
+				componentHelper.resetConfigure(componentSelect, isSelect, table);
 				System.out.println("checkcounter:  " + checkcounter);
 			}
 		});
@@ -1490,7 +1458,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 	}
 
 	public String validateThirdCompt(List<Component> thirdCompontents, boolean isApp) {
-		return componentCommon.validateThirdCompt(thirdCompontents, isApp);
+		return componentHelper.validateThirdCompt(thirdCompontents, isApp);
 	}
 
 	// 处理Enum类型的参数
@@ -1518,7 +1486,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 					boolean checked = booleanBtn.getSelection();
 					item.setData("value", checked?"true":"false");
 //					item.setText(1, checked?"true":"false");
-					componentCommon.resetConfigure(componentSelect, isSelect, table);
+					componentHelper.resetConfigure(componentSelect, isSelect, table);
 				}
 			});
 		}else {
@@ -1551,7 +1519,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 					item.setData("value", combo.getText());
 //					item.setText(1, combo.getText());
 					comptVisited.add(compName);
-					componentCommon.resetConfigure(componentSelect, isSelect, table);
+					componentHelper.resetConfigure(componentSelect, isSelect, table);
 				}
 
 				@Override
@@ -1794,7 +1762,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 
 	private boolean handleCheckAndExclude(List<Component> compontentsChecked, List<Component> compontents,
 			List<Component> compontentsInit, IProject project, ICConfigurationDescription[] conds, boolean isApp) {
-		componentCommon.createCheckXml(isApp, project.getLocation().toString(), appCompontents, ibootCompontents);
+		componentHelper.createCheckXml(isApp, project.getLocation().toString(), appCompontents, ibootCompontents);
 
 		try {
 			resetExclude(compontentsChecked, compontents, compontentsInit, isApp, conds, project);
@@ -1808,7 +1776,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 
 	private boolean handleInitFiles(IProject project, boolean isApp, File file, String coreConfigure, int templateIndex) {
 		initProject(project.getLocation().toString() + "/src", isApp);
-		componentCommon.creatProjectConfiure(file, coreConfigure, isApp, appCheckedSort, ibootCheckedSort, templateIndex);
+		componentHelper.creatProjectConfiure(file, coreConfigure, isApp, appCheckedSort, ibootCheckedSort, templateIndex);
 		return true;
 	}
 
@@ -1966,7 +1934,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				if (check.getCmpntName().equals(item.getText())) {
 					if (check.isChecked().equals("true")) {
 						item.setChecked(true);
-						Component curComponent = componentCommon.getComponentByPath(item.getData().toString(),
+						Component curComponent = componentHelper.getComponentByPath(item.getData().toString(),
 								isApp ? appCompontents : ibootCompontents);
 						(isApp ? appCompontentsChecked : ibootCompontentsChecked).add(curComponent);
 					} else {

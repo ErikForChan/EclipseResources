@@ -30,7 +30,16 @@ import com.djyos.dide.ui.helper.LinkHelper;
 import com.djyos.dide.ui.objects.Component;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 
-public class ComponentCommonPage implements IComponentCommon {
+public class ComponentHelper implements IComponentCommon {
+	
+	public static Component getComponentByName(String name,List<Component> compontents) {
+		for(Component c:compontents) {
+			if(c.getName().equals(name)) {
+				return c;
+			}
+		}
+		return null;
+	}
 	
 	public void creatProjectConfiure(File file, String coreConfigure, boolean isApp, List<Component> appCheckedSort, List<Component> ibootCheckedSort, int index) {
 		List<Component> compontentsCheckedSort = isApp?appCheckedSort:ibootCheckedSort;

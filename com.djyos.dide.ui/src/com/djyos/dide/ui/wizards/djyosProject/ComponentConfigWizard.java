@@ -67,13 +67,13 @@ import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.Component;
 import com.djyos.dide.ui.objects.Core;
 import com.djyos.dide.ui.objects.OnBoardCpu;
-import com.djyos.dide.ui.wizards.component.ComponentCommonPage;
+import com.djyos.dide.ui.wizards.component.ComponentHelper;
 import com.djyos.dide.ui.wizards.component.ReadComponent;
 
 @SuppressWarnings("restriction")
 public class ComponentConfigWizard extends WizardPage implements IComponentConstants {
 
-	private ComponentCommonPage componentCommon = new ComponentCommonPage();
+	private ComponentHelper componentCommon = new ComponentHelper();
 
 	private void initComponent(List<Component> typeCompontents, boolean isApp) {
 		// TODO Auto-generated method stub
