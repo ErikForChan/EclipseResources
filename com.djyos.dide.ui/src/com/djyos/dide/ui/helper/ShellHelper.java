@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IProgressMonitor;
 
 public class ShellHelper {
 	
@@ -108,56 +109,68 @@ public class ShellHelper {
 	/**
 	 * 将.a解压缩成.o
 	 * @param project 当前工程
+	 * @param libos_file 
 	 */
-	public static void release_a_to_os(IProject project) {
-		IFile file =  project.getFile("libos_Iboot_Debug/libos_Iboot.a");
-		File f = file.getLocation().toFile();
+	public static File release_a_to_os(File libos_file) {
 		
-		String parentPath = f.getParentFile().getPath();
+//		IFile file =  project.getFile("libos_Iboot_Debug/libos_Iboot.a");
+//		File f = file.getLocation().toFile();
+		
+		String parentPath = libos_file.getParentFile().getPath();
 		File os_file = new File(parentPath+"/os");
-		String commond = "arm-none-eabi-ar -x "+f.getPath();
-//		String[] commands = {"cmd","/C",commond};
-//		Runtime runtime = Runtime.getRuntime();
+		if(!os_file.exists()) {
+			os_file.mkdir();
+		}
+		String commond = "arm-none-eabi-ar -x "+libos_file.getPath();
+		String[] commands = {"cmd","/C",commond};
+		Runtime runtime = Runtime.getRuntime();
 		
-		Thread_command tc = new Thread_command(commond, os_file);
-		Thread_symbol ts  = new Thread_symbol(os_file);
-		tc.start();
-		ts.start();
-		
-//		try {
-//			runtime.exec(commands,null,os_file);
-//			Thread.sleep(3000);
-//		} catch (Exception e) {
-//			// TODO 自动生成的 catch 块
-//			e.printStackTrace();
-//		}
-//		
-////		 synchronized(runtime){
-////             try {
-////            	runtime.exec(commands,null,os_file);
-////				runtime.wait(3000);
-////			} catch (Exception e) {
-////				// TODO Auto-generated catch block
-////				e.printStackTrace();
-////			}
-////         }
-//		
-//		File[] os = os_file.listFiles();
-//		List<String> symbols = new ArrayList<String>();
-//		for(File o:os) {
-//			Map<String, String> map = DideHelper.get_o_symbol(o);
-//			String symbol = map.get("symbol");
-//			if(symbol != null) {
-//				symbols.add(symbol);
+		try {
+			long startTime=System.currentTimeMillis();   //获取开始时间
+			runtime.exec(commands,null,os_file);
+			long endTime=System.currentTimeMillis(); //获取结束时间
+			System.out.println("解压.a的程序运行时间： "+(endTime-startTime)+"  ms");
+			Thread.sleep(2000);
+		} catch (Exception e) {
+			// TODO 自动生成的 catch 块
+			e.printStackTrace();
+		}
+//		 synchronized(runtime){
+//             try {
+//            	runtime.exec(commands,null,os_file);
+//				runtime.wait(3000);
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
 //			}
-////			DideHelper.printToConsole(map.get("o_content"), true);
-////			System.out.println(map.get("o_content"));
-//		}
+//         }
+		return os_file;
+		
+	}
+	
+	public static List<String> parse_o(File os_file, IProgressMonitor monitor) {
+		File[] os = os_file.listFiles();
+		System.out.println("os.length:  "+os.length);
+		List<String> symbols = new ArrayList<String>();
+		long startTime=System.currentTimeMillis();   //获取开始时间
+		for(File o:os) {
+			Map<String, String> map = DideHelper.get_o_symbol(o);
+			String symbol = map.get("symbol");
+			if(symbol != null) {
+				symbols.add(symbol);
+			}
+			monitor.worked(1);
+		}
+		long endTime=System.currentTimeMillis(); //获取结束时间
+		System.out.println("分析所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 //		System.out.println("start symbol");
 //		for(String s:symbols) {
 //			System.out.println("symbol:   "+s);
 //		}
+		return symbols;
 	}
+	
+	
 	
 	public static void test() {
 		File os_file = new File("D:\\SoftWare\\DIDE_Builder\\djysrc\\examples\\explore_stm32f407\\libos_Iboot_Debug\\os");

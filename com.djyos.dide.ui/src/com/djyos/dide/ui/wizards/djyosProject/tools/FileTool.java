@@ -1,11 +1,121 @@
 package com.djyos.dide.ui.wizards.djyosProject.tools;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Base64.Encoder;
+import java.util.List;
+
+import com.djyos.dide.ui.helper.DideHelper;
 
 public class FileTool {
+	
+	public static String read_file_hex(File f) {
+		InputStream input = null; // 准备好一个输入的对象
+		try {
+			input = new FileInputStream(f);
+			// 第3步、进行读操作
+			byte b[] = new byte[1024*10000]; // 所有的内容都读到此数组之中
+			input.read(b); // 读取内容 网络编程中 read 方法会阻塞
+			// 第4步、关闭输出流
+			input.close(); // 关闭输出流
+			String data = bytesToHexString(b);
+			DideHelper.printToConsole(data, true);
+//			System.out.println("内容为：\n" + new String(b)); // 把byte数组变为字符串输出
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} // 通过对象多态性，进行实例化
+//		return builder.toString();
+		return null;
+	}
+	
+	public static String bToHexString(File f) {
+//		FileOutputStream os = null;
+		StringBuilder stringBuilder = new StringBuilder("");
+//		File hexFile = new File("E:\\hex.txt");
+//		DideHelper.createNewFile(hexFile);
+		try {
+//			os = new FileOutputStream(hexFile.getPath());
+			byte[] bts = Files.readAllBytes(Paths.get(f.getPath()));
+			System.out.println("bts.length:  "+bts.length);
+			int i = 1;
+			for(byte b:bts){
+				int h = 0xf&(b>>>4);
+				int l = 0xf&b;
+				String s = (Integer.toHexString(h)+Integer.toHexString(l)).toUpperCase();
+				stringBuilder.append(s+" ");
+//				stringBuilder.append(i%16 == 0?"\n":" ");
+//				System.out.print(s + (i%16 == 0?"\n":" "));
+//				stringBuilder.append(i%16 == 0?"\n":" ");
+//				if(i%16 == 0) {
+//					stringBuilder.append("\n");
+//				}else {
+//					stringBuilder.append(" ");
+//				}
+//				os.write(s.getBytes());
+//				if(i%16==0){
+//					os.write("\n".getBytes());
+//				}
+				i++;
+			}
+//			os.flush();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		/*finally{
+			if(os!=null){
+				try{
+					os.close();
+				}catch (Exception e) {
+					
+				}
+			}
+		}*/
+//		DideHelper.printToConsole(DideHelper.readFile(hexFile), true);
+		return stringBuilder.toString();
+	}
+	
+	/*
+	 * * Convert byte[] to hex string.这里我们可以将byte转换成int，然后利用Integer.toHexString(int)
+	 * 来转换成16进制字符串。
+	 * 
+	 * @param src byte[] data
+	 * 
+	 * @return hex string
+	 */
+	public static String bytesToHexString(byte[] src) {
+		StringBuilder stringBuilder = new StringBuilder("");
+		if (src == null || src.length <= 0) {
+			return null;
+		}
+		for (int i = 0; i < src.length; i++) {
+			int v = src[i] & 0xFF;
+			String hv = Integer.toHexString(v);
+			if (hv.length() < 2) {
+				stringBuilder.append(0);
+			}
+			stringBuilder.append(hv);
+			if((i+1)%16 == 0) {
+				stringBuilder.append("\n");
+			}else {
+				stringBuilder.append(" ");
+			}
+		}
+		return stringBuilder.toString();
+	}
+	
 	/**
 	 * 复制单个文件
 	 * 

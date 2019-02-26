@@ -383,6 +383,7 @@ public class ComponentHelper implements IComponentCommon {
 						IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 						MessageDialog.openError(window.getShell(), "提示",
 								"该组件被" + tempCompt.getName() + " 等已勾选的组件依赖，不可取消勾选");
+						break;
 					}
 				}
 			}

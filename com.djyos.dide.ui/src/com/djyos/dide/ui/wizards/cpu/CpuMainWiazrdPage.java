@@ -4,17 +4,25 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -47,12 +55,14 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 
+import com.djyos.dide.shell.KeepShell;
 import com.djyos.dide.ui.DPluginImages;
 import com.djyos.dide.ui.arch.ArchHelper;
 import com.djyos.dide.ui.arch.NewArchDialog;
 import com.djyos.dide.ui.arch.ReadArchXml;
 import com.djyos.dide.ui.arch.ReviceArchDialog;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.helper.ShellHelper;
 import com.djyos.dide.ui.messages.IArchContants;
 import com.djyos.dide.ui.messages.IPrompt;
 import com.djyos.dide.ui.objects.Arch;
@@ -165,7 +175,28 @@ public class CpuMainWiazrdPage extends WizardPage implements ICpuConstants,IArch
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
-
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		IProject[] projects = workspace.getRoot().getProjects();
+		DideHelper.printToConsole("正在分析libos_Iboot.a...请稍后，可查看右下方进度条", true);
+		for (IProject project : projects) {
+			File libos_file = new File("D:\\SoftWare\\DIDE_Builder\\djysrc\\examples\\explore_stm32f407\\libos_Iboot_Debug\\libos_Iboot.a");
+			File os_file = ShellHelper.release_a_to_os(libos_file);
+			File[] os = os_file.listFiles();
+			Job backgroundJob = new Job("正在分析libos_Iboot.a") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					monitor.beginTask("正在分析libos_Iboot.a", os.length + 1);
+					monitor.worked(1);
+					List<String> symbols = ShellHelper.parse_o(os_file,monitor);
+					DideHelper.printToConsole("分析libos_Iboot.a结束", true);
+					boolean isApp = libos_file.getParentFile().getName().contains("App")?true:false;
+					KeepShell.create_keepshell(isApp, project, symbols);
+					return Status.CANCEL_STATUS;
+				}
+			};
+			backgroundJob.schedule();
+		}
+		
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
 		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));

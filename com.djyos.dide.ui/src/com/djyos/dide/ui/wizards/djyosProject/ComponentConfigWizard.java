@@ -552,12 +552,13 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 									item.setChecked(true);
 									MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
 								} else {
+									boolean isDepedent = true;
 									for (Control c : controls) {
 										Tree tempTree = (Tree) c;
 										TreeItem[] fChilds = tempTree.getItems();
 										for (TreeItem treeItem : fChilds) {
 											if (treeItem.getText().equals(type)) {
-												boolean isDepedent = componentCommon.isDepedent(treeItem, item, type,
+												isDepedent = componentCommon.isDepedent(treeItem, item, type,
 														itemCompt, isApp, appCompontents, ibootCompontents,
 														appCompontentsChecked, ibootCompontentsChecked);
 												if (isDepedent) {
@@ -570,6 +571,9 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 												}
 												break;
 											}
+										}
+										if(!isDepedent) {
+											break;
 										}
 									}
 								}

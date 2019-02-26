@@ -73,9 +73,26 @@ public class HandleProjectImport {
 
 	final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 	String srcLocation = DideHelper.getDjyosSrcPath();
+	
+	public static String bytes2HexString(byte[] bytes){
+		StringBuilder result = new StringBuilder();
+		for(int i=0;i<bytes.length-1;i++){
+			int h = 0xf&(bytes[i]>>>4);
+			int l = 0xf&bytes[i];
+			String hex = (Integer.toHexString(h)+Integer.toHexString(l)).toUpperCase();
+//			String hex = Integer.toHexString(bytes[i]);
+			if(hex.length() < 2){
+				result.append("0"+hex);
+			}else{
+				result.append(hex);
+			}
+			result.append((i+1)%16 == 0?"\n":" ");
+		}
+		return result.toString().toUpperCase();
+	}
 
 	public void handlProjectImport() {
-		ShellHelper.test();
+//		ShellHelper.test();
 //		IPreferenceStore ps = PlatformUI.getPreferenceStore();
 		String openOCD_Path =  DideHelper.didePath + "Tools/OpenOCD/bin";
 //		System.out.println("EclipseUtils:  "+EclipseUtils.getVariableValue("openocd_path"));
@@ -83,7 +100,33 @@ public class HandleProjectImport {
 		EclipseUtils.setVariableValue("openocd_path", openOCD_Path);
 		IProject[] projects = workspace.getRoot().getProjects();
 		for (IProject project : projects) {
-			ShellHelper.release_a_to_os(project);
+//			File aFile = project.getFile("libos_Iboot_Debug/libos_Iboot.a").getLocation().toFile();
+//			File f = new File("D:\\SoftWare\\DIDE_Builder\\djysrc\\examples\\explore_stm32f407\\libos_App_Debug\\src\\libos\\component\\shell\\shell.o");
+//			long startTime=System.currentTimeMillis();   //获取开始时间
+//			String hexString = FileTool.bToHexString(aFile);
+//			System.out.println("读出.a后的十六进制字符串长度:   "+hexString.length());
+//			long endTime=System.currentTimeMillis(); //获取结束时间
+//			System.out.println("读出.a的程序运行时间： "+(endTime-startTime)+"  ms");
+////			String elf_head = "7F\\s+45\\s+4C\\s+46\\s+01\\s+01\\s+01\\s+00\\s+00\\s+00\\s+00\\s+00\\s+00\\s+00\\s+00\\s+00\\s+";
+//			String elf_head = "7F 45 4C 46 01 01 01 00 00 00 00 00 00 00 00 00 ";
+//			String[] oContent = hexString.split(elf_head);
+//			for(int i=1;i<oContent.length;i++) {
+//				String oHex = elf_head +  oContent[i];
+//				if(i == 1) {
+//					String[] ms = oHex.split(" ");
+////					for(int j=0;j<ms.length;j++) {
+////						System.out.print(ms[j]+((j+1)%16==0?"\n":" "));
+////					}
+//					byte[] bytes = oHex.getBytes();
+//					String qqq = bytes2HexString(bytes);
+//					System.out.println(qqq);
+//				}
+////				System.out.println("content :  "+s);
+//			}
+//			System.out.println("elf_head:   "+hexString.contains(elf_head));
+//			System.out.println("oContent.length:   "+oContent.length);
+//			System.out.println("content:   "+FileTool.read_file_hex(aFile));
+//			ShellHelper.release_a_to_os(project);
 			handleProjectElemExculde(project);
 			DideHelper.reset_djyos_link(project);
 		}

@@ -30,6 +30,7 @@ public class StartupHandler implements IStartup {
 
 		Init_Workspace();
 
+		
 		Auto_Test_Build();
 		
 		Check_Compt_Repeat();

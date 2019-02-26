@@ -690,12 +690,14 @@ public class DideHelper {
 		return allFiles;
 	}
 	
+	static Runtime runtime = Runtime.getRuntime();
+	static String[] sections = {".ro_shell_cmd",".ex_shell_cmd",".ro_shell_data",".ex_shell_data"}; 
+	
 	public static Map<String, String> get_o_symbol(File f) {
 		Map<String, String> map = new HashMap<String, String>();
 		String command = "arm-none-eabi-objdump -ht "+f.getPath();
 		String line = null;
 		StringBuilder sb = new StringBuilder();
-		Runtime runtime = Runtime.getRuntime();
 		try {
 			Process process = runtime.exec(command);
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -707,7 +709,6 @@ public class DideHelper {
 			e.printStackTrace();
 		}
 		
-		String[] sections = {".ro_shell_cmd",".ex_shell_cmd",".ro_shell_data",".ex_shell_data"}; 
 		String[] contents = sb.toString().split("SYMBOL TABLE:");
 		String my_section = null;
 		String my_symbol = null;

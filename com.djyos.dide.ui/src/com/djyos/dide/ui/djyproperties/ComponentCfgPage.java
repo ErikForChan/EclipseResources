@@ -533,12 +533,13 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 									item.setChecked(true);
 									MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
 								} else {
+									boolean isDepedent = true;
 									for (Control c : controls) {
 										Tree tempTree = (Tree) c;
 										TreeItem[] fChilds = tempTree.getItems();
 										for (TreeItem treeItem : fChilds) {
 											if (treeItem.getText().equals(type)) {
-												boolean isDepedent = componentHelper.isDepedent(treeItem, item, type,
+												isDepedent = componentHelper.isDepedent(treeItem, item, type,
 														itemCompt, isApp, appCompontents, ibootCompontents,
 														appCompontentsChecked, ibootCompontentsChecked);
 												if (isDepedent) {
@@ -551,6 +552,9 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 												}
 												break;
 											}
+										}
+										if(!isDepedent) {
+											break;
 										}
 									}
 								}
