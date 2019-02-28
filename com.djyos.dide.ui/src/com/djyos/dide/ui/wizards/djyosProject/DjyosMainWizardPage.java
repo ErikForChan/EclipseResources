@@ -34,6 +34,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -498,16 +500,10 @@ public class DjyosMainWizardPage extends WizardPage {
 		fIbootSize.setValidRange(1, 10000);
 		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
 		ControlFactory.createLabel(group1, "K");
-		fIbootSize.getTextControl(ibootComposite).addMouseTrackListener(new MouseTrackListener() {
-
+		fIbootSize.getTextControl(ibootComposite).addFocusListener(new FocusListener() {
+			
 			@Override
-			public void mouseHover(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExit(MouseEvent e) {
+			public void focusLost(FocusEvent e) {
 				// TODO Auto-generated method stub
 				String bootSize = fIbootSize.getTextControl(ibootComposite).getText();
 				Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
@@ -527,11 +523,11 @@ public class DjyosMainWizardPage extends WizardPage {
 //					}
 //				}
 			}
-
+			
 			@Override
-			public void mouseEnter(MouseEvent e) {
+			public void focusGained(FocusEvent e) {
 				// TODO Auto-generated method stub
-
+				
 			}
 		});
 		// fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify,

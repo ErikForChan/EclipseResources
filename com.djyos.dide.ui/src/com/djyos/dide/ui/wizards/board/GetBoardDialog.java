@@ -13,6 +13,8 @@ import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -384,16 +386,10 @@ public class GetBoardDialog extends StatusDialog {
 		fDialogFields[1].setLabelText(BoardDetailsTextLabels[1] + ":");
 		fDialogFields[1].getLabelControl(content).setLayoutData(new GridData(GridData.BEGINNING));
 		fDialogFields[1].getTextControl(content).setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		fDialogFields[1].getTextControl(content).addMouseTrackListener(new MouseTrackListener() {
-
+		fDialogFields[1].getTextControl(content).addFocusListener(new FocusListener() {
+			
 			@Override
-			public void mouseHover(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExit(MouseEvent e) {
+			public void focusLost(FocusEvent e) {
 				// TODO Auto-generated method stub
 				String coreClk = fDialogFields[1].getTextControl(content).getText().trim();
 				Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
@@ -404,11 +400,11 @@ public class GetBoardDialog extends StatusDialog {
 					MessageDialog.openError(window.getShell(), "提示", "请输入正整数");
 				}
 			}
-
+			
 			@Override
-			public void mouseEnter(MouseEvent e) {
+			public void focusGained(FocusEvent e) {
 				// TODO Auto-generated method stub
-
+				
 			}
 		});
 		ControlFactory.createLabel(content, "MHz");

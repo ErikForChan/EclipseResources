@@ -21,6 +21,8 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.TableEditor;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -882,16 +884,10 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 						}
 					}
 					
-					text.addMouseTrackListener(new MouseTrackListener() {
-
+					text.addFocusListener(new FocusListener() {
+						
 						@Override
-						public void mouseHover(MouseEvent e) {
-							// TODO Auto-generated method stub
-
-						}
-
-						@Override
-						public void mouseExit(MouseEvent e) {
+						public void focusLost(FocusEvent e) {
 							// TODO Auto-generated method stub
 							String tempString = text.getText().replace("\"", "");
 							boolean toCalculate = false;
@@ -948,11 +944,11 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 
 							componentCommon.resetConfigure(componentSelect, isSelect, table);
 						}
-
+						
 						@Override
-						public void mouseEnter(MouseEvent e) {
+						public void focusGained(FocusEvent e) {
 							// TODO Auto-generated method stub
-
+							
 						}
 					});
 				}
@@ -961,16 +957,21 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 				annoText.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_CENTER));
 				// 将文本框当前值，设置为表格中的值
 				annoText.setText(item.getText(2));
-				annoText.addModifyListener(new ModifyListener() {
-
+				annoText.addFocusListener(new FocusListener() {
+					
 					@Override
-					public void modifyText(ModifyEvent e) {
+					public void focusLost(FocusEvent e) {
 						// TODO Auto-generated method stub
 						String anno = annoText.getText();
 						item.setText(2, anno);
 						componentCommon.resetConfigure(componentSelect, isSelect, table);
 					}
-
+					
+					@Override
+					public void focusGained(FocusEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
 				});
 				editor1.setEditor(annoText, item, 2);
 				tabelControls.add(annoText);

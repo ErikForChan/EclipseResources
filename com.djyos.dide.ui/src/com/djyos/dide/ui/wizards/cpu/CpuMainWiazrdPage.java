@@ -146,8 +146,7 @@ public class CpuMainWiazrdPage extends WizardPage implements ICpuConstants,IArch
 				"您确认要删除[" + item.getText() + "]吗?");
 		if (isSure) {
 			String curFilePath = item.getData().toString();// 获取当前选中文件的路径
-			DeleteFolderUtils dlf = new DeleteFolderUtils();
-			dlf.deleteFolder(curFilePath);
+			DeleteFolderUtils.deleteFolder(curFilePath);
 			item.dispose();
 		}
 	}
@@ -175,27 +174,28 @@ public class CpuMainWiazrdPage extends WizardPage implements ICpuConstants,IArch
 	@Override
 	public void createControl(Composite parent) {
 		// TODO Auto-generated method stub
-		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		IProject[] projects = workspace.getRoot().getProjects();
-		DideHelper.printToConsole("正在分析libos_Iboot.a...请稍后，可查看右下方进度条", true);
-		for (IProject project : projects) {
-			File libos_file = new File("D:\\SoftWare\\DIDE_Builder\\djysrc\\examples\\explore_stm32f407\\libos_Iboot_Debug\\libos_Iboot.a");
-			File os_file = ShellHelper.release_a_to_os(libos_file);
-			File[] os = os_file.listFiles();
-			Job backgroundJob = new Job("正在分析libos_Iboot.a") {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					monitor.beginTask("正在分析libos_Iboot.a", os.length + 1);
-					monitor.worked(1);
-					List<String> symbols = ShellHelper.parse_o(os_file,monitor);
-					DideHelper.printToConsole("分析libos_Iboot.a结束", true);
-					boolean isApp = libos_file.getParentFile().getName().contains("App")?true:false;
-					KeepShell.create_keepshell(isApp, project, symbols);
-					return Status.CANCEL_STATUS;
-				}
-			};
-			backgroundJob.schedule();
-		}
+//		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+//		IProject[] projects = workspace.getRoot().getProjects();
+//		DideHelper.printToConsole("正在分析libos_Iboot.a...请稍后，可查看右下方进度条", true);
+//		for (IProject project : projects) {
+//			File libos_file = new File("D:\\SoftWare\\DIDE_Builder\\djysrc\\examples\\explore_stm32f407\\libos_Iboot_Debug\\libos_Iboot.a");
+//			File os_file = ShellHelper.release_a_to_os(libos_file);
+//			File[] os = os_file.listFiles();
+//			Job backgroundJob = new Job("正在分析libos_Iboot.a") {
+//				@Override
+//				protected IStatus run(IProgressMonitor monitor) {
+//					monitor.beginTask("正在分析libos_Iboot.a", os.length + 1);
+//					monitor.worked(1);
+//					List<String> symbols = 
+//					ShellHelper.parse_o1(os_file,monitor);
+//					DideHelper.printToConsole("分析libos_Iboot.a结束", true);
+//					boolean isApp = libos_file.getParentFile().getName().contains("App")?true:false;
+//					KeepShell.create_keepshell(isApp, project, symbols);
+//					return Status.CANCEL_STATUS;
+//				}
+//			};
+//			backgroundJob.schedule();
+//		}
 		
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());

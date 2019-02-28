@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.djyos.dide.ui.djyproperties;
 
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -43,6 +45,9 @@ import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.TableEditor;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
@@ -136,12 +141,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 
 		for (File file : cfgFiles) {
 			String str = null, coreConfigure = null;
-			boolean isApp;
-			if (file.getPath().contains("app")) {
-				isApp = true;
-			} else {
-				isApp = false;
-			}
+			boolean isApp = file.getPath().contains("app")?true:false;
 			try {
 				FileReader reader = new FileReader(file.getPath());
 				BufferedReader br = new BufferedReader(reader);
@@ -1068,16 +1068,11 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 						// 关键方法，将编辑单元格与文本框绑定到表格的第一列
 						editor.setEditor(text, item, 1);
 						tabelControls.add(text);
-						text.addMouseTrackListener(new MouseTrackListener() {
-
+						
+						text.addFocusListener(new FocusListener() {
+							
 							@Override
-							public void mouseHover(MouseEvent e) {
-								// TODO Auto-generated method stub
-
-							}
-
-							@Override
-							public void mouseExit(MouseEvent e) {
+							public void focusLost(FocusEvent e) {
 								// TODO Auto-generated method stub
 								configureChanged = true;
 								if (isApp) {
@@ -1152,11 +1147,10 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								}
 								componentHelper.resetConfigure(componentSelect, isSelect, table);
 							}
-
+							
 							@Override
-							public void mouseEnter(MouseEvent e) {
+							public void focusGained(FocusEvent e) {
 								// TODO Auto-generated method stub
-
 							}
 						});
 					}
@@ -1167,10 +1161,10 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				annoText.setText(item.getText(2));
 				editor1.setEditor(annoText, item, 2);
 				tabelControls.add(annoText);
-				annoText.addModifyListener(new ModifyListener() {
-
+				annoText.addFocusListener(new FocusListener() {
+					
 					@Override
-					public void modifyText(ModifyEvent e) {
+					public void focusLost(FocusEvent e) {
 						// TODO Auto-generated method stub
 						configureChanged = true;
 						if (isApp) {
@@ -1182,7 +1176,12 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 						item.setText(2, anno);
 						componentHelper.resetConfigure(componentSelect, isSelect, table);
 					}
-
+					
+					@Override
+					public void focusGained(FocusEvent e) {
+						// TODO Auto-generated method stub
+						
+					}
 				});
 
 			} else if (parameter.contains("#define") && tag.equals("obj_para")) {

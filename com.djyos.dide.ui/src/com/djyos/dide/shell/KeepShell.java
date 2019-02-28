@@ -10,6 +10,13 @@ import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 
 public class KeepShell {
 	
+	
+	/**
+	 * 生成keepshell.c
+	 * @param isApp 是否为app的库
+	 * @param project 当前工程
+	 * @param symbols 所有符号
+	 */
 	public static void create_keepshell(boolean isApp,IProject project,List<String> symbols) {
 		
 		String defineInit = DjyosMessages.Automatically_Generated;

@@ -14,107 +14,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 public class ShellHelper {
 	
-	static class Thread_command extends Thread{
-		
-		private Thread_symbol symbol;
-		String command;
-		File os_file;
-		
-		public Thread_command(String command,File os_file) {
-			this.command = command;
-			this.os_file = os_file;
-		}
-		
-		@Override
-		public  void run() {
-			// TODO Auto-generated method stub
-			synchronized (symbol){
-                synchronized (this){
-                	Runtime runtime = Runtime.getRuntime();
-        			try {
-        				runtime.exec(command,null,os_file);
-//        				Thread.sleep(3000);
-        			} catch (Exception e) {
-        				// TODO 自动生成的 catch 块
-        				e.printStackTrace();
-        			}
-                    this.notify();
-                }
-                try {
-                	symbol.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-		}
-		
-		public void setThreadS(Thread_symbol symbol) {
-			this.symbol = symbol;
-		}
-	}
-	
-	static class Thread_symbol extends Thread {
-
-		File os_file;
-
-		public Thread_symbol(File os_file) {
-			this.os_file = os_file;
-		}
-
-		@Override
-		public void run() {
-			// TODO Auto-generated method stub
-			File[] os = os_file.listFiles();
-			List<String> symbols = new ArrayList<String>();
-			for(File o:os) {
-				Map<String, String> map = DideHelper.get_o_symbol(o);
-				String symbol = map.get("symbol");
-				if(symbol != null) {
-					symbols.add(symbol);
-				}
-//				DideHelper.printToConsole(map.get("o_content"), true);
-//				System.out.println(map.get("o_content"));
-			}
-			System.out.println("start symbol");
-			for(String s:symbols) {
-				System.out.println("symbol:   "+s);
-			}
-		}
-	}
-	
-//	class Thread_command extends Thread {
-//
-//		String commands;
-//		File os_file;
-//
-//		public Thread_command(String commands, File os_file) {
-//			this.commands = commands;
-//			this.os_file = os_file;
-//		}
-//
-//		@Override
-//		public void run() {
-//			// TODO Auto-generated method stub
-//			Runtime runtime = Runtime.getRuntime();
-//			try {
-//				runtime.exec(commands, null, os_file);
-//				Thread.sleep(3000);
-//			} catch (Exception e) {
-//				// TODO 自动生成的 catch 块
-//				e.printStackTrace();
-//			}
-//		}
-//	}
-	
 	/**
 	 * 将.a解压缩成.o
 	 * @param project 当前工程
 	 * @param libos_file 
 	 */
 	public static File release_a_to_os(File libos_file) {
-		
-//		IFile file =  project.getFile("libos_Iboot_Debug/libos_Iboot.a");
-//		File f = file.getLocation().toFile();
 		
 		String parentPath = libos_file.getParentFile().getPath();
 		File os_file = new File(parentPath+"/os");
@@ -148,7 +53,7 @@ public class ShellHelper {
 		
 	}
 	
-	public static List<String> parse_o(File os_file, IProgressMonitor monitor) {
+	public static List<String> parse_o(File os_file, IProgressMonitor monitor, File libos_folder) {
 		File[] os = os_file.listFiles();
 		System.out.println("os.length:  "+os.length);
 		List<String> symbols = new ArrayList<String>();
@@ -168,6 +73,29 @@ public class ShellHelper {
 //			System.out.println("symbol:   "+s);
 //		}
 		return symbols;
+	}
+	
+	
+	/**
+	 * 获取目录下所有的.o文件
+	 * @param libos_folder
+	 * @param o_files
+	 * @return
+	 */
+	public static List<File> get_src_ofiles(File libos_folder, List<File> o_files) {
+		if(libos_folder.exists()) {
+			File[] fs = libos_folder.listFiles();
+			if(fs.length > 0) {
+				for(File f:fs) {
+					if(f.isDirectory()) {
+						get_src_ofiles(f,o_files);
+					}else if(f.getName().endsWith(".o")){
+						o_files.add(f);
+					}
+				}
+			}
+		}
+		return o_files;
 	}
 	
 	

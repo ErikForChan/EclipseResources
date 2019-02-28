@@ -89,6 +89,10 @@ public class DideHelper {
 			+ "/";
 	static DecimalFormat df = new DecimalFormat("######0");
 	
+	/**
+	 * 获取DIDE的版本
+	 * @return
+	 */
 	public static String get_DIDE_Version() {
 		File versionFile = new File(didePath + "IDE/DIDE.ini");
 		if(versionFile.exists()) {
@@ -143,7 +147,6 @@ public class DideHelper {
 	}
 	
 
-	/********* * 与编译有关的函数* * *********/
 	public static void buildTarget(IProject project, String targetName) {
 		final ICProjectDescription local_prjd = CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations();
@@ -299,9 +302,11 @@ public class DideHelper {
 
 	}
 
-	/********* * 与工具有关的函数* * *********/
-
-	// 将long转成无符类型
+	/**
+	 * 将long转成无符类型
+	 * @param s
+	 * @return
+	 */
 	public static long toUnsigned(long s) {
 		return s & 0xFFFFFFFFL;
 	}
@@ -379,7 +384,11 @@ public class DideHelper {
 		return djysrcExist;
 	}
 
-	// 根据id获取某个action
+	/**
+	 * 根据id获取某个action
+	 * @param id
+	 * @return
+	 */
 	public static IAction getAction(String id) {
 		IAction action = null;
 		IWizardDescriptor wizardDesc = WorkbenchPlugin.getDefault().getNewWizardRegistry().findWizard(id);
@@ -416,17 +425,26 @@ public class DideHelper {
 		return didePath + "IDE/djyos/cookies/FileTemp/StepByStep";
 	}
 
-	// 获取模板的路径
+	/**
+	 * 获取模板的路径
+	 * @return
+	 */
 	public static String getTemplatePath() {
 		return System.getProperty("user.dir") + "/djyos/cookies";
 	}
 
-	// 获取Djysrc的路径
+	/**
+	 * 获取Djysrc的路径
+	 * @return
+	 */
 	public static String getDjyosSrcPath() {
 		return didePath + "djysrc";
 	}
 
-	// 获取用户板件的路径
+	/**
+	 * 获取用户板件的路径
+	 * @return
+	 */
 	public static String getUserBoardFilePath() {
 		String userBoardPath = didePath + "djysrc/bsp/boarddrv/user";
 		File userBoardFile = new File(userBoardPath);
@@ -436,7 +454,10 @@ public class DideHelper {
 		return userBoardPath;
 	}
 
-	// 获取Djyos板件的绝对路径
+	/**
+	 *  获取Djyos板件的绝对路径
+	 * @return
+	 */
 	public static String getDemoBoardFilePath() {
 		String demoBoardPath = didePath + "djysrc/bsp/boarddrv/demo";
 		File demoBoardFile = new File(demoBoardPath);
@@ -446,17 +467,27 @@ public class DideHelper {
 		return demoBoardPath;
 	}
 
-	// 获取用户板件的相对路径
+	/**
+	 * 获取用户板件的相对路径
+	 * @return
+	 */
 	public static String getRelativeUserBoardFilePath() {
 		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/user/";
 	}
 
-	// 获取Djyos板件的相对路径
+	/**
+	 * 获取Djyos板件的相对路径
+	 * @return
+	 */
 	public static String getRelativeDemoBoardFilePath() {
 		return "${DJYOS_SRC_LOCATION}/bsp/boarddrv/demo/";
 	}
 
-	/********* * 与文件操作有关的函数* * *********/
+	/**
+	 * 复制文件
+	 * @param src
+	 * @param dest
+	 */
 	public static void copyFolder(File src, File dest) {
 		if (src.isDirectory()) {
 			if (!dest.exists()) {
@@ -487,6 +518,10 @@ public class DideHelper {
 		}
 	}
 
+	/**
+	 * 在IDE中打开文件
+	 * @param file
+	 */
 	public static void openFileInDide(File file) {
 		// TODO Auto-generated method stub
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
@@ -511,6 +546,10 @@ public class DideHelper {
 		});
 	}
 
+	/**
+	 * 创建文件，如果文件存在则删除再创建
+	 * @param file
+	 */
 	public static void createNewFile(File file) {
 		// TODO Auto-generated method stub
 		if (file.exists()) {
@@ -524,6 +563,11 @@ public class DideHelper {
 		}
 	}
 
+	/**
+	 * 读取文件中的数据
+	 * @param file
+	 * @return
+	 */
 	public static String readFile(File file) {
 		String encoding = "GBK";
 		Long filelength = file.length();
@@ -546,7 +590,13 @@ public class DideHelper {
 		}
 	}
 
-	// 将src目录下的所有文件拷贝到命名为boardName的dest目录下
+	/**
+	 * 将src目录下的所有文件拷贝到命名为boardName的dest目录下
+	 * @param src
+	 * @param dest
+	 * @param boardName
+	 * @throws IOException
+	 */
 	@SuppressWarnings("unused")
 	private static void copyFileToFolder(File src, File dest, String boardName) throws IOException {
 		if (src.isDirectory()) {
@@ -580,6 +630,12 @@ public class DideHelper {
 		}
 	}
 
+	/**
+	 * 写入文件
+	 * @param file
+	 * @param content
+	 * @param append
+	 */
 	public static void writeFile(File file, String content,boolean append) {
 		if (!file.exists()) {
 			try {
@@ -600,7 +656,11 @@ public class DideHelper {
 		}
 	}
 
-	// 当前目录及其子目录下是否包含xml文件
+	/**
+	 * 当前目录及其子目录下是否包含xml文件
+	 * @param file
+	 * @return
+	 */
 	public static boolean travelContainsXml(File file) {
 		File[] files = file.listFiles();
 		for (File f : files) {
@@ -617,7 +677,11 @@ public class DideHelper {
 		return false;
 	}
 
-	// 当前目录下是否包含xml文件
+	/**
+	 * 当前目录下是否包含xml文件
+	 * @param file
+	 * @return
+	 */
 	public static boolean isContainsXml(File file) {
 		File[] files = file.listFiles();
 		for (File f : files) {
@@ -628,6 +692,12 @@ public class DideHelper {
 		return false;
 	}
 
+	/**
+	 * 获取所有的arch.xml
+	 * @param archFile
+	 * @param files
+	 * @return
+	 */
 	public static List<File> getArchXmlFiles(File archFile, ArrayList<File> files) {
 		// TODO Auto-generated method stub
 		if (archFile != null) {
@@ -645,7 +715,11 @@ public class DideHelper {
 		return files;
 	}
 
-	// 显示错误信息
+	/**
+	 * 显示错误信息
+	 * @param message
+	 * @return
+	 */
 	public static boolean showErrorMessage(String message) {
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 			public void run() {
@@ -656,7 +730,11 @@ public class DideHelper {
 		return false;
 	}
 
-	// 获取某个文件夹下的xml文件
+	/**
+	 * 获取某个文件夹下的xml文件
+	 * @param parentFile
+	 * @return
+	 */
 	public static File getXmlFile(File parentFile) {
 		File file = null;
 		File[] files = parentFile.listFiles();
@@ -669,7 +747,11 @@ public class DideHelper {
 		return file;
 	}
 
-	// 将某个文件夹下的文件按照文件夹...文件的方式排序
+	/**
+	 *  将某个文件夹下的文件按照文件夹...文件的方式排序
+	 * @param file
+	 * @return
+	 */
 	public static List<File> sortFileAndFolder(File file) {
 		File[] files = file.listFiles();
 		List<File> allFiles = new ArrayList<File>();
@@ -693,6 +775,11 @@ public class DideHelper {
 	static Runtime runtime = Runtime.getRuntime();
 	static String[] sections = {".ro_shell_cmd",".ex_shell_cmd",".ro_shell_data",".ex_shell_data"}; 
 	
+	/**
+	 * 获取.o文件中的符号
+	 * @param f 文件
+	 * @return
+	 */
 	public static Map<String, String> get_o_symbol(File f) {
 		Map<String, String> map = new HashMap<String, String>();
 		String command = "arm-none-eabi-objdump -ht "+f.getPath();
@@ -1032,6 +1119,11 @@ public class DideHelper {
 		return true;
 	}
 
+	/**
+	 * 删除字符串中所有的括号
+	 * @param data
+	 * @return
+	 */
 	public static String getridParentheses(String data) {
 		if (data.contains("(") || data.contains(")")) {
 			data = data.replaceAll("\\(|\\)", "");
