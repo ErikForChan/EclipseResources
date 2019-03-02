@@ -28,7 +28,7 @@ public class ExceptionHelper {
 			while ((str = br.readLine()) != null) {
 				boolean toAdd = true;
 				String[] members = str.split("\\s+");
-				if (str.contains("Configure") || str.contains("Core Clock")) {
+				if (str.contains("Configure")) {
 					if (compt != null) {
 						String[] cur_compt_paras = get_paras_defined(compt.getConfigure()).split("\n");
 						for(String para:cur_compt_paras) {
@@ -47,7 +47,7 @@ public class ExceptionHelper {
 				}else if(compt != null &&  str.contains("#define")) {
 					temp_paras += str+"\n";
 					String para = members[1];
-					if(! temp_configure.contains(para)) {
+					if(!temp_configure.contains(para) && !str.contains("CFG_CORE_MCLK")) {
 						toAdd = false; //strÒÑ±»É¾³ý
 					}
 				}

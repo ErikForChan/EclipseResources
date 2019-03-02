@@ -81,7 +81,7 @@ public class ComponentHelper implements IComponentCommon {
 		defineInit += "//******************************* Core Clock ******************************************//\n";
 		defineInit += coreConfigure;
 		defineInit += "\n\n#endif";
-		System.out.println("defineInit:   "+defineInit);
+//		System.out.println("defineInit:   "+defineInit);
 		DideHelper.writeFile(file, defineInit,false);
 	}
 
@@ -436,11 +436,10 @@ public class ComponentHelper implements IComponentCommon {
 				tag = DideHelper.getTag(parameter, tag);
 			}
 			if (parameter.contains("#define") && !tag.equals("obj_para")) {
-				String[] realNameSplites = parametersDefined[i].trim().split("\"");
-				String name = realNameSplites.length > 2? ("\"" + realNameSplites[realNameSplites.length-2] + "\","):"";
+				String pure_config = parametersDefined[i].startsWith("//")?parametersDefined[i].replaceFirst("//", ""):parametersDefined[i];
 				String[] defines = parametersDefined[i].trim().split("//");
-				String[] members = null;
-				members = parametersDefined[i].startsWith("//")?defines[1].trim().split("\\s+"):defines[0].trim().split("\\s+");
+				String name = defines[1].contains("\"")?"\""+defines[1].split("\"")[1]+"\",":"";
+				String[] members = pure_config.trim().split("\\s+");
 				// define∏Ò ΩªØ
 				if (isSelect[i]) {
 					parametersDefined[i] = String.format("%-11s", members[0]) + " " + String.format("%-32s", members[1])

@@ -83,7 +83,7 @@ public class FileHandler implements IResourceChangeListener {
 							if (resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
 //								System.out.println("event.getType():  "+event.getType()+"  "+event.getBuildKind()
 //												+" "+delta.getFlags());
-//								Analysis_aFile(resource);
+								Analysis_aFile(resource);
 							}
 							
 							//用户新增的文件，除了djyos、component、当前板件、当前CPU、当前arch，APP 。都排除编译
@@ -114,15 +114,31 @@ public class FileHandler implements IResourceChangeListener {
 		// TODO Auto-generated method stub
 		File libos_file = resource.getLocation().toFile();
 		List<File> o_files = new ArrayList<File>();
-//		File os_file = ShellHelper.release_a_to_os(libos_file);
-//		File[] o_files = os_file.listFiles();
-		File libos_folder = new File(libos_file.getParentFile().getPath()+"/src/libos");
+		
+		File hardWardInfoFile = new File(
+				resource.getProject().getLocation().toString() + "/data/hardware_info.xml");
+		List<String> hardwares = ReadHardWareDesc.getHardWares(hardWardInfoFile);
+		String boardName = hardwares.get(0);
+		String cpuName = hardwares.get(1);
+		boolean isApp = libos_file.getParentFile().getName().contains("App") ? true
+				: false;
+		File check_file = new File(resource.getProject().getLocation().toString() + "/data/"+(isApp?"app":"iboot")+"_component_check.xml");
+		List<CmpntCheck> compts_checks = ReadComponentCheckXml.getCmpntChecks(check_file);
+		List<Component> compt_object_checks = new ArrayList<Component>();
+		List<Component> compontents = ReadComponent.getAllComponents(DideHelper.getCpuByName(cpuName), DideHelper.getBoardByName(boardName));
+		for(CmpntCheck cc:compts_checks) {
+			if(cc.isChecked().equals("true")) {
+				Component c = ComponentHelper.getComponentByName(cc.getCmpntName(), compontents);
+				compt_object_checks.add(c);
+			}
+		}
+		
 		long startTime=System.currentTimeMillis();   //获取开始时间
-		ShellHelper.get_src_ofiles(libos_folder, o_files);
+		ShellHelper.get_src_ofiles(compt_object_checks, o_files, libos_file.getParentFile());
 		long endTime=System.currentTimeMillis(); //获取结束时间
 		System.out.println("获取所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 		List<String> symbols = new ArrayList<String>();
-		System.out.println("o_files.size()： "+o_files.size());
+//		System.out.println("o_files.size()： "+o_files.size());
 		
 		if(o_files.size() < 1) {
 			DideHelper.printToConsole("当前编译选项的src目录下不存在.0", true);
@@ -139,13 +155,10 @@ public class FileHandler implements IResourceChangeListener {
 						String symbol = map.get("symbol");
 						if(symbol != null) {
 							symbols.add(symbol);
-							System.out.println("symbol： "+symbol);
 						}
 						monitor.worked(1);
 					}
 					DideHelper.printToConsole("分析libos_Iboot.a结束", true);
-					boolean isApp = libos_file.getParentFile().getName().contains("App") ? true
-							: false;
 					KeepShell.create_keepshell(isApp, resource.getProject(), symbols);
 					
 					long endTime=System.currentTimeMillis(); //获取结束时间
@@ -154,8 +167,8 @@ public class FileHandler implements IResourceChangeListener {
 				}
 			};
 			backgroundJob.schedule();
-			DideHelper.refresh_workspace();
 		}
+		DideHelper.refresh_workspace();
 	}
 
 	protected void BuildOsAuto(IResource resource, IProject project, File stup_complie_file) {

@@ -12,6 +12,8 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import com.djyos.dide.ui.objects.Component;
+
 public class ShellHelper {
 	
 	/**
@@ -78,23 +80,34 @@ public class ShellHelper {
 	
 	/**
 	 * 获取目录下所有的.o文件
-	 * @param libos_folder
+	 * @param compt_object_checks
 	 * @param o_files
+	 * @param string 
 	 * @return
 	 */
-	public static List<File> get_src_ofiles(File libos_folder, List<File> o_files) {
-		if(libos_folder.exists()) {
-			File[] fs = libos_folder.listFiles();
-			if(fs.length > 0) {
-				for(File f:fs) {
-					if(f.isDirectory()) {
-						get_src_ofiles(f,o_files);
-					}else if(f.getName().endsWith(".o")){
-						o_files.add(f);
-					}
-				}
+	public static List<File> get_src_ofiles(List<Component> compt_object_checks, List<File> o_files, File parentFile) {
+		for(Component c:compt_object_checks) {
+			String parent_folder_path = c.getParentPath();
+			File c_folder = new File(parentFile.getPath() + "\\src\\libos" + parent_folder_path.split("djysrc")[1]);
+			File[] child_files = c_folder.listFiles();
+			for(File f:child_files) {
+				if(f.getName().endsWith(".o")){
+					o_files.add(f);
+				} 
 			}
 		}
+//		if(compt_object_checks.exists()) {
+//			File[] fs = compt_object_checks.listFiles();
+//			if(fs.length > 0) {
+//				for(File f:fs) {
+//					if(f.isDirectory()) {
+//						get_src_ofiles(f,o_files);
+//					}else if(f.getName().endsWith(".o")){
+//						o_files.add(f);
+//					}
+//				}
+//			}
+//		}
 		return o_files;
 	}
 	

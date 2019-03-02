@@ -287,7 +287,6 @@ public class HandleProjectImport {
 				if(conds[j].getName().startsWith("libos")) {
 					boolean toExclude = false;
 					if(!(relativePath.contains("component") || relativePath.contains("djyos"))) {
-//						System.out.println("compPath:  "+compPath);
 						if(conds[j].getName().startsWith("libos_App")) {
 							toExclude = appCmpntNamesChecks.contains(component.getName())?false:true;
 						}else if(conds[j].getName().startsWith("libos_Iboot")) {
@@ -297,8 +296,6 @@ public class HandleProjectImport {
 					LinkHelper.setFolderExclude(ifolder, conds[j], toExclude);
 				}
 			}
-//			if (!compPaths.contains(compPath)) { //compPaths:component_infos.xml中所有的之前已存在的组件，如果不存在当前组件的相对路径，则排除编译
-//			}
 		}
 
 	}

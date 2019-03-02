@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.djyos.dide.ui.djyproperties;
 
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -47,12 +45,10 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
-import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
-import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -78,7 +74,6 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PropertyPage;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
@@ -901,9 +896,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		}
 	}
 
-	/*
-	 * --------------------------------5、 配置表界面--------------------------
-	 */
+	
 	private String setItemText(String configure, String[] members, List<String> pjCgfs, String dataString,
 			TableItem item, String realComptName, String[] defines, String annoation, String tag) {
 		// TODO Auto-generated method stub (!tag.equals("enum") && !tag.equals("select"))?dataString:""
@@ -1069,6 +1062,54 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 						editor.setEditor(text, item, 1);
 						tabelControls.add(text);
 						
+						text.addModifyListener(new ModifyListener() {
+							
+							@Override
+							public void modifyText(ModifyEvent e) {
+								// TODO Auto-generated method stub
+								String tempString = text.getText().replace("\"", "");
+								if (rangesCopy.size() > 0) {
+									if (flag.equals("int")) {
+										String minString = rangesCopy.get(0);
+										String maxString = rangesCopy.get(1);
+										double min = minString.startsWith("0x")?Integer.parseInt(minString.substring(2), 16):Integer.parseInt(minString);
+										long max = maxString.startsWith("0x")?Long.parseLong(maxString.substring(2), 16):Long.parseLong(maxString);
+										long curNum = -1;
+										Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
+										boolean isInt = pattern.matcher(tempString).matches();
+										if (tempString.startsWith("0x")) {
+											curNum = Long.parseLong(tempString.substring(2), 16);
+										} else if (tempString.contains("+") || tempString.contains("-")
+												|| tempString.contains("*") || tempString.contains("/")) {
+											String pureCal = DideHelper.getridParentheses(tempString);
+											double result = Calculator.conversion(pureCal);
+											BigDecimal bd = new BigDecimal(df.format(result));
+											curNum = Long.valueOf(bd.toPlainString());
+										} else {
+											if (isInt && !tempString.trim().equals("")) {
+												curNum = Integer.parseInt(DideHelper.getridParentheses(tempString));
+											}
+										}
+										if (curNum < min || curNum > max) {
+											text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
+										}else {
+											text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+										}
+									} else if (flag.equals("string")) {
+										if (rangesCopy.size() > 0) {
+											int min = Integer.parseInt(rangesCopy.get(0));
+											int max = Integer.parseInt(rangesCopy.get(1));
+											if (tempString.length() < min || tempString.length() > max) {
+												text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
+											}else {
+												text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_BLACK));
+											}
+										}
+									}
+								}
+							}
+						});
+						
 						text.addFocusListener(new FocusListener() {
 							
 							@Override
@@ -1119,24 +1160,10 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 												DideHelper.showErrorMessage("字符串长度不得小于" + min + "或者大于" + max);
 											}
 										}
-
 									}
 								}
-								if (text.getForeground().equals(table.getDisplay().getSystemColor(SWT.COLOR_RED))) {
-									text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_BLACK));
-									// boolean isRight = true;
-									// TableItem[] tableItems = table.getItems();
-									// for (TableItem tableItem : tableItems) {
-									//
-									// if (tableItem.getForeground(1)
-									// .equals(table.getDisplay().getSystemColor(SWT.COLOR_RED))) {
-									// isRight = false;
-									// break;
-									// }
-									// }
-									// if (isRight) {
-									// eventItem.setImage(CPluginImages.CFG_COMPONENT_OBJ.createImage());
-									// }
+								if(!text.getText().trim().equals("")) {
+									eventItem.setImage(DPluginImages.CFG_COMPONENT_OBJ.createImage());
 								}
 
 								comptVisited.add(compName);

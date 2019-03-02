@@ -221,7 +221,10 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 				// if (!makefile.exists()) {
 				// makefile.createNewFile();
 				// }
-				cb.build(kind, bInfo, monitor);
+				boolean sucess =  cb.build(kind, bInfo, monitor);
+				if(sucess) {
+					
+				}
 			}
 			/*
 			 * New after Interalbuilder build success¡Athen invoke Externalbuilder
