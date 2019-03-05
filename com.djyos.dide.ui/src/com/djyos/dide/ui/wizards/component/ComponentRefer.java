@@ -29,6 +29,17 @@ public class ComponentRefer {
 		componentPaths.add(thirdPath);
 		return componentPaths;
 	}
+	
+	public List<String> get_notcore_paths(String boardName) {
+		String thirdPath = didePath + "djysrc/third";
+		String demoPath = DideHelper.getDemoBoardFilePath() + "/" + boardName;
+		String userPath = DideHelper.getUserBoardFilePath() + "/" + boardName;
+		List<String> componentPaths = new ArrayList<String>();
+		componentPaths.add(demoPath);
+		componentPaths.add(userPath);
+		componentPaths.add(thirdPath);
+		return componentPaths;
+	}
 
 	public boolean isComponent(File file) {
 

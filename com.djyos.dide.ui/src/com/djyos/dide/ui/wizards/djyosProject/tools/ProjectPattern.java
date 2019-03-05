@@ -49,7 +49,7 @@ public class ProjectPattern {
 						tool.setCommandLinePattern(pattern);
 						IOption[] options = tool.getOptions();
 						for(IOption op:options) {
-							if(op.getName().equalsIgnoreCase("Archiver flags")) {
+							if(op.getName().contains("Archiver flags")) {
 								try {
 									op.setValue("-rPu");
 								} catch (BuildException e) {

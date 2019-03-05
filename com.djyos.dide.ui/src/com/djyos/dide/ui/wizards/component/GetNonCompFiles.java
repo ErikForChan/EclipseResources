@@ -45,8 +45,10 @@ public class GetNonCompFiles {
 						}
 					}
 				} else {
+					if (!file.getName().equals("firmware") && !file.getName().equals("fs")) {
+						excludeCompFiles.add(file);
+					}
 					if (file.getParentFile().getName().equals("firmware")) {
-						// System.out.print("file: "+file.getName());
 						excludeCompFiles.add(file);
 					}
 				}
@@ -85,7 +87,7 @@ public class GetNonCompFiles {
 	public static List<File> getNonCompFiles(OnBoardCpu onBoardCpu, Board board) {
 		ComponentRefer cRefer = new ComponentRefer();
 		excludeCompFiles = new ArrayList<File>();
-		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
+		List<String> componentPaths = cRefer.get_notcore_paths(board.getBoardName());
 		String chipPath = didePath + "djysrc/bsp/chipdrv";
 		for (int i = 0; i < componentPaths.size(); i++) {
 			File sourceFile = new File(componentPaths.get(i));// third Explorer

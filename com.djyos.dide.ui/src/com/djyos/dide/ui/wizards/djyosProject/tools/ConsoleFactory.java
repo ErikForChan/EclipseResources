@@ -8,7 +8,7 @@ import org.eclipse.ui.console.MessageConsole;
 
 public class ConsoleFactory implements IConsoleFactory{
 
-	private static MessageConsole console = new MessageConsole("", null);
+	private static MessageConsole console = new MessageConsole("Djyos Console", null);
 	static boolean exists = false;
 	
 	@Override

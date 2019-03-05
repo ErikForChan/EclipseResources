@@ -62,12 +62,7 @@ public class ConfigurationHandler {
 				IConfiguration cfg = ManagedBuildManager.getConfigurationForDescription(cfgDesc);
 				String toolChainName = cfg.getToolChain().getName();
 				ProjectPattern.handleBuilderPattern(toolChainName, cfg, s);
-				try {
-					CoreModel.getDefault().setProjectDescription(project, local_prjd);
-				} catch (CoreException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				DideHelper.saveProjectDescription(project, local_prjd);
 			}
 		}
 	}

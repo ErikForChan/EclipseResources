@@ -389,13 +389,7 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 		File compInfoFile = new File(project.getLocation().toString() + "/data/hardwares/component_infos.xml");
 		DideHelper.createNewFile(compInfoFile);
 		CreateComponentInfo.createComponentInfo(compInfoFile, compontentsList);
-		if(appCompontentsChecked.size() > 0) {
-			linkComponentResource(true, appCompontentsChecked, compontentsList, srcLocation, project, conds);
-		}
-		if(ibootCompontentsChecked.size() > 0) {
-			linkComponentResource(false, ibootCompontentsChecked, compontentsList, srcLocation, project, conds);
-		}
-
+		
 		// 排除所有没有描述文件的组件
 		List<File> excludeCompFiles = GetNonCompFiles.getNonCompFiles(onBoardCpu, board);
 		for (File f : excludeCompFiles) {
@@ -411,6 +405,13 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 					LinkHelper.setFolderExclude(ifolder, conds[j], true);
 				}
 			}
+		}
+
+		if(appCompontentsChecked.size() > 0) {
+			linkComponentResource(true, appCompontentsChecked, compontentsList, srcLocation, project, conds);
+		}
+		if(ibootCompontentsChecked.size() > 0) {
+			linkComponentResource(false, ibootCompontentsChecked, compontentsList, srcLocation, project, conds);
 		}
 
 		List<Board> allBoards = ReadBoardXml.getAllBoards();
@@ -721,18 +722,14 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			String relativePath = componentPath.replace(srcLocation, "");
 			IFolder folder = project.getFolder("src/libos" + relativePath);
 			for (int i = 0; i < conds.length; i++) {
-				if (isApp) {
-					if (conds[i].getName().contains("libos_App")) {
-						LinkHelper.setFolderExclude(folder, conds[i], true);
-					}
-				} else {
-					if (conds[i].getName().contains("libos_Iboot")) {
-						LinkHelper.setFolderExclude(folder, conds[i], true);
-					}
+				if (conds[i].getName().contains(isApp?"libos_App":"libos_Iboot")) {
+					LinkHelper.setFolderExclude(folder, conds[i], true);
 				}
 			}
 		}
 
+		
+		// 隐藏不需要编译的文件
 		for (int j = 0; j < compontentsChecked.size(); j++) {
 			Component component = compontentsChecked.get(j);
 			String componentPath = component.getParentPath().replace("\\", "/");
@@ -743,7 +740,6 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 			}
 		}
 
-		// 隐藏不需要编译的文件
 		for (int j = 0; j < excludes.size(); j++) {
 			IFile ifle = project.getFile(excludes.get(j));
 			for (int i = 0; i < conds.length; i++) {

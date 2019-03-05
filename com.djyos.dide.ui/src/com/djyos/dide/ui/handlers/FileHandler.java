@@ -1,13 +1,22 @@
 package com.djyos.dide.ui.handlers;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.cdt.core.ErrorParserManager;
+import org.eclipse.cdt.core.IConsoleParser;
 import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.internal.core.BuildRunnerHelper;
+import org.eclipse.cdt.internal.ui.buildconsole.BuildConsole;
+import org.eclipse.cdt.managedbuilder.core.IBuilder;
+import org.eclipse.cdt.managedbuilder.core.IConfiguration;
+import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
+import org.eclipse.cdt.managedbuilder.internal.core.CommonBuilder;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -21,8 +30,13 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleManager;
 
 import com.djyos.dide.shell.KeepShell;
 import com.djyos.dide.ui.helper.DideHelper;
@@ -35,6 +49,7 @@ import com.djyos.dide.ui.wizards.component.ComponentHelper;
 import com.djyos.dide.ui.wizards.component.ReadComponent;
 import com.djyos.dide.ui.wizards.component.ReadComponentCheckXml;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
+import com.djyos.dide.ui.wizards.djyosProject.tools.ProjectPattern;
 
 public class FileHandler implements IResourceChangeListener {
 	
@@ -110,6 +125,7 @@ public class FileHandler implements IResourceChangeListener {
 		}
 	}
 
+	@SuppressWarnings("restriction")
 	protected void Analysis_aFile(IResource resource) {
 		// TODO Auto-generated method stub
 		File libos_file = resource.getLocation().toFile();
@@ -138,12 +154,10 @@ public class FileHandler implements IResourceChangeListener {
 		long endTime=System.currentTimeMillis(); //获取结束时间
 		System.out.println("获取所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 		List<String> symbols = new ArrayList<String>();
-//		System.out.println("o_files.size()： "+o_files.size());
-		
 		if(o_files.size() < 1) {
 			DideHelper.printToConsole("当前编译选项的src目录下不存在.0", true);
 		}else {
-			DideHelper.printToConsole("正在分析"+resource.getName()+"...请稍后，可查看右下方进度条", true);
+//			DideHelper.printToConsole("正在分析"+resource.getName()+"...请稍后，可查看右下方进度条", false);
 			Job backgroundJob = new Job("正在分析"+resource.getName()) {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
@@ -158,11 +172,11 @@ public class FileHandler implements IResourceChangeListener {
 						}
 						monitor.worked(1);
 					}
-					DideHelper.printToConsole("分析libos_Iboot.a结束", true);
+//					DideHelper.printToConsole("分析libos_Iboot.a结束", true);
 					KeepShell.create_keepshell(isApp, resource.getProject(), symbols);
 					
 					long endTime=System.currentTimeMillis(); //获取结束时间
-					System.out.println("分析所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
+//					System.out.println("分析所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 					return Status.CANCEL_STATUS;
 				}
 			};

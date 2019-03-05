@@ -217,12 +217,7 @@ public class HandleProjectImport {
 				Cpu myCpu = DideHelper.getCpuByonBoard(onBoardCpu, allCpus);
 				excludeArchNotThisProject(myCpu, conds, project, coreName);
 
-				try {
-					CoreModel.getDefault().setProjectDescription(project, local_prjd);
-				} catch (CoreException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				DideHelper.saveProjectDescription(project, local_prjd);
 			}
 		}
 	}

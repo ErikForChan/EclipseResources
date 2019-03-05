@@ -399,10 +399,14 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		}
 	}
 
-	/*
-	 * --------------------------3、创建Iboot/App组件树-----------------------------------
-	 * ---
+	/**
+	 * 创建Iboot/App组件树
+	 * @param folder
+	 * @param appTypeComponents
+	 * @param ibootTypeComponents
+	 * @return
 	 */
+	 
 	private Control createTabContent(TabFolder folder, List<Component> appTypeComponents,
 			List<Component> ibootTypeComponents) {
 		// TODO Auto-generated method stub
@@ -455,145 +459,10 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 				// TODO Auto-generated method stub
 				selectChanged = true;
 				TreeItem item = (TreeItem) event.item;
+				
 				if (item == null) {
 					return;
 				} else {
-					if (item.getText().equals("App") || item.getText().equals("Iboot")) {
-						item.setChecked(true);
-					}
-					Component itemCompt;
-					Control[] controls = folder.getChildren();
-					String type = componentHelper.getAIType(item);
-					if (item.getChecked()) {
-						componentTree.setSelection(item);
-						// 判断当前选中组件与已选中组件是否有互斥，如果没有互斥则处理组件依赖
-						if (type != null) {
-							boolean isApp;
-							if (type.equals("App")) {
-								isApp = true;
-								appConfigureChanged = true;
-							} else {
-								isApp = false;
-								ibootConfigureChanged = true;
-							}
-							itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
-									isApp ? appCompontents : ibootCompontents);
-							if (itemCompt != null) {
-								for (Control c : controls) {
-									Tree tempTree = (Tree) c;
-									TreeItem[] fChilds = tempTree.getItems();
-									for (TreeItem treeItem : fChilds) {
-										if (treeItem.getText().equals(type)) {
-											boolean isMutex = componentHelper.travelItems_Mutex(treeItem, itemCompt,
-													item);
-											if (!isMutex) {
-												List<String> visitedComp = new ArrayList<String>();
-												componentHelper.travelItems_Depedent(treeItem, itemCompt, isApp,
-														visitedComp, appCompontents, ibootCompontents,
-														appCompontentsChecked, ibootCompontentsChecked, folder);
-												itemCompt.setSelect(true);
-												if (isApp) {
-													if (!appCompontentsChecked.contains(itemCompt)) {
-														appCompontentsChecked.add(itemCompt);
-													}
-												} else {
-													if (!ibootCompontentsChecked.contains(itemCompt)) {
-														ibootCompontentsChecked.add(itemCompt);
-													}
-												}
-											}
-											break;
-										}
-									}
-								}
-							}
-
-						}
-					} else {
-						// 取消选中当前组件时，判断已选中组件是否依赖于此组件，如果有依赖，则不允许取消并提示
-						if (type != null) {
-							boolean isApp;
-							if (type.equals("App")) {
-								isApp = true;
-								appConfigureChanged = true;
-							} else {
-								isApp = false;
-								ibootConfigureChanged = true;
-							}
-							itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
-									isApp ? appCompontents : ibootCompontents);
-							if (itemCompt != null) {
-								if (itemCompt.getSelectable().equals("required")
-										|| itemCompt.getSelectable().equals("必选组件")) {
-									item.setChecked(true);
-									MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
-								} else {
-									boolean isDepedent = true;
-									for (Control c : controls) {
-										Tree tempTree = (Tree) c;
-										TreeItem[] fChilds = tempTree.getItems();
-										for (TreeItem treeItem : fChilds) {
-											if (treeItem.getText().equals(type)) {
-												isDepedent = componentHelper.isDepedent(treeItem, item, type,
-														itemCompt, isApp, appCompontents, ibootCompontents,
-														appCompontentsChecked, ibootCompontentsChecked);
-												if (isDepedent) {
-													if (isApp) {
-														appCompontentsChecked.remove(itemCompt);
-													} else {
-														ibootCompontentsChecked.remove(itemCompt);
-													}
-													itemCompt.setSelect(false);
-												}
-												break;
-											}
-										}
-										if(!isDepedent) {
-											break;
-										}
-									}
-								}
-							}
-
-						}
-					}
-				}
-			}
-		});
-
-		componentTree.addMouseMoveListener(new MouseMoveListener() {
-
-			@Override
-			public void mouseMove(MouseEvent e) {
-				// TODO Auto-generated method stub
-				Point point = new Point(e.x, e.y);
-				TreeItem item = componentTree.getItem(point);
-				if (item != null) {
-					if (!item.getText().equals("App") && !item.getText().equals("Iboot")) {
-						String descContent = item.getData("anno").toString();
-						componentTree.setToolTipText(descContent);
-					}
-				}
-			}
-		});
-
-		// 组件树的点击事件
-		componentTree.addListener(SWT.MouseDown, new Listener() {
-
-			@Override
-			public void handleEvent(Event event) {
-				// TODO Auto-generated method stub
-
-				// dependentText mutexText
-				Point point = new Point(event.x, event.y);
-				TreeItem item = componentTree.getItem(point);
-
-				if (item != null) {
-					if (item.getText().startsWith("App") || item.getText().startsWith("Iboot")) {
-						openFileItem.setEnabled(false);
-					} else {
-						openFileItem.setEnabled(true);
-					}
 					for (Control control : tabelControls) {
 						control.dispose();
 					}
@@ -607,19 +476,19 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 					if (editor1 != null) {
 						editor1.dispose();
 					}
-
 					table.removeAll();
-					if (!item.getText().equals("App") && !item.getText().equals("Iboot")) {
+					
+					if (item.getText().startsWith("App") || item.getText().startsWith("Iboot")) {
+						openFileItem.setEnabled(false);
+						configGroup.setText("组件配置[请选择要配置的组件]");
+						table.setEnabled(false);
+						item.setChecked(true);
+					} else {
+						openFileItem.setEnabled(true);
 						String itemText = item.getText();
 						String type = componentHelper.getAIType(item);
-						boolean isApp;
-						Component itemCompt;
-						if (type.equals("App")) {
-							isApp = true;
-						} else {
-							isApp = false;
-						}
-						itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
+						boolean isApp = type.equals("App")?true:false;
+						Component itemCompt = componentHelper.getComponentByPath(item.getData().toString(),
 								isApp ? appCompontents : ibootCompontents);
 
 						if (itemCompt != null) {
@@ -635,32 +504,100 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 								allDeps += (k != 0 ? "，" : "") + depedents.get(k);
 							}
 
-							if (allDeps.equals("")) {
-								dependentText.setText(depedentLabel + " 无");
-							} else {
-								dependentText.setText(depedentLabel + allDeps);
-							}
-							if (allMuts.equals("")) {
-								mutexText.setText(mutexLabel + " 无");
-							} else {
-								mutexText.setText(mutexLabel + allMuts);
-							}
+							dependentText.setText(depedentLabel + (allDeps.equals("")?" 无":allDeps));
+							mutexText.setText(mutexLabel + (allMuts.equals("")?" 无":allMuts));
 
 							String configure = itemCompt.getConfigure();
 							if (!configure.contains("#define")) {
 								configGroup.setText("组件 [" + itemText + "] 无需配置");
 								table.setEnabled(false);
-								// item.setForeground(folder.getDisplay().getSystemColor(SWT.COLOR_GRAY));
 							} else {
 								configGroup.setText(type + "组件 [" + itemText + "] 配置");
 								table.setEnabled(true);
 							}
 							initTable(itemCompt, isApp, item);
 						}
+						
+						
+						Control[] controls = folder.getChildren();
+						boolean checked = item.getChecked();
+						if (type != null) {
+							if(isApp) {
+								appConfigureChanged = true;
+							}else {
+								ibootConfigureChanged = true;
+							}
+							if (itemCompt != null) {
+								componentTree.setSelection(item);
+								if(checked){
+									for (Control c : controls) {
+										Tree tempTree = (Tree) c;
+										TreeItem[] fChilds = tempTree.getItems();
+										for (TreeItem treeItem : fChilds) {
+											if (treeItem.getText().equals(type)) {
+												boolean isMutex = componentHelper.travelItems_Mutex(treeItem, itemCompt,
+														item);
+												if (!isMutex) {
+													List<String> visitedComp = new ArrayList<String>();
+													componentHelper.travelItems_Depedent(treeItem, itemCompt, isApp,
+															visitedComp, appCompontents, ibootCompontents,
+															appCompontentsChecked, ibootCompontentsChecked, folder);
+													itemCompt.setSelect(true);
+													if (!((isApp?appCompontentsChecked:ibootCompontentsChecked).contains(itemCompt))) {
+														(isApp?appCompontentsChecked:ibootCompontentsChecked).add(itemCompt);
+													}
+												}
+												break;
+											}
+										}
+									}
+								}else {
+									if (itemCompt.getSelectable().equals("required")
+											|| itemCompt.getSelectable().equals("必选组件")) {
+										item.setChecked(true);
+										MessageDialog.openError(window.getShell(), "提示", "该组件为必选组件，不可取消！");
+									} else {
+										boolean isDepedent = true;
+										for (Control c : controls) {
+											Tree tempTree = (Tree) c;
+											TreeItem[] fChilds = tempTree.getItems();
+											for (TreeItem treeItem : fChilds) {
+												if (treeItem.getText().equals(type)) {
+													isDepedent = componentHelper.isDepedent(treeItem, item, type,
+															itemCompt, isApp, appCompontents, ibootCompontents,
+															appCompontentsChecked, ibootCompontentsChecked);
+													if (isDepedent) {
+														(isApp?appCompontentsChecked:ibootCompontentsChecked).remove(itemCompt);
+														itemCompt.setSelect(false);
+													}
+													break;
+												}
+											}
+											if(!isDepedent) {
+												break;
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					
+				}
+			}
+		});
 
-					} else {
-						configGroup.setText("组件配置[请选择要配置的组件]");
-						table.setEnabled(false);
+		componentTree.addMouseMoveListener(new MouseMoveListener() {
+
+			@Override
+			public void mouseMove(MouseEvent e) {
+				// TODO Auto-generated method stub
+				Point point = new Point(e.x, e.y);
+				TreeItem item = componentTree.getItem(point);
+				if (item != null) {
+					if (!item.getText().equals("App") && !item.getText().equals("Iboot")) {
+						String descContent = item.getData("anno").toString();
+						componentTree.setToolTipText(descContent);
 					}
 				}
 			}
