@@ -79,6 +79,10 @@ public class ComponentHelper implements IComponentCommon {
 			}
 		}
 		defineInit += "//******************************* Core Clock ******************************************//\n";
+		if(coreConfigure == null) {
+			coreConfigure = String.format("%-9s", "#define") + String.format("%-32s", "CFG_CORE_MCLK")
+			+ String.format("%-18s", "(" + 216 + "*Mhz)") + "//主频，内核要用，必须定义";
+		}
 		defineInit += coreConfigure;
 		defineInit += "\n\n#endif";
 //		System.out.println("defineInit:   "+defineInit);
@@ -126,8 +130,8 @@ public class ComponentHelper implements IComponentCommon {
 				if (paraSelected < Integer.parseInt(infos[1])) {
 					String attribute = component.getAttribute();
 					attribute = transalateCompt(attribute);
-					return (isApp ? "App" : "Iboot") + ": " + attribute + "[" + component.getName() + "]请至少勾选" + infos[1]
-							+ "个参数";
+					return  (isApp ? "App" : "Iboot") + ": " + attribute + "[" + component.getName() + "]请至少勾选" + infos[1] + "个参数\n"
+							+"配置文件路径:\t"+(component.getParentPath()+"\\"+component.getFileName());
 				}
 			}
 		}

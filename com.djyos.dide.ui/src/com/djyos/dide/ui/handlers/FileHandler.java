@@ -57,7 +57,10 @@ public class FileHandler implements IResourceChangeListener {
 	IProject[] projects = workspace.getRoot().getProjects();
 	List<String> projectsExists = getProjectsExisted();
 
-	
+	/**
+	 * 获取当前工作空间中存在的工程名称 集合
+	 * @return
+	 */
 	private List<String> getProjectsExisted(){
 		List<String> projectsExists =  new ArrayList<String>();
 		for (IProject p : projects) {
@@ -125,7 +128,10 @@ public class FileHandler implements IResourceChangeListener {
 		}
 	}
 
-	@SuppressWarnings("restriction")
+	/**
+	 * 分析.a文件
+	 * @param resource 新生成的.a文件
+	 */
 	protected void Analysis_aFile(IResource resource) {
 		// TODO Auto-generated method stub
 		File libos_file = resource.getLocation().toFile();
@@ -152,16 +158,15 @@ public class FileHandler implements IResourceChangeListener {
 		long startTime=System.currentTimeMillis();   //获取开始时间
 		ShellHelper.get_src_ofiles(compt_object_checks, o_files, libos_file.getParentFile());
 		long endTime=System.currentTimeMillis(); //获取结束时间
-		System.out.println("获取所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
+//		System.out.println("获取所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 		List<String> symbols = new ArrayList<String>();
 		if(o_files.size() < 1) {
-			DideHelper.printToConsole("当前编译选项的src目录下不存在.0", true);
+			DideHelper.printToConsole("当前编译选项的src目录下不存在.o", true);
 		}else {
-//			DideHelper.printToConsole("正在分析"+resource.getName()+"...请稍后，可查看右下方进度条", false);
 			Job backgroundJob = new Job("正在分析"+resource.getName()) {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-					long startTime=System.currentTimeMillis();   //获取开始时间
+//					long startTime=System.currentTimeMillis();   //获取开始时间
 					monitor.beginTask("正在分析"+resource.getName(), o_files.size() + 1);
 					monitor.worked(1);
 					for(File f:o_files) {
@@ -172,10 +177,8 @@ public class FileHandler implements IResourceChangeListener {
 						}
 						monitor.worked(1);
 					}
-//					DideHelper.printToConsole("分析libos_Iboot.a结束", true);
 					KeepShell.create_keepshell(isApp, resource.getProject(), symbols);
-					
-					long endTime=System.currentTimeMillis(); //获取结束时间
+//					long endTime=System.currentTimeMillis(); //获取结束时间
 //					System.out.println("分析所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 					return Status.CANCEL_STATUS;
 				}
@@ -185,12 +188,18 @@ public class FileHandler implements IResourceChangeListener {
 		DideHelper.refresh_workspace();
 	}
 
+	/**
+	 * 自动编译
+	 * @param resource
+	 * @param project
+	 * @param stup_complie_file
+	 */
 	protected void BuildOsAuto(IResource resource, IProject project, File stup_complie_file) {
 		// TODO Auto-generated method stub
 		if (resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
 			IResource pResource = resource.getParent();
 			String libCfgName = pResource.getName();
-			System.out.println("libCfgName: "+libCfgName);
+//			System.out.println("libCfgName: "+libCfgName);
 			String commonName = libCfgName.replace("libos", "");
 			String targetName = project.getName() + commonName;
 			DideHelper.buildTarget(project, targetName);

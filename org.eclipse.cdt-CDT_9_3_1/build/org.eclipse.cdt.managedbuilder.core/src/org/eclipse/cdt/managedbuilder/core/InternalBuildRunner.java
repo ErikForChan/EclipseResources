@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.cdt.core.ErrorParserManager;
 import org.eclipse.cdt.core.ICommandLauncher;
@@ -173,16 +175,17 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 
 			// 1 ERROR 0 yes
 			if (status == ParallelBuilder.STATUS_ERROR || status == ParallelBuilder.STATUS_INVALID) {
+				
 				String fullPath = Platform.getInstallLocation().getURL().toString().replace("\\", "/");
 				String didePath = fullPath.substring(6,
 						(fullPath.substring(0, fullPath.length() - 1)).lastIndexOf("/") + 1);
 				File stup_complie_file = new File(didePath + "auto_complier.txt"); //$NON-NLS-1$
 				if (stup_complie_file.exists()) {
-					File errorFile = new File(didePath + "IDE/configuration/errorResult.txt"); //$NON-NLS-1$
+					File errorFile = new File(didePath + "IDE/readme/errorResult.txt"); //$NON-NLS-1$
 					String errMsg = project.getName() + "->" + cfgName + "， \n";
 					setErrorFile(errorFile, errMsg);
-					// SendErrorEmail email = new SendErrorEmail();
-					// email.send(errMsg);
+//					 SendErrorEmail email = new SendErrorEmail();
+//					 email.send(errMsg);
 				}
 			}
 
@@ -221,10 +224,7 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 				// if (!makefile.exists()) {
 				// makefile.createNewFile();
 				// }
-				boolean sucess =  cb.build(kind, bInfo, monitor);
-				if(sucess) {
-					
-				}
+				cb.build(kind, bInfo, monitor);
 			}
 			/*
 			 * New after Interalbuilder build successthen invoke Externalbuilder
@@ -254,7 +254,6 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 		// TODO Auto-generated method stub
 		BufferedReader br = null;
 		String line = null;
-		boolean targetExist = false;
 		StringBuffer bufAll = new StringBuffer(); // 保存修改过后的所有内容，不断增加
 		try {
 			br = new BufferedReader(new FileReader(errorFile));

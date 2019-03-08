@@ -147,6 +147,11 @@ public class DideHelper {
 	}
 	
 
+	/**
+	 * 编译目标编译选项
+	 * @param project 工程
+	 * @param targetName 目标编译选项
+	 */
 	public static void buildTarget(IProject project, String targetName) {
 		final ICProjectDescription local_prjd = CoreModel.getDefault().getProjectDescription(project);
 		ICConfigurationDescription[] conds = local_prjd.getConfigurations();
@@ -979,6 +984,27 @@ public class DideHelper {
 		}
 		return false;
 	}
+	
+	
+	private static String get_check_log(Component component, String parameter, String reason) {
+		String attribute = null;
+		switch (component.getAttribute()) {
+		case "system":
+			attribute = "核心组件";
+			break;
+		case "bsp":
+			attribute = "bsp组件";
+			break;
+		case "third":
+			attribute = "第三方组件";
+			break;
+		case "user":
+			attribute = "用户组件";
+			break;
+		}
+		String log = "配置文件"+component.getFileName() + ",\t组件名称:"+component.getName()+",\t"+attribute+"\n" +parameter+"\n配置有误,"+reason;
+		return log;
+	}
 
 	/**
 	 * 检查参数是否有配置错误
@@ -1035,7 +1061,7 @@ public class DideHelper {
 						} else {
 							if (tag.equals("int")) {
 								if(members[2].contains("\"")) {
-									String log = "配置文件"+component.getFileName() + "\n" +parameter+"\n配置有误,原因:"+members[2]+" 不是int类型\n\n";
+									String log = get_check_log(component,parameter,"原因:"+members[2]+" 不是int类型\n\n");
 									if(!errCheckMsg.contains(log)) {
 										openFileInDide(new File(component.getParentPath() + "/" + component.getFileName()));
 										DideHelper.writeFile(checkLog, log, true);
@@ -1048,7 +1074,7 @@ public class DideHelper {
 								}
 							} else if (tag.equals("string")) {
 								if(!members[2].contains("\"")) {
-									String log = "配置文件"+component.getFileName() + "\n" +parameter+"\n配置有误,原因:"+members[2]+" 不是字符串类型\n\n";
+									String log = get_check_log(component,parameter,"原因:"+members[2]+" 不是字符串类型\n\n");
 									if(!errCheckMsg.contains(log)) {
 										openFileInDide(new File(component.getParentPath() + "/" + component.getFileName()));
 										DideHelper.writeFile(checkLog, log, true);
@@ -1064,7 +1090,7 @@ public class DideHelper {
 						}
 					} catch (Exception e) {
 						// TODO: handle exception
-						String log = "配置文件"+component.getFileName() + "\n" +parameter+"\n配置有误,原因未知\n\n";
+						String log = get_check_log(component,parameter,"原因未知\n\n");
 						if(!errCheckMsg.contains(log)) {
 							openFileInDide(new File(component.getParentPath() + "/" + component.getFileName()));
 							DideHelper.writeFile(checkLog, log, true);

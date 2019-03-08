@@ -136,7 +136,7 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 
 		for (File file : cfgFiles) {
 			String str = null, coreConfigure = null;
-			boolean isApp = file.getPath().contains("app")?true:false;
+			boolean isApp = file.getPath().equalsIgnoreCase(appCfgFile.getPath())?true:false;
 			try {
 				FileReader reader = new FileReader(file.getPath());
 				BufferedReader br = new BufferedReader(reader);
@@ -1713,10 +1713,6 @@ public class ComponentCfgPage extends PropertyPage implements IComponentConstant
 		return checkNames;
 	}
 
-	/*
-	 * ------------------------------------------9¡¢ÅÐ¶Ïº¯Êý-----------------------------
-	 * ---------
-	 */
 	@Override
 	public boolean isDjyos() {
 		// TODO Auto-generated method stub

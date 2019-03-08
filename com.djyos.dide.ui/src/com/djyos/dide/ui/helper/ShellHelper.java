@@ -96,18 +96,6 @@ public class ShellHelper {
 				} 
 			}
 		}
-//		if(compt_object_checks.exists()) {
-//			File[] fs = compt_object_checks.listFiles();
-//			if(fs.length > 0) {
-//				for(File f:fs) {
-//					if(f.isDirectory()) {
-//						get_src_ofiles(f,o_files);
-//					}else if(f.getName().endsWith(".o")){
-//						o_files.add(f);
-//					}
-//				}
-//			}
-//		}
 		return o_files;
 	}
 	

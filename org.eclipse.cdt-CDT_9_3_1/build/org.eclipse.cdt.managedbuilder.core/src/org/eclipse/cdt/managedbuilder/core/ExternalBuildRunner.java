@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Map.Entry;
 
 import org.eclipse.cdt.build.core.scannerconfig.CfgInfoContext;
@@ -140,11 +142,33 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 					epm.deDuplicate();
 				}
 				
-				buildRunnerHelper.close();
+				
+//				buildRunnerHelper.close();
 				buildRunnerHelper.goodbye();
-			
+				
 				if (state != ICommandLauncher.ILLEGAL_COMMAND) {
 					buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
+					if(state == ICommandLauncher.OK  && configuration.getName().startsWith("libos")) {
+						boolean isApp = configuration.getName().contains("App") ? true
+								: false;
+						File a_file =  project.getFile(configuration.getName()+"/"+"libos_"+(isApp?"App":"Iboot")+".a").getLocation().toFile();
+						if(a_file.exists()) {
+							File ks_file = project.getFile("src/"+(isApp?"app":"iboot")+"/OS_prjcfg/keepshell.c").getLocation().toFile();
+							ks_file.delete();
+							buildRunnerHelper.printLine("正在分析.a文件，...请稍后，可查看右下方进度条"); //$NON-NLS-1$
+							Timer timer = new Timer(true);
+							timer.schedule(new TimerTask() {
+								@Override
+								public void run() {
+									// TODO Auto-generated method stub
+									if(ks_file.exists()) {
+										buildRunnerHelper.printLine("分析.a文件已完成"); //$NON-NLS-1$
+										timer.cancel();
+									}
+								}
+							},0,1000);
+						}
+					}
 				}
 		
 			} else {

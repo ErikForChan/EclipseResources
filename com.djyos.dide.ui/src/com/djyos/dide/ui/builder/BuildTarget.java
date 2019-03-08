@@ -1,5 +1,7 @@
 package com.djyos.dide.ui.builder;
 
+import java.io.File;
+
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.managedbuilder.core.IConfiguration;
 import org.eclipse.cdt.managedbuilder.core.ManagedBuildManager;
@@ -12,6 +14,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
+import com.djyos.dide.ui.helper.DideHelper;
 import com.ibm.icu.text.MessageFormat;
 
 public class BuildTarget extends Job{
