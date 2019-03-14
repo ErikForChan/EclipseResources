@@ -68,7 +68,7 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
 
 import com.djyos.dide.ui.DPluginImages;
 import com.djyos.dide.ui.arch.ReadArchXml;
-import com.djyos.dide.ui.builder.BuildTarget;
+import com.djyos.dide.ui.job.BuildTarget;
 import com.djyos.dide.ui.objects.Arch;
 import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.Component;
@@ -1175,7 +1175,7 @@ public class DideHelper {
 						} else if (cfgs[2].contains("+") || cfgs[2].contains("-") || cfgs[2].contains("*")
 								|| cfgs[2].contains("/")) {
 							String pureCal = getridParentheses(cfgs[2]);
-							if (pureCal.startsWith("-")) {
+							if (pureCal.startsWith("-") && min>=0) {
 								curData = toUnsigned(Long.parseLong(pureCal));
 							} else {
 								double result = Calculator.conversion(pureCal);
@@ -1195,7 +1195,7 @@ public class DideHelper {
 				} else if (members[2].contains("+") || members[2].contains("-") || members[2].contains("*")
 						|| members[2].contains("/")) {
 					String pureCal = getridParentheses(members[2]);
-					if (pureCal.startsWith("-")) {
+					if (pureCal.startsWith("-") && min>=0) {
 						curData = toUnsigned(Long.parseLong(pureCal));
 					} else {
 						double result = Calculator.conversion(pureCal);
@@ -1206,7 +1206,6 @@ public class DideHelper {
 					curData = Integer.parseInt(getridParentheses(members[2]));
 				}
 			}
-
 			if (curData < min || curData > max) {
 				return false;
 			}

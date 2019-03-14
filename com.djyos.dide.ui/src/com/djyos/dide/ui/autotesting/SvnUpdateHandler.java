@@ -30,8 +30,8 @@ import org.eclipse.ui.internal.ide.actions.BuildUtilities;
 //import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 //import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
-import com.djyos.dide.ui.builder.BuildTarget;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.job.BuildTarget;
 
 @SuppressWarnings("restriction")
 public class SvnUpdateHandler {

@@ -1,26 +1,13 @@
 package com.djyos.dide.ui.startup;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.MergeResult.MergeStatus;
-import org.eclipse.jgit.api.PullResult;
-import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.ui.IStartup;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 
-import com.djyos.dide.ui.autotesting.SvnUpdateHandler;
 import com.djyos.dide.ui.git.GitAutomation;
 import com.djyos.dide.ui.git.GitHandler;
 import com.djyos.dide.ui.handlers.ConfigurationHandler;
@@ -28,7 +15,6 @@ import com.djyos.dide.ui.handlers.FileHandler;
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.objects.Component;
 import com.djyos.dide.ui.wizards.component.ReadComponent;
-import com.ibm.icu.text.SimpleDateFormat;
 
 public class StartupHandler implements IStartup {
 
@@ -46,7 +32,7 @@ public class StartupHandler implements IStartup {
 
 //		Auto_Test_Build();
 		
-		Check_Compt_Repeat();
+//		Check_Compt_Repeat();
 
 	}
 

@@ -1,4 +1,4 @@
-package com.djyos.dide.ui.builder;
+package com.djyos.dide.ui.job;
 
 import java.io.File;
 

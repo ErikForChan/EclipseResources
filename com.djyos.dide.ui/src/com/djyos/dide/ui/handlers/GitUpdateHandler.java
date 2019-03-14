@@ -18,8 +18,8 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.internal.ide.actions.BuildUtilities;
 
-import com.djyos.dide.ui.builder.BuildTarget;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.job.BuildTarget;
 
 public class GitUpdateHandler {
 

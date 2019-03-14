@@ -106,22 +106,8 @@ public abstract class DjyosCommonProjectWizard extends BasicNewResourceWizard {
 	 */
 	public String getTemplateName() {
 		int tIndex = fMainPage.getTemplateIndex();
-		String templateName = null;
-		switch (tIndex) {
-		case 0:
-			templateName = "ibootapp";
-			break;
-		case 1:
-			templateName = "iboot";
-			break;
-		case 2:
-			templateName = "App";
-			break;
-		case 3:
-			templateName = "Apponly";
-			break;
-		}
-		return templateName;
+		String[] templateNames = {"ibootapp","iboot","App","Apponly"};
+		return templateNames[tIndex];
 	}
 
 	public boolean importProject(String projectPath, Board selectedBoard, Core selectedCore, boolean haveApp,

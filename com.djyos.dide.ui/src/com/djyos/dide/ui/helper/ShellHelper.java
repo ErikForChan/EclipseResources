@@ -90,10 +90,12 @@ public class ShellHelper {
 			String parent_folder_path = c.getParentPath();
 			File c_folder = new File(parentFile.getPath() + "\\src\\libos" + parent_folder_path.split("djysrc")[1]);
 			File[] child_files = c_folder.listFiles();
-			for(File f:child_files) {
-				if(f.getName().endsWith(".o")){
-					o_files.add(f);
-				} 
+			if(child_files.length > 0) {
+				for(File f:child_files) {
+					if(f.getName().endsWith(".o")){
+						o_files.add(f);
+					} 
+				}
 			}
 		}
 		return o_files;

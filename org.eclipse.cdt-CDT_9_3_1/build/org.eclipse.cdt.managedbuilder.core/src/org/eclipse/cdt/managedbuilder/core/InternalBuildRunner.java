@@ -184,8 +184,6 @@ public class InternalBuildRunner extends AbstractBuildRunner {
 					File errorFile = new File(didePath + "IDE/readme/errorResult.txt"); //$NON-NLS-1$
 					String errMsg = project.getName() + "->" + cfgName + "£¬ \n";
 					setErrorFile(errorFile, errMsg);
-//					 SendErrorEmail email = new SendErrorEmail();
-//					 email.send(errMsg);
 				}
 			}
 

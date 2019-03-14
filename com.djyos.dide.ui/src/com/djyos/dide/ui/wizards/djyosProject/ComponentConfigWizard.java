@@ -4,6 +4,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -76,6 +77,7 @@ import com.djyos.dide.ui.wizards.component.ReadComponent;
 public class ComponentConfigWizard extends WizardPage implements IComponentConstants {
 
 	private ComponentHelper componentCommon = new ComponentHelper();
+	private HashMap<String, String> tab_map = new HashMap<String, String>();
 
 	private void initComponent(List<Component> typeCompontents, boolean isApp) {
 		// TODO Auto-generated method stub
@@ -141,12 +143,12 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 	private void handleInitProject(List<Component> typeCompontentsChecked, List<Component> typeCheckedSort,
 			String projectLocation, boolean isApp) {
 		// TODO Auto-generated method stub
-		String content = "", firstInit = "\tuint16_t evtt_main;\n\n", lastInit = "", gpioInit = "", djyMain = "",
+		String content = "", firstInit = "\tuint16_t evtt_main;\r\n\r\n", lastInit = "", gpioInit = "", djyMain = "",
 				shellInit = "";
 		String earlyCode = "", mediumCode = "", laterCode = "";
 		initHead = DjyosMessages.Automatically_Generated;
-		initHead += "#include \"project_config.h\"\n" + "#include \"djyos.h\"\n" + "#include \"stdint.h\"\n"
-				+ "#include \"stddef.h\"\n" + "#include \"cpu_peri.h\"\n" + "extern ptu32_t djy_main(void);\n";
+		initHead += "#include \"project_config.h\"\r\n" + "#include \"djyos.h\"\r\n" + "#include \"stdint.h\"\r\n"
+				+ "#include \"stddef.h\"\r\n" + "#include \"cpu_peri.h\"\r\n" + "extern ptu32_t djy_main(void);\r\n";
 		File file = new File(projectLocation + "/src/" + (isApp ? "app" : "iboot") + "/initPrj.c");
 		DideHelper.createNewFile(file);
 		for (int i = 0; i < typeCompontentsChecked.size(); i++) {
@@ -182,7 +184,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 					String[] codes = code.split("\n");
 					for (int j = 0; j < codes.length; j++) {
 						if (codes[j].contains("#include")) {
-							initHead += codes[j].trim() + "\n";
+							initHead += codes[j].trim() + "\r\n";
 						} else {
 							// 如果函包含可变参，则将配置好的参数替换...
 							if (codes[j].contains("...") && paraNames.size() > 0) {
@@ -197,25 +199,25 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 								}
 								codes[j] = codes[j].replace("...", replaceParas);
 							}
-							codeStrings += "\t" + codes[j].trim() + "\n";
+							codeStrings += "\t" + codes[j].trim() + "\r\n";
 						}
 					}
 				}
 
 				if (grade != null && code != null && !codeStrings.trim().equals("")) {
 					if (dependents.contains("cpu_peri_gpio")) {
-						gpioInit += codeStrings + "\n";
+						gpioInit += codeStrings + "\r\n";
 					} else if (componentName.equals("heap")) {
-						lastInit += evttMain + codeStrings + "\n";
+						lastInit += evttMain + codeStrings + "\r\n";
 					} else if (componentName.equals("shell")) {
-						shellInit += codeStrings + "\n";
+						shellInit += codeStrings + "\r\n";
 					} else {
 						if (grade.equals("early")) {
-							earlyCode += codeStrings + "\n";
+							earlyCode += codeStrings + "\r\n";
 						} else if (grade.equals("medium")) {
-							mediumCode += codeStrings + "\n";
+							mediumCode += codeStrings + "\r\n";
 						} else if (grade.equals("later")) {
-							laterCode += codeStrings + "\n";
+							laterCode += codeStrings + "\r\n";
 						}
 					}
 				}
@@ -223,11 +225,11 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 
 		}
 		content += initHead;
-		content += "\n" + djyStart + djyMain + djyEnd;
+		content += "\r\n" + djyStart + djyMain + djyEnd;
 		content += initStart + firstInit + gpioInit + shellInit
-				+ "\t//-------------------early-------------------------//\n" + earlyCode
-				+ "\t//-------------------medium-------------------------//\n" + mediumCode
-				+ "\t//-------------------later-------------------------//\n" + laterCode + lastInit + initEnd;
+				+ "\t//-------------------early-------------------------//\r\n" + earlyCode
+				+ "\t//-------------------medium-------------------------//\r\n" + mediumCode
+				+ "\t//-------------------later-------------------------//\r\n" + laterCode + lastInit + initEnd;
 		DideHelper.writeFile(file, content,false);
 		componentCommon.createCheckXml(isApp, projectLocation, appCompontents, ibootCompontents);
 
@@ -318,6 +320,27 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 		mutexText.setEditable(false);
 	}
 
+
+	/**
+	 * 清除配置表格
+	 */
+	private void destory_table() {
+		for (Control control : tabelControls) {
+			control.dispose();
+		}
+		// partControls
+		for (Control control : partControls) {
+			control.dispose();
+		}
+		if (editor != null) {
+			editor.dispose();
+		}
+		if (editor1 != null) {
+			editor1.dispose();
+		}
+		table.removeAll();
+	}
+	
 	private void createDynamicGroup(Composite composite) {
 		// TODO Auto-generated method stub
 		creatDepedentCpt(composite);
@@ -353,6 +376,50 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 		item.setText("用户组件"); //$NON-NLS-1$
 		item.setControl(createTabContent(folder, appUserComponents, ibootUserComponents));
 
+		String[] kinds = {"system","bsp","third","user"};
+		folder.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int index = folder.getSelectionIndex();
+				TabItem item = folder.getItem(index);
+				Tree tempTree = (Tree) item.getControl();
+				for(String key:tab_map.keySet()) {
+					String value = tab_map.get(key).toString();
+					String[] values = value.split("\\s+");
+					Component c = ComponentHelper.getComponentByName(values[1].trim(), compontentsList);
+					if(c != null) {
+						if(c.getAttribute().equalsIgnoreCase(kinds[index])) {
+							for(TreeItem kind_item:tempTree.getItems()) {
+								if(kind_item.getText().equalsIgnoreCase(values[0])) {
+									kind_item.setExpanded(true);
+									destory_table();
+									for(TreeItem t:kind_item.getItems()) {
+										if(t.getText().trim().equalsIgnoreCase(values[1].trim())) {
+											tempTree.select(t);
+											initTable(c, values[0].contains("app"), t);
+											break;
+										}else if(t.getItems().length > 0) {
+											for(TreeItem t1:t.getItems()) {
+												if(t1.getText().trim().equalsIgnoreCase(values[1].trim())) {
+													tempTree.select(t1);
+													initTable(c, values[0].contains("app"), t1);
+													break;
+												}
+											}
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+				super.widgetSelected(e);
+			}
+		});
+		
+		
 		configGroup = ControlFactory.createGroup(sashForm, "组件配置[请选中要配置的组件]", 1);
 		configGroup.setLayout(new GridLayout(1, false));
 		configGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -499,6 +566,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 							Component itemCompt = componentCommon.getComponentByPath(item.getData().toString(),
 									isApp ? appCompontents : ibootCompontents);
 							if (itemCompt != null) {
+								tab_map.put(itemCompt.getAttribute(), (isApp?"app":"iboot")+" "+itemText);
 								List<String> depedents = itemCompt.getDependents();
 								List<String> mutexs = itemCompt.getMutexs();
 								String allDeps = "", allMuts = "";
@@ -968,7 +1036,6 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 		int min = Integer.parseInt(minString);
 		int max = Integer.parseInt(maxString);
 		String value = defines[0].split("\\s+")[2].replace("\"", "");
-//		System.out.println("value:  "+value);
 		if(value != null) {
 			if (value.length() < min || value.length() > max) {
 				text.setForeground(table.getDisplay().getSystemColor(SWT.COLOR_RED));
@@ -985,7 +1052,7 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 		} else if (members[2].contains("+") || members[2].contains("-") || members[2].contains("*")
 				|| members[2].contains("/")) {
 			String pureCal = DideHelper.getridParentheses(members[2]);
-			if (pureCal.startsWith("-")) {
+			if (pureCal.startsWith("-") && min>=0) {
 				curData = DideHelper.toUnsigned(Long.parseLong(pureCal));
 			} else {
 				double result = Calculator.conversion(pureCal);
@@ -1049,11 +1116,16 @@ public class ComponentConfigWizard extends WizardPage implements IComponentConst
 						lastchk = cur;
 					}
 				} else {
-					isSelect[cur] = false;
-					if (rangeSize > 0) {
-						checkcounter -= 1;
-						if (checkcounter < 0) {
-							checkcounter = 0;
+					if(!parameter.trim().startsWith("//")) {
+						checkBtn[cur].setSelection(true);
+						DideHelper.showErrorMessage("此参数必选，不可取消");
+					}else {
+						isSelect[cur] = false;
+						if (rangeSize > 0) {
+							checkcounter -= 1;
+							if (checkcounter < 0) {
+								checkcounter = 0;
+							}
 						}
 					}
 				}

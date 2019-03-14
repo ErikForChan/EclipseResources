@@ -258,24 +258,24 @@ public class GitHandler {
 			protected IStatus run(IProgressMonitor monitor) {
 				monitor.beginTask("比较本地与远程版本信息", 10);
 				File gitLocalFile = new File(projectPath + "/.git");
+				File local_master_file = new File(djysrcPath+"/.git/refs/heads/master");
+				File remote_master_file = new File(djysrcPath+"/.git/refs/remotes/origin/master");
 				boolean update = true;
 				try {
 					monitor.worked(5);
 					Git gitLocal = Git.open(gitLocalFile);
-//					String curVersion = getCurVersion(gitLocal);
-//					String preFetchVersion = getFetchVersion(gitLocalFile);
-//					System.out.println("curVersion1 : " + curVersion);
-//					System.out.println("preFetchVersion : " + preFetchVersion);
-					FetchResult fetchResult = gitLocal.fetch().call();
-					TrackingRefUpdate refUpdate = fetchResult.getTrackingRefUpdate("refs/remotes/origin/release");
-					if (refUpdate == null) {
+					gitLocal.fetch().call();
+//					FetchResult fetchResult = gitLocal.fetch().call();
+					String local_version = DideHelper.readFile(local_master_file).trim();
+					String remote_version = DideHelper.readFile(remote_master_file).trim();
+//					TrackingRefUpdate refUpdate = fetchResult.getTrackingRefUpdate("refs/remotes/origin/release");
+					if (local_version.equalsIgnoreCase(remote_version)) {
 						update = false;
 					}
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
 					update = false;
 				}
-//				System.out.println("update : " + update);
 				if (!update) {
 					if (tag == 1) {
 						PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {

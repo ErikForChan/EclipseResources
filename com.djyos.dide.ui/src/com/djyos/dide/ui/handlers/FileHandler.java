@@ -88,7 +88,6 @@ public class FileHandler implements IResourceChangeListener {
 									project.getLocation().toString() + "/data/hardware_info.xml");
 							
 							if (stup_complie_file.exists()) {
-								//自动编译库
 								BuildOsAuto(resource,project,stup_complie_file);
 							}
 
@@ -99,8 +98,6 @@ public class FileHandler implements IResourceChangeListener {
 							}
 							
 							if (resource.getName().endsWith(".a") && resource.getName().startsWith("libos")) {
-//								System.out.println("event.getType():  "+event.getType()+"  "+event.getBuildKind()
-//												+" "+delta.getFlags());
 								Analysis_aFile(resource);
 							}
 							
@@ -142,8 +139,7 @@ public class FileHandler implements IResourceChangeListener {
 		List<String> hardwares = ReadHardWareDesc.getHardWares(hardWardInfoFile);
 		String boardName = hardwares.get(0);
 		String cpuName = hardwares.get(1);
-		boolean isApp = libos_file.getParentFile().getName().contains("App") ? true
-				: false;
+		boolean isApp = libos_file.getParentFile().getName().contains("App") ? true : false;
 		File check_file = new File(resource.getProject().getLocation().toString() + "/data/"+(isApp?"app":"iboot")+"_component_check.xml");
 		List<CmpntCheck> compts_checks = ReadComponentCheckXml.getCmpntChecks(check_file);
 		List<Component> compt_object_checks = new ArrayList<Component>();
@@ -151,13 +147,15 @@ public class FileHandler implements IResourceChangeListener {
 		for(CmpntCheck cc:compts_checks) {
 			if(cc.isChecked().equals("true")) {
 				Component c = ComponentHelper.getComponentByName(cc.getCmpntName(), compontents);
-				compt_object_checks.add(c);
+				if(c != null) {
+					compt_object_checks.add(c);
+				}
 			}
 		}
 		
-		long startTime=System.currentTimeMillis();   //获取开始时间
+//		long startTime=System.currentTimeMillis();   //获取开始时间
 		ShellHelper.get_src_ofiles(compt_object_checks, o_files, libos_file.getParentFile());
-		long endTime=System.currentTimeMillis(); //获取结束时间
+//		long endTime=System.currentTimeMillis(); //获取结束时间
 //		System.out.println("获取所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 		List<String> symbols = new ArrayList<String>();
 		if(o_files.size() < 1) {
@@ -166,7 +164,6 @@ public class FileHandler implements IResourceChangeListener {
 			Job backgroundJob = new Job("正在分析"+resource.getName()) {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-//					long startTime=System.currentTimeMillis();   //获取开始时间
 					monitor.beginTask("正在分析"+resource.getName(), o_files.size() + 1);
 					monitor.worked(1);
 					for(File f:o_files) {
@@ -178,8 +175,6 @@ public class FileHandler implements IResourceChangeListener {
 						monitor.worked(1);
 					}
 					KeepShell.create_keepshell(isApp, resource.getProject(), symbols);
-//					long endTime=System.currentTimeMillis(); //获取结束时间
-//					System.out.println("分析所有.o的程序运行时间： "+(endTime-startTime)+"  ms");
 					return Status.CANCEL_STATUS;
 				}
 			};

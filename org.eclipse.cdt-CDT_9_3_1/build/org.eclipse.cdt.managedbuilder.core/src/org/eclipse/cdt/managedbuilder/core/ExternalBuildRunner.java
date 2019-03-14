@@ -147,7 +147,6 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 				buildRunnerHelper.goodbye();
 				
 				if (state != ICommandLauncher.ILLEGAL_COMMAND) {
-					buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
 					if(state == ICommandLauncher.OK  && configuration.getName().startsWith("libos")) {
 						boolean isApp = configuration.getName().contains("App") ? true
 								: false;
@@ -160,7 +159,7 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 							timer.schedule(new TimerTask() {
 								@Override
 								public void run() {
-									// TODO Auto-generated method stub
+									// TODO Auto-generated m`ethod stub
 									if(ks_file.exists()) {
 										buildRunnerHelper.printLine("分析.a文件已完成"); //$NON-NLS-1$
 										timer.cancel();
@@ -169,6 +168,7 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 							},0,1000);
 						}
 					}
+					buildRunnerHelper.refreshProject(cfgName, new SubProgressMonitor(monitor, TICKS_REFRESH_PROJECT, SubProgressMonitor.PREPEND_MAIN_LABEL_TO_SUBTASK));
 				}
 		
 			} else {

@@ -10,13 +10,9 @@
  *******************************************************************************/
 package com.djyos.dide.ui.startup;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.model.CoreModel;
@@ -25,28 +21,14 @@ import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionPreferences;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionWorkspacePreferences;
-import org.eclipse.core.internal.resources.Project;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.variables.IStringVariableManager;
-import org.eclipse.core.variables.IValueVariable;
-import org.eclipse.core.variables.VariablesPlugin;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.helper.LinkHelper;
-import com.djyos.dide.ui.helper.ShellHelper;
 import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.CmpntCheck;
 import com.djyos.dide.ui.objects.Component;
@@ -64,8 +46,6 @@ import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateComponentInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadComponentsInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.ReadIncludeFile;
-import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
-import com.djyos.dide.ui.wizards.djyosProject.tools.ReviseVariableToXML;
 
 import ilg.gnuarmeclipse.core.EclipseUtils;
 

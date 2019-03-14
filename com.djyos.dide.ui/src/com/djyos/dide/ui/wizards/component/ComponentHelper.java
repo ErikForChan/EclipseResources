@@ -34,7 +34,7 @@ public class ComponentHelper implements IComponentCommon {
 	
 	public static Component getComponentByName(String name,List<Component> compontents) {
 		for(Component c:compontents) {
-			if(c.getName().equals(name)) {
+			if(c.getName().trim().equalsIgnoreCase(name.trim())) {
 				return c;
 			}
 		}
@@ -45,17 +45,17 @@ public class ComponentHelper implements IComponentCommon {
 		List<Component> compontentsCheckedSort = isApp?appCheckedSort:ibootCheckedSort;
 		DideHelper.createNewFile(file);
 		String defineInit = DjyosMessages.Automatically_Generated;
-		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\n"
-				+ "#include \"stdint.h\"\n\n";
+		defineInit += "#ifndef __PROJECT_CONFFIG_H__\r\n" + "#define __PROJECT_CONFFIG_H__\r\n\r\n"
+				+ "#include \"stdint.h\"\r\n\r\n";
 		if(index == 3) {
-			defineInit += "#define CFG_RUNMODE_BAREAPP    1\n";
+			defineInit += "#define CFG_RUNMODE_BAREAPP    1\r\n";
 		}
 		for (int i = 0; i < compontentsCheckedSort.size(); i++) {
 			Component c = compontentsCheckedSort.get(i);
 			if (c.getTarget().equals(ConfigureTarget.HEADER.getName()) && c.isSelect()) {
 				if (c.getConfigure().contains("#define")) {
 					defineInit += "//*******************************  Configure " + c.getName()
-							+ "  ******************************************//\n";
+							+ "  ******************************************//\r\n";
 					String[] configures = c.getConfigure().split("\n");
 					for (int j = 0; j < configures.length; j++) {
 						if (configures[j].contains("#define")) {
@@ -72,19 +72,19 @@ public class ComponentHelper implements IComponentCommon {
 							}
 							defineInit += (annoName == null) ? configures[j]
 									: configures[j].replace(annoName, "").replace(",", "").replace("，", "");
-							defineInit += "\n";
+							defineInit += "\r\n";
 						}
 					}
 				}
 			}
 		}
-		defineInit += "//******************************* Core Clock ******************************************//\n";
+		defineInit += "//******************************* Core Clock ******************************************//\r\n";
 		if(coreConfigure == null) {
 			coreConfigure = String.format("%-9s", "#define") + String.format("%-32s", "CFG_CORE_MCLK")
 			+ String.format("%-18s", "(" + 216 + "*Mhz)") + "//主频，内核要用，必须定义";
 		}
 		defineInit += coreConfigure;
-		defineInit += "\n\n#endif";
+		defineInit += "\r\n\r\n#endif";
 //		System.out.println("defineInit:   "+defineInit);
 		DideHelper.writeFile(file, defineInit,false);
 	}
@@ -442,18 +442,20 @@ public class ComponentHelper implements IComponentCommon {
 			if (parameter.contains("#define") && !tag.equals("obj_para")) {
 				String pure_config = parametersDefined[i].startsWith("//")?parametersDefined[i].replaceFirst("//", ""):parametersDefined[i];
 				String[] defines = parametersDefined[i].trim().split("//");
-				String name = defines[1].contains("\"")?"\""+defines[1].split("\"")[1]+"\",":"";
-				String[] members = pure_config.trim().split("\\s+");
-				// define格式化
-				if (isSelect[i]) {
-					parametersDefined[i] = String.format("%-11s", members[0]) + " " + String.format("%-32s", members[1])
-							+ " " + String.format("%-18s", items[itemCount].getData("value")) + "//" + name
-							+ items[itemCount].getText(2);
-				} else {
-					parametersDefined[i] = String.format("%-11s", "//" + members[0]) + " "
-							+ String.format("%-32s", members[1]) + " "
-							+ String.format("%-18s", items[itemCount].getData("value")) + "//" + name
-							+ items[itemCount].getText(2);
+				if(defines.length > 1) {
+					String name = defines[1].contains("\"")?"\""+defines[1].split("\"")[1]+"\",":"";
+					String[] members = pure_config.trim().split("\\s+");
+					// define格式化
+					if (isSelect[i]) {
+						parametersDefined[i] = String.format("%-11s", members[0]) + " " + String.format("%-32s", members[1])
+								+ " " + String.format("%-18s", items[itemCount].getData("value")) + "//" + name
+								+ items[itemCount].getText(2);
+					} else {
+						parametersDefined[i] = String.format("%-11s", "//" + members[0]) + " "
+								+ String.format("%-32s", members[1]) + " "
+								+ String.format("%-18s", items[itemCount].getData("value")) + "//" + name
+								+ items[itemCount].getText(2);
+					}
 				}
 				itemCount++;
 			}

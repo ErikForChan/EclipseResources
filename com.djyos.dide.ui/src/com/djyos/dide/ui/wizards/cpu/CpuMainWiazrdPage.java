@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.cdt.managedbuilder.core.SendErrorEmail;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
@@ -196,6 +197,9 @@ public class CpuMainWiazrdPage extends WizardPage implements ICpuConstants,IArch
 //			};
 //			backgroundJob.schedule();
 //		}
+		
+//		 SendErrorEmail email = new SendErrorEmail();
+//		 email.send("≤‚ ‘” º˛∑¢ÀÕ");
 		
 		Composite composite = new Composite(parent, SWT.NULL);
 		composite.setLayout(new GridLayout());
