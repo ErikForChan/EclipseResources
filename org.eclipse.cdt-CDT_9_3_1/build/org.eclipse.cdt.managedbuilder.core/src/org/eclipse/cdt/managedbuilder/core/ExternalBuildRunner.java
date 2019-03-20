@@ -146,6 +146,8 @@ public class ExternalBuildRunner extends AbstractBuildRunner {
 //				buildRunnerHelper.close();
 				buildRunnerHelper.goodbye();
 				
+				System.out.println("Ex_state:   "+state);
+				
 				if (state != ICommandLauncher.ILLEGAL_COMMAND) {
 					if(state == ICommandLauncher.OK  && configuration.getName().startsWith("libos")) {
 						boolean isApp = configuration.getName().contains("App") ? true
