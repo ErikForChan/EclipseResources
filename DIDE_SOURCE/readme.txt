@@ -1,0 +1,3 @@
+com.djyos.dide中为djyos插件
+org.eclipse.cdt中为CDT插件
+其他为eclipse公用插件
