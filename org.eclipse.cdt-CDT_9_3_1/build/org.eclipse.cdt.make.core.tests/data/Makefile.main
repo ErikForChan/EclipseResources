@@ -1,4 +1,0 @@
-VAR = foo
-include Makefile.incl
-main: $(VAR)
-	nothing

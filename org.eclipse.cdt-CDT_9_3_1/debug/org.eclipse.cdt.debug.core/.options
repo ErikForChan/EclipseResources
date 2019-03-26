@@ -1,5 +1,0 @@
-org.eclipse.cdt.debug.core/debug=false
-
-# Reports activity on the ExecutablesManager and its client (Executables viewer)
-org.eclipse.cdt.debug.core/debug/executables=false
-

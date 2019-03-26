@@ -1,5 +1,0 @@
-#include "Enumerator_307738.h"
-
-void test() {
-  int i = Ns::ENUM_VALUE;
-}

@@ -1,5 +1,0 @@
-#include "Template_306670.h"
-
-void test() {
-    func306670(1);
-}

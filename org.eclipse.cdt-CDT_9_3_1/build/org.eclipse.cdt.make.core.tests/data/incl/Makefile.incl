@@ -1,2 +1,0 @@
-INCLVAR = bar
-foo.o: .PHONY
