@@ -20,6 +20,8 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 
+import com.djyos.dide.ui.DPluginImages;
+import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.objects.Core;
 import com.djyos.dide.ui.objects.CoreMemory;
 
@@ -58,7 +60,6 @@ public class SelectCoreDialog extends StatusDialog {
 		coreCpt.setLayout(coreLayout);
 		coreCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		createTreeForCores(coreCpt);
-		coreTree.setSize(170, 200);
 		detailsField = new Text(coreCpt, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
 		detailsField.setLayoutData(new GridData(GridData.FILL_BOTH));
 		detailsField.setEditable(false);
@@ -71,7 +72,8 @@ public class SelectCoreDialog extends StatusDialog {
 		if (items.length > 0) {
 			String coreName = items[0].getText();
 			for (int i = 0; i < cores.size(); i++) {
-				if (coreName.contains(String.valueOf(i + 1))) {
+				String cName = DideHelper.getCoreName(cores.get(i),i);
+				if (coreName.contains(cName)) {
 					coreSelected = cores.get(i);
 					break;
 				}
@@ -82,22 +84,13 @@ public class SelectCoreDialog extends StatusDialog {
 
 	private void createTreeForCores(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NULL);
-		coreTree = new Tree(composite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		coreTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-		coreTree.setHeaderVisible(true);
+		coreTree = DideHelper.buildTree(composite, 170, 200, "内核名称", SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 		for (int i = 0; i < cores.size(); i++) {
 			TreeItem t = new TreeItem(coreTree, SWT.NONE);
-			t.setText("Core" + (i + 1));
+			String coreName = DideHelper.getCoreName(cores.get(i),i);
+			t.setText(coreName);
+			t.setImage(DPluginImages.OBJ_CORE_VIEW.createImage());
 		}
-
-		coreTree.addListener(SWT.MouseDoubleClick, new Listener() {
-
-			@Override
-			public void handleEvent(Event event) {
-				// TODO Auto-generated method stub
-				okPressed();
-			}
-		});
 
 		coreTree.addSelectionListener(new SelectionListener() {
 
@@ -111,9 +104,9 @@ public class SelectCoreDialog extends StatusDialog {
 					detailsDesc = "";
 					for (int j = 0; j < cores.size(); j++) {
 						Core core = cores.get(j);
-						if (coreName.contains(String.valueOf(j + 1))) {
+						String cName = DideHelper.getCoreName(core,j);
+						if (coreName.contains(cName)) {
 							String type = core.getArch().getSerie();
-							;
 							String arch = core.getArch().getMarch();
 							String family = core.getArch().getMcpu();
 							String fpuType = core.getFpuType();
@@ -123,14 +116,25 @@ public class SelectCoreDialog extends StatusDialog {
 								CoreMemory memory = core.getMemorys().get(k);
 								if (memory.getType().equals("ROM")) {
 									memoryString += "\n\tFlashStart: " + memory.getStartAddr() + "\n\tFlashSize: "
-											+ memory.getSize() + "k";
+											+ memory.getSize();
 								} else if (memory.getType().equals("RAM")) {
 									memoryString += "\n\tRamStart: " + memory.getStartAddr() + "\n\tRamSize: "
-											+ memory.getSize() + "k";
+											+ memory.getSize();
 								}
 							}
-							detailsDesc = "type: " + type + "\nArch: " + arch + "\nFamily: " + family + "\nFputype: "
-									+ fpuType + "\nResetAddr: " + resetAddr + "\nMemory:  " + memoryString + "\n\n";
+							if(type != null) {
+								detailsDesc += ("系列: " + type);
+							}
+							if(arch!=null) {
+								detailsDesc += ("\n架构: " + arch);
+							}
+							if(family!=null) {
+								detailsDesc += ("\n家族: " + family);
+							}
+							if(fpuType!=null) {
+								detailsDesc += ("\n浮点: " + fpuType);
+							}
+							detailsDesc += "\n复位地址: " + resetAddr + "\n存储:  " + memoryString + "\n\n";
 							break;
 						}
 
@@ -142,13 +146,8 @@ public class SelectCoreDialog extends StatusDialog {
 			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
-
+				okPressed();
 			}
 		});
-		final TreeColumn columnCpus = new TreeColumn(coreTree, SWT.NONE);
-		columnCpus.setText("内核名称");
-		columnCpus.setWidth(140);
-		columnCpus.setResizable(false);
-		columnCpus.setToolTipText("Cpu");
 	}
 }

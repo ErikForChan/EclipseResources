@@ -9,6 +9,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -16,8 +17,10 @@ import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.Chip;
 import com.djyos.dide.ui.objects.Component;
+import com.djyos.dide.ui.objects.CoreMemory;
 import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.objects.OnBoardMemory;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class ReadBoardXml {
 	private static DocumentBuilderFactory dbFactory = null;
@@ -36,8 +39,8 @@ public class ReadBoardXml {
 	public static List<Board> getAllBoards() {
 		List<Board> boards = new ArrayList<Board>();
 		List<String> paths = new ArrayList<String>();
-		String userBoardFilePath = DideHelper.getUserBoardFilePath();
-		String demoBoardFilePath = DideHelper.getDemoBoardFilePath();
+		String userBoardFilePath = PathTool.getUserBoardFilePath();
+		String demoBoardFilePath = PathTool.getDemoBoardFilePath();
 		paths.add(userBoardFilePath);
 		paths.add(demoBoardFilePath);
 		for (int i = 0; i < paths.size(); i++) {
@@ -73,7 +76,7 @@ public class ReadBoardXml {
 	public static Board getBoard(File file) throws Exception {
 		document = db.parse(file);
 		Board board = new Board();
-		board.setBoardPath(file.getParentFile().getPath());
+		board.setBoardFolderPath(file.getParentFile().getPath());
 		Node nameNode = document.getElementsByTagName("boardName").item(0);
 		board.setBoardName(nameNode.getTextContent());
 		NodeList onBoardCpuList = document.getElementsByTagName("cpu");
@@ -140,6 +143,33 @@ public class ReadBoardXml {
 			onBoardCpus.add(cpuOn);
 		}
 		board.setOnBoardCpus(onBoardCpus);
+		
+		NodeList smLists = document.getElementsByTagName("shared_memory");
+		if(smLists.getLength() != 0) {
+			NodeList mLists = smLists.item(0).getChildNodes();
+			for(int i=0;i<mLists.getLength();i++) {
+				Node mNode = mLists.item(i);
+				if(mNode.getNodeType() == Node.ELEMENT_NODE) {
+					OnBoardMemory m = new OnBoardMemory();
+					NamedNodeMap attrs = mNode.getAttributes();
+					for(int j=0;j<attrs.getLength();j++) {
+						String attrName = attrs.item(j).getNodeName();
+						switch(attrName) {
+						case "type":
+							m.setType(attrs.item(j).getNodeValue());
+							break;
+						case "startAddr":
+							m.setStartAddr(attrs.item(j).getNodeValue());
+							break;
+						case "size":
+							m.setSize(attrs.item(j).getNodeValue());
+							break;
+						}
+					}
+					board.getShare_memorys().add(m);
+				}
+			}
+		}
 		return board;
 	}
 }

@@ -17,11 +17,12 @@ import org.w3c.dom.Element;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.objects.Component;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class CreateComponentInfo {
 
 	static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	static String srcLocation = DideHelper.getDjyosSrcPath();
+	static String srcLocation = PathTool.getDjyosSrcPath();
 
 	public static void createComponentInfo(File file, List<Component> components) {
 

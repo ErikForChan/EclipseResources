@@ -21,17 +21,19 @@ import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.internal.ide.actions.BuildUtilities;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+//import org.tmatesoft.svn.core.SVNException;
+//import org.tmatesoft.svn.core.SVNLogEntry;
+//import org.tmatesoft.svn.core.SVNURL;
+//import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+//import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+//import org.tmatesoft.svn.core.io.SVNRepository;
+//import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+//import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
-import com.djyos.dide.ui.builder.BuildTarget;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.job.BuildTarget;
+import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 @SuppressWarnings("restriction")
 public class SvnUpdateHandler {
@@ -39,7 +41,7 @@ public class SvnUpdateHandler {
 	final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 	IProject[] projects = workspace.getRoot().getProjects();
 	IResourceRuleFactory ruleFactory = ResourcesPlugin.getWorkspace().getRuleFactory();
-	File svnVerFile = new File(DideHelper.getDIDEPath() + "IDE/configuration/.settings/com.djyos.svnVerson.prefs");
+	File svnVerFile = new File(PathTool.getDIDEPath() + "IDE/configuration/.settings/com.djyos.svnVerson.prefs");
 
 	public void visitSvn() {
 		if (!svnVerFile.exists()) {
@@ -50,118 +52,144 @@ public class SvnUpdateHandler {
 				e.printStackTrace();
 			}
 		}
-		Detect_Svn_Schedule();
+		// Detect_Svn_Schedule();
+
+		Job buildJob = null;
+		if (projects.length != 0) {
+
+			CUIPlugin.getDefault().startGlobalConsole();
+			for (IProject project : projects) {
+				ICProjectDescription projectDescription = CoreModel.getDefault().getProjectDescription(project, false);
+				if (projectDescription != null) {
+					ICConfigurationDescription[] cfgds = projectDescription.getConfigurations();
+					ArrayList<ICConfigurationDescription> libcfgdList = new ArrayList<ICConfigurationDescription>();
+					for (ICConfigurationDescription cfgd : cfgds) {
+						if (cfgd.getName().startsWith("libos")) {
+							libcfgdList.add(cfgd);
+						}
+					}
+					ICConfigurationDescription[] libosCfgds = new ICConfigurationDescription[libcfgdList.size()];
+					if (cfgds != null && cfgds.length > 0) {
+						BuildUtilities.saveEditors(null);
+						buildJob = new BuildTarget(libcfgdList.toArray(libosCfgds), 0,
+								IncrementalProjectBuilder.INCREMENTAL_BUILD);
+						buildJob.schedule();
+					}
+				}
+			}
+		}
+
 	}
 
 	private void Detect_Svn_Schedule() {
-		Timer timer = new Timer(true);
-		timer.schedule(new TimerTask() {
-
-			@SuppressWarnings("deprecation")
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				String url = "https://xiangmuzuserver/svn/硬件组开发库/platform_soft/djyos/trunk";
-				String name = "chenjm@sznari.com";
-				String password = "sunri@2017";
-				long startRevision = 43903;
-				long endRevision = -1; // HEAD (the latest) revision
-
-				Collection logEntries = null;
-				SVNURL svnurl;
-				try {
-					svnurl = SVNURL.parseURIEncoded(url);
-					DAVRepositoryFactory.setup();
-					ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name,
-							password);
-					SVNRepository repos = SVNRepositoryFactory.create(svnurl);
-					repos.setAuthenticationManager(authManager);
-					logEntries = repos.log(new String[] { "" }, null, startRevision, endRevision, true, true);
-				} catch (SVNException e) {
-					e.printStackTrace();
-				}
-				int entryNum = 0;
-				for (Iterator entries = logEntries.iterator(); entries.hasNext();) {
-					SVNLogEntry logEntry = (SVNLogEntry) entries.next();
-					entryNum++;
-					if (entryNum == logEntries.size()) {
-						long svnVersion = logEntry.getRevision();
-						// Long preSvnVersion = (long) 0;
-						Long preSvnVersion = getSvnVersion(svnVerFile);
-						// System.out.println("---------------------------------------------");
-						// System.out.println("revision: " + logEntry.getRevision());
-						// System.out.println("author: " + logEntry.getAuthor());
-						// System.out.println("date: " + logEntry.getDate());
-						// System.out.println("log message: " + logEntry.getMessage());
-						if (preSvnVersion != svnVersion) {
-							File errorFile = new File(DideHelper.getDIDEPath() + "IDE/configuration/errorResult.txt");
-							DideHelper.createNewFile(errorFile);
-
-							Job buildJob = null;
-							if (projects.length != 0) {
-								CUIPlugin.getDefault().startGlobalConsole();
-								for (IProject project : projects) {
-									ICProjectDescription projectDescription = CoreModel.getDefault()
-											.getProjectDescription(project, false);
-									if (projectDescription != null) {
-										ICConfigurationDescription[] cfgds = projectDescription.getConfigurations();
-										ArrayList<ICConfigurationDescription> libcfgdList = new ArrayList<ICConfigurationDescription>();
-										for (ICConfigurationDescription cfgd : cfgds) {
-											if (cfgd.getName().startsWith("libos")) {
-												libcfgdList.add(cfgd);
-											}
-										}
-										ICConfigurationDescription[] libosCfgds = new ICConfigurationDescription[libcfgdList
-												.size()];
-										if (cfgds != null && cfgds.length > 0) {
-											BuildUtilities.saveEditors(null);
-											buildJob = new BuildTarget(libcfgdList.toArray(libosCfgds), 0,
-													IncrementalProjectBuilder.INCREMENTAL_BUILD);
-											buildJob.schedule();
-										}
-									}
-								}
-							}
-
-							setSvnVersion(svnVerFile, svnVersion);
-
-							if (buildJob != null) {
-								Job job = buildJob;
-								Timer t = new Timer(true);
-								t.schedule(new TimerTask() {
-
-									@Override
-									public void run() {
-										// TODO Auto-generated method stub
-										if (job.getState() == Job.RUNNING) {
-											System.out.println("----------Job.RUNNING");
-										} else if (job.getState() == Job.WAITING) {
-											System.out.println("----------Job.WAITING");
-										} else if (job.getState() == Job.SLEEPING) {
-											System.out.println("----------Job.SLEEPING");
-										} else if (job.getState() == Job.NONE) {
-											System.out.println("----------Job.NONE");
-											String errMsg = DideHelper.getFileContent(errorFile);
-											if (!errMsg.trim().equals("")) {
-												SendEmail email = new SendEmail();
-												email.send_Email(errMsg);
-												t.cancel();
-											}
-										}
-									}
-								}, 0, 10 * 1000);
-								// buildJob =
-								// new BuildTarget(null, 0, 0, true);
-								// buildJob.schedule();
-
-							}
-						}
-					}
-				}
-
-			}
-
-		}, 0, 2 * 60 * 60 * 1000);
+//		Timer timer = new Timer(true);
+//		timer.schedule(new TimerTask() {
+//
+//			@SuppressWarnings("deprecation")
+//			@Override
+//			public void run() {
+//				// TODO Auto-generated method stub
+//				String url = "https://xiangmuzuserver/svn/硬件组开发库/platform_soft/djyos/trunk";
+//				String name = "chenjm@sznari.com";
+//				String password = "sunri@2017";
+//				long startRevision = 43903;
+//				long endRevision = -1; // HEAD (the latest) revision
+//
+//				Collection logEntries = null;
+//				SVNURL svnurl;
+//				try {
+//					svnurl = SVNURL.parseURIEncoded(url);
+//					DAVRepositoryFactory.setup();
+//					ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(name,
+//							password);
+//					SVNRepository repos = SVNRepositoryFactory.create(svnurl);
+//					repos.setAuthenticationManager(authManager);
+//					logEntries = repos.log(new String[] { "" }, null, startRevision, endRevision, true, true);
+//				} catch (SVNException e) {
+//					e.printStackTrace();
+//				}
+//				int entryNum = 0;
+//				for (Iterator entries = logEntries.iterator(); entries.hasNext();) {
+//					SVNLogEntry logEntry = (SVNLogEntry) entries.next();
+//					entryNum++;
+//					if (entryNum == logEntries.size()) {
+//						long svnVersion = logEntry.getRevision();
+//						// Long preSvnVersion = (long) 0;
+//						Long preSvnVersion = getSvnVersion(svnVerFile);
+//						// System.out.println("---------------------------------------------");
+//						// System.out.println("revision: " + logEntry.getRevision());
+//						// System.out.println("author: " + logEntry.getAuthor());
+//						// System.out.println("date: " + logEntry.getDate());
+//						// System.out.println("log message: " + logEntry.getMessage());
+//						if (preSvnVersion != svnVersion) {
+//							File errorFile = new File(DideHelper.getDIDEPath() + "IDE/configuration/errorResult.txt");
+//							DideHelper.createNewFile(errorFile);
+//
+//							Job buildJob = null;
+//							if (projects.length != 0) {
+//								CUIPlugin.getDefault().startGlobalConsole();
+//								for (IProject project : projects) {
+//									ICProjectDescription projectDescription = CoreModel.getDefault()
+//											.getProjectDescription(project, false);
+//									if (projectDescription != null) {
+//										ICConfigurationDescription[] cfgds = projectDescription.getConfigurations();
+//										ArrayList<ICConfigurationDescription> libcfgdList = new ArrayList<ICConfigurationDescription>();
+//										for (ICConfigurationDescription cfgd : cfgds) {
+//											if (cfgd.getName().startsWith("libos")) {
+//												libcfgdList.add(cfgd);
+//											}
+//										}
+//										ICConfigurationDescription[] libosCfgds = new ICConfigurationDescription[libcfgdList
+//												.size()];
+//										if (cfgds != null && cfgds.length > 0) {
+//											BuildUtilities.saveEditors(null);
+//											buildJob = new BuildTarget(libcfgdList.toArray(libosCfgds), 0,
+//													IncrementalProjectBuilder.INCREMENTAL_BUILD);
+//											buildJob.schedule();
+//										}
+//									}
+//								}
+//							}
+//
+//							setSvnVersion(svnVerFile, svnVersion);
+//
+//							// if (buildJob != null) {
+//							// Job job = buildJob;
+//							// Timer t = new Timer(true);
+//							// t.schedule(new TimerTask() {
+//							//
+//							// @Override
+//							// public void run() {
+//							// // TODO Auto-generated method stub
+//							// if (job.getState() == Job.RUNNING) {
+//							// System.out.println("----------Job.RUNNING");
+//							// } else if (job.getState() == Job.WAITING) {
+//							// System.out.println("----------Job.WAITING");
+//							// } else if (job.getState() == Job.SLEEPING) {
+//							// System.out.println("----------Job.SLEEPING");
+//							// } else if (job.getState() == Job.NONE) {
+//							// System.out.println("----------Job.NONE");
+//							// String errMsg = DideHelper.getFileContent(errorFile);
+//							// if (!errMsg.trim().equals("")) {
+//							// SendEmail email = new SendEmail();
+//							// email.send_Email(errMsg);
+//							// t.cancel();
+//							// }
+//							// }
+//							// }
+//							// }, 0, 10 * 1000);
+//							// // buildJob =
+//							// // new BuildTarget(null, 0, 0, true);
+//							// // buildJob.schedule();
+//							//
+//							// }
+//						}
+//					}
+//				}
+//
+//			}
+//
+//		}, 0, 2 * 60 * 60 * 1000);
 	}
 
 	private long getSvnVersion(File svnVerFile) {
@@ -224,7 +252,7 @@ public class SvnUpdateHandler {
 		if (!find) {
 			bufAll.append("SVN_VERION=" + version + "\n");
 		}
-		DideHelper.writeFile(svnVerFile, bufAll.toString());
+		FileTool.writeFile(svnVerFile, bufAll.toString(),false);
 	}
 
 }

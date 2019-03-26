@@ -70,7 +70,7 @@ public class MyJob extends Job {
 		if (!find) {
 			bufAll.append("SVN_VERION=" + version + "\n");
 		}
-		DideHelper.writeFile(svnVerFile, bufAll.toString());
+		FileTool.writeFile(svnVerFile, bufAll.toString(),false);
 	}
 
 }

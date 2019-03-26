@@ -37,6 +37,7 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.FetchResult;
@@ -46,17 +47,19 @@ import org.eclipse.ui.PlatformUI;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.wizards.djyosProject.tools.DeleteFolderUtils;
+import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class GitHandler {
-	// https://git.coding.net/djyos/source.git
+	// https://git.coding.net/djyos/djyos.git
 	// https://gitee.com/djyos/source.git
 	// https://github.com/ErikForChan/Arraylist_link.git
 	DeleteFolderUtils df = new DeleteFolderUtils();
-	String djysrcPath = DideHelper.getDjyosSrcPath();
-	String comparePath = DideHelper.getDIDEPath() + "gitTemp";
+	String djysrcPath = PathTool.getDjyosSrcPath();
+	String comparePath = PathTool.getDIDEPath() + "gitTemp";
 
-	File didePrefsFile = new File(DideHelper.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
-	public String remotePath = "https://git.coding.net/djyos/source.git";// djyos远程库路径
+	File didePrefsFile = new File(PathTool.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
+	public String remotePath = "https://git.coding.net/djyos/djyos.git";// djyos远程库路径
 	private IWorkspace workspace = ResourcesPlugin.getWorkspace();
 	File compareFile = new File(comparePath);
 
@@ -139,11 +142,9 @@ public class GitHandler {
 					monitor.done();
 					PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 						public void run() {
-							IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-							MessageDialog.openError(window.getShell(), "提示", "更新Djyos源码失败: " + e.getMessage());
+							DideHelper.showErrorMessage("更新Djyos源码失败: " + e.getMessage());
 						}
 					});
-					e.printStackTrace();
 				}
 				monitor.worked(5);
 				if (isOK) {
@@ -232,6 +233,23 @@ public class GitHandler {
 		});
 	}
 
+	private String getCurVersion(Git gitLocal) {
+		Iterable<RevCommit> gitlogCur;
+		List<RevCommit> gitIistCur = null;
+		try {
+			gitlogCur = gitLocal.log().call();
+			gitIistCur = copyIterator(gitlogCur.iterator());
+		} catch (NoHeadException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (GitAPIException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return gitIistCur.get(0).getName();
+	}
+
 	/*
 	 * 检查git是否有更新
 	 */
@@ -242,35 +260,33 @@ public class GitHandler {
 			protected IStatus run(IProgressMonitor monitor) {
 				monitor.beginTask("比较本地与远程版本信息", 10);
 				File gitLocalFile = new File(projectPath + "/.git");
+				File local_release_file = new File(djysrcPath+"/.git/refs/heads/release");
+				File remote_release_file = new File(djysrcPath+"/.git/refs/remotes/origin/release");
 				boolean update = true;
 				try {
 					monitor.worked(5);
 					Git gitLocal = Git.open(gitLocalFile);
-					Iterable<RevCommit> gitlogCur = gitLocal.log().call();
-					List<RevCommit> gitIistCur = copyIterator(gitlogCur.iterator());
-					String curVersion = gitIistCur.get(0).getName();
-					String preFetchVersion = getFetchVersion(gitLocalFile);
-					System.out.println("curVersion1 : " + curVersion);
-					System.out.println("remoteVersion1 : " + preFetchVersion);
-					if (curVersion.equals(preFetchVersion)) {
-						FetchResult fetchResult = gitLocal.fetch().call();
-						TrackingRefUpdate refUpdate = fetchResult.getTrackingRefUpdate("refs/remotes/origin/release");
-						if (refUpdate != null) {
-							monitor.worked(3);
-							String remoteVersion = getFetchVersion(gitLocalFile);
-							System.out.println("curVersion : " + curVersion);
-							System.out.println("remoteVersion : " + remoteVersion);
-							monitor.worked(1);
-							if (curVersion.equals(remoteVersion)) {
-								update = false;
-							}
-						} else {
+					gitLocal.fetch().call();
+//					FetchResult fetchResult = gitLocal.fetch().call();
+					if(local_release_file.exists()) {
+						String local_version = FileTool.readFile(local_release_file).trim();
+						String remote_version;
+						if(remote_release_file.exists()) {
+							remote_version = FileTool.readFile(remote_release_file).trim();
+						}else {
+							remote_version = local_version;
+						}
+						
+//						TrackingRefUpdate refUpdate = fetchResult.getTrackingRefUpdate("refs/remotes/origin/release");
+						if (local_version.equalsIgnoreCase(remote_version)) {
 							update = false;
 						}
+					}else {
+						update = false;
 					}
+					
 				} catch (Exception e1) {
 					// TODO Auto-generated catch block
-					e1.printStackTrace();
 					update = false;
 				}
 				if (!update) {
@@ -286,7 +302,7 @@ public class GitHandler {
 					prepare_Update(tag);
 					return Status.OK_STATUS;
 				}
-				monitor.worked(1);
+				monitor.worked(5);
 				return Status.CANCEL_STATUS;
 			}
 		};
@@ -303,31 +319,69 @@ public class GitHandler {
 		BufferedReader buf = null;
 		String line = null;
 		String releaseMsg = null;
-		try {
-			buf = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
-			while ((line = buf.readLine()) != null) {
-				// 修改内容核心代码
-				if (line.contains("release")) {
-					releaseMsg = line;
-					break;
+		if (file.exists()) {
+			try {
+				buf = new BufferedReader(new InputStreamReader(new FileInputStream(file), "utf-8"));
+				while ((line = buf.readLine()) != null) {
+					// 修改内容核心代码
+					if (line.contains("release")) {
+						releaseMsg = line;
+						break;
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				if (buf != null) {
+					try {
+						buf.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (buf != null) {
-				try {
-					buf.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+			if (releaseMsg != null) {
+				String remoteVersion = releaseMsg.split("\\s+")[0];
+				return remoteVersion;
 			}
-		}
-		if (releaseMsg != null) {
-			String remoteVersion = releaseMsg.split("\\s+")[0];
-			return remoteVersion;
 		}
 		return "";
+
+		// DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		// Repository repository;
+		// try {
+		// repository = new RepositoryBuilder().setGitDir(gitLocalFile).build();
+		// try (RevWalk walk = new RevWalk(repository)) {
+		// Ref head = repository.findRef("HEAD");
+		// walk.markStart(walk.parseCommit(head.getObjectId())); // 从HEAD开始遍历，
+		// for (RevCommit commit : walk) {
+		// RevTree tree = commit.getTree();
+		// System.out.println("tree： " + tree);
+		//
+		// TreeWalk treeWalk = new TreeWalk(repository, repository.newObjectReader());
+		// PathFilter f = PathFilter.create("pom.xml");
+		// treeWalk.setFilter(f);
+		// treeWalk.reset(tree);
+		// treeWalk.setRecursive(false);
+		// while (treeWalk.next()) {
+		// PersonIdent authoIdent = commit.getAuthorIdent();
+		// System.out.println("提交人： " + authoIdent.getName() + " <" +
+		// authoIdent.getEmailAddress() + ">");
+		// System.out.println("提交SHA1： " + commit.getId().name());
+		// System.out.println("提交信息： " + commit.getShortMessage());
+		// System.out.println("提交时间： " + format.format(authoIdent.getWhen()));
+		//
+		// ObjectId objectId = treeWalk.getObjectId(0);
+		// ObjectLoader loader = repository.open(objectId);
+		// loader.copyTo(System.out); // 提取blob对象的内容
+		// }
+		// }
+		// }
+		//
+		// } catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
 	}
 
 	private boolean clone_Repository(String url, File file) {

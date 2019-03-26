@@ -67,8 +67,30 @@ public class LinkHelper {
 			CUIPlugin.log(e);
 		}
 	}
+	
+	// include多个文件夹
+	public static void setFoldersInclude(List<IFolder> folders, ICConfigurationDescription[] conds) {
+		// TODO Auto-generated method stub
+		for (int i = 0; i < conds.length; i++) {
+			if (conds[i].getName().contains("libos")) {
+				for (int k = folders.size() - 1; k >= 0; k--) {
+					setFolderExclude(folders.get(k), conds[i], false);
+				}
+			}
+		}
+	}
+	
+	//排除工程中libos选项中对folder的编译
+	public static void setProjectFolderExclude(IFolder ifolder, ICConfigurationDescription[] conds, boolean exclude) {
+		for (int j = 0; j < conds.length; j++) {
+			if(conds[j].getName().startsWith("libos")) {
+				setFolderExclude(ifolder, conds[j], exclude);
+			}
+		}
+	}
 
-	public static void setExclude(IFolder ifle, ICConfigurationDescription cfg, boolean exclude) {
+	//排除文件夹的编译
+	public static void setFolderExclude(IFolder ifle, ICConfigurationDescription cfg, boolean exclude) {
 		try {
 			ICSourceEntry[] newEntries = CDataUtil.setExcluded(ifle.getFullPath(), (ifle instanceof IFolder), exclude,
 					cfg.getSourceEntries());
@@ -82,6 +104,16 @@ public class LinkHelper {
 		// TODO Auto-generated method stub
 		for (int j = 0; j < compontentsChecked.size(); j++) {
 			Component component = compontentsChecked.get(j);
+			for(String symbol:component.getSymbols()) {
+				if(symbol.contains("*")) {
+					String[] sbs = symbol.split("\\*");
+					ICLanguageSettingEntry entry = CDataUtil.createCMacroEntry(sbs[0],sbs[1], 0);
+					entries.add(entry);
+				}else {
+					ICLanguageSettingEntry entry = CDataUtil.createCMacroEntry(symbol,"", 0);
+					entries.add(entry);
+				}
+			}
 			if (component.getTarget().equals(ConfigureTarget.CMDLINE.getName())) {
 				// System.out.println("CMDLINE component: "+component.getName());
 				String[] parametersDefined = component.getConfigure().split("\n");
@@ -89,7 +121,7 @@ public class LinkHelper {
 					if (parametersDefined[i].contains("#define")) {
 						String parameter = parametersDefined[i];
 						// System.out.println("parameter: "+parameter);
-						if (!parameter.startsWith("//")) {
+						if (!parameter.trim().startsWith("//")) {
 							String[] defines = parameter.trim().split("//");
 							String[] members = defines[0].trim().split("\\s+");
 							ICLanguageSettingEntry entry = CDataUtil.createCMacroEntry(members[1],

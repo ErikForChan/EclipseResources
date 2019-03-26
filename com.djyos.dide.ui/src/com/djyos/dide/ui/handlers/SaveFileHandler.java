@@ -41,12 +41,13 @@ import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.helper.LinkHelper;
 import com.djyos.dide.ui.objects.CmpntCheck;
 import com.djyos.dide.ui.wizards.component.ReadComponentCheckXml;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 @SuppressWarnings("restriction")
 public class SaveFileHandler extends SaveHandler {
 
 	List<String> allStrings = new ArrayList<String>();
-	String srcLocation = DideHelper.getDjyosSrcPath();
+	String srcLocation = PathTool.getDjyosSrcPath();
 	private String compName;
 
 	@Override
@@ -80,25 +81,13 @@ public class SaveFileHandler extends SaveHandler {
 			File ibootCheckFile = new File(project.getLocation().toString() + "/data/iboot_component_check.xml");
 
 			if (appCheckFile.exists()) {
-				try {
-					ReadComponentCheckXml rccx = new ReadComponentCheckXml();
-					appCmpntChecks = rccx.getCmpntChecks(appCheckFile);
-					handleProject(project, appCmpntChecks, file, true, conds, excludeStrings, includeStrings);
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				appCmpntChecks = ReadComponentCheckXml.getCmpntChecks(appCheckFile);
+				handleProject(project, appCmpntChecks, file, true, conds, excludeStrings, includeStrings);
 			}
 
 			if (ibootCheckFile.exists()) {
-				try {
-					ReadComponentCheckXml rccx = new ReadComponentCheckXml();
-					ibootCmpntChecks = rccx.getCmpntChecks(ibootCheckFile);
-					handleProject(project, ibootCmpntChecks, file, false, conds, excludeStrings, includeStrings);
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+				ibootCmpntChecks = ReadComponentCheckXml.getCmpntChecks(ibootCheckFile);
+				handleProject(project, ibootCmpntChecks, file, false, conds, excludeStrings, includeStrings);
 			}
 
 			try {
@@ -187,7 +176,7 @@ public class SaveFileHandler extends SaveHandler {
 
 	private void notExcludeFiles(IProject project, File parentFile, boolean isApp, ICConfigurationDescription[] conds) {
 		// TODO Auto-generated method stub
-		String srcLocation = DideHelper.getDIDEPath() + "djysrc";
+		String srcLocation = PathTool.getDIDEPath() + "djysrc";
 		File[] files = parentFile.listFiles();
 		for (File file : files) {
 			String relativePath = file.getPath().replace("\\", "/").replace(srcLocation, "");
@@ -199,7 +188,7 @@ public class SaveFileHandler extends SaveHandler {
 						if (file.isFile()) {
 							LinkHelper.setFileExclude(ifile, cond, false);
 						} else if (file.isDirectory()) {
-							LinkHelper.setExclude(ifolder, cond, false);
+							LinkHelper.setFolderExclude(ifolder, cond, false);
 						}
 					}
 				} else {
@@ -207,7 +196,7 @@ public class SaveFileHandler extends SaveHandler {
 						if (file.isFile()) {
 							LinkHelper.setFileExclude(ifile, cond, false);
 						} else if (file.isDirectory()) {
-							LinkHelper.setExclude(ifolder, cond, false);
+							LinkHelper.setFolderExclude(ifolder, cond, false);
 						}
 					}
 				}

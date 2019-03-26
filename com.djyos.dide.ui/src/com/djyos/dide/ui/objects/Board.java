@@ -7,6 +7,16 @@ public class Board {
 	String boardName;
 	String boardPath;
 	private List<OnBoardCpu> onBoardCpus = new ArrayList<OnBoardCpu>();
+	private List<OnBoardMemory> share_memorys = new ArrayList<OnBoardMemory>();
+
+	
+	public List<OnBoardMemory> getShare_memorys() {
+		return share_memorys;
+	}
+
+	public void setShare_memorys(List<OnBoardMemory> share_memorys) {
+		this.share_memorys = share_memorys;
+	}
 
 	public Board(String boardName, List<OnBoardCpu> onBoardCpus) {
 		super();
@@ -30,11 +40,11 @@ public class Board {
 		this.onBoardCpus = onBoardCpus;
 	}
 
-	public String getBoardPath() {
+	public String getBoardFolderPath() {
 		return boardPath;
 	}
 
-	public void setBoardPath(String boardPath) {
+	public void setBoardFolderPath(String boardPath) {
 		this.boardPath = boardPath;
 	}
 

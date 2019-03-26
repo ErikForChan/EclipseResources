@@ -17,10 +17,11 @@ import org.w3c.dom.Element;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.objects.Cpu;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class CreateCpuInfo {
 
-	private String didePath = DideHelper.getDIDEPath();
+	private String didePath = PathTool.getDIDEPath();
 	String srcLocation = didePath + "djysrc";
 
 	public static void createCpuInfo(File file, List<Cpu> cpus) {

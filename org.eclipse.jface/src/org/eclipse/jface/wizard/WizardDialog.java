@@ -90,10 +90,10 @@ public class WizardDialog extends TitleAreaDialog implements IWizardContainer2, 
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
 		String name = currentPage.getName();
-		System.out.println("currentPage:   " + name);
+//		System.out.println("currentPage:   " + name);
 		if (name.contains("Board") || name.contains("Cpu")) {
-			return new Point(560, 600);
-		} else {
+			return new Point(680, 700);
+		}else {
 			return super.getInitialSize();
 		}
 	}

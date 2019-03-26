@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Core {
 	private int id;
+	private String name;
 	private Arch arch = new Arch();
 	private String floatABI;
 	private String fpuType;
@@ -24,6 +25,18 @@ public class Core {
 		this.memorys = memorys;
 	}
 	
+	
+	
+	public String getName() {
+		return name;
+	}
+
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+
 	public Arch getArch() {
 		return arch;
 	}

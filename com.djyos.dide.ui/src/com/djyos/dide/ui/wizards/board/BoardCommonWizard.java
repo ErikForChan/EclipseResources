@@ -21,6 +21,7 @@ import org.eclipse.ui.wizards.newresource.BasicNewResourceWizard;
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.helper.LinkHelper;
 import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class BoardCommonWizard extends BasicNewResourceWizard {
 
@@ -68,7 +69,7 @@ public class BoardCommonWizard extends BasicNewResourceWizard {
 		Board newBoard = fMainPage.getBoard();
 
 		if (newBoard != null && projects.length > 0) {
-			String relativePath = newBoard.getBoardPath().replace(DideHelper.getDjyosSrcPath(), "");
+			String relativePath = newBoard.getBoardFolderPath().replace(PathTool.getDjyosSrcPath(), "");
 			// System.out.println("relativePath: "+relativePath);
 			IRunnableWithProgress runnable = new IRunnableWithProgress() {
 
@@ -83,7 +84,7 @@ public class BoardCommonWizard extends BasicNewResourceWizard {
 							ICConfigurationDescription[] conds = local_prjd.getConfigurations(); // 获取工程的所有Configuration
 							for (int i = 0; i < conds.length; i++) {
 								if (conds[i].getName().contains("libos")) {
-									LinkHelper.setExclude(folder, conds[i], true);
+									LinkHelper.setFolderExclude(folder, conds[i], true);
 								}
 							}
 

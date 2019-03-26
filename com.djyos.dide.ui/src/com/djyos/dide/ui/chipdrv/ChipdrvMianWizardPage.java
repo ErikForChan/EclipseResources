@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.djyos.dide.ui.chipdrv;
 
+import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.util.BidiUtils;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -47,12 +48,11 @@ public class ChipdrvMianWizardPage extends WizardPage {
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IIDEHelpContextIds.NEW_PROJECT_WIZARD_PAGE);
 
 		createDynamicGroup(composite);
-		composite.pack();
-		parent.pack();
 
 		setErrorMessage(null);
 		setMessage(null);
 		setControl(composite);
+		Dialog.applyDialogFont(composite);
 	}
 
 	@Override

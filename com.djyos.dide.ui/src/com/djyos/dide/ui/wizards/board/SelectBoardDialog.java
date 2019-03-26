@@ -12,6 +12,9 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -37,10 +40,11 @@ import com.djyos.dide.ui.objects.CoreMemory;
 import com.djyos.dide.ui.objects.Cpu;
 import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
+import com.djyos.dide.ui.wizards.djyosProject.tools.UnitData;
 
 public class SelectBoardDialog extends StatusDialog {
 
-	private String detailsDesc = null;
 	private Text detailsField;
 	private Label boardSearchLabel;
 	private Text boardEditText;
@@ -113,7 +117,7 @@ public class SelectBoardDialog extends StatusDialog {
 	@Override
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
-		return new Point(560, 600);
+		return new Point(660, 600);
 	}
 
 	@Override
@@ -150,10 +154,14 @@ public class SelectBoardDialog extends StatusDialog {
 		boardTree.setSize(220, 260);
 		Button newBoradBtn = new Button(boardTreeCpt, SWT.PUSH);
 		newBoradBtn.setText("新建板件");
-		newBoradBtn.setBackground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_BLACK));
-		newBoradBtn.setForeground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+//		newBoradBtn.setBackground(new Color(boardTreeCpt.getDisplay(), 235, 84, 2));
+		newBoradBtn.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
+		Font font = new Font(boardTreeCpt.getDisplay(), "华文仿宋", 10, SWT.BOLD);
+//		FontData newFontData = font.getFontData()[0];
+		newBoradBtn.setForeground(boardTreeCpt.getDisplay().getSystemColor(SWT.COLOR_RED));
 		newBoradBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
+		newBoradBtn.setFont(font);
+		
 		detailsField = new Text(boardCpt, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL);
 		detailsField.setLayoutData(new GridData(GridData.FILL_BOTH));
 		detailsField.setEditable(false);
@@ -211,7 +219,7 @@ public class SelectBoardDialog extends StatusDialog {
 						okPressed();
 					} else {
 						IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-						MessageDialog.openInformation(window.getShell(), "提示", "请选中板件");
+						DideHelper.showErrorMessage("请选中板件");
 					}
 				}
 			}
@@ -224,96 +232,8 @@ public class SelectBoardDialog extends StatusDialog {
 				// TODO Auto-generated method stub
 
 				TreeItem[] items = boardTree.getSelection();
-				if (items.length > 0) {
-					detailsDesc = "";
-					String selectText = items[0].getText();
-					if (selectText.contains("板件")) {
-						detailsDesc += "选中板件即可显示选中的板件配置信息";
-					} else {
-						String type = items[0].getData("type").toString();
-
-						for (int i = 0; i < boards.size(); i++) {
-							Board board = boards.get(i);
-							if (type.equals("board")) {
-								if (board.getBoardName().equals(selectText)) {
-									List<OnBoardCpu> cpus = board.getOnBoardCpus();
-									detailsDesc += "板载Cpu个数: " + cpus.size();
-									break;
-								}
-							} else if (type.equals("cpu") || type.equals("core")) {
-								if (items[0].getParentItem().getText().equals(board.getBoardName()) || items[0]
-										.getParentItem().getParentItem().getText().equals(board.getBoardName())) {
-									List<OnBoardCpu> onBoardCpus = board.getOnBoardCpus();
-									for (OnBoardCpu o : onBoardCpus) {
-										Cpu myCpu = DideHelper.getCpuByonBoard(o, allCpus);
-										if (type.equals("core")) {
-											if (myCpu.getCpuName().equals(items[0].getParentItem().getText())) {
-												for (int c = 0; c < myCpu.getCores().size(); c++) {
-													Core core = myCpu.getCores().get(c);
-													if (selectText.equals("Core" + (c + 1))) {
-														if (core.getArch().getSerie() != null) {
-															detailsDesc += "架构：\n" + core.getArch().getSerie();
-														}
-														if (core.getArch().getMarch() != null) {
-															detailsDesc += "，" + core.getArch().getMarch();
-														}
-														if (core.getArch().getMcpu() != null) {
-															detailsDesc += "，" + core.getArch().getMcpu();
-														}
-														if (core.getFpuType() != null) {
-															detailsDesc += "\n浮点：" + core.getFpuType();
-														}
-														if (core.getResetAddr() != null) {
-															detailsDesc += "\n复位地址：" + core.getResetAddr();
-														}
-														if (core.getMemorys().size() != 0) {
-															List<CoreMemory> memorys = core.getMemorys();
-															for (int k = 0; k < memorys.size(); k++) {
-																detailsDesc += "\n内存" + (k + 1) + "：\n";
-																if (memorys.get(k).getType() != null) {
-																	detailsDesc += memorys.get(k).getType();
-																}
-																if (memorys.get(k).getStartAddr() != null) {
-																	detailsDesc += "，起始地址："
-																			+ memorys.get(k).getStartAddr();
-																}
-																if (memorys.get(k).getSize() != null) {
-																	detailsDesc += "，大小：" + memorys.get(k).getSize();
-																}
-															}
-														}
-													}
-												}
-											}
-										} else {
-											if (o.getCpuName().equals(selectText)) {
-												String chipString = "";
-												if (o.getChips().size() > 0) {
-													for (int k = 0; k < o.getChips().size(); k++) {
-														chipString += ((k != 0 ? "，" : "")
-																+ o.getChips().get(k).getChipName());
-													}
-												}
-
-												String peripheralString = "";
-												for (int k = 0; k < o.getPeripherals().size(); k++) {
-													peripheralString += ((k != 0 ? "，" : "")
-															+ o.getPeripherals().get(k).getName());
-												}
-												detailsDesc += "内核个数" + "： " + myCpu.getCores().size();
-												detailsDesc += "\n主晶振频率: " + o.getMianClk() + "\nRtc钟频率: "
-														+ o.getRtcClk() + "\n芯片: " + chipString + "\n外设: "
-														+ peripheralString + "\n\n";
-											}
-										}
-
-									}
-								}
-							}
-						}
-					}
-					detailsField.setText(detailsDesc);
-				}
+				TreeItem item = items[0];
+				BoardTools.Display_BoardDetails(item, boards, allCpus, detailsField);
 			}
 
 			@Override
@@ -334,25 +254,24 @@ public class SelectBoardDialog extends StatusDialog {
 	private void Init_Board_Tree(List<Board> boards) {
 		// TODO Auto-generated method stub
 		t2 = new TreeItem(boardTree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		t2.setData(DideHelper.getUserBoardFilePath());
+		t2.setData(PathTool.getUserBoardFilePath());
 		t2.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
 		t2.setText("用户板件");
 
 		t1 = new TreeItem(boardTree, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		t1.setData(DideHelper.getDemoBoardFilePath());
+		t1.setData(PathTool.getDemoBoardFilePath());
 		t1.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
 		t1.setText("Djyos板件");
 
 		for (int i = 0; i < boards.size(); i++) {
-			boolean newTree = true;
 			TreeItem t;
-			if (boards.get(i).getBoardPath().contains("demo")) {
+			if (boards.get(i).getBoardFolderPath().contains("demo")) {
 				t = new TreeItem(t1, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 			} else {
 				t = new TreeItem(t2, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
 			}
-			fillBoardChilds(boards.get(i), t);
-			t.setData(boards.get(i).getBoardPath());
+			BoardTools.fillBoardChilds(boards.get(i), t, allCpus);
+			t.setData(boards.get(i).getBoardFolderPath());
 			t.setData("type", "board");
 			t.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
 			t.setText(boards.get(i).getBoardName());
@@ -361,31 +280,5 @@ public class SelectBoardDialog extends StatusDialog {
 		t1.setExpanded(true);
 	}
 
-	// 板件目录下添加板载Cpu
-	private void fillBoardChilds(Board board, TreeItem t) {
-		// TODO Auto-generated method stub
-		List<OnBoardCpu> onBoardCpus = board.getOnBoardCpus();
-		for (OnBoardCpu o : onBoardCpus) {
-			TreeItem cpuItem = new TreeItem(t, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-			fillCpuChilds(DideHelper.getCpuByonBoard(o, allCpus), cpuItem);
-			cpuItem.setText(o.getCpuName());
-			cpuItem.setData(o.getCpuName());
-			cpuItem.setData("type", "cpu");
-			cpuItem.setImage(DPluginImages.OBJ_CPU_VIEW.createImage());
-		}
-	}
-
-	// 板载Cpu目录下添加内核
-	private void fillCpuChilds(Cpu c, TreeItem cpuItem) {
-		// TODO Auto-generated method stub
-		List<Core> cores = c.getCores();
-		for (int i = 0; i < cores.size(); i++) {
-			TreeItem coreItem = new TreeItem(cpuItem, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-			coreItem.setText("Core" + (i + 1));
-			coreItem.setData("Core" + (i + 1));
-			coreItem.setData("type", "core");
-			coreItem.setImage(DPluginImages.OBJ_CORE_VIEW.createImage());
-		}
-	}
 
 }

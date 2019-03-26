@@ -113,9 +113,14 @@ public class DjyosGeneralPage extends PropertyPage {
 						for (int j = 0; j < cores.size(); j++) {
 							infos += "\n\t\t内核" + (j + 1) + "：";
 							infos += "\n\t\t\t类型：" + cores.get(j).getArch().getSerie();
-							infos += "\n\t\t\t架构：" + cores.get(j).getArch().getMarch();
+							if(cores.get(j).getArch().getMarch() != null) {
+								infos += "\n\t\t\t架构：" + cores.get(j).getArch().getMarch();
+							}
 							infos += "\n\t\t\t家族：" + cores.get(j).getArch().getMcpu();
-							infos += "\n\t\t\t浮点：" + cores.get(j).getFpuType();
+							if(cores.get(j).getFpuType() != null) {
+								infos += "\n\t\t\t浮点：" + cores.get(j).getFpuType();
+							}
+							
 							List<CoreMemory> coreMemorys = cores.get(j).getMemorys();
 							infos += "\n\t\t\t片内内存：";
 							if (coreMemorys.size() == 0) {
@@ -180,9 +185,14 @@ public class DjyosGeneralPage extends PropertyPage {
 					for (int j = 0; j < cores.size(); j++) {
 						infos += "\n\t\t内核" + (j + 1) + "：";
 						infos += "\n\t\t\t类型：" + cores.get(j).getArch().getSerie();
-						infos += "\n\t\t\t架构：" + cores.get(j).getArch().getMarch();
+						if(cores.get(j).getArch().getMarch() != null) {
+							infos += "\n\t\t\t架构：" + cores.get(j).getArch().getMarch();
+						}
 						infos += "\n\t\t\t家族：" + cores.get(j).getArch().getMcpu();
-						infos += "\n\t\t\t浮点：" + cores.get(j).getFpuType();
+						if(cores.get(j).getFpuType() != null) {
+							infos += "\n\t\t\t浮点：" + cores.get(j).getFpuType();
+						}
+						
 						List<CoreMemory> coreMemorys = cores.get(j).getMemorys();
 						infos += "\n\t\t\t片内内存：";
 						if (coreMemorys.size() == 0) {
@@ -193,6 +203,7 @@ public class DjyosGeneralPage extends PropertyPage {
 										+ coreMemorys.get(k).getStartAddr() + "，" + coreMemorys.get(k).getSize();
 							}
 						}
+
 					}
 					break;
 				}

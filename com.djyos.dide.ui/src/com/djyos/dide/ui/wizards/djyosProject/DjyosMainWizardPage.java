@@ -34,6 +34,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -55,6 +57,8 @@ import org.eclipse.ui.internal.ide.dialogs.ProjectContentsLocationArea;
 import org.eclipse.ui.internal.ide.dialogs.ProjectContentsLocationArea.IErrorMessageReporter;
 
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.messages.IDataLegalPrompt;
+import com.djyos.dide.ui.messages.IPrompt;
 import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.Core;
 import com.djyos.dide.ui.objects.CoreMemory;
@@ -62,6 +66,7 @@ import com.djyos.dide.ui.objects.Cpu;
 import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.objects.OnBoardMemory;
 import com.djyos.dide.ui.wizards.board.GetBoardDialog;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 @SuppressWarnings("restriction")
 public class DjyosMainWizardPage extends WizardPage {
@@ -98,7 +103,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		return selectedCore;
 	}
 
-	public static ProjectContentsLocationArea locationArea;
+	public ProjectContentsLocationArea locationArea;
 
 	boolean nameValid = false;
 
@@ -125,7 +130,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		if (!isInt) {
 			fIbootSize.getTextControl(ibootComposite).setText("");
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-			MessageDialog.openError(window.getShell(), promoteTitle, promoteDesc_Int_Data);
+			MessageDialog.openError(window.getShell(), IPrompt.promptLabel, IDataLegalPrompt.promoteDesc_Int_Data);
 		} else {
 			boolean valid = Validate_DjyosMainPage();
 			setPageComplete(valid);
@@ -173,23 +178,23 @@ public class DjyosMainWizardPage extends WizardPage {
 
 	private void createDynamicGroup(Composite composite) {
 		// TODO Auto-generated method stub
-		// System.out.println("Java运行环境的版本:" + System.getProperty("java.version"));
-		// System.out.println("Java运行环境的生产商:" + System.getProperty("java.vendor"));
-		// System.out.println("Java的安装路径：" + System.getProperty("java.home"));
-		// System.out.println("虚拟机实现的版本：" + System.getProperty("java.vm.version"));
-		// System.out.println("虚拟机实现的生产商：" + System.getProperty("java.vm.vendor"));
-		// System.out.println("默认的临时文件路径：" + System.getProperty("java.io.tmpdir"));
-		// System.out.println("用户的账户名称：" + System.getProperty("user.name"));
-		// System.out.println("当前用户工作目录：" + System.getProperty("user.dir"));
-		// System.out.println("用户的home路径：" + System.getProperty("user.home"));
-		// System.out.println("操作系统的名称:" + System.getProperty("os.name"));
-		// System.out.println("操作系统的版本：" + System.getProperty("os.version"));
-		// System.out.println("操作系统的架构：" + System.getProperty("os.arch"));
-		// System.out.println("运行环境规范的名称:" +
-		// System.getProperty("java.specification.name"));
-		// System.out.println("Java类格式化的版本号：" +
-		// System.getProperty("java.class.version"));
-		// System.out.println("类所在的路径：" + System.getProperty("java.class.path"));
+//		 System.out.println("Java运行环境的版本:" + System.getProperty("java.version"));
+//		 System.out.println("Java运行环境的生产商:" + System.getProperty("java.vendor"));
+//		 System.out.println("Java的安装路径：" + System.getProperty("java.home"));
+//		 System.out.println("虚拟机实现的版本：" + System.getProperty("java.vm.version"));
+//		 System.out.println("虚拟机实现的生产商：" + System.getProperty("java.vm.vendor"));
+//		 System.out.println("默认的临时文件路径：" + System.getProperty("java.io.tmpdir"));
+//		 System.out.println("用户的账户名称：" + System.getProperty("user.name"));
+//		 System.out.println("当前用户工作目录：" + System.getProperty("user.dir"));
+//		 System.out.println("用户的home路径：" + System.getProperty("user.home"));
+//		 System.out.println("操作系统的名称:" + System.getProperty("os.name"));
+//		 System.out.println("操作系统的版本：" + System.getProperty("os.version"));
+//		 System.out.println("操作系统的架构：" + System.getProperty("os.arch"));
+//		 System.out.println("运行环境规范的名称:" +
+//		 System.getProperty("java.specification.name"));
+//		 System.out.println("Java类格式化的版本号：" +
+//		 System.getProperty("java.class.version"));
+//		 System.out.println("类所在的路径：" + System.getProperty("java.class.path"));
 
 		creatTemplateUI(composite);
 		createProjectAndBoardGroup(composite);
@@ -249,7 +254,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		selectBoardBtn.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				boolean djysrcExist = true;
-				File djysrcFile = new File(DideHelper.getDjyosSrcPath());
+				File djysrcFile = new File(PathTool.getDjyosSrcPath());
 				if (djysrcFile.exists()) {
 					File[] files = djysrcFile.listFiles();
 					if (files.length < 2) {
@@ -259,7 +264,7 @@ public class DjyosMainWizardPage extends WizardPage {
 					djysrcExist = false;
 				}
 				if (!djysrcExist) {
-					MessageDialog.openInformation(window.getShell(), "提示", "Djyos源码不存在，请重启DIDE根据提示下载");
+					MessageDialog.openInformation(window.getShell(), IPrompt.promptLabel, IPrompt.djysrcNotExit);
 				} else {
 					GetBoardDialog dialog = new GetBoardDialog(getShell());
 					if (dialog.open() == Window.OK) {
@@ -268,7 +273,14 @@ public class DjyosMainWizardPage extends WizardPage {
 						selectedBoard = dialog.getSelectBoard();
 						selectedCore = dialog.getSelectCore();
 						boardModuleTrimPath = dialog.boardModuleTrimPath;
-						File ldsFile = new File(selectedBoard.getBoardPath() + "/lds");
+						String boardLdsFolderPath = selectedBoard.getBoardFolderPath() + "/lds";
+						if(selectedCore.getName() != null) {
+							File coreLdsFolder = new File(boardLdsFolderPath+"/"+selectedCore.getName());
+							if(coreLdsFolder.exists()) {
+								boardLdsFolderPath = coreLdsFolder.getPath();
+							}
+						}
+						File ldsFile = new File(boardLdsFolderPath);
 						File[] ldsFiles = ldsFile.listFiles();
 						if (ldsFiles.length < 3) {
 							radioBtns[0].setSelection(false);
@@ -290,13 +302,17 @@ public class DjyosMainWizardPage extends WizardPage {
 							radioBtns[3].setEnabled(true);
 						}
 						fBoardNameField.setText(boardName);
-						File mldsFile = new File(selectedBoard.getBoardPath() + "/lds/memory.lds");
+						File mldsFile = new File(boardLdsFolderPath + "/memory.lds");
 						String ibootSize = readIbootSize(mldsFile, "IbootSize");
 						if (ibootSize != null) {
 							fIbootSize.getTextControl(ibootComposite).setText(ibootSize);
 						}
 					}
 				}
+				
+				DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard) getWizard();
+				nmWizard.addedComptCfg = false;
+				clickedNext = false;
 			}
 		});
 
@@ -329,7 +345,7 @@ public class DjyosMainWizardPage extends WizardPage {
 	}
 
 	public String getLdsHead() {
-		ldsHead += Lds_Head_Promopt;
+		ldsHead += IPrompt.Lds_Head_Promopt;
 
 		List<OnBoardMemory> onBoardMemorys_ROM = new ArrayList<OnBoardMemory>();
 		List<OnBoardMemory> onBoardMemorys_RAM = new ArrayList<OnBoardMemory>();
@@ -485,16 +501,10 @@ public class DjyosMainWizardPage extends WizardPage {
 		fIbootSize.setValidRange(1, 10000);
 		BidiUtils.applyBidiProcessing(fIbootSize.getTextControl(ibootComposite), BidiUtils.BTD_DEFAULT);
 		ControlFactory.createLabel(group1, "K");
-		fIbootSize.getTextControl(ibootComposite).addMouseTrackListener(new MouseTrackListener() {
-
+		fIbootSize.getTextControl(ibootComposite).addFocusListener(new FocusListener() {
+			
 			@Override
-			public void mouseHover(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExit(MouseEvent e) {
+			public void focusLost(FocusEvent e) {
 				// TODO Auto-generated method stub
 				String bootSize = fIbootSize.getTextControl(ibootComposite).getText();
 				Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
@@ -502,17 +512,23 @@ public class DjyosMainWizardPage extends WizardPage {
 				if (!isInt) {
 					fIbootSize.getTextControl(ibootComposite).setText("");
 					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-					MessageDialog.openError(window.getShell(), promoteTitle, promoteDesc_Int_Data);
-				} else {
-					boolean valid = Validate_DjyosMainPage();
-					setPageComplete(valid);
-				}
+					MessageDialog.openError(window.getShell(), IPrompt.promptLabel, IDataLegalPrompt.promoteDesc_Int_Data);
+				} 
+//				else {
+//					boolean valid = Validate_DjyosMainPage();
+//					setPageComplete(valid);
+//					
+//					DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard) getWizard();
+//					if(! nmWizard.addedComptCfg) {
+//						clickedNext = true;
+//					}
+//				}
 			}
-
+			
 			@Override
-			public void mouseEnter(MouseEvent e) {
+			public void focusGained(FocusEvent e) {
 				// TODO Auto-generated method stub
-
+				
 			}
 		});
 		// fIbootSize.getTextControl(ibootComposite).addListener(SWT.Modify,
@@ -523,14 +539,15 @@ public class DjyosMainWizardPage extends WizardPage {
 	protected void Handle_ProjectType_Select(int index) {
 		// TODO Auto-generated method stub
 		projectTypeDesc.setText(templateDescs[index]);
-		if (index == radioBtns.length - 1) {
-			fIbootSize.getTextControl(ibootComposite).setEnabled(false);
-			fIbootSize.getTextControl(ibootComposite).setText("");
-			boolean valid = Validate_DjyosMainPage();
-			setPageComplete(valid);
-		} else {
-			fIbootSize.getTextControl(ibootComposite).setEnabled(true);
-		}
+//		if (index == radioBtns.length - 1) {
+//			fIbootSize.getTextControl(ibootComposite).setEnabled(false);
+//			fIbootSize.getTextControl(ibootComposite).setText("");
+////			boolean valid = Validate_DjyosMainPage();
+////			setPageComplete(valid);
+//		} else {
+//			fIbootSize.getTextControl(ibootComposite).setEnabled(true);
+//		}
+		
 	}
 
 	@Override
@@ -538,35 +555,37 @@ public class DjyosMainWizardPage extends WizardPage {
 		// TODO Auto-generated method stub
 		clickedNext = false;
 		projectPath = locationArea.locationPathField.getText();
-		return super.canFlipToNextPage();
+		boolean valid = Validate_DjyosMainPage();
+		if(valid) {
+			return true;
+		}
+		return false;
+//		return super.canFlipToNextPage();
 	}
-
+	
 	@Override
 	public IWizardPage getNextPage() {
 		System.out.println("getNextPage DW");
+//		boolean isOK = true;
 		DjyosCommonProjectWizard nmWizard = (DjyosCommonProjectWizard) getWizard();
-		if (!nmWizard.addedComptCfg) {
-			OnBoardCpu onBoardCpu = null;
-			List<OnBoardCpu> onBoardCpus = selectedBoard.getOnBoardCpus();
-			for (int i = 0; i < onBoardCpus.size(); i++) {
-				if (onBoardCpus.get(i).getCpuName().equals(selectedCpu.getCpuName())) {
-					onBoardCpu = onBoardCpus.get(i);
-					break;
-				}
-			}
-			nmWizard.cpomtCfgPage = new ComponentConfigWizard("basicComponentCfgPage", onBoardCpu, selectedBoard,
-					haveApp(), haveIboot());
-			nmWizard.cpomtCfgPage.setTitle("Component Configuration");
-			nmWizard.cpomtCfgPage.setDescription("工程裁剪与配置");
-			nmWizard.addPage(nmWizard.cpomtCfgPage);
-			nmWizard.addedComptCfg = true;
-		} else {
-			if (clickedNext) {
-				nmWizard.importProject(projectPath, selectedBoard, selectedCore, haveApp(), haveIboot());
-				nmWizard.clickedMianNext = true;
+		
+		OnBoardCpu onBoardCpu = null;
+		List<OnBoardCpu> onBoardCpus = selectedBoard.getOnBoardCpus();
+		for (int i = 0; i < onBoardCpus.size(); i++) {
+			if (onBoardCpus.get(i).getCpuName().equals(selectedCpu.getCpuName())) {
+				onBoardCpu = onBoardCpus.get(i);
+				break;
 			}
 		}
-		clickedNext = true;
+		nmWizard.cpomtCfgPage = new ComponentConfigWizard("basicComponentCfgPage", onBoardCpu, selectedBoard,
+				haveApp(), haveIboot());
+		nmWizard.cpomtCfgPage.setTitle("Component Configuration");
+		nmWizard.cpomtCfgPage.setDescription("工程裁剪与配置");
+		nmWizard.addPage(nmWizard.cpomtCfgPage);
+		
+		int tIndex = getTemplateIndex();
+		nmWizard.importProject(projectPath, selectedBoard, selectedCore, haveApp(), needIbootLds(), tIndex);
+		
 		return super.getNextPage();
 	}
 
@@ -584,6 +603,14 @@ public class DjyosMainWizardPage extends WizardPage {
 			return true;
 		}
 		return false;
+	}
+	
+	public boolean needIbootLds() {
+		int index = getTemplateIndex();
+		if (index == 3) {
+			return false;
+		}
+		return true;
 	}
 
 	public boolean haveApp() {
@@ -651,7 +678,7 @@ public class DjyosMainWizardPage extends WizardPage {
 		}
 		File prjFile = new File(prjPathSelect);
 		if (prjFile.exists()) {
-			setErrorMessage("工作空间或者磁盘已经存在目标工程 !");
+			setErrorMessage(IPrompt.projectExit);
 			return false;
 		}
 
@@ -672,7 +699,7 @@ public class DjyosMainWizardPage extends WizardPage {
 
 		String validLocationMessage = locationArea.checkValidLocation();
 		if (validLocationMessage != null) { // there is no destination location given
-			setErrorMessage("工作空间已经存在目标工程 !");
+			setErrorMessage(IPrompt.projectExit);
 			return false;
 		}
 
@@ -681,13 +708,6 @@ public class DjyosMainWizardPage extends WizardPage {
 		return true;
 	}
 
-	String[] templateDescs = { templateDesc0, templateDesc1, templateDesc2, templateDesc3 };
-	private String Lds_Head_Promopt = "\n/*由于MEMORY命令不能使用符号，这些常量的定义，必须与MEMORY命令处一致 */ \n\n" + "MEMORY\n" + "{";
-	private static String templateDesc0 = "用于开发iboot和App的工程，App由iboot\n启动，" + "用于App和iboot由一个团队维护的情况";
-	private static String templateDesc1 = "用于开发iboot的工程，用于App和iboot由不同" + "团队维护的情况";
-	private static String templateDesc2 = "用于开发App的工程，App工程需要输入iboot的尺" + "寸 用于App和iboot由不同团队维护的情况";
-	private static String templateDesc3 = "用于开发无需iboot，自启动运行的App工程";
-	private static String promoteTitle = "提示";
-	private static String promoteDesc_Int_Data = "请输入正整数";
+	String[] templateDescs = { IPrompt.templateDesc0, IPrompt.templateDesc1, IPrompt.templateDesc2, IPrompt.templateDesc3 };
 
 }

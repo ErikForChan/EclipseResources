@@ -9,23 +9,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class ComponentRefer {
-	private String didePath = DideHelper.getDIDEPath();
+	private String didePath = PathTool.getDIDEPath();
 
 	public List<String> getClearCompPaths(String boardName) {
 		String componentPath = didePath + "djysrc/component";
 		String djyosPath = didePath + "djysrc/djyos";
 		String thirdPath = didePath + "djysrc/third";
 		String loaderPath = didePath + "djysrc/loader";
-		String demoPath = DideHelper.getDemoBoardFilePath() + "/" + boardName;
-		String userPath = DideHelper.getUserBoardFilePath() + "/" + boardName;
+		String demoPath = PathTool.getDemoBoardFilePath() + "/" + boardName;
+		String userPath = PathTool.getUserBoardFilePath() + "/" + boardName;
 		List<String> componentPaths = new ArrayList<String>();
 		componentPaths.add(componentPath);
 		componentPaths.add(djyosPath);
 		componentPaths.add(demoPath);
 		componentPaths.add(userPath);
 		componentPaths.add(loaderPath);
+		componentPaths.add(thirdPath);
+		return componentPaths;
+	}
+	
+	public List<String> get_notcore_paths(String boardName) {
+		String thirdPath = didePath + "djysrc/third";
+		String demoPath = PathTool.getDemoBoardFilePath() + "/" + boardName;
+		String userPath = PathTool.getUserBoardFilePath() + "/" + boardName;
+		List<String> componentPaths = new ArrayList<String>();
+		componentPaths.add(demoPath);
+		componentPaths.add(userPath);
 		componentPaths.add(thirdPath);
 		return componentPaths;
 	}

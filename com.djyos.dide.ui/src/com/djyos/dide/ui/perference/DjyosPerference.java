@@ -31,6 +31,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.PlatformUI;
 
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 @SuppressWarnings("restriction")
 public class DjyosPerference extends PreferencePage implements IWorkbenchPreferencePage {
@@ -43,7 +44,7 @@ public class DjyosPerference extends PreferencePage implements IWorkbenchPrefere
 	boolean atuo_buildlibos_new;
 	boolean atuo_buildlibos_import;
 	boolean noa_buildlibos;
-	File didePrefsFile = new File(DideHelper.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
+	File didePrefsFile = new File(PathTool.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
 
 	public DjyosPerference() {
 		super();

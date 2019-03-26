@@ -6,9 +6,10 @@ import java.util.List;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class GetNonBoardFiles {
-	private String didePath = DideHelper.getDIDEPath();
+	private String didePath = PathTool.getDIDEPath();
 	private List<File> excludeBoardFiles = new ArrayList<File>();
 
 	public List<File> getNonBoards() {

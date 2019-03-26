@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import com.djyos.dide.ui.DPluginImages;
 import com.djyos.dide.ui.objects.Board;
+import com.djyos.dide.ui.swt.DjyosUI;
 
 public class SelectBoardFilesDialog extends StatusDialog {
 
@@ -128,10 +129,7 @@ public class SelectBoardFilesDialog extends StatusDialog {
 		// TODO Auto-generated method stub
 		Composite composite = (Composite) super.createDialogArea(parent);
 		composite.setSize(500, 500);
-		GridLayout layout = new GridLayout();
-		layout.marginTop = 5;
-		layout.numColumns = 1;
-		layout.marginLeft = 5;
+		GridLayout layout = DjyosUI.DjyosGridLayout(1, 5, 5);
 		composite.setLayout(layout);
 		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -141,8 +139,8 @@ public class SelectBoardFilesDialog extends StatusDialog {
 		root = new TreeItem(boardFileTree, 0);
 		root.setText(board.getBoardName());
 		root.setImage(DPluginImages.OBJ_BOARD_VIEW.createImage());
-		root.setData(board.getBoardPath());// 保存当前节点数据
-		String boardPath = board.getBoardPath();
+		root.setData(board.getBoardFolderPath());// 保存当前节点数据
+		String boardPath = board.getBoardFolderPath();
 		File boardFile = new File(boardPath);
 
 		ExpadFileTree(root, boardFile);

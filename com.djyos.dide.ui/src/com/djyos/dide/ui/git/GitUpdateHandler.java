@@ -20,10 +20,11 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class GitUpdateHandler extends AbstractHandler {
 
-	String djysrcPath = DideHelper.getDjyosSrcPath();
+	String djysrcPath = PathTool.getDjyosSrcPath();
 	File gitFile = new File(djysrcPath + "/.git");
 
 	@Override

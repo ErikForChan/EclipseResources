@@ -19,6 +19,7 @@ import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.Chip;
 import com.djyos.dide.ui.objects.Component;
+import com.djyos.dide.ui.objects.CoreMemory;
 import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.objects.OnBoardMemory;
 
@@ -77,7 +78,11 @@ public class CreatBoardXml {
 					Element startAddr = document.createElement("startAddr");
 					startAddr.setTextContent(memorys.get(j).getStartAddr());
 					Element size = document.createElement("size");
-					size.setTextContent(memorys.get(j).getSize());
+					String memorySize = memorys.get(j).getSize();
+					if (!memorySize.contains("k")) {
+						memorySize += "k";
+					}
+					size.setTextContent(memorySize);
 
 					memoryElement.appendChild(type);
 					memoryElement.appendChild(startAddr);
@@ -91,10 +96,30 @@ public class CreatBoardXml {
 					peripheral.setTextContent(peripherals.get(j).getName());
 					cpuElement.appendChild(peripheral);
 				}
-
 				boardElement.appendChild(cpuElement);
 			}
 
+			if(board.getShare_memorys().size()>0) {
+				Element smhElem = document.createElement("shared_memory");
+				for(OnBoardMemory m : board.getShare_memorys()) {
+					Element smElem = document.createElement("memory");
+					if(m.getType() != null) {
+						smElem.setAttribute("type", m.getType());
+					}
+					if(m.getStartAddr() != null) {
+						smElem.setAttribute("startAddr", m.getStartAddr());
+					}
+					if(m.getSize() != null) {
+						String memorySize = m.getSize();
+						if (!memorySize.contains("k")) {
+							memorySize += "k";
+						}
+						smElem.setAttribute("size", memorySize);
+					}
+					smhElem.appendChild(smElem);
+				}
+				boardElement.appendChild(smhElem);
+			}
 			document.appendChild(boardElement);
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();

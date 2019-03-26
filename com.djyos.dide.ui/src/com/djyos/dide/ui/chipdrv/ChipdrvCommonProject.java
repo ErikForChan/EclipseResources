@@ -34,6 +34,8 @@ import org.eclipse.ui.wizards.newresource.BasicNewResourceWizard;
 
 import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.messages.IPrompt;
+import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 @SuppressWarnings("restriction")
 public class ChipdrvCommonProject extends BasicNewResourceWizard {
@@ -66,7 +68,7 @@ public class ChipdrvCommonProject extends BasicNewResourceWizard {
 			DideHelper.showErrorMessage(IPrompt.fillChipdrvName);
 			return false;
 		} else {
-			String djysrcPath = DideHelper.getDjyosSrcPath();
+			String djysrcPath = PathTool.getDjyosSrcPath();
 			File myChipDriverFile = new File(djysrcPath + "/bsp/chipdrv/" + chipName);
 			if (!myChipDriverFile.exists()) {
 				myChipDriverFile.mkdirs();
@@ -74,13 +76,13 @@ public class ChipdrvCommonProject extends BasicNewResourceWizard {
 			File myChipDrvCFile = new File(djysrcPath + "/bsp/chipdrv/" + chipName + "/" + chipName + ".c");
 			File myChipDrvHFile = new File(djysrcPath + "/bsp/chipdrv/include/" + chipName + ".h");
 
-			String path = DideHelper.getTemplatePath();
+			String path = PathTool.getTemplatePath();
 			File CFile = new File(path + "/FileTemp/CFileTemplate");
 			File HFile = new File(path + "/FileTemp/HFileTemplate");
-			String CString = DideHelper.readFile(CFile);
-			String HString = DideHelper.readFile(HFile);
-			DideHelper.writeFile(myChipDrvCFile, CString);
-			DideHelper.writeFile(myChipDrvHFile, HString);
+			String CString = FileTool.readFile(CFile);
+			String HString = FileTool.readFile(HFile);
+			FileTool.writeFile(myChipDrvCFile, CString,false);
+			FileTool.writeFile(myChipDrvHFile, HString,false);
 
 			openFile(myChipDrvCFile);
 			openFile(myChipDrvHFile);

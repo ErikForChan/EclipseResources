@@ -1,20 +1,25 @@
 package com.djyos.dide.ui.startup;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.ui.IStartup;
 
-import com.djyos.dide.ui.autotesting.SvnUpdateHandler;
+import com.djyos.dide.ui.git.GitAutomation;
 import com.djyos.dide.ui.git.GitHandler;
 import com.djyos.dide.ui.handlers.ConfigurationHandler;
 import com.djyos.dide.ui.handlers.FileHandler;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.objects.Component;
+import com.djyos.dide.ui.wizards.component.ReadComponent;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class StartupHandler implements IStartup {
 
-	File didePrefsFile = new File(DideHelper.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
+	File didePrefsFile = new File(PathTool.getDIDEPath() + "IDE/configuration/.settings/com.djyos.ui.prefs");
 
 	@Override
 	public void earlyStartup() {
@@ -26,36 +31,44 @@ public class StartupHandler implements IStartup {
 
 		Init_Workspace();
 
-		Auto_Test_Build();
+//		Auto_Test_Build();
+		
+//		Check_Compt_Repeat();
 
-		Detect_ST_Driver();
 	}
 
-	private void Detect_ST_Driver() {
+	private void Check_Compt_Repeat() {
 		// TODO Auto-generated method stub
-
+		List<Component>  workspaceCompts = ReadComponent.getWorkspaceComponents();
+		List<String> cptNames = new ArrayList<String>();
+		for(Component c:workspaceCompts) {
+			if(!cptNames.contains(c.getName())) {
+				cptNames.add(c.getName());
+			}else {
+				DideHelper.showErrorMessage("源码中两组件名称 ("+c.getName()+") 相同，请修改!");
+			}
+		}
+		
 	}
 
 	private void Auto_Test_Build() {
 		// TODO Auto-generated method stub
-		File stup_complie_file = new File(DideHelper.getDIDEPath() + "auto_complier.txt");
-		if (stup_complie_file.exists()) {
-			SvnUpdateHandler svnHandler = new SvnUpdateHandler();
-			svnHandler.visitSvn();
-		}
+		GitAutomation.start_gitMonitor();
 	}
 
 	private void Init_Workspace() {
 		// TODO Auto-generated method stub
-		File file = new File(DideHelper.getDjyosSrcPath());
+		File file = new File(PathTool.getDjyosSrcPath());
 		if (file.exists()) {
-			// 初始化工作空间的配置
+			
+			// 处理所有工程未被排除编译的文件：组件、板件、Cpu、arch
+			HandleProjectImport folderListener = new HandleProjectImport();
+			folderListener.handlProjectImport();
+
+			// 初始化工作空间的配置，设置一些默认的参数
 			ConfigurationHandler cfgHandler = new ConfigurationHandler();
 			cfgHandler.handlerConfiguration();
 
-			// 处理所有工程未被排除编译的文件
-			HandleProjectImport folderListener = new HandleProjectImport();
-			folderListener.handlProjectImport();
 		}
 	}
 

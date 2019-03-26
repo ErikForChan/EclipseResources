@@ -25,6 +25,7 @@ import com.djyos.dide.ui.helper.DideHelper;
 import com.djyos.dide.ui.helper.LinkHelper;
 import com.djyos.dide.ui.objects.Cpu;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class CpuCommonWizard extends BasicNewResourceWizard {
 
@@ -32,7 +33,7 @@ public class CpuCommonWizard extends BasicNewResourceWizard {
 	private String wz_title;
 	private String wz_desc;
 
-	private String srcLocation = DideHelper.getDjyosSrcPath();
+	private String srcLocation = PathTool.getDjyosSrcPath();
 
 	public CpuCommonWizard(String title, String desc) {
 		// TODO Auto-generated constructor stub
@@ -90,7 +91,8 @@ public class CpuCommonWizard extends BasicNewResourceWizard {
 						if (hardWardInfoFile.exists()) {
 							hardwares = ReadHardWareDesc.getHardWares(hardWardInfoFile);
 							String cpuName = hardwares.get(1);
-							String cpuPath = cpu.getParentPath().replace("\\", "/");
+							System.out.println("getCpuName:  "+cpu.getCpuName());
+							String cpuPath = cpu.getCpuFolderPath().replace("\\", "/");
 							File cpuFolder = new File(cpuPath);
 							List<IFolder> folders = new ArrayList<IFolder>();
 							getFolders(project, folders, cpuFolder, cpuName);
@@ -102,7 +104,7 @@ public class CpuCommonWizard extends BasicNewResourceWizard {
 							for (IFolder folder : folders) {
 								for (int i = 0; i < conds.length; i++) {
 									if (conds[i].getName().contains("libos")) {
-										LinkHelper.setExclude(folder, conds[i], true);
+										LinkHelper.setFolderExclude(folder, conds[i], true);
 									}
 								}
 							}

@@ -14,27 +14,30 @@ import com.djyos.dide.ui.objects.Component;
 import com.djyos.dide.ui.objects.Cpu;
 import com.djyos.dide.ui.objects.OnBoardCpu;
 import com.djyos.dide.ui.wizards.cpu.ReadCpuXml;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
-public class ReadComponent {
+public class ReadComponent{
 	private static List<Component> components = new ArrayList<Component>();
-	private static String didePath = DideHelper.getDIDEPath();
+	private static String didePath = PathTool.getDIDEPath();
 
 	private static void getCpuSrcPath(File cpuFolder, List<String> cpuSrcPaths) {
-		File[] files = cpuFolder.listFiles();
-		for (File f : files) {
-			if (f.getName().equals("src")) {
-				cpuSrcPaths.add(f.getPath());
-				break;
+		if (cpuFolder.exists()) {
+			File[] files = cpuFolder.listFiles();
+			for (File f : files) {
+				if (f.getName().equals("src")) {
+					cpuSrcPaths.add(f.getPath());
+					break;
+				}
 			}
-		}
-		if (!cpuFolder.getParentFile().getName().equals("cpudrv")) {
-			getCpuSrcPath(cpuFolder.getParentFile(), cpuSrcPaths);
+			if (!cpuFolder.getParentFile().getName().equals("cpudrv")) {
+				getCpuSrcPath(cpuFolder.getParentFile(), cpuSrcPaths);
+			}
 		}
 	}
 
 	// 遍历组件及其子组件
 	private static void traverFiles(File file) {
-		if (!file.getName().equals("include")) {
+		if (file.exists() && !file.getName().equals("include")) {
 
 			List<File> allFiles = DideHelper.sortFileAndFolder(file);
 			boolean hExist = false;
@@ -94,7 +97,48 @@ public class ReadComponent {
 				return cpusList.get(i);
 			}
 		}
-		return null;
+		return new Cpu();
+	}
+	
+	public static List<Component> getWorkspaceComponents(){
+		components = new ArrayList<Component>();
+		String componentPath = didePath + "djysrc/component";
+		String djyosPath = didePath + "djysrc/djyos";
+		String thirdPath = didePath + "djysrc/third";
+		String loaderPath = didePath + "djysrc/loader";
+//		String libcPath = didePath + "djysrc/libc";
+		String chipPath = didePath + "djysrc/bsp/chipdrv";
+		List<String> componentPaths = new ArrayList<String>();
+		componentPaths.add(componentPath);
+		componentPaths.add(djyosPath);
+		componentPaths.add(loaderPath);
+		componentPaths.add(thirdPath);
+		componentPaths.add(chipPath);
+		
+		for (int i = 0; i < componentPaths.size(); i++) {
+			File sourceFile = new File(componentPaths.get(i));
+			if (sourceFile.exists()) {
+				File[] files = sourceFile.listFiles();
+				for (File file : files) {
+					if (file.isDirectory()) {
+						traverFiles(file);
+					} else {
+						if (!file.getPath().contains("third")) {
+							if (file.getName().endsWith(".c")) {
+								try {
+									getComponent(file);
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+//		traverFiles(new File(libcPath));
+		return components;
 	}
 
 	public static List<Component> getComponents(OnBoardCpu onBoardCpu, Board board) {
@@ -103,7 +147,7 @@ public class ReadComponent {
 		List<String> componentPaths = cRefer.getClearCompPaths(board.getBoardName());
 		String libcPath = didePath + "djysrc/libc";
 		String chipPath = didePath + "djysrc/bsp/chipdrv";
-
+		
 		for (int i = 0; i < componentPaths.size(); i++) {
 			File sourceFile = new File(componentPaths.get(i));
 			if (sourceFile.exists()) {
@@ -134,7 +178,7 @@ public class ReadComponent {
 
 		Cpu cpu = getCpuByBoard(onBoardCpu);
 		List<String> cpuSrcPaths = new ArrayList<String>();
-		File cpuFolder = new File(cpu.getParentPath());
+		File cpuFolder = new File(cpu.getCpuFolderPath());
 		getCpuSrcPath(cpuFolder, cpuSrcPaths);
 
 		for (int i = 0; i < chips.size(); i++) {
@@ -193,7 +237,7 @@ public class ReadComponent {
 		traverFiles(new File(libcPath));
 		// cpu的src目录
 		List<String> cpuSrcPaths = new ArrayList<String>();
-		File cpuFolder = new File(cpu.getParentPath());
+		File cpuFolder = new File(cpu.getCpuFolderPath());
 		getCpuSrcPath(cpuFolder, cpuSrcPaths);
 		for (String path : cpuSrcPaths) {
 			traverParentSrc(path);
@@ -226,6 +270,7 @@ public class ReadComponent {
 	}
 
 	public static List<Component> getSrcPeripherals(File srcFile) {
+		components = new ArrayList<Component>();
 		File[] srcfiles = srcFile.listFiles();
 		for (File file : srcfiles) {
 			if (file.isDirectory()) {
@@ -356,6 +401,28 @@ public class ReadComponent {
 			}
 			newComponent.setCode(listToString(initcodeStrings));
 			newComponent.setConfigure(listToString(configueStrings));
+			
+			List<String> symbols = new ArrayList<String>();
+			boolean symbol_start = false,symbol_stop=false;
+			for (String configure : configueStrings) {
+				if(configure.toUpperCase().contains("//%$#@") && symbol_start) {
+					symbol_stop = true;
+					break;
+				}
+				if(symbol_start && !symbol_stop) {
+					String[] cfgs = configure.trim().split("\\s+");
+					if(cfgs.length == 2) {
+						symbols.add(cfgs[1].trim());
+					}else if(cfgs.length > 2) {
+						symbols.add(cfgs[1].trim()+"*"+cfgs[2].trim());
+					}
+				}
+				if(configure.toUpperCase().contains("//%$#@SYMBOL")) {
+					symbol_start = true;
+				}
+			}
+			newComponent.setSymbols(symbols);
+			
 			for (String describe : describeStrings) {
 				// if(describe.contains("mutex")) {
 				// describe.replaceAll("依赖", "互斥");

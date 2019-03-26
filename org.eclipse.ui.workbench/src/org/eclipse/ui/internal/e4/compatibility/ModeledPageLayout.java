@@ -74,12 +74,11 @@ public class ModeledPageLayout implements IPageLayout {
 		}
 		ArrayList<String> result = new ArrayList<>();
 		if (tagPrefix.equals(NEW_WIZARD_TAG)) {
-			System.out.println("Label:  " + model.getLabel());
 			if (model.getLabel().contains("C/C++")) {
 				result.add("com.djyos.dide.ui.wizards.NewDWizard1");
 				result.add("com.djyos.dide.ui.wizards.NewDWizard2");
 				result.add("com.djyos.dide.ui.wizards.NewDWizard3");
-				// result.add("com.djyos.dide.ui.wizards.NewDWizard4");
+				result.add("com.djyos.dide.ui.wizards.NewDWizard4");
 				result.add("com.djyos.dide.ui.wizards.NewDWizard5");
 				// result.add("com.djyos.dide.ui.wizards.NewDWizard6");
 			} else {

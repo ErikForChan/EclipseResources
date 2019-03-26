@@ -54,7 +54,7 @@ public class GitPromptDialog extends AbstractPropertyDialog {
 		gd.horizontalSpan = 3;
 		gd.widthHint = 300;
 		promptLabel = new Label(c, SWT.NONE);
-		promptLabel.setText("DIDE中还未有Djyos源码，是否自动下载源码？");
+		promptLabel.setText("DIDE中不存在Djyos源码，是否自动下载源码？");
 		promptLabel.setLayoutData(gd);
 
 		noPromptBtn = new Button(c, SWT.CHECK);

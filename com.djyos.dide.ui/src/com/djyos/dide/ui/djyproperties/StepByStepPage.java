@@ -1,4 +1,5 @@
 /*******************************************************************************
+
  * Copyright (c) 2017 Djyos Team.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -57,6 +58,8 @@ import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.BspStep;
 import com.djyos.dide.ui.objects.Cpu;
 import com.djyos.dide.ui.wizards.djyosProject.ReadHardWareDesc;
+import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 @SuppressWarnings("restriction")
 public class StepByStepPage extends PropertyPage {
@@ -96,7 +99,7 @@ public class StepByStepPage extends PropertyPage {
 	@Override
 	public boolean performOk() {
 		// TODO Auto-generated method stub
-		DideHelper.createNewFile(stepPrefsFile);
+		FileTool.createNewFile(stepPrefsFile);
 		boolean isError = false;
 		stepDesc = "";
 		TreeItem[] roots = stepTree.getItems();
@@ -113,7 +116,7 @@ public class StepByStepPage extends PropertyPage {
 			public void run(IProgressMonitor monitor) {
 				monitor.beginTask("¥Ê¥¢≈‰÷√...", 10);
 				// handleOK(monitor);
-				DideHelper.writeFile(stepPrefsFile, stepDesc);
+				FileTool.writeFile(stepPrefsFile, stepDesc,false);
 				monitor.done();
 				monitor.setTaskName("ÕÍ≥…");
 			}
@@ -199,7 +202,7 @@ public class StepByStepPage extends PropertyPage {
 								if (lastMember.equals("arch")) {
 									objectFile = new File(projectArch.getArchPath());
 								} else if (lastMember.equals("cpudrv")) {
-									objectFile = new File(projectCpu.getParentPath());
+									objectFile = new File(projectCpu.getCpuFolderPath());
 								}
 								objectFiles.add(objectFile);
 								lastMembers.add(lastMember);
@@ -208,7 +211,7 @@ public class StepByStepPage extends PropertyPage {
 							} else {
 								if (location.startsWith("board")) {
 									File file = new File(
-											projectBoard.getBoardPath() + "/" + lastMember + "/" + fileName);
+											projectBoard.getBoardFolderPath() + "/" + lastMember + "/" + fileName);
 									initNewFile(file);
 									files.add(file);
 								}
@@ -260,7 +263,7 @@ public class StepByStepPage extends PropertyPage {
 		// TODO Auto-generated method stub
 		savedSteps = new ArrayList<String>();
 		if (stepPrefsFile.exists()) {
-			String desc = DideHelper.readFile(stepPrefsFile);
+			String desc = FileTool.readFile(stepPrefsFile);
 			String[] allFuns = desc.split(";");
 			for (String fun : allFuns) {
 				if (fun.trim().contains(":")) {
@@ -335,9 +338,9 @@ public class StepByStepPage extends PropertyPage {
 
 	private void initNewFile(File file) {
 		// TODO Auto-generated method stub
-		DideHelper.createNewFile(file);
-		String content = DideHelper.readFile(new File(DideHelper.getStepByStepPath() + "/" + file.getName()));
-		DideHelper.writeFile(file, content);
+		FileTool.createNewFile(file);
+		String content = FileTool.readFile(new File(PathTool.getStepByStepPath() + "/" + file.getName()));
+		FileTool.writeFile(file, content,false);
 	}
 
 	private void getParentFileNames(File objectFile, String lastMember, List<String> parentFileNames) {
@@ -446,7 +449,7 @@ public class StepByStepPage extends PropertyPage {
 	private String fillChild(TreeItem root) {
 		boolean select = false, notSelect = false;
 		List<BspStep> steps = ReadBspTemplate
-				.getBspSteps(new File(DideHelper.getStepByStepPath() + "/BspTemplate.xml"));
+				.getBspSteps(new File(PathTool.getStepByStepPath() + "/BspTemplate.xml"));
 		for (BspStep step : steps) {
 			TreeItem item = new TreeItem(root, 0);
 			item.setText(step.getName());

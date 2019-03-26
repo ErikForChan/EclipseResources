@@ -69,6 +69,8 @@ import com.djyos.dide.ui.wizards.djyosProject.CreateHardWareDesc;
 import com.djyos.dide.ui.wizards.djyosProject.DjyosMessages;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateBoardInfo;
 import com.djyos.dide.ui.wizards.djyosProject.info.CreateCpuInfo;
+import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 import com.djyos.dide.ui.wizards.djyosProject.tools.ReviseVariableToXML;
 
 @SuppressWarnings("restriction")
@@ -78,7 +80,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 	private String wz_title, wz_desc;
 	private IProject curProject;
 	private boolean createdProject;
-	private String didePath = DideHelper.getDIDEPath();
+	private String didePath = PathTool.getDIDEPath();
 
 	public BspCommonProject(String title, String desc) {
 		// TODO Auto-generated constructor stub
@@ -150,7 +152,8 @@ public class BspCommonProject extends BasicNewResourceWizard {
 					e1.printStackTrace();
 				}
 				CreateHardWareDesc chwd = new CreateHardWareDesc();
-				chwd.createHardWareXml(board.getBoardName(), cpu.getCpuName(), hardWardInfoFile);
+				String coreName = DideHelper.getCoreName(core, cpu.getCores().indexOf(core));
+				chwd.createHardWareXml(board.getBoardName(), cpu.getCpuName(), coreName,hardWardInfoFile);
 				monitor.worked(6);
 
 				// 处理工程的链接
@@ -217,7 +220,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 	public void importProject(String projectPath, Board selectedBoard, Core selectedCore) {
 
 		String projectName = fMainPage.getProjectName();// 用户填写的工程名
-		String srcPath = DideHelper.getTemplatePath() + "/"
+		String srcPath = PathTool.getTemplatePath() + "/"
 				+ selectedCore.getArch().getToolchain().replaceAll("\\s+", "-") + "/" + "bsp";// 模板的路径
 		String userPath = projectPath;
 		if (!projectPath.contains(projectName)) {
@@ -260,8 +263,8 @@ public class BspCommonProject extends BasicNewResourceWizard {
 			if (!destLdsFile.exists()) {
 				destLdsFile.mkdirs();
 			}
-			File memoryLdsFile = new File(selectedBoard.getBoardPath() + "/lds/memory.lds");
-			File bspLdsFile = new File(selectedBoard.getBoardPath() + "/lds/bsp.lds");
+			File memoryLdsFile = new File(selectedBoard.getBoardFolderPath() + "/lds/memory.lds");
+			File bspLdsFile = new File(selectedBoard.getBoardFolderPath() + "/lds/bsp.lds");
 			if (memoryLdsFile.exists()) {
 				DideHelper.copyFolder(memoryLdsFile, new File(destPath + "/src/lds/memory.lds"));
 			}
@@ -322,11 +325,11 @@ public class BspCommonProject extends BasicNewResourceWizard {
 
 	public void configure_BspProject(Board board, Cpu cpu, Core core, String projectPath, String projectName) {
 		String _cpuName = cpu.getCpuName();
-		File boardDemoFile = new File(DideHelper.getDemoBoardFilePath());
-		File archSourceFile = new File(DideHelper.getDjyosSrcPath() + "/bsp/arch");
+		File boardDemoFile = new File(PathTool.getDemoBoardFilePath());
+		File archSourceFile = new File(PathTool.getDjyosSrcPath() + "/bsp/arch");
 		List<File> archXmlFiles = DideHelper.getArchXmlFiles(archSourceFile, new ArrayList<File>());
-		File boardFolder = new File(board.getBoardPath());
-		File cpuFolder = new File(cpu.getParentPath());
+		File boardFolder = new File(board.getBoardFolderPath());
+		File cpuFolder = new File(cpu.getCpuFolderPath());
 
 		boolean isDemoBoard = false;
 		if (boardDemoFile.exists()) {
@@ -395,7 +398,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		// 释放当前的arch
 		if (curArchFile != null) {
 			IFolder archtectureFolder = project.getFolder(
-					"src/libos" + curArchFile.getPath().replace("\\", "/").replace(DideHelper.getDjyosSrcPath(), ""));
+					"src/libos" + curArchFile.getPath().replace("\\", "/").replace(PathTool.getDjyosSrcPath(), ""));
 			List<IFolder> archtectureFolders = new ArrayList<IFolder>();
 			getArchFolders(archtectureFolder, archtectureFolders);
 			setFoldersInclude(archtectureFolders, conds);
@@ -466,13 +469,13 @@ public class BspCommonProject extends BasicNewResourceWizard {
 			}
 			// 根据板件名链接
 			if (isDemoBoard) {
-				links.add(DideHelper.getRelativeDemoBoardFilePath() + boardFolder.getName());
-				links.add(DideHelper.getRelativeDemoBoardFilePath() + boardFolder.getName() + "/include");
-				links.add(DideHelper.getRelativeDemoBoardFilePath() + boardFolder.getName() + "/startup");
+				links.add(PathTool.getRelativeDemoBoardFilePath() + boardFolder.getName());
+				links.add(PathTool.getRelativeDemoBoardFilePath() + boardFolder.getName() + "/include");
+				links.add(PathTool.getRelativeDemoBoardFilePath() + boardFolder.getName() + "/startup");
 			} else {
-				links.add(DideHelper.getRelativeUserBoardFilePath() + boardFolder.getName());
-				links.add(DideHelper.getRelativeUserBoardFilePath() + boardFolder.getName() + "/include");
-				links.add(DideHelper.getRelativeUserBoardFilePath() + boardFolder.getName() + "/startup");
+				links.add(PathTool.getRelativeUserBoardFilePath() + boardFolder.getName());
+				links.add(PathTool.getRelativeUserBoardFilePath() + boardFolder.getName() + "/include");
+				links.add(PathTool.getRelativeUserBoardFilePath() + boardFolder.getName() + "/startup");
 			}
 			// 根据内核类型、架构、家族链接
 			List<String> archLinks = new ArrayList<String>();
@@ -509,7 +512,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 
 		List<Board> allBoards = ReadBoardXml.getAllBoards();
 		File boardInfoFile = new File(project.getLocation().toString() + "/data/hardwares/board_infos.xml");
-		DideHelper.createNewFile(boardInfoFile);
+		FileTool.createNewFile(boardInfoFile);
 		CreateBoardInfo.createBoardInfo(boardInfoFile, allBoards);
 
 		if (isDemoBoard) {
@@ -523,7 +526,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		List<Cpu> allCpus = ReadCpuXml.getAllCpus();
 		// 保存所有的cpu信息
 		File cpuInfoFile = new File(project.getLocation().toString() + "/data/hardwares/cpu_infos.xml");
-		DideHelper.createNewFile(cpuInfoFile);
+		FileTool.createNewFile(cpuInfoFile);
 		CreateCpuInfo.createCpuInfo(cpuInfoFile, allCpus);
 
 		Cpu myCpu = null;
@@ -549,7 +552,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		for (int i = 0; i < conds.length; i++) {
 			if (conds[i].getName().contains("libos")) {
 				for (int k = folders.size() - 1; k >= 0; k--) {
-					LinkHelper.setExclude(folders.get(k), conds[i], false);
+					LinkHelper.setFolderExclude(folders.get(k), conds[i], false);
 				}
 			}
 		}
@@ -584,13 +587,13 @@ public class BspCommonProject extends BasicNewResourceWizard {
 
 	private void setFolderExclude(File f, IProject project, ICConfigurationDescription[] conds) {
 		// TODO Auto-generated method stub
-		String srcLocation = DideHelper.getDjyosSrcPath();
+		String srcLocation = PathTool.getDjyosSrcPath();
 		String filePath = f.getPath().toString().replace("\\", "/");
 		String relativePath = filePath.replace(srcLocation, "");
 		IFolder folder = project.getFolder("src/libos" + relativePath);
 		for (int i = 0; i < conds.length; i++) {
 			if (conds[i].getName().contains("libos")) {
-				LinkHelper.setExclude(folder, conds[i], true);
+				LinkHelper.setFolderExclude(folder, conds[i], true);
 			}
 		}
 	}
@@ -614,7 +617,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 
 	private void setArchLinks(Arch arch, List<String> archLinks, List<File> archXmlFiles) {
 		// TODO Auto-generated method stub
-		File archSrcFile = new File(DideHelper.getDjyosSrcPath() + "/bsp/arch");
+		File archSrcFile = new File(PathTool.getDjyosSrcPath() + "/bsp/arch");
 		if (archSrcFile.exists()) {
 			for (File f : archXmlFiles) {
 				if (arch.getMcpu() != null) {
@@ -632,7 +635,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		// TODO Auto-generated method stub
 		File includeFile = new File(archFolder.getPath().replace("\\", "/") + "/include");
 		if (includeFile.exists()) {
-			archLinks.add(includeFile.getPath().replace("\\", "/").replace(DideHelper.getArchPath(),
+			archLinks.add(includeFile.getPath().replace("\\", "/").replace(PathTool.getArchPath(),
 					"${DJYOS_SRC_LOCATION}/bsp/arch"));
 		}
 		if (!archFolder.getParentFile().getName().equals("arch")) {
@@ -643,7 +646,7 @@ public class BspCommonProject extends BasicNewResourceWizard {
 	private void setBoardExclude(boolean isDemoBoard, String boardName, IProject project,
 			ICConfigurationDescription[] conds) {
 		// TODO Auto-generated method stub
-		File boardDrvFile = new File(DideHelper.getDjyosSrcPath() + "/bsp/boarddrv");
+		File boardDrvFile = new File(PathTool.getDjyosSrcPath() + "/bsp/boarddrv");
 		File[] files = boardDrvFile.listFiles();
 		for (File file : files) {
 			if (file.isDirectory()) {
@@ -682,13 +685,13 @@ public class BspCommonProject extends BasicNewResourceWizard {
 	}
 
 	private void setFolderInclude(File f, IProject project, ICConfigurationDescription[] conds) {
-		String srcLocation = DideHelper.getDjyosSrcPath();
+		String srcLocation = PathTool.getDjyosSrcPath();
 		String filePath = f.getPath().toString().replace("\\", "/");
 		String relativePath = filePath.replace(srcLocation, "");
 		IFolder folder = project.getFolder("src/libos" + relativePath);
 		for (int i = 0; i < conds.length; i++) {
 			if (conds[i].getName().contains("libos")) {
-				LinkHelper.setExclude(folder, conds[i], false);
+				LinkHelper.setFolderExclude(folder, conds[i], false);
 			}
 		}
 	}
@@ -705,14 +708,14 @@ public class BspCommonProject extends BasicNewResourceWizard {
 		// Exclude不需要的cpu
 		for (Cpu c : allCpus) {
 			if (!c.getCpuName().equals(myCpu.getCpuName())) {
-				String parentPath = c.getParentPath();
+				String parentPath = c.getCpuFolderPath();
 				File parentFile = new File(parentPath);
 				travelCpuParentInclude(parentFile.getParentFile(), project, conds);
 				travelCpuParentExclude(parentFile, project, conds);
 			}
 		}
 		// Include需要的cpu
-		File myCpuParentFile = new File(myCpu.getParentPath());
+		File myCpuParentFile = new File(myCpu.getCpuFolderPath());
 		travelCpuParentInclude(myCpuParentFile, project, conds);
 	}
 

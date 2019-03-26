@@ -15,10 +15,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class LinkProjectFile {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	private String didePath = DideHelper.getDIDEPath();
+	private String didePath = PathTool.getDIDEPath();
 
 	public void addLink(IFile file, String objectName, String objectPath, String tag) {
 		factory.setIgnoringElementContentWhitespace(false);

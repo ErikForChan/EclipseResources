@@ -320,8 +320,10 @@ public class ParallelBuilder {
 				// Build process has been canceled or failed to launch
 				if (launcher.queryState() == ProcessLauncher.STATE_CANCELED)
 					status = STATUS_CANCELED;
-				else
+				else {
 					status = STATUS_INVALID;
+				}
+					
 				errorMsg = launcher.getErrorMessage();
 				break main_loop;
 			}
@@ -453,10 +455,11 @@ public class ParallelBuilder {
 				break main_loop;
 		}
 
-		if (status != STATUS_OK && errorMsg != null) 
+		if (status != STATUS_OK && errorMsg != null)
 			printMessage(errorMsg, out);
 		return status;
 	}
+	
 	
 	/**
 	 * Prints output to the console 

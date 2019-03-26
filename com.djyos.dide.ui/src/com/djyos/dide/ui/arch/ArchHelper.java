@@ -18,10 +18,11 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import com.djyos.dide.ui.DPluginImages;
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class ArchHelper {
 
-	private static String didePath = DideHelper.getDIDEPath();
+	private static String didePath = PathTool.getDIDEPath();
 
 	public static void initArchTree(Tree tree) {
 		// TODO Auto-generated method stub

@@ -19,9 +19,8 @@ import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.Cpu;
 
 public class CreateHardWareDesc {
-	private DideHelper dideHelper = new DideHelper();
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-	public void createHardWareXml(String boardName,String cpuName,File file){
+	public void createHardWareXml(String boardName,String cpuName,String coreName, File file){
 		try {
 			factory.setIgnoringElementContentWhitespace(false);
 	    	DocumentBuilder builder = factory.newDocumentBuilder();             
@@ -32,15 +31,18 @@ public class CreateHardWareDesc {
 	    	baordElement.setTextContent(boardName);
 	    	Element cpuElement = document.createElement("cpu");
 	    	cpuElement.setTextContent(cpuName);
+	    	Element coreElement = document.createElement("core");
+	    	coreElement.setTextContent(coreName);
 	    	
 	    	hardwareElement.appendChild(baordElement);
 	    	hardwareElement.appendChild(cpuElement);
+	    	hardwareElement.appendChild(coreElement);
 	    	document.appendChild(hardwareElement);
 	    	
 	    	TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
+			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为3
 			transformer.setOutputProperty("encoding", "UTF-8");
 			StringWriter writer = new StringWriter();
 			transformer.transform(new DOMSource(document), new StreamResult(writer));
@@ -50,7 +52,7 @@ public class CreateHardWareDesc {
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
-			dideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
+			DideHelper.showErrorMessage("文件"+file.getName()+"创建失败！ "+e.getMessage());
 		}
 		
 	}

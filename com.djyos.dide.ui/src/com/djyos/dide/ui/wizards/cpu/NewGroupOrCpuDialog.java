@@ -18,6 +18,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.eclipse.cdt.utils.ui.controls.ControlFactory;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.StatusDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ModifyEvent;
@@ -54,27 +55,24 @@ import com.djyos.dide.ui.objects.Arch;
 import com.djyos.dide.ui.objects.Core;
 import com.djyos.dide.ui.objects.CoreMemory;
 import com.djyos.dide.ui.objects.Cpu;
+import com.djyos.dide.ui.swt.DjyosUI;
+import com.djyos.dide.ui.wizards.djyosProject.tools.FileTool;
 
-public class NewGroupOrCpuDialog extends StatusDialog {
+public class NewGroupOrCpuDialog extends StatusDialog implements ICpuConstants{
 
-	private Tree cpuGroupTree, memoryTree, archTree;
+	private Tree cpuGroupTree, memoryTree, archTree, sharedMemoryTree;
 	private Composite configContent;
-	private Combo memoryTypeCombo;
-	private Text addrField, sizeField;
+	private Combo memoryTypeCombo,shared_memoryTypeCombo;
+	private Text addrField, sizeField, groupNameField, shared_addrField, shared_sizeField;
 	private Group contentGroup;
 	private ScrolledComposite scrolledComposite;
-	private Cpu newCpu = new Cpu(), parentCpu = new Cpu(), curCpu = new Cpu(), revisingCpu = new Cpu();
+	private Cpu newCpu = new Cpu(), parentCpu = new Cpu(), curCpu = new Cpu(), revisingCpu = new Cpu(), CpuCreated;
 	private Core newCore = new Core();
-	private Text groupNameField;
-	private String curPath = null, groupName, cpuName, cpuTag = null;
+	private String curPath = null, groupName, cpuName, cpuTag = null, tempName = null;
 	private List<String> attributes = new ArrayList<String>();
-	private Combo numCombo4;
-	private Label memorySizeLabel, memoryAddrLabel, memoryTypeLabel;
-	private String tempName = null;
-	private List<TreeItem> archItems;
+	private Label memorySizeLabel, memoryAddrLabel, memoryTypeLabel,
+	shared_memorySizeLabel, shared_memoryAddrLabel, shared_memoryTypeLabel;
 	private File configFile;
-	private String didePath = DideHelper.getDIDEPath();
-	private IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 
 	private void setMemoryCpt(boolean isEnable) {
 		memoryTypeLabel.setEnabled(isEnable);
@@ -84,51 +82,79 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		sizeField.setEnabled(isEnable);
 		addrField.setEnabled(isEnable);
 	}
+	
+	private void setSharedMemoryCpt(boolean isEnable) {
+		shared_memoryTypeLabel.setEnabled(isEnable);
+		shared_memoryAddrLabel.setEnabled(isEnable);
+		shared_memorySizeLabel.setEnabled(isEnable);
+		shared_memoryTypeCombo.setEnabled(isEnable);
+		shared_addrField.setEnabled(isEnable);
+		shared_addrField.setEnabled(isEnable);
+	}
 
 	public String getGroupName() {
 		return groupName;
 	}
 
+	private void init_Window_Constants(Label nameLabel) {
+		// TODO Auto-generated method stub
+		if (cpuTag.equals("group")) {
+			nameLabel.setText(name_folder);
+		} else if (cpuTag.equals("cpu")) {
+			nameLabel.setText(name_cpu);
+		} else if (cpuTag.startsWith("revise")) {
+			if (cpuTag.endsWith("cpu")) {
+				nameLabel.setText(name_cpu);
+			} else if (cpuTag.endsWith("group")) {
+				nameLabel.setText(name_folder);
+			}
+			groupNameField.setText(tempName);
+		}
+	}
+	
 	public NewGroupOrCpuDialog(Shell parent, List<String> configs, Cpu cpu, String curFilePath, String tag) {
 		super(parent);
 		attributes = configs;
+		curPath = curFilePath;
 		cpuTag = tag;
-
+		newCpu = new Cpu();
 		if (cpu.getCoreNum() != 0) {
 			parentCpu.setCoreNum(cpu.getCoreNum());
 			parentCpu.setCores(cpu.getCores());
-			curCpu = parentCpu;
-			newCpu = new Cpu();
+			parentCpu.setShared_memorys(cpu.getShared_memorys());
+			parentCpu.setSharedMemoryNames();
+			curCpu.setCoreNum(cpu.getCoreNum());
+			curCpu.setCores(cpu.getCores());
+			curCpu.setShared_memorys(cpu.getShared_memorys());
+			curCpu.setSharedMemoryNames();
 			newCpu.setCoreNum(cpu.getCoreNum());
 			for (int i = 0; i < cpu.getCoreNum(); i++) {
 				newCpu.getCores().add(new Core());
 			}
-		} else {
-
 		}
-		curPath = curFilePath;
 
-		if (tag.equals("group")) {
-			setTitle("新建分组");
-		} else if (tag.equals("cpu")) {
-			setTitle("新建Cpu");
-		} else if (tag.startsWith("revise")) {
-			if (tag.endsWith("group")) {
-				setTitle("修改子目录配置");
-			} else if (tag.endsWith("cpu")) {
-				setTitle("修改Cpu配置");
-			}
-			File curFile = new File(curPath);
-			configFile = DideHelper.getXmlFile(curFile);
-			try {
-				if (configFile != null) {
-					revisingCpu = ReadCpuXml.unitCpu(revisingCpu, configFile);
+		switch(tag) {
+			case "group":
+				setTitle(title_group);
+				break;
+			case "cpu":
+				setTitle(title_cpu);
+				break;
+			default:
+				if (tag.startsWith("revise")) {
+					if (tag.endsWith("group")) {
+						setTitle(title_folder_revice);
+					} else if (tag.endsWith("cpu")) {
+						setTitle(title_cpu_revice);
+					}
+					File curFile = new File(curPath);
+					configFile = DideHelper.getXmlFile(curFile);
+					if (configFile != null) {
+						revisingCpu = ReadCpuXml.unitCpu(revisingCpu, configFile);
+					}
+					tempName = curPath.substring(curPath.lastIndexOf("\\") + 1, curPath.length());
 				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			tempName = curPath.substring(curPath.lastIndexOf("\\") + 1, curPath.length());
+				break;
 		}
 
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MAX);
@@ -137,14 +163,10 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		// TODO Auto-generated method stub
-		Composite composite = new Composite(parent, SWT.NONE);
-		composite.setLayout(new GridLayout());
-		composite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		Composite composite = DjyosUI.DjyosComposite(parent, SWT.NONE);
 
 		Composite groupNameCpt = new Composite(composite, SWT.NONE);
-		GridLayout groupNameLayout = new GridLayout();
-		groupNameLayout.numColumns = 2;
-		groupNameLayout.marginHeight = 20;
+		GridLayout groupNameLayout = DjyosUI.DjyosGridLayout(2, 0, 20);
 		groupNameCpt.setLayout(groupNameLayout);
 		groupNameCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -152,74 +174,27 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		groupNameField = new Text(groupNameCpt, SWT.BORDER);
 		groupNameField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-		if (cpuTag.equals("group")) {
-			nameLabel.setText("子目录名称: ");
-		} else if (cpuTag.equals("cpu")) {
-			nameLabel.setText("Cpu名称: ");
-		} else if (cpuTag.startsWith("revise")) {
-			if (cpuTag.endsWith("cpu")) {
-				nameLabel.setText("Cpu名称: ");
-			} else if (cpuTag.endsWith("group")) {
-				nameLabel.setText("子目录名称: ");
-			}
-			groupNameField.setText(tempName);
-		}
+		init_Window_Constants(nameLabel);
 
 		Composite cpuGroupCpt = new Composite(composite, SWT.NULL);
-		GridLayout layoutAttributes = new GridLayout();
-		layoutAttributes.numColumns = 2;
+		GridLayout layoutAttributes = DjyosUI.DjyosGridLayout(2, 0, 0);
 		cpuGroupCpt.setLayout(layoutAttributes);
 		cpuGroupCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-
 		Composite cpuGroupListCpt = new Composite(cpuGroupCpt, SWT.NULL);
-		cpuGroupTree = new Tree(cpuGroupListCpt, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		cpuGroupTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-		cpuGroupTree.setHeaderVisible(true);
-		final TreeColumn columnGroupList = new TreeColumn(cpuGroupTree, SWT.NONE);
-		columnGroupList.setText("Cpu配置项");
-		columnGroupList.setWidth(140);
-		columnGroupList.setResizable(false);
-		columnGroupList.setToolTipText("Cpu Attributes");
-		columnGroupList.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
-		cpuGroupTree.setSize(150, 250);
-		List<String> cons = new ArrayList<String>();
-		cons.add("内核个数");
-		cons.add("复位配置");
-		// 如果当前的内核个数不为0，且当前cpu内核的浮点不为空，则添加浮点配置项
-		if (curCpu.getCores().size() > 0) {
-			boolean fpNeed = DideHelper.isFputypeuNeed(curCpu.getCores().get(0));
-			if (fpNeed) {
-				cons.add("浮点配置");
-			}
-		}
-		cons.add("内核配置");
-		cons.add("存储配置");
-		for (int i = 0; i < cons.size(); i++) {
-			TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
-			t.setText(cons.get(i));
-			if (!attributes.contains(cons.get(i))) {
-				t.setImage(DPluginImages.CFG_DONE_VIEW.createImage());
-			}
-		}
+		cpuGroupTree = buildTree(cpuGroupListCpt,160, 290, config_head);
+		
+		check_Configured();
 
-		contentGroup = ControlFactory.createGroup(cpuGroupCpt, "分组配置", 1);
+		contentGroup = ControlFactory.createGroup(cpuGroupCpt, config_group, 1);
 		contentGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
 		contentGroup.setLayout(new GridLayout(1, true));
-
-		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-
-		configContent = new Composite(scrolledComposite, SWT.NONE);
-		configContent.setLayout(new GridLayout());
-		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
-
-		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(configContent);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setMinWidth(300);
-
+		cpuGroupTree.select(cpuGroupTree.getItem(0));
+		
+		init_ScrollCompt();
+		contentGroup.setText(config_core);
+		creatCoreNumContent();
+		resetScrollCompt();
+		
 		cpuGroupTree.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -229,6 +204,46 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		});
 
 		return super.createDialogArea(parent);
+	}
+	
+	private void init_ScrollCompt() {
+		// TODO Auto-generated method stub
+		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL | SWT.H_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		configContent = DjyosUI.DjyosComposite(scrolledComposite, SWT.NONE);
+	}
+
+	private void check_Configured() {
+		// TODO Auto-generated method stub
+		List<String> cons = new ArrayList<String>();
+		cons.add(config_core);
+		cons.add(config_reset);
+		cons.add(config_shared_memory);
+		// 如果当前的内核个数不为0，且当前cpu内核的浮点不为空，则添加浮点配置项
+		if (curCpu.getCores().size() > 0) {
+			boolean fpNeed = DideHelper.isFputypeuNeed(curCpu.getCores().get(0));
+			if (fpNeed) {
+				cons.add(config_fpu);
+			}
+		}
+//		cons.add(config_core);
+		cons.add(config_memory);
+		for (int i = 0; i < cons.size(); i++) {
+			TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
+			t.setText(cons.get(i));
+			if (!attributes.contains(cons.get(i))) {
+				t.setImage(DPluginImages.CFG_DONE_VIEW.createImage());
+			}
+		}
+	}
+
+	private void  resetScrollCompt() {
+		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
+		scrolledComposite.setContent(configContent);
+		scrolledComposite.setMinHeight(point.y);
+		scrolledComposite.setExpandHorizontal(true);
+		scrolledComposite.setExpandVertical(true);
+		scrolledComposite.setMinWidth(300);
 	}
 
 	/**
@@ -241,47 +256,667 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 			String selectConfigName = items[0].getText();
 			contentGroup.setText(selectConfigName);
 			scrolledComposite.dispose();
+			init_ScrollCompt();
 			switch (selectConfigName) {
-			case "内核个数":
-				creatCoreNumContent(contentGroup);
+			case config_core:
+				creatCoreNumContent();
 				break;
-			case "内核配置":
-				creatCoreContent(contentGroup);
+			case config_memory:
+				creatMemoryContent();
 				break;
-			case "存储配置":
-				creatMemoryContent(contentGroup);
+			case config_shared_memory:
+				creatSharedMemoryContent();
 				break;
-			case "浮点配置":
-				creatFloatContent(contentGroup);
+			case config_fpu:
+				creatFloatContent();
 				break;
-			case "复位配置":
-				creatResetContent(contentGroup);
+			case config_reset:
+				creatResetContent();
 				break;
+			}
+			resetScrollCompt();
+			contentGroup.layout();
+		}
+	}
+
+	private MemoryHandler getMemoryHandlerInstance() {
+        return new MemoryHandler();
+    }
+	
+	public Tree buildTree(Composite memoryComposite, int tWidth, int tHeight, String columTitle) {
+		Tree t = new Tree(memoryComposite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
+		t.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		t.setHeaderVisible(true);
+		t.setSize(tWidth,tHeight);
+		final TreeColumn columnMemory = new TreeColumn(t, SWT.NONE);
+		columnMemory.setText(columTitle);
+		columnMemory.setWidth(tWidth);
+		columnMemory.setResizable(false);
+		columnMemory.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
+		return t;
+	}
+	
+	private void creatSharedMemoryContent() {
+		// TODO Auto-generated method stub
+		MemoryHandler memHandler = getMemoryHandlerInstance();
+		
+		GridLayout layout = DjyosUI.DjyosGridLayout(2, 0, 0);
+		configContent.setLayout(layout);
+		Composite memoryComposite = new Composite(configContent, SWT.NONE);
+		memoryComposite.setLayout(new GridLayout());
+		memoryComposite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+
+		sharedMemoryTree = buildTree(memoryComposite,150,170, "共享片内存储");
+		Composite btnCpt = new Composite(memoryComposite, SWT.NONE);
+		btnCpt.setLayout(new GridLayout(2, true));
+		btnCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
+		Button addBtn = new Button(btnCpt, SWT.PUSH);
+		addBtn.setText("添加");
+		addBtn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				memHandler.handle_addClick(sharedMemoryTree,true,-1);
+			}
+		});
+		Button deleteBtn = new Button(btnCpt, SWT.PUSH);
+		deleteBtn.setText("删除");
+		deleteBtn.setEnabled(false);
+		deleteBtn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int memoryNum = memHandler.handle_deleteClick(sharedMemoryTree,true,-1);
+				if (memoryNum < 1) {
+					deleteBtn.setEnabled(false);
+					setSharedMemoryCpt(false);
+				}
+			}
+		});
+
+		Composite memoryContentCpt = new Composite(configContent, SWT.NONE);
+		GridLayout detailsLayout = DjyosUI.DjyosGridLayout(2, 0, 20);
+		memoryContentCpt.setLayout(detailsLayout);
+		memoryContentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		shared_memoryTypeLabel = new Label(memoryContentCpt, SWT.NONE);
+		shared_memoryTypeLabel.setText("类型: ");
+
+		shared_memoryTypeCombo = new Combo(memoryContentCpt, SWT.READ_ONLY);
+		shared_memoryTypeCombo.add("FLASH");
+		shared_memoryTypeCombo.add("RAM");
+		shared_memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		shared_memoryTypeCombo.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				setSharedMemoryCpt(true);
+				int comboIndex = shared_memoryTypeCombo.getSelectionIndex();
+				TreeItem[] items = sharedMemoryTree.getSelection();
+				String type = shared_memoryTypeCombo.getItem(comboIndex);//
+				if (items.length > 0) {
+					String selectMemory = items[0].getText().trim();// 选中的内存
+					List<CoreMemory> memorys = newCpu.getShared_memorys();// 获取当前内核所有内存
+					int index = memHandler.updateType(memorys,selectMemory,type);
+					if (index != -1) {
+						curCpu.getShared_memorys().get(index).setType(type);
+					}
+					if (tempName != null) {
+						List<CoreMemory> _memorys = revisingCpu.getShared_memorys();// 获取当前内核所有内存
+						memHandler.updateType(_memorys,selectMemory,type);
+					}
+				}
+			}
+		});
+		
+		shared_memoryAddrLabel = new Label(memoryContentCpt, SWT.NONE);
+		shared_memoryAddrLabel.setText("地址: ");
+		shared_addrField = new Text(memoryContentCpt, SWT.BORDER);
+		shared_addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		shared_addrField.addMouseTrackListener(new MouseTrackListener() {
+
+			@Override
+			public void mouseHover(MouseEvent e) {
+				// TODO Auto-generated method stub
+			}
+
+			@Override
+			public void mouseExit(MouseEvent e) {
+				// TODO Auto-generated method stub
+					Pattern pattern = Pattern.compile("^([1-9]\\d*|[0]{1,1})$"); // 含0正整数
+					TreeItem[] items = sharedMemoryTree.getSelection();
+					if (items.length > 0) {
+						String selectMemory = items[0].getText().trim();
+						String addr = shared_addrField.getText().trim();
+						if (items.length > 0 && !addr.equals("")) {
+								boolean isInt = pattern.matcher(addr).matches();
+								int curNum = parseIntNum(addr,isInt);
+								if (curNum < 0) {
+									shared_addrField.setText("");
+									DideHelper.showErrorMessage("请输入正整数(包含0)");
+								} else {
+									List<CoreMemory> memorys = newCpu.getShared_memorys();// 获取当前内核所有内存
+									int index = memHandler.updateAddr(memorys, selectMemory, addr);
+									if (index != -1) {
+										curCpu.getShared_memorys().get(index).setStartAddr(addr);
+									}
+									if (tempName != null) {
+										List<CoreMemory> _memorys = revisingCpu.getShared_memorys();// 获取当前内核所有内存
+										memHandler.updateAddr(_memorys, selectMemory, addr);
+									}
+								}
+						}
+					}
+
+			}
+
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		shared_memorySizeLabel = new Label(memoryContentCpt, SWT.NONE);
+		shared_memorySizeLabel.setText("大小: ");
+		shared_sizeField = new Text(memoryContentCpt, SWT.BORDER);
+		shared_sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		if(curCpu.getShared_memorys().size()>0) {
+			sharedMemoryTree.removeAll();
+			for(int i = 0;i<curCpu.getShared_memorys().size();i++) {
+				String memoryName = curCpu.getShared_memorys().get(i).getName();
+				TreeItem t = new TreeItem(sharedMemoryTree, SWT.NONE);
+				t.setText(memoryName == null?("memory"+(i+1)):memoryName);
+			}
+			shared_memoryTypeCombo.select(0);
+			shared_addrField.setText(curCpu.getShared_memorys().get(0).getStartAddr());
+			shared_sizeField.setText(curCpu.getShared_memorys().get(0).getSize());
+		}
+		
+		setSharedMemoryCpt(true);
+
+		shared_sizeField.addMouseTrackListener(new MouseTrackListener() {
+
+			@Override
+			public void mouseHover(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseExit(MouseEvent e) {
+				// TODO Auto-generated method stub
+				Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$"); // ^[-\\+]?[\\d]*$
+				TreeItem[] items = sharedMemoryTree.getSelection();
+				String size = shared_sizeField.getText().trim().replace("k", "");
+				if (items.length > 0) {
+					String selectMemory = items[0].getText().trim();
+					if (!size.equals("")) {
+						boolean isInt = pattern.matcher(size).matches();
+						int curNum = parseIntNum(size, isInt);
+						if (curNum < 0) {
+							shared_sizeField.setText("");
+							DideHelper.showErrorMessage("请输入正整数(不包含0)");
+						} else {
+							List<CoreMemory> memorys = newCpu.getShared_memorys();// 获取当前内核所有内存
+							int index = memHandler.updateSize(memorys, selectMemory, size);
+							if (index != -1) {
+								curCpu.getShared_memorys().get(index).setSize(size);
+							}
+							if (tempName != null) {
+								List<CoreMemory> _memorys = revisingCpu.getShared_memorys();// 获取当前内核所有内存
+								memHandler.updateSize(_memorys, selectMemory, size);
+							}
+						}
+
+					}
+				}
+			}
+
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		sharedMemoryTree.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				deleteBtn.setEnabled(true);
+				setSharedMemoryCpt(true);
+				TreeItem[] items = sharedMemoryTree.getSelection();
+				List<CoreMemory> memorys = curCpu.getShared_memorys();
+				if (items.length > 0) {
+					String selectMemoryName = items[0].getText();
+					for (CoreMemory memory:memorys) {
+						String memoryName = memory.getName();
+						if (memoryName.equals(selectMemoryName)) {
+							if (memory.getType() != null) {
+								shared_memoryTypeCombo.select(memory.getType().equalsIgnoreCase("RAM")?1:0);
+							} else {
+								shared_memoryTypeCombo.deselectAll();
+							}
+							shared_addrField.setText(memory.getStartAddr()==null?"":memory.getStartAddr());
+							shared_sizeField.setText(memory.getSize()==null?"":String.valueOf(memory.getSize()));
+							break;
+						}
+					}
+				}
+			}
+		});
+
+		if (sharedMemoryTree.getItemCount() == 0) {
+			setSharedMemoryCpt(false);
+		}
+
+	}
+	
+	protected void creatMemoryContent() {
+		// TODO Auto-generated method stub
+		MemoryHandler memHandler = getMemoryHandlerInstance();
+		
+		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
+		GridLayout layout = DjyosUI.DjyosGridLayout(2,0,0);
+		coreSelectCpt.setLayout(layout);
+		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
+		nameLabel.setText(core_select);
+		Combo numCombo = new Combo(coreSelectCpt, SWT.READ_ONLY);
+		for (int i = 0; i < curCpu.getCoreNum(); i++) {
+			String coreName = curCpu.getCores().get(i).getName();
+			numCombo.add(coreName!=null?coreName:"core"+(i+1));
+		}
+		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		Group memoryGroup = ControlFactory.createGroup(configContent, "配置内存", 1);
+		GridLayout memoryGroupLayout = DjyosUI.DjyosGridLayout(2, 0, 0);
+		memoryGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
+		memoryGroup.setLayout(memoryGroupLayout);
+
+		Composite memoryComposite = new Composite(memoryGroup, SWT.NONE);
+		memoryComposite.setLayout(new GridLayout());
+		memoryComposite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+
+		memoryTree = buildTree(memoryComposite,150,170, "私有片内存储");
+		Composite btnCpt = new Composite(memoryComposite, SWT.NONE);
+		btnCpt.setLayout(new GridLayout(2, true));
+		btnCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
+		Button addBtn = new Button(btnCpt, SWT.PUSH);
+		addBtn.setText("添加");
+		addBtn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int coreIndex = numCombo.getSelectionIndex();
+				memHandler.handle_addClick(memoryTree,false,coreIndex);
+			}
+		});
+		Button deleteBtn = new Button(btnCpt, SWT.PUSH);
+		deleteBtn.setText("删除");
+		deleteBtn.setEnabled(false);
+		deleteBtn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int coreIndex = numCombo.getSelectionIndex();
+				int memoryNum = memHandler.handle_deleteClick(memoryTree, false, coreIndex);
+				if (memoryNum < 1) {
+					deleteBtn.setEnabled(false);
+					setMemoryCpt(false);
+				}
+			}
+		});
+
+		Composite memoryContentCpt = new Composite(memoryGroup, SWT.NONE);
+		GridLayout detailsLayout = DjyosUI.DjyosGridLayout(2, 0, 20);
+		memoryContentCpt.setLayout(detailsLayout);
+		memoryContentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
+		memoryTypeLabel = new Label(memoryContentCpt, SWT.NONE);
+		memoryTypeLabel.setText("类型: ");
+
+		memoryTypeCombo = new Combo(memoryContentCpt, SWT.READ_ONLY);
+		memoryTypeCombo.add("FLASH");
+		memoryTypeCombo.add("RAM");
+		memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		memoryTypeCombo.addSelectionListener(new SelectionAdapter() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				memoryAddrLabel.setEnabled(true);
+				memorySizeLabel.setEnabled(true);
+				sizeField.setEnabled(true);
+				addrField.setEnabled(true);
+				int selectIndex = numCombo.getSelectionIndex();
+				if (selectIndex != -1) {
+					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
+
+					int comboIndex = memoryTypeCombo.getSelectionIndex();
+					TreeItem[] items = memoryTree.getSelection();
+					String type = memoryTypeCombo.getItem(comboIndex);//
+					if (items.length > 0) {
+						String selectMemory = items[0].getText().trim();// 选中的内存
+						int index = memHandler.updateType(memorys, selectMemory, type);
+						if (index != -1) {
+							curCpu.getCores().get(selectIndex).getMemorys().get(index).setType(type);
+						}
+						if (tempName != null) {
+							List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
+							memHandler.updateType(_memorys, selectMemory, type);
+						}
+					}
+				}
+			}
+				
+		});
+
+		memoryAddrLabel = new Label(memoryContentCpt, SWT.NONE);
+		memoryAddrLabel.setText("地址: ");
+		addrField = new Text(memoryContentCpt, SWT.BORDER);
+		addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		addrField.addMouseTrackListener(new MouseTrackListener() {
+
+			@Override
+			public void mouseHover(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseExit(MouseEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				if (selectIndex != -1) {
+					Pattern pattern = Pattern.compile("^([1-9]\\d*|[0]{1,1})$"); // 含0正整数
+					TreeItem[] items = memoryTree.getSelection();
+					if (items.length > 0) {
+						String selectMemory = items[0].getText().trim();
+						String addr = addrField.getText().trim();
+						if (items.length > 0) {
+							if (!addr.equals("")) {
+								boolean isInt = pattern.matcher(addr).matches();
+								int curNum = parseIntNum(addr, isInt);
+								if (curNum < 0) {
+									addrField.setText("");
+									DideHelper.showErrorMessage("请输入正整数(包含0)");
+								} else {
+									List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
+									int index = memHandler.updateAddr(memorys, selectMemory, addr);
+									if (index != -1) {
+										curCpu.getCores().get(selectIndex).getMemorys().get(index).setStartAddr(addr);
+									}
+									if (tempName != null) {
+										List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex)
+												.getMemorys();// 获取当前内核所有内存
+										memHandler.updateAddr(_memorys, selectMemory, addr);
+									}
+								}
+
+							} 
+						}
+					}
+
+				}
+			}
+
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		memorySizeLabel = new Label(memoryContentCpt, SWT.NONE);
+		memorySizeLabel.setText("大小: ");
+		sizeField = new Text(memoryContentCpt, SWT.BORDER);
+		sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		setMemoryCpt(true);
+
+		sizeField.addMouseTrackListener(new MouseTrackListener() {
+
+			@Override
+			public void mouseHover(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void mouseExit(MouseEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				if (selectIndex != -1) {
+					Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$"); // ^[-\\+]?[\\d]*$
+					TreeItem[] items = memoryTree.getSelection();
+					String size = sizeField.getText().trim().replace("k", "");
+					if (items.length > 0) {
+						String selectMemory = items[0].getText().trim();
+						if (!size.equals("")) {
+							boolean isInt = pattern.matcher(size).matches();
+							int curNum = parseIntNum(size, isInt);
+							if (curNum < 0) {
+								sizeField.setText("");
+								DideHelper.showErrorMessage("请输入正整数(不包含0)");
+							} else {
+								List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
+								int index = memHandler.updateSize(memorys, selectMemory, size);
+								if (index != -1) {
+									curCpu.getCores().get(selectIndex).getMemorys().get(index).setSize(size);
+								}
+								if (tempName != null) {
+									List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
+									memHandler.updateSize(_memorys, selectMemory, size);
+								}
+
+							}
+
+						}
+					}
+				}
+			}
+
+			@Override
+			public void mouseEnter(MouseEvent e) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
+		// 选择内核的监听事件
+		numCombo.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				int selectIndex = numCombo.getSelectionIndex();
+				List<CoreMemory> memorys = curCpu.getCores().get(selectIndex).getMemorys();
+				Control[] controls = memoryGroup.getChildren();
+				for (Control control : controls) {
+					control.setEnabled(true);
+				}
+				memoryTree.removeAll();
+				for (int i = 0; i < memorys.size(); i++) {
+					String memoryName = memorys.get(i).getName();
+					TreeItem t = new TreeItem(memoryTree, SWT.NONE);
+					t.setText(memoryName);
+				}
+				setMemoryCpt(false);
+				setDefault_MemTree_Display(memorys,memoryTypeCombo,addrField,sizeField);
+			}
+		});
+
+		memoryTree.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// TODO Auto-generated method stub
+				deleteBtn.setEnabled(true);
+				setMemoryCpt(true);
+				TreeItem[] items = memoryTree.getSelection();
+				int selectIndex = numCombo.getSelectionIndex();
+				List<CoreMemory> memorys = curCpu.getCores().get(selectIndex).getMemorys();
+				if (items.length > 0) {
+					String selectMemoryName = items[0].getText();
+					for (int i = 0; i < memorys.size(); i++) {
+						String memoryName = memorys.get(i).getName();
+						if (memoryName.equals(selectMemoryName)) {
+							if (memorys.get(i).getType() != null) {
+								memoryTypeCombo.select(memorys.get(i).getType().equals("RAM")?1:0);
+							} else {
+								memoryTypeCombo.deselectAll();
+							}
+							addrField.setText(memorys.get(i).getStartAddr() == null?"":memorys.get(i).getStartAddr());
+							sizeField.setText(memorys.get(i).getSize() == null?"":String.valueOf(memorys.get(i).getSize()));
+						}
+					}
+				}
+			}
+		});
+
+		if (curCpu.getCores().size() == 0) {
+			coreSelectCpt.setVisible(false);
+			List<CoreMemory> memorys = newCore.getMemorys();
+			setCoreMemory(memorys);
+			memoryTree.removeAll();
+			setDefault_MemTree_Display(memorys,memoryTypeCombo,addrField,sizeField);
+		} else {
+			numCombo.select(0);
+			for (Core core : curCpu.getCores()) {
+				List<CoreMemory> memorys = core.getMemorys();
+				setCoreMemory(memorys);
+			}
+			for (Core core : revisingCpu.getCores()) {
+				List<CoreMemory> memorys = core.getMemorys();
+				setCoreMemory(memorys);
+			}
+			memoryTree.removeAll();
+			if (curCpu.getCores().get(0).getMemorys().size() != 0) {
+				List<CoreMemory> memorys = curCpu.getCores().get(0).getMemorys();
+				for (int i = 0; i < memorys.size(); i++) {
+					String memoryName = memorys.get(i).getName();
+					TreeItem t = new TreeItem(memoryTree, SWT.NONE);
+					t.setText(memoryName);
+					if (i == 0) {
+						memoryTree.setSelection(t);
+					}
+				}
+				setDefault_MemTree_Display(memorys,memoryTypeCombo,addrField,sizeField);
+			}
+		}
+
+		int selectIndex = numCombo.getSelectionIndex();
+		if (selectIndex == -1) {
+			DjyosUI.enableControls(memoryGroup,false);
+		} else {
+			DjyosUI.enableControls(memoryGroup,true);
+		}
+
+		if (memoryTree.getItemCount() == 0) {
+			setMemoryCpt(false);
+		}
+
+	}
+
+	private void setCoreMemory(List<CoreMemory> memorys) {
+		// TODO Auto-generated method stub
+		for (CoreMemory memory : memorys) {
+			int index = memorys.indexOf(memory);
+			if (memory.getName() == null) {
+				memory.setName("memory" + (index + 1));
 			}
 		}
 	}
 
-	protected void creatCoreNumContent(Group contentGroup) {
+	protected int parseIntNum(String addr, boolean isInt) {
 		// TODO Auto-generated method stub
-		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-		configContent = new Composite(scrolledComposite, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		configContent.setLayout(layout);
-		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+		if (addr.startsWith("0x")) {
+			return Integer.parseInt(addr.substring(2), 16);
+		} else {
+			if (isInt) {
+				return Integer.parseInt(addr);
+			}
+		}
+		return -1;
+	}
 
-		Label nameLabel = new Label(configContent, SWT.NONE);
-		nameLabel.setText("内核个数: ");
-		Text numText = new Text(configContent, SWT.BORDER);
+	protected void creatCoreNumContent() {
+		// TODO Auto-generated method stub
+		//*******************************************//
+		GridLayout layout = DjyosUI.DjyosGridLayout(2, 0, 0);
+		configContent.setLayout(layout);
+		
+		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
+		GridLayout layout_core_select = DjyosUI.DjyosGridLayout(2, 0, 0);
+		coreSelectCpt.setLayout(layout_core_select);
+		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
+		nameLabel.setText(config_corenum +": ");
+		Text numText = new Text(coreSelectCpt, SWT.BORDER);
 		numText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		Composite coreNameContent = new Composite(configContent, SWT.BORDER);
+		GridData gd_core_name = new GridData(GridData.FILL_BOTH);
+		gd_core_name.horizontalSpan = 2;
+		GridLayout layout_core_name = DjyosUI.DjyosGridLayout(3, 0, 0);
+		coreNameContent.setLayout(layout_core_name);
+		coreNameContent.setLayoutData(gd_core_name);
+		
 		if (curCpu.getCoreNum() != 0) {
 			int coreNum = curCpu.getCoreNum();
 			numText.setText(String.valueOf(coreNum));
-			// if(parentCpu.getCoreNum()!=0) {
-			// numText.setEnabled(false);
-			// }
+			List<Text> coreNameTexts = new ArrayList<Text>();
+			for(int i=0;i<coreNum;i++) {
+				int index = i;
+				Label coreLabel = new Label(coreNameContent, SWT.NONE);
+				coreLabel.setText("核"+(i+1)+": ");
+				Text coreNameText = new Text(coreNameContent, SWT.BORDER);
+				coreNameText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+				coreNameText.setMessage("请选择内核");
+				
+				Button sCoreBtn = new Button(coreNameContent, SWT.PUSH);
+				sCoreBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+				sCoreBtn.setText("选择内核");
+				String coreName = curCpu.getCores().get(i).getName();
+				String mCpu = curCpu.getCores().get(0).getArch().getMcpu();
+				if(coreName != null) {
+					coreNameText.setText(coreName);
+				}else if(mCpu != null){
+					coreNameText.setText(mCpu);
+				}
+				coreNameText.addModifyListener(new ModifyListener() {
+					@Override
+					public void modifyText(ModifyEvent e) {
+						// TODO Auto-generated method stub
+						handle__CoreNum_modify(coreNameText,index);
+					}
+				});
+				coreNameTexts.add(coreNameText);
+				sCoreBtn.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						// TODO Auto-generated method stub
+						handle_sCoreSelected(coreNameTexts,index);
+					}
+				});
+//				if (configFile != null) {
+//					if (tempName != null) {
+//						Cpu singleCpu = ReadCpuXml.unitCpu(new Cpu(), configFile);
+//						if (singleCpu.getCores().get(0).getResetAddr() == null) {
+//							numText.setEnabled(false);
+//							coreNameText.setEnabled(false);
+//						}
+//					}
+//				}else {
+//					numText.setEnabled(false);
+//					coreNameText.setEnabled(false);
+//				}
+				
+			}
 		}
+		
 		numText.addModifyListener(new ModifyListener() {
 
 			@Override
@@ -292,80 +927,166 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 				boolean isInt = pattern.matcher(coreNum).matches();
 				if (!isInt) {
 					numText.setText("");
-					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-					MessageDialog.openError(window.getShell(), "提示", "请输入正整数");
-				} else {
-					newCpu = new Cpu();
+					DideHelper.showErrorMessage(input_int);
+				}else if(!coreNum.trim().equals("")){
 					int cNum = Integer.parseInt(coreNum);
-					newCpu.setCoreNum(cNum);
-					curCpu.setCoreNum(cNum);
-					int coreSize = revisingCpu.getCores().size();
-					if (tempName != null) {
-						revisingCpu.setCoreNum(cNum);
-						if (cNum > revisingCpu.getCores().size()) {
-							int extra = cNum - coreSize;
-							for (int i = 0; i < extra; i++) {
-								revisingCpu.getCores().add(new Core());
-							}
-						} else {
-							for (int i = coreSize - 1; i >= cNum; i--) {
-								revisingCpu.getCores().remove(i);
-							}
-						}
-
-					}
-
-					int newCoreSize = newCpu.getCores().size();
-					if (cNum > newCoreSize) {
-						int extra = cNum - newCoreSize;
-						for (int i = 0; i < extra; i++) {
-							newCpu.getCores().add(new Core());
-						}
-					} else {
-						for (int i = newCoreSize - 1; i >= cNum; i--) {
-							newCpu.getCores().remove(i);
-						}
-					}
-					curCpu = newCpu;
+					Handle_CoreNum_modify(cNum,coreNameContent);
 				}
-
+				resetScrollCompt();
+				contentGroup.layout();
 			}
 		});
-
-		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(configContent);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setMinWidth(300);
-		contentGroup.layout();
+	}
+	
+	private void handle__CoreNum_modify(Text coreNameText, int index) {
+		String coreName = coreNameText.getText();
+		newCpu.getCores().get(index).setName(coreName);
+		curCpu.getCores().get(index).setName(coreName);
+		if (tempName != null) {
+			revisingCpu.getCores().get(index).setName(coreName);
+		}
 	}
 
-	protected void creatResetContent(Group contentGroup) {
+	protected void handle_sCoreSelected(List<Text> coreNameTexts,int selectIndex) {
 		// TODO Auto-generated method stub
-		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+		SelectFamilyDialog dialog = new SelectFamilyDialog(coreNameTexts.get(selectIndex).getShell());
+		if(dialog.open() == Window.OK) {
+			Arch arch = dialog.getArch();
+			for(Text text:coreNameTexts) {
+				int textIndex = coreNameTexts.indexOf(text);
+				if(textIndex >= selectIndex) {
+					String coreName = arch.getMcpu();
+					if(coreNameTexts.size() > 2) {
+						coreName += "_"+String.valueOf(textIndex + 1);
+					}
+					text.setText(coreName);
+				}
+			}
+			if (newCpu.getCores().size() != 0) {
+				for (int i = selectIndex; i < newCpu.getCores().size(); i++) {
+					newCpu.getCores().get(i).setArch(arch);
+				}
+				if (tempName != null) {
+					for (int i = selectIndex; i < revisingCpu.getCores().size(); i++) {
+						revisingCpu.getCores().get(i).setArch(arch);
+					}
+				}
+				for (int i = selectIndex; i < curCpu.getCores().size(); i++) {
+					curCpu.getCores().get(i).setArch(arch);
+				}
 
-		configContent = new Composite(scrolledComposite, SWT.NONE);
-		configContent.setLayout(new GridLayout());
-		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
+			} else {
+				newCore.setArch(arch);
+			}
 
-		// if(haveCore) {
-		// curCpu = parentCpu;
-		// }else {
-		// curCpu = newCpu;
-		// }
-		//
+			TreeItem[] items = cpuGroupTree.getItems();
+			if (arch.getFpuType() != null) {
+				boolean containsFloate = false;
+				for (TreeItem t : items) {
+					if (t.getText().equals(config_fpu)) {
+						containsFloate = true;
+						break;
+					}
+				}
+				if (!containsFloate) {
+					TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
+					t.setText(config_fpu);
+					if (!attributes.contains(config_fpu)) {
+						t.setImage(DPluginImages.CFG_DONE_VIEW.createImage());
+					}
+				}
+			}
+		}
+	}
+	
+	protected void Handle_CoreNum_modify(int cNum, Composite coreNameContent) {
+		newCpu.setCoreNum(cNum);
+		curCpu.setCoreNum(cNum);
+		// TODO Auto-generated method stub
+		if (tempName != null) {
+			revisingCpu.setCoreNum(cNum);
+			changeCores(revisingCpu,cNum,revisingCpu.getCores().size());
+		}
+		changeCores(newCpu,cNum,newCpu.getCores().size());
+		changeCores(curCpu,cNum,curCpu.getCores().size());
+		
+		Control[] controls = coreNameContent.getChildren();
+		for(Control c:controls) {
+			c.dispose();
+		}
+		
+		List<Text> coreNameTexts = new ArrayList<Text>();
+		for(int i=0;i<cNum;i++) {
+			int index = i;
+			Label coreLabel = new Label(coreNameContent, SWT.NONE);
+			coreLabel.setText("核"+(i+1)+": ");
+			Text coreNameText = new Text(coreNameContent, SWT.BORDER);
+			coreNameText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+			coreNameText.setMessage("请选择内核");
+			
+			Button sCoreBtn = new Button(coreNameContent, SWT.PUSH);
+			sCoreBtn.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+			sCoreBtn.setText("选择内核");
+			if (tempName != null) {
+				if(revisingCpu.getCores().get(i).getName() != null) {
+					coreNameText.setText(revisingCpu.getCores().get(i).getName());
+				}
+			}else {
+				if(curCpu.getCores().get(i).getName() != null) {
+					coreNameText.setText(curCpu.getCores().get(i).getName());
+				}
+			}
+			coreNameText.addModifyListener(new ModifyListener() {
+				@Override
+				public void modifyText(ModifyEvent e) {
+					// TODO Auto-generated method stub
+					handle__CoreNum_modify(coreNameText,index);
+				}
+			});
+			coreNameTexts.add(coreNameText);
+			sCoreBtn.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					// TODO Auto-generated method stub
+					handle_sCoreSelected(coreNameTexts,index);
+				}
+			});
+			coreNameContent.layout();
+		}
+	}
+
+	protected void changeCores(Cpu cpu, int num, int coreSize) {
+		// TODO Auto-generated method stub
+		cpu.setCoreNum(num);
+		if (num > coreSize) {
+			int extra = num - coreSize;
+			for (int i = 0; i < extra; i++) {
+				cpu.getCores().add(new Core());
+			}
+		} else {
+			for (int i = coreSize - 1; i >= num; i--) {
+				cpu.getCores().remove(i);
+			}
+		}
+	}
+
+	protected void creatResetContent() {
+		// TODO Auto-generated method stub
 		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
+		GridLayout layout = DjyosUI.DjyosGridLayout(2, 0, 0);
 		coreSelectCpt.setLayout(layout);
 		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
 		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
-		nameLabel.setText("内核选择: ");
+		nameLabel.setText(core_select);
 		Combo numCombo = new Combo(coreSelectCpt, SWT.READ_ONLY);
 		for (int i = 0; i < curCpu.getCoreNum(); i++) {
-			numCombo.add("内核" + (i + 1));
+			String coreName = curCpu.getCores().get(i).getName();
+			if(coreName!=null) {
+				numCombo.add(coreName);
+			}else {
+				numCombo.add("core"+(i+1));
+			}
 		}
 		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
@@ -374,8 +1095,7 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		resetGroup.setLayout(new GridLayout());
 
 		Composite coreConfigCpt = new Composite(resetGroup, SWT.NONE);
-		GridLayout coreLayout = new GridLayout();
-		coreLayout.numColumns = 2;
+		GridLayout coreLayout = DjyosUI.DjyosGridLayout(2, 0, 0);
 		coreConfigCpt.setLayout(coreLayout);
 		coreConfigCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -396,19 +1116,7 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 			}
 		}
 
-		// if(parentCpu.getCores().size()==0) {
-		// coreSelectCpt.setVisible(false);
-		// if(newCore.getResetAddr()!=null) {
-		// addrText.setText(newCore.getResetAddr());
-		// }
-		// }else {
-		// if(parentCpu.getCores().get(0).getResetAddr()!=null) {
-		// numCombo.select(0);
-		// addrText.setText(parentCpu.getCores().get(0).getResetAddr());
-		// }
-		// }
-		numCombo.addSelectionListener(new SelectionListener() {
-
+		numCombo.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
@@ -419,13 +1127,6 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 				} else {
 					addrText.setText("");
 				}
-
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
 
@@ -459,39 +1160,28 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 
 			}
 		});
-
-		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(configContent);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setMinWidth(300);
-		contentGroup.layout();
 	}
 
-	protected void creatFloatContent(Group contentGroup) {
+	protected void creatFloatContent() {
 		// TODO Auto-generated method stub
-		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-
-		configContent = new Composite(scrolledComposite, SWT.NONE);
-		configContent.setLayout(new GridLayout());
-		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
 		// 内核选择界面
 		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
+		GridLayout layout = DjyosUI.DjyosGridLayout(2, 0, 0);
 		coreSelectCpt.setLayout(layout);
 		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
-		nameLabel.setText("内核选择: ");
+		nameLabel.setText(core_select);
 		Combo numCombo = new Combo(coreSelectCpt, SWT.READ_ONLY);
-		for (int i = 0; i < curCpu.getCoreNum(); i++) {
-			numCombo.add("内核" + (i + 1));
-		}
 		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		for (int i = 0; i < curCpu.getCoreNum(); i++) {
+			Core core = curCpu.getCores().get(i);
+			boolean fpNeed = DideHelper.isFputypeuNeed(core);
+			if (fpNeed) {
+				String coreName = core.getName();
+				coreName = coreName!=null?coreName:("core"+(i+1));
+				numCombo.add(coreName);
+			}
+		}
 
 		// 配置浮点界面
 		Group floatGroup = ControlFactory.createGroup(configContent, "配置浮点", 1);
@@ -499,15 +1189,13 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		floatGroup.setLayout(new GridLayout());
 
 		Composite coreConfigCpt = new Composite(floatGroup, SWT.NONE);
-		GridLayout coreLayout = new GridLayout();
-		coreLayout.numColumns = 2;
+		GridLayout coreLayout = DjyosUI.DjyosGridLayout(2, 0, 0);
 		coreConfigCpt.setLayout(coreLayout);
 		coreConfigCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		Label fpuTypeLabel = new Label(coreConfigCpt, SWT.NONE);
 		fpuTypeLabel.setText("FPU Type： ");
 		Combo fpuTypeCombo = new Combo(coreConfigCpt, SWT.READ_ONLY);
-		String[] fpuTypes = { "Toolchain default", "fpv5-d16", "fpv5-sp-d16", "fpv4-sp-d16", "fpv4-d16" };
 		fpuTypeCombo.setItems(fpuTypes);
 		fpuTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		// 内核个数为0时
@@ -531,20 +1219,12 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 			}
 		} else {// 内核个数不为0时
 			List<Core> cores = curCpu.getCores();
-
 			numCombo.select(0);
-			if (cores.get(0).getFloatABI() != null) {
-				if (cores.get(0).getFpuType() != null) {
-					if (cores.get(0).getFloatABI().equals("Library(soft)")) {
-						fpuTypeCombo.select(0);
-						fpuTypeCombo.setEnabled(false);
-					} else {
-						for (int i = 0; i < fpuTypes.length; i++) {
-							if (fpuTypes[i].contains(cores.get(0).getFpuType())) {
-								fpuTypeCombo.select(i);
-								break;
-							}
-						}
+			if (cores.get(0).getFpuType() != null) {
+				for (int i = 0; i < fpuTypes.length; i++) {
+					if (fpuTypes[i].contains(cores.get(0).getFpuType())) {
+						fpuTypeCombo.select(i);
+						break;
 					}
 				}
 			}
@@ -574,646 +1254,46 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 			public void widgetSelected(SelectionEvent e) {
 				// TODO Auto-generated method stub
 				String fpuType = fpuTypeCombo.getText().trim();
+				fpuType = fpuType.contains("default")?"default":fpuType;
 				if (curCpu.getCores().size() != 0) {
 					int selectIndex = numCombo.getSelectionIndex();
-					if (fpuType.contains("default")) {
-						newCpu.getCores().get(selectIndex).setFpuType("default");
-						if (tempName != null) {
-							revisingCpu.getCores().get(selectIndex).setFpuType("default");
+					String curCoreName =  numCombo.getText();
+					for(Core core:curCpu.getCores()) {
+						if(core.getName() != null) {
+							if(core.getName().equalsIgnoreCase(curCoreName)) {
+								selectIndex = curCpu.getCores().indexOf(core);
+							}
 						}
-
-						curCpu.getCores().get(selectIndex).setFpuType("default");
-					} else {
-						newCpu.getCores().get(selectIndex).setFpuType(fpuType);
-						if (tempName != null) {
-							revisingCpu.getCores().get(selectIndex).setFpuType(fpuType);
-						}
-
-						curCpu.getCores().get(selectIndex).setFpuType(fpuType);
 					}
-				} else {
-					if (fpuType.contains("default")) {
-						newCore.setFpuType("default");
-					} else {
-						newCore.setFpuType(fpuType);
-					}
-				}
-			}
-		});
-
-		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(configContent);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setMinWidth(300);
-		contentGroup.layout();
-	}
-
-	protected void creatCoreContent(Group contentGroup) {
-		// TODO Auto-generated method stub
-		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-
-		configContent = new Composite(scrolledComposite, SWT.NONE);
-		configContent.setLayout(new GridLayout());
-		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
-		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		coreSelectCpt.setLayout(layout);
-		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		archItems = new ArrayList<TreeItem>();
-		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
-		nameLabel.setText("内核选择: ");
-		numCombo4 = new Combo(coreSelectCpt, SWT.READ_ONLY);
-		for (int i = 0; i < curCpu.getCoreNum(); i++) {
-			numCombo4.add("内核" + (i + 1));
-		}
-		numCombo4.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		Group coreGroup = ControlFactory.createGroup(configContent, "配置内核", 1);
-		contentGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
-		contentGroup.setLayout(new GridLayout());
-
-		Composite archComposite = new Composite(coreGroup, SWT.NULL);
-		initArchTree(archComposite);
-
-		if (curCpu.getCores().size() == 0) {
-			coreSelectCpt.setVisible(false);
-			resetArchTree(newCore);
-		} else {
-			List<Core> cores = curCpu.getCores();
-			numCombo4.select(0);
-			Core core = cores.get(0);
-			resetArchTree(core);
-		}
-
-		numCombo4.addSelectionListener(new SelectionAdapter() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				int index = numCombo4.getSelectionIndex();
-				List<Core> cores = curCpu.getCores();
-				Core core = cores.get(index);
-				resetArchTree(core);
-			}
-		});
-
-		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(configContent);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setExpandVertical(true);
-		contentGroup.layout();
-	}
-
-	protected void creatMemoryContent(Group contentGroup) {
-		// TODO Auto-generated method stub
-		scrolledComposite = new ScrolledComposite(contentGroup, SWT.V_SCROLL | SWT.H_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-
-		configContent = new Composite(scrolledComposite, SWT.NONE);
-		configContent.setLayout(new GridLayout());
-		configContent.setLayoutData(new GridData(GridData.FILL_BOTH));
-		Composite coreSelectCpt = new Composite(configContent, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		coreSelectCpt.setLayout(layout);
-		coreSelectCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		Label nameLabel = new Label(coreSelectCpt, SWT.NONE);
-		nameLabel.setText("内核选择: ");
-		Combo numCombo = new Combo(coreSelectCpt, SWT.READ_ONLY);
-		for (int i = 0; i < curCpu.getCoreNum(); i++) {
-			numCombo.add("内核" + (i + 1));
-		}
-		numCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		Group memoryGroup = ControlFactory.createGroup(configContent, "配置内存", 1);
-		GridLayout memoryGroupLayout = new GridLayout();
-		memoryGroupLayout.numColumns = 2;
-		memoryGroup.setLayoutData(new GridData(GridData.FILL_BOTH));
-		memoryGroup.setLayout(memoryGroupLayout);
-
-		Composite memoryComposite = new Composite(memoryGroup, SWT.NONE);
-		memoryComposite.setLayout(new GridLayout());
-		memoryComposite.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-
-		memoryTree = new Tree(memoryComposite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL);
-		memoryTree.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-		memoryTree.setHeaderVisible(true);
-		memoryTree.setSize(150, 170);
-		final TreeColumn columnMemory = new TreeColumn(memoryTree, SWT.NONE);
-		columnMemory.setText("片内存储");
-		columnMemory.setWidth(120);
-		columnMemory.setResizable(false);
-		columnMemory.setToolTipText("Inner Memory");
-
-		Composite btnCpt = new Composite(memoryComposite, SWT.NONE);
-		btnCpt.setLayout(new GridLayout(2, true));
-		btnCpt.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_CENTER));
-		Button addBtn = new Button(btnCpt, SWT.PUSH);
-		addBtn.setText("添加");
-		addBtn.addSelectionListener(new SelectionListener() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				int memoryCount = memoryTree.getItemCount();// memoryTree的孩子数量
-				TreeItem t = new TreeItem(memoryTree, SWT.NONE);// 添加新的内存
-				TreeItem[] items = memoryTree.getItems();
-				int max = 0;
-				if (memoryCount > 0) {
-					String maxString = items[memoryCount - 1].getText();
-					max = Integer.parseInt(maxString.substring(6, maxString.length()));
-				}
-				t.setText("memory" + (max + 1));
-				CoreMemory memory = new CoreMemory();
-				memory.setName("memory" + (max + 1));
-				if (newCpu.getCores().size() != 0) {
-					int selectIndex = numCombo.getSelectionIndex();
-					newCpu.getCores().get(selectIndex).getMemorys().add(memory);
+					
+					newCpu.getCores().get(selectIndex).setFpuType(fpuType);
+					curCpu.getCores().get(selectIndex).setFpuType(fpuType);
 					if (tempName != null) {
-						revisingCpu.getCores().get(selectIndex).getMemorys().add(memory);
-					}
-					if (curCpu.getCores().get(selectIndex).getMemorys().size() != newCpu.getCores().get(selectIndex)
-							.getMemorys().size()) {
-						curCpu.getCores().get(selectIndex).getMemorys().add(memory);
+						revisingCpu.getCores().get(selectIndex).setFpuType(fpuType);
 					}
 				} else {
-					newCore.getMemorys().add(memory);
+					newCore.setFpuType(fpuType);
 				}
-
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
 			}
 		});
-		Button deleteBtn = new Button(btnCpt, SWT.PUSH);
-		deleteBtn.setText("删除");
-		deleteBtn.setEnabled(false);
-		deleteBtn.addSelectionListener(new SelectionListener() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				int selectIndex = numCombo.getSelectionIndex();
-				TreeItem[] items = memoryTree.getSelection();
-				if (items.length > 0) {
-					for (int i = 0; i < newCpu.getCores().get(selectIndex).getMemorys().size(); i++) {
-						String memoryName = newCpu.getCores().get(selectIndex).getMemorys().get(i).getName();
-						if (memoryName != null) {
-							if (memoryName.equals(items[0].getText().trim())) {
-								newCpu.getCores().get(selectIndex).getMemorys().remove(i);
-								if (tempName != null) {
-									revisingCpu.getCores().get(selectIndex).getMemorys().remove(i);
-								}
-
-								curCpu.getCores().get(selectIndex).getMemorys().remove(i);
-							}
-						}
-					}
-					items[0].dispose();
-				}
-				int memoryNum = memoryTree.getItemCount();
-				if (memoryNum < 1) {
-					deleteBtn.setEnabled(false);
-					setMemoryCpt(false);
-				}
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		Composite memoryContentCpt = new Composite(memoryGroup, SWT.NONE);
-		GridLayout detailsLayout = new GridLayout();
-		detailsLayout.marginHeight = 20;
-		detailsLayout.numColumns = 2;
-		memoryContentCpt.setLayout(detailsLayout);
-		memoryContentCpt.setLayoutData(new GridData(GridData.FILL_BOTH));
-		memoryTypeLabel = new Label(memoryContentCpt, SWT.NONE);
-		memoryTypeLabel.setText("类型: ");
-
-		memoryTypeCombo = new Combo(memoryContentCpt, SWT.READ_ONLY);
-		memoryTypeCombo.add("FLASH");
-		memoryTypeCombo.add("RAM");
-		memoryTypeCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		memoryTypeCombo.addSelectionListener(new SelectionListener() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				memoryAddrLabel.setEnabled(true);
-				memorySizeLabel.setEnabled(true);
-				sizeField.setEnabled(true);
-				addrField.setEnabled(true);
-				int selectIndex = numCombo.getSelectionIndex();
-				if (selectIndex != -1) {
-					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
-
-					int comboIndex = memoryTypeCombo.getSelectionIndex();
-					TreeItem[] items = memoryTree.getSelection();
-					String type = memoryTypeCombo.getItem(comboIndex);//
-					int index = -1;//
-					if (items.length > 0) {
-						String selectMemory = items[0].getText().trim();// 选中的内存
-						for (int i = 0; i < memorys.size(); i++) {
-							CoreMemory memory = memorys.get(i);
-							if (memory.getName() != null) {
-								if (memory.getName().equals(selectMemory)) {
-									memory.setType(type);
-									index = i;
-									break;
-								}
-							}
-						}
-						if (tempName != null) {
-							List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
-							for (int i = 0; i < _memorys.size(); i++) {
-								CoreMemory memory = _memorys.get(i);
-								if (memory.getName() != null) {
-									if (memory.getName().equals(selectMemory)) {
-										memory.setType(type);
-										break;
-									}
-								}
-							}
-						}
-					}
-					if (index != -1) {
-						curCpu.getCores().get(selectIndex).getMemorys().get(index).setType(type);
-					}
-				}
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		memoryAddrLabel = new Label(memoryContentCpt, SWT.NONE);
-		memoryAddrLabel.setText("地址: ");
-		addrField = new Text(memoryContentCpt, SWT.BORDER);
-		addrField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-		addrField.addMouseTrackListener(new MouseTrackListener() {
-
-			@Override
-			public void mouseHover(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExit(MouseEvent e) {
-				// TODO Auto-generated method stub
-				int selectIndex = numCombo.getSelectionIndex();
-				if (selectIndex != -1) {
-					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
-
-					TreeItem[] items = memoryTree.getSelection();
-					if (items.length > 0) {
-						String selectMemory = items[0].getText().trim();
-						String addr = addrField.getText().trim();
-						int index = -1;//
-						if (items.length > 0) {
-							if (!addr.equals("")) {
-								int curNum = -1;
-								Pattern pattern = Pattern.compile("^([1-9]\\d*|[0]{1,1})$"); // 含0正整数
-								boolean isInt = pattern.matcher(addr).matches();
-								if (addr.startsWith("0x")) {
-									curNum = Integer.parseInt(addr.substring(2), 16);
-								} else {
-									if (isInt) {
-										curNum = Integer.parseInt(addr);
-									}
-								}
-								if (curNum < 0) {
-									addrField.setText("");
-									MessageDialog.openInformation(window.getShell(), "提示", "请输入正整数(包含0)");
-								} else {
-									for (int i = 0; i < memorys.size(); i++) {
-										CoreMemory memory = memorys.get(i);
-										if (memory.getName() != null) {
-											if (memory.getName().equals(selectMemory)) {
-												memory.setStartAddr(addr);
-												index = i;
-												break;
-											}
-										}
-
-									}
-									if (tempName != null) {
-										List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex)
-												.getMemorys();// 获取当前内核所有内存
-										for (int i = 0; i < _memorys.size(); i++) {
-											CoreMemory memory = _memorys.get(i);
-											System.out.println("memory.getName()：  " + memory.getName());
-											if (memory.getName() != null) {
-												if (memory.getName().equals(selectMemory)) {
-													memory.setStartAddr(addr);
-													break;
-												}
-											}
-
-										}
-									}
-								}
-
-							} else {
-								// MessageDialog.openInformation(window.getShell(), "提示",
-								// "地址不能为空");
-							}
-						}
-						if (index != -1) {
-							System.out.println("addr：  " + addr);
-							curCpu.getCores().get(selectIndex).getMemorys().get(index).setStartAddr(addr);
-						}
-					}
-
-				}
-			}
-
-			@Override
-			public void mouseEnter(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		memorySizeLabel = new Label(memoryContentCpt, SWT.NONE);
-		memorySizeLabel.setText("大小: ");
-		sizeField = new Text(memoryContentCpt, SWT.BORDER);
-		sizeField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		setMemoryCpt(true);
-
-		sizeField.addMouseTrackListener(new MouseTrackListener() {
-
-			@Override
-			public void mouseHover(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void mouseExit(MouseEvent e) {
-				// TODO Auto-generated method stub
-				int selectIndex = numCombo.getSelectionIndex();
-				if (selectIndex != -1) {
-					List<CoreMemory> memorys = newCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
-
-					TreeItem[] items = memoryTree.getSelection();
-					int index = -1;//
-					String size = sizeField.getText().trim().replace("k", "");
-					if (items.length > 0) {
-						String selectMemory = items[0].getText().trim();
-						if (!size.equals("")) {
-							int curNum = -1;
-							Pattern pattern = Pattern.compile("^[+]{0,1}(\\d+)$"); // ^[-\\+]?[\\d]*$
-							boolean isInt = pattern.matcher(size).matches();
-							if (size.startsWith("0x") && !size.trim().equals("0x")) {
-								curNum = Integer.parseInt(size.substring(2), 16);
-							} else {
-								if (isInt) {
-									curNum = Integer.parseInt(size);
-								}
-							}
-							if (curNum < 0) {
-								sizeField.setText("");
-								MessageDialog.openInformation(window.getShell(), "提示", "请输入正整数(不包含0)");
-							} else {
-								for (int i = 0; i < memorys.size(); i++) {
-									CoreMemory memory = memorys.get(i);
-									if (memory.getName() != null) {
-										if (memory.getName().equals(selectMemory)) {
-											memory.setSize(size);
-											index = i;
-											break;
-										}
-									}
-								}
-
-								if (tempName != null) {
-									List<CoreMemory> _memorys = revisingCpu.getCores().get(selectIndex).getMemorys();// 获取当前内核所有内存
-									for (int i = 0; i < _memorys.size(); i++) {
-										CoreMemory memory = _memorys.get(i);
-										if (memory.getName() != null) {
-											if (memory.getName().equals(selectMemory)) {
-												memory.setSize(size);
-												index = i;
-												break;
-											}
-										}
-									}
-								}
-
-							}
-
-						} else {
-							// MessageDialog.openInformation(window.getShell(), "提示",
-							// "大小不能为空");
-						}
-					}
-					if (index != -1) {
-						System.out.println("size：  " + size);
-						curCpu.getCores().get(selectIndex).getMemorys().get(index).setSize(size);
-					}
-				}
-			}
-
-			@Override
-			public void mouseEnter(MouseEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		// 选择内核的监听事件
-		numCombo.addSelectionListener(new SelectionListener() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				int selectIndex = numCombo.getSelectionIndex();
-				List<CoreMemory> memorys = curCpu.getCores().get(selectIndex).getMemorys();
-				Control[] controls = memoryGroup.getChildren();
-				for (Control control : controls) {
-					control.setEnabled(true);
-				}
-				memoryTree.removeAll();
-				if (memorys.size() != 0) {
-					for (int i = 0; i < memorys.size(); i++) {
-						String memoryName = memorys.get(i).getName();
-						TreeItem t = new TreeItem(memoryTree, SWT.NONE);
-						t.setText(memoryName);
-					}
-					// memoryTypeLabel.setEnabled(true);
-					// memoryTypeCombo.setEnabled(true);
-				}
-				setMemoryCpt(false);
-				setDefault_MemTree_Display(memorys);
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		memoryTree.addSelectionListener(new SelectionListener() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				deleteBtn.setEnabled(true);
-				setMemoryCpt(true);
-				TreeItem[] items = memoryTree.getSelection();
-				int selectIndex = numCombo.getSelectionIndex();
-				List<CoreMemory> memorys = curCpu.getCores().get(selectIndex).getMemorys();
-				if (items.length > 0) {
-					String selectMemoryName = items[0].getText();
-					for (int i = 0; i < memorys.size(); i++) {
-						String memoryName = memorys.get(i).getName();
-						if (memoryName.equals(selectMemoryName)) {
-							if (memorys.get(i).getType() != null) {
-								if (memorys.get(i).getType().equals("FLASH")) {
-									memoryTypeCombo.select(0);
-								} else if (memorys.get(i).getType().equals("RAM")) {
-									memoryTypeCombo.select(1);
-								}
-							} else {
-								memoryTypeCombo.deselectAll();
-							}
-							if (memorys.get(i).getStartAddr() != null) {
-								addrField.setText(memorys.get(i).getStartAddr());
-							} else {
-								addrField.setText("");
-							}
-							if (memorys.get(i).getSize() != null) {
-								sizeField.setText(String.valueOf(memorys.get(i).getSize()));
-							} else {
-								sizeField.setText("");
-							}
-						}
-					}
-				}
-			}
-
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		if (curCpu.getCores().size() == 0) {
-			coreSelectCpt.setVisible(false);
-			List<CoreMemory> memorys = newCore.getMemorys();
-			int count = 0;
-			for (CoreMemory memory : memorys) {
-				if (memory.getName() == null) {
-					memory.setName("memory" + (count + 1));
-				}
-				count++;
-			}
-			memoryTree.removeAll();
-			setDefault_MemTree_Display(memorys);
-		} else {
-			numCombo.select(0);
-			for (Core core : curCpu.getCores()) {
-				List<CoreMemory> memorys = core.getMemorys();
-				int i = 0;
-				for (CoreMemory memory : memorys) {
-					if (memory.getName() == null) {
-						memory.setName("memory" + (i + 1));
-					}
-					i++;
-				}
-			}
-			for (Core core : revisingCpu.getCores()) {
-				List<CoreMemory> memorys = core.getMemorys();
-				int i = 0;
-				for (CoreMemory memory : memorys) {
-					if (memory.getName() == null) {
-						memory.setName("memory" + (i + 1));
-					}
-					i++;
-				}
-			}
-			memoryTree.removeAll();
-			if (curCpu.getCores().get(0).getMemorys().size() != 0) {
-				List<CoreMemory> memorys = curCpu.getCores().get(0).getMemorys();
-
-				memoryTree.removeAll();
-				for (int i = 0; i < memorys.size(); i++) {
-					String memoryName = memorys.get(i).getName();
-					TreeItem t = new TreeItem(memoryTree, SWT.NONE);
-					t.setText(memoryName);
-					if (i == 0) {
-						memoryTree.setSelection(t);
-					}
-				}
-				setDefault_MemTree_Display(memorys);
-			}
-		}
-
-		int selectIndex = numCombo.getSelectionIndex();
-		if (selectIndex == -1) {
-			Control[] controls = memoryGroup.getChildren();
-			for (Control control : controls) {
-				control.setEnabled(false);
-			}
-		} else {
-			Control[] controls = memoryGroup.getChildren();
-			for (Control control : controls) {
-				control.setEnabled(true);
-			}
-		}
-
-		if (memoryTree.getItemCount() == 0) {
-			setMemoryCpt(false);
-		}
-
-		Point point = configContent.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-		scrolledComposite.setContent(configContent);
-		scrolledComposite.setMinHeight(point.y);
-		scrolledComposite.setExpandHorizontal(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setMinWidth(300);
-		contentGroup.layout();
 
 	}
+
 
 	/**
 	 * 设置配置内存界面的默认显示
 	 * 
 	 * @param memorys
 	 *            正在配置的Cpu的内存
+	 * @param sizeField2  ·
+	 * @param addrField2 
+	 * @param memoryTypeCombo2 
 	 */
-	protected void setDefault_MemTree_Display(List<CoreMemory> memorys) {
+	protected void setDefault_MemTree_Display(List<CoreMemory> memorys, Combo memoryTypeCombo2, Text addrField2, Text sizeField2) {
 		// TODO Auto-generated method stub
 		if (memorys.size() > 0) {
 			if (memorys.get(0).getType() != null) {
-				if (memorys.get(0).getType().equals("RAM")) {
-					memoryTypeCombo.select(1);
-				} else {
-					memoryTypeCombo.select(0);
-				}
+				memoryTypeCombo.select(memorys.get(0).getType().equalsIgnoreCase("RAM")?1:0);
 			}
 			if (memorys.get(0).getStartAddr() != null) {
 				addrField.setText(memorys.get(0).getStartAddr());
@@ -1235,10 +1315,7 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		if (core.getArch().getSerie() != null) {
 			TreeItem[] typeItems = archTree.getItems();
 			for (TreeItem item : typeItems) {
-				if (item.getText().trim().equals(core.getArch().getSerie())) {
-					travelItem(item, core);
-					break;
-				}
+				travelItem(item, core);
 			}
 		}
 	}
@@ -1283,330 +1360,175 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		ti.setExpanded(true);
 	}
 
-	private void initArchTree(Composite archComposite) {
-		// TODO Auto-generated method stub
-		archTree = new Tree(archComposite, SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL | SWT.CHECK);
-		archTree.setLayoutData(new GridData(GridData.FILL_BOTH));
-		archTree.setSize(300, 170);
-		archTree.setHeaderVisible(true);
-
-		final TreeColumn columnArch = new TreeColumn(archTree, SWT.NONE);
-		columnArch.setText("Arch列表");
-		columnArch.setWidth(280);
-		columnArch.setResizable(false);
-		columnArch.setToolTipText("请选择蓝色图标的一项");
-		columnArch.setImage(DPluginImages.CFG_CPMT_OBJ.createImage());
-
-		File file = new File(didePath + "djysrc/bsp/arch");
-		File[] typeFiles = file.listFiles();
-		for (int i = 0; i < typeFiles.length; i++) {
-			if (DideHelper.travelContainsXml(typeFiles[i])) {
-				TreeItem type = new TreeItem(archTree, SWT.NONE);
-				type.setText(typeFiles[i].getName());
-				type.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
-				type.setData(typeFiles[i]);// 保存当前节点数据
-				type.setGrayed(true);
-				type.setChecked(true);
-				new TreeItem(type, 0);
-				ExpandTree(type);
-			}
-		}
-
-		archTree.addSelectionListener(new SelectionAdapter() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				// TODO Auto-generated method stub
-				TreeItem item = (TreeItem) e.item;
-				if (item == null) {
-					return;
-				} else {
-					if (item.getGrayed()) {
-						item.setChecked(true);
-					} else {
-						for (TreeItem t : archItems) {
-							if (t != item) {
-								t.setChecked(false);
-							}
-						}
-
-						// 获取当前的Arch对象
-						ReadArchXml rax = new ReadArchXml();
-						File xmlFile = new File(item.getData().toString());
-						Arch arch = new Arch();
-						arch = rax.getMutiplyFileArch(xmlFile, arch);
-						try {
-							if (newCpu.getCores().size() != 0) {
-								int selectIndex = numCombo4.getSelectionIndex();
-								newCpu.getCores().get(selectIndex).getArch().setSerie(arch.getSerie());
-								newCpu.getCores().get(selectIndex).getArch().setMarch(arch.getMarch());
-								newCpu.getCores().get(selectIndex).getArch().setMcpu(arch.getMcpu());
-								if (tempName != null) {
-									revisingCpu.getCores().get(selectIndex).getArch().setSerie(arch.getSerie());
-									revisingCpu.getCores().get(selectIndex).getArch().setMarch(arch.getMarch());
-									revisingCpu.getCores().get(selectIndex).getArch().setMcpu(arch.getMcpu());
-								}
-
-								curCpu.getCores().get(selectIndex).getArch().setSerie(arch.getSerie());
-								curCpu.getCores().get(selectIndex).getArch().setMarch(arch.getMarch());
-								curCpu.getCores().get(selectIndex).getArch().setMcpu(arch.getMcpu());
-							} else {
-								newCore.getArch().setSerie(arch.getSerie());
-								newCore.getArch().setMarch(arch.getMarch());
-								newCore.getArch().setMcpu(arch.getMcpu());
-							}
-						} catch (Exception e2) {
-							// TODO: handle exception
-							MessageDialog.openInformation(window.getShell(), "提示",
-									xmlFile.getName() + "或者其父目录的描述文件配置错误");
-						}
-
-						TreeItem[] items = cpuGroupTree.getItems();
-						if (arch.getFpuType() != null) {
-							boolean containsFloate = false;
-							for (TreeItem t : items) {
-								if (t.getText().equals("浮点配置")) {
-									containsFloate = true;
-									break;
-								}
-							}
-							if (!containsFloate) {
-								TreeItem t = new TreeItem(cpuGroupTree, SWT.NONE);
-								t.setText("浮点配置");
-								if (!attributes.contains("浮点配置")) {
-									t.setImage(DPluginImages.CFG_DONE_VIEW.createImage());
-								}
-							}
-						} else {
-							for (TreeItem t : items) {
-								if (t.getText().equals("浮点配置")) {
-									t.dispose();
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-
-		});
-	}
-
-	private void ExpandTree(TreeItem root) {
-		// TODO Auto-generated method stub
-		TreeItem[] items = root.getItems();
-		for (int i = 0; i < items.length; i++) {
-			if (items[i].getData() != null)
-				return;
-			items[i].dispose();
-		}
-		File file = (File) root.getData();
-		File[] files = file.listFiles();
-		if (files == null)
-			return;
-		for (int i = 0; i < files.length; i++) {
-			if ((files[i].isHidden() == false || files[i].getName().endsWith(".xml"))) {
-				boolean toExpand = false;
-				if (files[i].isDirectory()) {
-					boolean isNeed = DideHelper.travelContainsXml(files[i]);
-					if (isNeed) {
-						toExpand = true;
-					}
-				}
-				if (toExpand) {
-					// 当前为文件目录而不是文件的时候，添加新项目，以便只是显示文件夹（包括空文件夹），而不显示文件夹下的文件
-					if (files[i].isDirectory() && files[i].getName() != "include" && files[i].getName() != "src") {
-						TreeItem item;
-						boolean configed = ArchHelper.isFamily(files[i]);
-						item = new TreeItem(root, SWT.NONE);
-						item.setText(files[i].getName());
-						if (configed) {// SWT.ERROR_CANNOT_SET_ENABLED
-							item.setImage(DPluginImages.OBJ_ARCH_VIEW.createImage());
-							item.setExpanded(false);
-							File archFile = ArchHelper.getArchFile(files[i]);
-							item.setData(archFile);
-							archItems.add(item);
-						} else {
-							item.setImage(DPluginImages.TREE_FLODER_VIEW.createImage());
-							item.setGrayed(true);
-							item.setChecked(true);
-							item.setData(files[i]);
-							new TreeItem(item, 0);
-							ExpandTree(item);
-						}
-					}
-				}
-
-			}
-		}
-	}
-
 	@Override
 	protected Point getInitialSize() {
 		// TODO Auto-generated method stub
-		return new Point(570, 560);
+		return new Point(570, 550);
 	}
 
 	public Cpu getCpuCreated() {
-		return newCpu;
+		return CpuCreated;
 	}
 
 	private boolean handleGroupOK() {
 		groupName = groupNameField.getText();
-		// String completeName = "";
 		if (groupName.trim().equals("")) {
-			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-			MessageDialog.openError(window.getShell(), "提示", "请填写子目录名称");
+			DideHelper.showErrorMessage("请填写子目录名称");
 			return false;
 		} else {
-			boolean isOk = true;
-			File curFile = new File(curPath);
-			if (curFile != null) {
-				File[] files = curFile.listFiles();
-				for (File f : files) {
-					if (f.getName().equals(groupName)) {
-						isOk = false;
-						break;
-					}
-				}
-			}
-			File newGroupFile = null, oldGroupFile = null;
-			File xmlFile = null;
 			if (tempName == null) {// 新建子目录或者cpu
-				if (isOk) {
-					curPath = curPath + "/" + groupName;
-					newGroupFile = new File(curPath);
-					if (!newGroupFile.exists()) {
-						newGroupFile.mkdir();
-					}
-					xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + groupName + ".xml");
-
-					File[] files = newGroupFile.listFiles();
-					for (File f : files) {
-						if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_group")) {
-							f.delete();
-						}
-					}
-
-					try {
-						xmlFile.createNewFile();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					if (newCpu.getCores().size() != 0) {
-						createNewGroupXml(newCpu, xmlFile);
-					} else {
-						createPublicXml(newCore, xmlFile);
-					}
-				} else {
-					MessageDialog.openInformation(window.getShell(), "提示", "该子目录名称已存在！");
-				}
-
+				handleNewGroup();
 			} else {// 修改配置信息
-				oldGroupFile = new File(curPath);
-				newGroupFile = new File(curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + groupName);
-
-				File[] oldFiles = oldGroupFile.listFiles();
-				for (File f : oldFiles) {
-					if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_group")) {
-						f.delete();
-					}
-				}
-				oldGroupFile.renameTo(newGroupFile);
-				xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + groupName + ".xml");
-
-				try {
-					xmlFile.createNewFile();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (revisingCpu.getCores().size() != 0) {
-					createNewGroupXml(revisingCpu, xmlFile);
-				} else {
-					createPublicXml(newCore, xmlFile);
-				}
+				handleReviceGroup();
 			}
 		}
 		return true;
+	}
+
+	private void handleReviceGroup() {
+		// TODO Auto-generated method stub
+		File oldGroupFile = new File(curPath);
+		File newGroupFile = new File(curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + groupName);
+		File[] oldFiles = oldGroupFile.listFiles();
+		for (File f : oldFiles) {
+			if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_group")) {
+				f.delete();
+			}
+		}
+		oldGroupFile.renameTo(newGroupFile);
+		File xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + groupName + ".xml");
+		FileTool.createNewFile(xmlFile);
+		if (revisingCpu.getCores().size() != 0) {
+			CreateCpuXml.createNewGroupXml(revisingCpu, xmlFile);
+			List<File> childXmlFiles = new ArrayList<File>();
+			getChildXmlFiles(xmlFile.getParentFile(),childXmlFiles);
+			childXmlFiles.remove(0);
+			int coreNum = revisingCpu.getCoreNum();
+			for(File f:childXmlFiles) {
+				ChangeCpuXml.changeCoreNum(f,coreNum);
+			}
+		} else {
+			CreateCpuXml.createPublicXml(newCore, xmlFile);
+		}
+	}
+
+	private void handleNewGroup() {
+		// TODO Auto-generated method stub
+		boolean groupNameVailable = true;
+		File curFile = new File(curPath);
+		if (curFile != null) {
+			File[] files = curFile.listFiles();
+			for (File f : files) {
+				if (f.getName().equals(groupName)) {
+					groupNameVailable = false;
+					break;
+				}
+			}
+		}
+		if (groupNameVailable) {
+			curPath = curPath + "/" + groupName;
+			File newGroupFile = new File(curPath);
+			if (!newGroupFile.exists()) {
+				newGroupFile.mkdir();
+			}
+			File xmlFile = new File(newGroupFile.getPath() + "/cpu_group_" + groupName + ".xml");
+			File[] files = newGroupFile.listFiles();
+			for (File f : files) {
+				if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_group")) {
+					f.delete();
+				}
+			}
+			FileTool.createNewFile(xmlFile);
+			if (newCpu.getCores().size() != 0) {
+				CreateCpuXml.createNewGroupXml(newCpu, xmlFile);
+			} else {
+				CreateCpuXml.createPublicXml(newCore, xmlFile);
+			}
+		} else {
+			DideHelper.showErrorMessage("该子目录名称已存在！");
+		}
+	}
+
+	private void getChildXmlFiles(File parentFile, List<File> childXmlFiles) {
+		// TODO Auto-generated method stub
+		File[] files = parentFile.listFiles();
+		for(File f : files) {
+			if(f.getName().endsWith(".xml")) {
+				childXmlFiles.add(f);
+			}else if(f.isDirectory()) {
+				getChildXmlFiles(f,childXmlFiles);
+			}
+		}
 	}
 
 	private boolean handleCpuOK() {
 		groupName = groupNameField.getText();
 		cpuName = groupNameField.getText();
 		if (cpuName.trim().equals("")) {
-			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-			MessageDialog.openError(window.getShell(), "提示", "请填写Cpu名称");
+			DideHelper.showErrorMessage("请填写Cpu名称");
 			return false;
 		} else {
-			boolean isOk = true;
-			File curFile = new File(curPath);
-			if (curFile != null) {
-				File[] files = curFile.listFiles();
-				for (File f : files) {
-					if (f.getName().equals(groupName)) {
-						isOk = false;
-						break;
-					}
-				}
-			}
-
-			File newCpuFile, oldCpuFile;
-			File xmlFile;
 			if (tempName == null) {// 新建子目录或者cpu
-				if (isOk) {
-					curPath = curPath + "/" + cpuName;
-					newCpuFile = new File(curPath);
-					if (!newCpuFile.exists()) {
-						newCpuFile.mkdir();
-					}
-					File[] files = newCpuFile.listFiles();
-					for (File f : files) {
-						if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_")) {
-							f.delete();
-						}
-					}
-					xmlFile = new File(newCpuFile.getPath() + "/cpu_" + cpuName + ".xml");
-					try {
-						xmlFile.createNewFile();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					newCpu.setParentPath(newCpuFile.getPath());
-					createNewCpuXml(newCpu, xmlFile, cpuName);
-				} else {
-					MessageDialog.openInformation(window.getShell(), "提示", "该子Cpu名称已存在！");
-				}
-
+				handleNewCpu();
 			} else {// 修改配置信息
-				oldCpuFile = new File(curPath);
-				newCpuFile = new File(curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + cpuName);
-				xmlFile = new File(oldCpuFile.getPath() + "/cpu_" + tempName + ".xml");
-				if (xmlFile.exists()) {
-					xmlFile.delete();
-				}
-
-				File[] files = oldCpuFile.listFiles();
-				for (File f : files) {
-					if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_")) {
-						f.delete();
-					}
-				}
-
-				oldCpuFile.renameTo(newCpuFile);
-				xmlFile = new File(newCpuFile.getPath() + "/cpu_" + cpuName + ".xml");
-				try {
-					xmlFile.createNewFile();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				createNewCpuXml(revisingCpu, xmlFile, cpuName);
+				handleReviceCpu();
 			}
-
 			return true;
+		}
+	}
+
+	private void handleReviceCpu() {
+		// TODO Auto-generated method stub
+		File oldCpuFile = new File(curPath);
+		File newCpuFile = new File(curPath.substring(0, curPath.lastIndexOf("\\")) + "\\" + cpuName);
+		File xmlFile = new File(oldCpuFile.getPath() + "/cpu_" + tempName + ".xml");
+		if (xmlFile.exists()) {
+			xmlFile.delete();
+		}
+
+		File[] files = oldCpuFile.listFiles();
+		for (File f : files) {
+			if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_")) {
+				f.delete();
+			}
+		}
+		oldCpuFile.renameTo(newCpuFile);
+		xmlFile = new File(newCpuFile.getPath() + "/cpu_" + cpuName + ".xml");
+		FileTool.createNewFile(xmlFile);
+		CreateCpuXml.createNewCpuXml(revisingCpu, xmlFile, cpuName);
+	}
+
+	private void handleNewCpu() {
+		// TODO Auto-generated method stub
+		boolean cpuNameVailable = true;
+		File curFile = new File(curPath);
+		if (curFile != null) {
+			File[] files = curFile.listFiles();
+			for (File f : files) {
+				if (f.getName().equals(groupName)) {
+					cpuNameVailable = false;
+					break;
+				}
+			}
+		}
+		if (cpuNameVailable) {
+			curPath = curPath + "/" + cpuName;
+			File newCpuFile = new File(curPath);
+			if (!newCpuFile.exists()) {
+				newCpuFile.mkdir();
+			}
+			File[] files = newCpuFile.listFiles();
+			for (File f : files) {
+				if (f.getName().endsWith(".xml") && f.getName().startsWith("cpu_")) {
+					f.delete();
+				}
+			}
+			File xmlFile = new File(newCpuFile.getPath() + "/cpu_" + cpuName + ".xml");
+			FileTool.createNewFile(xmlFile);
+			newCpu.setCpuFolderPath(newCpuFile.getPath());
+			CreateCpuXml.createNewCpuXml(newCpu, xmlFile, cpuName);
+		} else {
+			DideHelper.showErrorMessage("该子Cpu名称已存在！");
 		}
 	}
 
@@ -1617,23 +1539,24 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 		String errorMsg = null;
 		List<Core> cores = curCpu.getCores();
 		for (int i = 0; i < cores.size(); i++) {
+			String coreName = cores.get(i).getName() == null?String.valueOf(i + 1):cores.get(i).getName();
 			if (cpuTag.endsWith("cpu")) {
 				if (cores.get(i).getResetAddr() == null) {
 					isOK = false;
-					errorMsg = "请填写完整内核" + (i + 1) + "的复位地址！";
+					errorMsg = "请填写完整内核" + coreName + "的复位地址！";
 				}
 
 				boolean fpNeed = DideHelper.isFputypeuNeed(cores.get(i));
 				if (fpNeed) {
 					if (cores.get(i).getFpuType() == null) {
 						isOK = false;
-						errorMsg = "请填写完整内核" + (i + 1) + "的浮点配置！";
+						errorMsg = "请填写完整内核" + coreName + "的浮点配置！";
 					}
 				}
 
 				if (cores.get(i).getArch().getMcpu() == null) {
 					isOK = false;
-					errorMsg = "请填写完整内核" + (i + 1) + "的内核配置！";
+					errorMsg = "请填写完整内核" + coreName + "的内核配置！";
 				}
 			}
 
@@ -1641,11 +1564,11 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 			for (CoreMemory memory : memorys) {
 				if (memory.getType() == null || memory.getStartAddr() == null || memory.getSize() == null) {
 					isOK = false;
-					errorMsg = "请填写完整内核" + (i + 1) + "的存储配置！";
+					errorMsg = "请填写完整内核" + coreName + "的存储配置！";
 					break;
 				} else if (memory.getSize().equals("0") || memory.getSize().equals("0x")) {
 					isOK = false;
-					errorMsg = "内核" + (i + 1) + "的内存大小需大于0！";
+					errorMsg = "内核" + coreName + "的内存大小需大于0！";
 					break;
 				}
 			}
@@ -1661,6 +1584,7 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 				}
 			} else if (cpuTag.equals("cpu")) {
 				if (handleCpuOK()) {
+					CpuCreated = curCpu;
 					super.okPressed();
 				}
 			} else if (cpuTag.startsWith("revise")) {
@@ -1675,270 +1599,127 @@ public class NewGroupOrCpuDialog extends StatusDialog {
 				}
 			}
 		} else {
-			MessageDialog.openInformation(window.getShell(), "提示", errorMsg);
+			DideHelper.showErrorMessage(errorMsg);
 		}
 
 	}
 
-	// private class newXmlFile{
-	//
-	// }
+	class MemoryHandler {
+		public int updateType(List<CoreMemory> memorys, String selectMemory, String type) {
+			for (int i = 0; i < memorys.size(); i++) {
+				CoreMemory memory = memorys.get(i);
+				if (memory.getName() != null) {
+					if (memory.getName().equals(selectMemory)) {
+						memory.setType(type);
+						return i;
+					}
+				}
+			}
+			return -1;
+		}
 
-	private void createNewGroupXml(Cpu cpu, File file) {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		try {
-			factory.setIgnoringElementContentWhitespace(false);
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document document = builder.newDocument();
+		public int updateAddr(List<CoreMemory> memorys, String selectMemory, String addr) {
+			for (int i = 0; i < memorys.size(); i++) {
+				CoreMemory memory = memorys.get(i);
+				if (memory.getName() != null) {
+					if (memory.getName().equals(selectMemory)) {
+						memory.setStartAddr(addr);
+						return i;
+					}
+				}
+			}
+			return -1;
+		}
+		
+		public int updateSize(List<CoreMemory> memorys, String selectMemory, String size) {
+			for (int i = 0; i < memorys.size(); i++) {
+				CoreMemory memory = memorys.get(i);
+				if (memory.getName() != null) {
+					if (memory.getName().equals(selectMemory)) {
+						memory.setSize(size);
+						return i;
+					}
+				}
+			}
+			return -1;
+		}
 
-			Element cpuElement = document.createElement("cpu");
-			for (int i = 0; i < cpu.getCores().size(); i++) {
-				Element core = document.createElement("core");
-				core.setAttribute("id", String.valueOf(i + 1));
+		public void handle_addClick(Tree tree, boolean isShared, int coreIndex) {
+			// TODO Auto-generated method stub
+			int memoryCount = tree.getItemCount();// memoryTree的孩子数量
+			TreeItem t = new TreeItem(tree, SWT.NONE);// 添加新的内存
+//			TreeItem[] items = tree.getItems();
+//			int max = 0;
+//			if (memoryCount > 0) {
+//				String maxString = items[memoryCount - 1].getText();
+//				max = Integer.parseInt(maxString.substring(6, maxString.length()));
+//			}
+			t.setText("memory" + (memoryCount + 1));
+			CoreMemory memory = new CoreMemory();
+			memory.setName("memory" + (memoryCount + 1));
+			if(isShared) {
+				if (newCpu.getCores().size() != 0) {
+					newCpu.getShared_memorys().add(memory);
+					if (tempName != null) {
+						revisingCpu.getShared_memorys().add(memory);
+					}
+					if (curCpu.getShared_memorys().size() != newCpu.getShared_memorys().size()) {
+						curCpu.getShared_memorys().add(memory);
+					}
+				}
+			}else {
+				if (newCpu.getCores().size() != 0) {
+					newCpu.getCores().get(coreIndex).getMemorys().add(memory);
+					if (tempName != null) {
+						revisingCpu.getCores().get(coreIndex).getMemorys().add(memory);
+					}
+					if (curCpu.getCores().get(coreIndex).getMemorys().size() != newCpu.getCores().get(coreIndex)
+							.getMemorys().size()) {
+						curCpu.getCores().get(coreIndex).getMemorys().add(memory);
+					}
+				} else {
+					newCore.getMemorys().add(memory);
+				}
+			}
+		}
+	
+		public int handle_deleteClick(Tree tree, boolean isShared, int coreIndex) {
+			TreeItem[] items = tree.getSelection();
+			if(isShared) {
+				if (items.length > 0) {
+					for (int i = 0; i < newCpu.getShared_memorys().size(); i++) {
+						String memoryName = newCpu.getShared_memorys().get(i).getName();
+						if (memoryName != null) {
+							if (memoryName.equals(items[0].getText().trim())) {
+								newCpu.getShared_memorys().remove(i);
+								if (tempName != null) {
+									revisingCpu.getShared_memorys().remove(i);
+								}
 
-				Core curCore = cpu.getCores().get(i);
-				if (curCore.getArch().getSerie() != null) {
-					Element type = document.createElement("type");
-					type.setTextContent(curCore.getArch().getSerie());
-					core.appendChild(type);
-				}
-				if (curCore.getArch().getMarch() != null) {
-					Element arch = document.createElement("arch");
-					arch.setTextContent(curCore.getArch().getMarch());
-					core.appendChild(arch);
-				}
-				if (curCore.getArch().getMcpu() != null) {
-					Element family = document.createElement("family");
-					family.setTextContent(curCore.getArch().getMcpu());
-					core.appendChild(family);
-				}
-				if (curCore.getFloatABI() != null) {
-					Element floatABI = document.createElement("floatABI");
-					floatABI.setTextContent(curCore.getFloatABI());
-					core.appendChild(floatABI);
-				}
-				if (curCore.getFpuType() != null) {
-					Element fpuType = document.createElement("fpuType");
-					fpuType.setTextContent(curCore.getFpuType());
-					core.appendChild(fpuType);
-				}
-				if (curCore.getResetAddr() != null) {
-					Element resetAddr = document.createElement("resetAddr");
-					resetAddr.setTextContent(curCore.getResetAddr());
-					core.appendChild(resetAddr);
-				}
-				if (curCore.getMemorys().size() != 0) {
-
-					for (int j = 0; j < curCore.getMemorys().size(); j++) {
-						CoreMemory curMemory = curCore.getMemorys().get(j);
-						Element memory = document.createElement("memory");
-						Element type = document.createElement("type");
-						type.setTextContent(curMemory.getType());
-						memory.appendChild(type);
-						Element startAddr = document.createElement("startAddr");
-						startAddr.setTextContent(curMemory.getStartAddr());
-						memory.appendChild(startAddr);
-						Element size = document.createElement("size");
-						String memorySize = curMemory.getSize();
-						if (!memorySize.contains("k")) {
-							memorySize += "k";
+								curCpu.getShared_memorys().remove(i);
+							}
 						}
-						size.setTextContent(memorySize);
-						memory.appendChild(size);
-						core.appendChild(memory);
 					}
-
+					items[0].dispose();
 				}
-
-				cpuElement.appendChild(core);
-			}
-
-			document.appendChild(cpuElement);
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
-			transformer.setOutputProperty("encoding", "UTF-8");
-			StringWriter writer = new StringWriter();
-			transformer.transform(new DOMSource(document), new StreamResult(writer));
-			transformer.transform(new DOMSource(document), new StreamResult(file));
-			writer.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			DideHelper.showErrorMessage("文件" + file.getName() + "创建失败！ " + e.getMessage());
-		}
-
-	}
-
-	private void createPublicXml(Core core, File file) {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		try {
-			factory.setIgnoringElementContentWhitespace(false);
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document document = builder.newDocument();
-
-			Element cpuElement = document.createElement("cpu");
-			if (core.getArch().getSerie() != null) {
-				Element type = document.createElement("type");
-				type.setTextContent(core.getArch().getSerie());
-				cpuElement.appendChild(type);
-			}
-			if (core.getArch().getMarch() != null) {
-				Element arch = document.createElement("arch");
-				arch.setTextContent(core.getArch().getMarch());
-				cpuElement.appendChild(arch);
-			}
-			if (core.getArch().getMcpu() != null) {
-				Element family = document.createElement("family");
-				family.setTextContent(core.getArch().getMcpu());
-				cpuElement.appendChild(family);
-			}
-			if (core.getFloatABI() != null) {
-				Element floatABI = document.createElement("floatABI");
-				floatABI.setTextContent(core.getFloatABI());
-				cpuElement.appendChild(floatABI);
-			}
-			if (core.getFpuType() != null) {
-				Element fpuType = document.createElement("fpuType");
-				fpuType.setTextContent(core.getFpuType());
-				cpuElement.appendChild(fpuType);
-			}
-			if (core.getResetAddr() != null) {
-				Element resetAddr = document.createElement("resetAddr");
-				resetAddr.setTextContent(core.getResetAddr());
-				cpuElement.appendChild(resetAddr);
-			}
-			if (core.getMemorys().size() != 0) {
-
-				for (int j = 0; j < core.getMemorys().size(); j++) {
-					CoreMemory curMemory = core.getMemorys().get(j);
-					Element memory = document.createElement("memory");
-					Element type = document.createElement("type");
-					type.setTextContent(curMemory.getType());
-					memory.appendChild(type);
-					Element startAddr = document.createElement("startAddr");
-					startAddr.setTextContent(curMemory.getStartAddr());
-					memory.appendChild(startAddr);
-					Element size = document.createElement("size");
-					String memorySize = curMemory.getSize();
-					if (!memorySize.contains("k")) {
-						memorySize += "k";
-					}
-					size.setTextContent(memorySize);
-					memory.appendChild(size);
-					cpuElement.appendChild(memory);
-				}
-
-			}
-
-			document.appendChild(cpuElement);
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
-			transformer.setOutputProperty("encoding", "UTF-8");
-			StringWriter writer = new StringWriter();
-			transformer.transform(new DOMSource(document), new StreamResult(writer));
-			transformer.transform(new DOMSource(document), new StreamResult(file));
-			writer.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			DideHelper.showErrorMessage("文件" + file.getName() + "创建失败！ " + e.getMessage());
-		}
-	}
-
-	private boolean createNewCpuXml(Cpu cpu, File file, String completeName) {
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		try {
-			factory.setIgnoringElementContentWhitespace(false);
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document document = builder.newDocument();
-
-			Element cpuElement = document.createElement("cpu");
-
-			Element cpuName = document.createElement("cpuName");
-			cpuName.setTextContent(completeName);
-			cpuElement.appendChild(cpuName);
-
-			for (int i = 0; i < cpu.getCores().size(); i++) {
-				Element core = document.createElement("core");
-				core.setAttribute("id", String.valueOf(i + 1));
-
-				Core curCore = cpu.getCores().get(i);
-				if (curCore.getArch().getSerie() != null) {
-					Element type = document.createElement("type");
-					type.setTextContent(curCore.getArch().getSerie());
-					core.appendChild(type);
-				}
-				if (curCore.getArch().getMarch() != null) {
-					Element arch = document.createElement("arch");
-					arch.setTextContent(curCore.getArch().getMarch());
-					core.appendChild(arch);
-				}
-				if (curCore.getArch().getMcpu() != null) {
-					Element family = document.createElement("family");
-					family.setTextContent(curCore.getArch().getMcpu());
-					core.appendChild(family);
-				}
-				if (curCore.getFloatABI() != null) {
-					Element floatABI = document.createElement("floatABI");
-					floatABI.setTextContent(curCore.getFloatABI());
-					core.appendChild(floatABI);
-				}
-				if (curCore.getFpuType() != null) {
-					Element fpuType = document.createElement("fpuType");
-					fpuType.setTextContent(curCore.getFpuType());
-					core.appendChild(fpuType);
-				}
-				if (curCore.getResetAddr() != null) {
-					Element resetAddr = document.createElement("resetAddr");
-					resetAddr.setTextContent(curCore.getResetAddr());
-					core.appendChild(resetAddr);
-				}
-				if (curCore.getMemorys().size() != 0) {
-
-					for (int j = 0; j < curCore.getMemorys().size(); j++) {
-						CoreMemory curMemory = curCore.getMemorys().get(j);
-						Element memory = document.createElement("memory");
-						Element type = document.createElement("type");
-						type.setTextContent(curMemory.getType());
-						memory.appendChild(type);
-						Element startAddr = document.createElement("startAddr");
-						startAddr.setTextContent(curMemory.getStartAddr());
-						memory.appendChild(startAddr);
-						Element size = document.createElement("size");
-						String memorySize = curMemory.getSize();
-						if (!memorySize.contains("k")) {
-							memorySize += "k";
+			}else {
+				if (items.length > 0) {
+					for (int i = 0; i < newCpu.getCores().get(coreIndex).getMemorys().size(); i++) {
+						String memoryName = newCpu.getCores().get(coreIndex).getMemorys().get(i).getName();
+						if (memoryName != null) {
+							if (memoryName.equals(items[0].getText().trim())) {
+								newCpu.getCores().get(coreIndex).getMemorys().remove(i);
+								if (tempName != null) {
+									revisingCpu.getCores().get(coreIndex).getMemorys().remove(i);
+								}
+								curCpu.getCores().get(coreIndex).getMemorys().remove(i);
+							}
 						}
-						size.setTextContent(memorySize);
-						memory.appendChild(size);
-						core.appendChild(memory);
 					}
-
+					items[0].dispose();
 				}
-
-				cpuElement.appendChild(core);
 			}
-
-			document.appendChild(cpuElement);
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");// 增加换行缩进，但此时缩进默认为0
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "3");// 设置缩进为2
-			transformer.setOutputProperty("encoding", "UTF-8");
-			StringWriter writer = new StringWriter();
-			transformer.transform(new DOMSource(document), new StreamResult(writer));
-			transformer.transform(new DOMSource(document), new StreamResult(file));
-			writer.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			DideHelper.showErrorMessage("文件" + file.getName() + "创建失败！ " + e.getMessage());
+			return tree.getItemCount();
 		}
-		return true;
 	}
-
 }

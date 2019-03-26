@@ -46,6 +46,7 @@ import com.djyos.dide.ui.objects.Board;
 import com.djyos.dide.ui.objects.Core;
 import com.djyos.dide.ui.objects.Cpu;
 import com.djyos.dide.ui.wizards.board.GetBoardDialog;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 @SuppressWarnings("restriction")
 public class BspProjectMainWizard extends WizardPage {
@@ -220,7 +221,7 @@ public class BspProjectMainWizard extends WizardPage {
 		selectBoardBtn.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				boolean djysrcExist = true;
-				File djysrcFile = new File(DideHelper.getDjyosSrcPath());
+				File djysrcFile = new File(PathTool.getDjyosSrcPath());
 				if (djysrcFile.exists()) {
 					File[] files = djysrcFile.listFiles();
 					if (files.length < 2) {

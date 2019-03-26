@@ -5,9 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.djyos.dide.ui.helper.DideHelper;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class GetNonCpuFiles {
-	private String didePath = DideHelper.getDIDEPath();
+	private String didePath = PathTool.getDIDEPath();
 	private List<File> excludeCpuFiles = new ArrayList<File>();
 
 	public List<File> getNonCpus() {

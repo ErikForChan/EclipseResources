@@ -6,24 +6,30 @@ import java.util.List;
 public class Cpu {
 	private int coreNum;
 	private String cpuName;
-	private String firmwareLib;
 	private String parentPath;
 	private List<Core> cores = new ArrayList<Core>();
+	private List<CoreMemory> shared_memorys = new ArrayList<CoreMemory>();
+	
+	public void setSharedMemoryNames() {
+		for(int i=0;i<shared_memorys.size();i++) {
+			shared_memorys.get(i).setName("memory"+(i+1));
+		}
+	}
 
-	public String getParentPath() {
+	public List<CoreMemory> getShared_memorys() {
+		return shared_memorys;
+	}
+
+	public void setShared_memorys(List<CoreMemory> shared_memorys) {
+		this.shared_memorys = shared_memorys;
+	}
+
+	public String getCpuFolderPath() {
 		return parentPath;
 	}
 
-	public void setParentPath(String parentPath) {
+	public void setCpuFolderPath(String parentPath) {
 		this.parentPath = parentPath;
-	}
-
-	public String getFirmwareLib() {
-		return firmwareLib;
-	}
-
-	public void setFirmwareLib(String firmwareLib) {
-		this.firmwareLib = firmwareLib;
 	}
 
 	public int getCoreNum() {

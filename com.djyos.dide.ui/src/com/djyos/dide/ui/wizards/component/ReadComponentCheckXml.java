@@ -1,6 +1,7 @@
 package com.djyos.dide.ui.wizards.component;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.djyos.dide.ui.objects.CmpntCheck;
 
@@ -27,8 +29,16 @@ public class ReadComponentCheckXml {
 		}
 	}
 
-	public List<CmpntCheck> getCmpntChecks(File file) throws Exception {
-		document = db.parse(file);
+	public static List<CmpntCheck> getCmpntChecks(File file){
+		try {
+			document = db.parse(file);
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		List<CmpntCheck> cmpntChecks = new ArrayList<CmpntCheck>();
 		Node componentNode = document.getElementsByTagName("component").item(0);
 		NodeList componentList = componentNode.getChildNodes();

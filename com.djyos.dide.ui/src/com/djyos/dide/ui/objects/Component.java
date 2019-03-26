@@ -20,8 +20,18 @@ public class Component {
 	private List<String> mutexs = new ArrayList<String>();
 	private List<String> excludes = new ArrayList<String>();
 	private List<String> includes = new ArrayList<String>();
+	private List<String> symbols = new ArrayList<String>();
 	private String parentPath;// .h/.c¸¸Ä¿Â¼
 	private String target;
+	
+
+	public List<String> getSymbols() {
+		return symbols;
+	}
+
+	public void setSymbols(List<String> symbols) {
+		this.symbols = symbols;
+	}
 
 	public String getTarget() {
 		return target;

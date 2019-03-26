@@ -25,6 +25,10 @@ public class ReadHardWareDesc {
 			hardwares.add(boardList.item(0).getFirstChild().getTextContent());
 			NodeList cpuList = document.getElementsByTagName("cpu");
 			hardwares.add(cpuList.item(0).getFirstChild().getTextContent());
+			NodeList coreList = document.getElementsByTagName("core");
+			if(coreList.getLength() >0) {
+				hardwares.add(coreList.item(0).getFirstChild().getTextContent());
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

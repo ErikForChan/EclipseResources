@@ -1,6 +1,7 @@
 package com.djyos.dide.ui.wizards.cpu;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.djyos.dide.ui.arch.ReadArchXml;
 import com.djyos.dide.ui.helper.DideHelper;
@@ -19,13 +21,14 @@ import com.djyos.dide.ui.objects.Arch;
 import com.djyos.dide.ui.objects.Core;
 import com.djyos.dide.ui.objects.CoreMemory;
 import com.djyos.dide.ui.objects.Cpu;
+import com.djyos.dide.ui.wizards.djyosProject.tools.PathTool;
 
 public class ReadCpuXml {
 	private static DocumentBuilderFactory dbFactory = null;
 	private static DocumentBuilder db = null;
 	private static Document document = null;
 	private static List<Cpu> cpus = new ArrayList<Cpu>();
-	static File archSourceFile = new File(DideHelper.getDjyosSrcPath() + "/bsp/arch");
+	static File archSourceFile = new File(PathTool.getDjyosSrcPath() + "/bsp/arch");
 	static List<File> archXmlFiles = DideHelper.getArchXmlFiles(archSourceFile, new ArrayList<File>());
 	static {
 		try {
@@ -40,15 +43,17 @@ public class ReadCpuXml {
 	public static List<Cpu> getAllCpus() {
 
 		cpus = new ArrayList<Cpu>();
-		String sourcePath = DideHelper.getDIDEPath() + "djysrc/bsp/cpudrv";
+		String sourcePath = PathTool.getDIDEPath() + "djysrc/bsp/cpudrv";
 		File sourceFile = new File(sourcePath);
-		File[] files = sourceFile.listFiles();
-		for (File file : files) {
-			if (file.isDirectory()) {
-				getCpus(file);
+		if (sourceFile.exists()) {
+			File[] files = sourceFile.listFiles();
+			for (File file : files) {
+				if (file.isDirectory()) {
+					getCpus(file);
+				}
 			}
 		}
-		System.out.println("cpus.size():   " + cpus.size());
+//		System.out.println("cpus.size():   " + cpus.size());
 		return cpus;
 
 	}
@@ -59,6 +64,7 @@ public class ReadCpuXml {
 			File xmlFile = DideHelper.getXmlFile(parentFile);
 			try {
 				if (xmlFile != null) {
+//					System.out.println("xmlFile:   "+xmlFile.getPath());
 					unitCpu(cpu, xmlFile);
 				}
 			} catch (Exception e) {
@@ -84,7 +90,7 @@ public class ReadCpuXml {
 						Cpu cpu = new Cpu();
 						File parentFile = file.getParentFile();
 						traverseParents(cpu, parentFile);
-						Cpu newCpu = new Cpu(cpu.getCpuName(), cpu.getParentPath(), cpu.getCores());
+						Cpu newCpu = new Cpu(cpu.getCpuName(), cpu.getCpuFolderPath(), cpu.getCores());
 						cpus.add(newCpu);
 					}
 				} catch (Exception e) {
@@ -98,7 +104,7 @@ public class ReadCpuXml {
 	public static Cpu getCpuInfos(File file) throws Exception {
 		Cpu cpu = new Cpu();
 		if (file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
-			cpu.setParentPath(file.getParentFile().getPath());
+			cpu.setCpuFolderPath(file.getParentFile().getPath());
 		}
 		document = db.parse(file);
 		NodeList nameList = document.getElementsByTagName("cpuName");
@@ -113,11 +119,8 @@ public class ReadCpuXml {
 		} else {
 			cpu.setCoreNum(coreList.getLength());
 			List<Core> cores = new ArrayList<Core>();
-
 			for (int i = 0; i < coreList.getLength(); i++) {
-				Core core;
-				core = new Core();
-
+				Core core = new Core();
 				Node node = coreList.item(i);
 				NamedNodeMap namedNodeMap = node.getAttributes();
 				String id = namedNodeMap.getNamedItem("id").getTextContent();
@@ -126,6 +129,32 @@ public class ReadCpuXml {
 				cores.add(core);
 			}
 			cpu.setCores(cores);
+			NodeList smLists = document.getElementsByTagName("shared_memory");
+			if(smLists.getLength() != 0) {
+				NodeList mLists = smLists.item(0).getChildNodes();
+				for(int i=0;i<mLists.getLength();i++) {
+					Node mNode = mLists.item(i);
+					if(mNode.getNodeType() == Node.ELEMENT_NODE) {
+						CoreMemory m = new CoreMemory();
+						NamedNodeMap attrs = mNode.getAttributes();
+						for(int j=0;j<attrs.getLength();j++) {
+							String attrName = attrs.item(j).getNodeName();
+							switch(attrName) {
+							case "type":
+								m.setType(attrs.item(j).getNodeValue());
+								break;
+							case "startAddr":
+								m.setStartAddr(attrs.item(j).getNodeValue());
+								break;
+							case "size":
+								m.setSize(attrs.item(j).getNodeValue());
+								break;
+							}
+						}
+						cpu.getShared_memorys().add(m);
+					}
+				}
+			}
 		}
 
 		return cpu;
@@ -141,6 +170,11 @@ public class ReadCpuXml {
 				if (cNode.getFirstChild() != null) {
 					String content = cNode.getFirstChild().getTextContent();
 					switch (nodeName) {
+					case "name":
+						if(core.getName() == null) {
+							core.setName(content);
+						}
+						break;
 					case "type":
 						if (core.getArch().getSerie() == null) {
 							core.getArch().setSerie(content);
@@ -217,6 +251,11 @@ public class ReadCpuXml {
 				String nodeName = node.getNodeName();
 				String content = node.getFirstChild().getTextContent();
 				switch (nodeName) {
+				case "name":
+					if(core.getName() == null) {
+						core.setName(content);
+					}
+					break;
 				case "type":
 					core.getArch().setSerie(content);
 					break;
@@ -249,6 +288,13 @@ public class ReadCpuXml {
 				String nodeName = node.getNodeName();
 				String content = node.getFirstChild().getTextContent();
 				switch (nodeName) {
+				case "name":
+					for (int j = 0; j < cores.size(); j++) {
+						if(cores.get(j).getName() == null) {
+							cores.get(j).setName(content);
+						}
+					}
+					break;
 				case "type":
 					for (int j = 0; j < cores.size(); j++) {
 						if (cores.get(j).getArch().getSerie() == null) {
@@ -299,14 +345,23 @@ public class ReadCpuXml {
 			}
 		}
 	}
-
-	public static Cpu unitCpu(Cpu cpu, File file) throws Exception {
+	
+	public static Cpu unitCpu(Cpu cpu, File file)  {
 		// 将给定 URI 的内容解析为一个 XML 文档,并返回Document对象
 		// System.out.println("cpuFile: "+file.getName());
-		document = db.parse(file);
-		if (file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
-			cpu.setParentPath(file.getParentFile().getPath());
+//		System.out.println("file.getPath()： "+file.getPath());
+		try {
+			document = db.parse(file);
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		if (file.getName().startsWith("cpu_") && !file.getName().contains("group_")) {
+			cpu.setCpuFolderPath(file.getParentFile().getPath());
+		} 
 
 		NodeList nameList = document.getElementsByTagName("cpuName");
 		for (int i = 0; i < nameList.getLength(); i++) {
@@ -365,6 +420,34 @@ public class ReadCpuXml {
 			}
 
 		}
+		
+		NodeList smLists = document.getElementsByTagName("shared_memory");
+		if(smLists.getLength() != 0) {
+			NodeList mLists = smLists.item(0).getChildNodes();
+			for(int i=0;i<mLists.getLength();i++) {
+				Node mNode = mLists.item(i);
+				if(mNode.getNodeType() == Node.ELEMENT_NODE) {
+					CoreMemory m = new CoreMemory();
+					NamedNodeMap attrs = mNode.getAttributes();
+					for(int j=0;j<attrs.getLength();j++) {
+						String attrName = attrs.item(j).getNodeName();
+						switch(attrName) {
+						case "type":
+							m.setType(attrs.item(j).getNodeValue());
+							break;
+						case "startAddr":
+							m.setStartAddr(attrs.item(j).getNodeValue());
+							break;
+						case "size":
+							m.setSize(attrs.item(j).getNodeValue());
+							break;
+						}
+					}
+					cpu.getShared_memorys().add(m);
+				}
+			}
+		}
+
 		return cpu;
 	}
 }

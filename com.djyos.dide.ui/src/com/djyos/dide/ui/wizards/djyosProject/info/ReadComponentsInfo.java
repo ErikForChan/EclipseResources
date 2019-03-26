@@ -14,10 +14,10 @@ public class ReadComponentsInfo {
 	private static DocumentBuilderFactory dbFactory = null;
 	private static DocumentBuilder db = null;
 	private static Document document = null;
-	static List<String> componentPaths = new ArrayList<String>();
+	static List<String> componentPaths;
 
 	public static List<String> getCompsInfo(File file) {
-
+		componentPaths = new ArrayList<String>();
 		try {
 			dbFactory = DocumentBuilderFactory.newInstance();
 			db = dbFactory.newDocumentBuilder();
